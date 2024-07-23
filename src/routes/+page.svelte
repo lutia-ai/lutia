@@ -73,15 +73,7 @@
 		gptModelSelection = gptModelSelection.filter(m => m !== model);
 	}
 
-	function extractCodeBlock(inputString) {
-	    // Use a regular expression to match everything after the first ```
-		const match = inputString.match(/```[a-zA-Z]+\n([\s\S]*)/);
-
-		if (!match) {
-		    return null
-		} 
-	    return match[1];
-	}
+	
 
 	async function submitPrompt() {
 
@@ -122,76 +114,116 @@
 		    let codeBlockContent = '';
 		    let language = '';
 		    let responseComponents = [];
+		    let prevText = '';
+
+		    function extractCodeBlock(inputString) {
+			    // Use a regular expression to match everything after the first ```
+				const match = inputString.match(/```[a-zA-Z]+\n([\s\S]*)/);
+
+				if (!match) {
+				    return null
+				} 
+			    return match[1];
+			}
 
 		    while (true) {
-		        const { value, done } = await reader.read();
-		        if (done) break;
-		        const newText = decoder.decode(value);
-		        responseText += newText;
+		    	const { value, done } = await reader.read();
+		    	if (done) break;
 
-		        // Check for beginning of code block
-		        if (newText.includes('```') && !isInCodeBlock) {
-		            isInCodeBlock = true;
-		            codeBlockContent = extractCodeBlock(newText);
-		           	const langMatch = newText.match(/```(\w+)/);
-			        language = langMatch ? langMatch[1] : '';
-		            if (responseComponents.length > 0 && responseComponents[responseComponents.length - 1].type === 'text') {
-		                responseComponents[responseComponents.length - 1].content += newText.split('```')[0];
-		            }
+		    	let newText = decoder.decode(value);
+		    	responseText += newText;
+		    	// split the string but keep the spaces
+		    	let newTextArray = newText.split(/(\s+)/);
 
-		            if (codeBlockContent) {
-		            	responseComponents.push({
-			                type: 'code',
-			                language,
-			                code: codeBlockContent
-			            });
-		            }
-		            continue;
-		        }
+		    	if (prevText && newTextArray[0].includes('`')) {
+		    		newTextArray[0] = prevText + newTextArray[0];
+		    	}
 
-		        // Check for end of code block
-		        if (newText.includes('```') && isInCodeBlock) {
-		            isInCodeBlock = false;
-		            if (newText.split('```')[0]) {
-		            	if (responseComponents.length > 0 && responseComponents[responseComponents.length - 1].type === 'code') {
-			                responseComponents[responseComponents.length - 1].code += newText.split('```')[0];
-			            } 
-			                
-		            }
-		            if (newText.split('```')[1]) {
-		                responseComponents.push({
-		                    type: 'text',
-		                    content: newText.split('```')[1]
-		                });
-		            }
-		            continue;
-		        }
+		    	for (const [index, text] of newTextArray.entries()) {
+		    		if (index === newTextArray.length - 1 && !text.includes('```') && text.includes('`')) {
+		    			prevText = text;
+		    			continue;
+		    		}
 
-		        if (isInCodeBlock) {
-		            if (responseComponents.length > 0 && responseComponents[responseComponents.length - 1].type === 'code') {
-		                responseComponents[responseComponents.length - 1].code += newText;
-		            } else {
-		            	responseComponents.push({
-		                    type: 'code',
-			                language,
-			                code: newText
-		                });
-		            }
-		        } else {
-		            if (responseComponents.length > 0 && responseComponents[responseComponents.length - 1].type === 'text') {
-		                responseComponents[responseComponents.length - 1].content += newText;
-		            } else {
-		                responseComponents.push({
-		                    type: 'text',
-		                    content: newText
-		                });
-		            }
-		        }
+		    		// if current word is just text then add it as text
+		    		else if (!text.includes('```') && !isInCodeBlock) {
+		    			if (responseComponents.length > 0 && responseComponents[responseComponents.length - 1].type === 'text') {
+			                responseComponents[responseComponents.length - 1].content += text;
+			            } else {
+			                responseComponents.push({
+			                    type: 'text',
+			                    content: text
+			                });
+			            }
+		    		}
 
-		        // Update only the AI's response in chat history
-		        chatHistory = chatHistory.map((msg, index) => 
-		            index === chatHistory.length - 1 ? { ...msg, text: responseText, components: responseComponents } : msg
-		        );
+		    		// if current word is start of code block
+		    		else if (text.includes('```') && !isInCodeBlock) {
+		    			isInCodeBlock = true;
+		    			// extract any text before codeBlock
+		    			if (responseComponents.length > 0 && responseComponents[responseComponents.length - 1].type === 'text') {
+			                responseComponents[responseComponents.length - 1].content += text.split('```')[0];
+			            } else {
+			            	responseComponents.push({
+			            		type: 'text',
+			            		content: text.split('```')[0]
+			            	});
+			            }
+
+			            // extract any code after ```
+			            codeBlockContent = extractCodeBlock(text);
+			           	const langMatch = text.match(/```(\w+)/);
+				        language = langMatch ? langMatch[1] : '';
+				        if (codeBlockContent) {
+			            	responseComponents.push({
+				                type: 'code',
+				                language,
+				                code: codeBlockContent
+				            });
+			            }
+		    		}
+
+		    		// if current word is end of code block
+		    		else if (text.includes('```') && isInCodeBlock) {
+		    			isInCodeBlock = false;
+		    			// add any remaining code before end of codeBlock
+		    			if (responseComponents.length > 0 && responseComponents[responseComponents.length - 1].type === 'code') {
+			                responseComponents[responseComponents.length - 1].code += text.split('```')[0];
+			            } else {
+			            	responseComponents.push({
+			            		type: 'code',
+			            		language: '',
+			            		code: text.split('```')[0]
+			            	});
+			            }
+
+			            if (text.split('```')[1]) {
+			                responseComponents.push({
+			                    type: 'text',
+			                    content: newText.split('```')[1]
+			                });
+			            }
+		    		}
+
+			        else if (isInCodeBlock) {
+			            if (responseComponents.length > 0 && responseComponents[responseComponents.length - 1].type === 'code') {
+			                responseComponents[responseComponents.length - 1].code += text;
+			            } else {
+			            	responseComponents.push({
+			                    type: 'code',
+				                language,
+				                code: text
+			                });
+			            }
+			        } 
+
+		    		// Update only the AI's response in chat history
+			        chatHistory = chatHistory.map((msg, index) => 
+			            index === chatHistory.length - 1 ? { ...msg, text: responseText, components: responseComponents } : msg
+			        );
+
+			        prevText = '';
+		    	}
 		    }
 
 		    console.log(chatHistory[chatHistory.length-1]);
