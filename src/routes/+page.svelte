@@ -1,6 +1,7 @@
 <script>
-	/*import Highlight, { LineNumbers } from "svelte-highlight";*/
+	import DOMPurify from 'dompurify';
 	import { HighlightAuto, LineNumbers } from "svelte-highlight";
+	import { marked } from 'marked';
 	import typescript from "svelte-highlight/languages/typescript";
 	import python from "svelte-highlight/languages/python";
 	import ashes from "svelte-highlight/styles/ashes";
