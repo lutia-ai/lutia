@@ -15,15 +15,13 @@
 	import synthMidnightTerminalDark from "svelte-highlight/styles/synth-midnight-terminal-dark";
 	import windows10 from "svelte-highlight/styles/windows-10";
 	import windowsNt from "svelte-highlight/styles/windows-nt";
-	
 
 	import AnthropicIcon from '$lib/components/icons/Anthropic.svelte';
 	import OpenAiIcon from '$lib/components/icons/OpenAiIcon.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 
-
-	let prompt = '';
+	let prompt;
 	let placeholderVisible = true;
 
 	let chatHistory = [];
@@ -60,6 +58,16 @@
 	let gptModelSelection = Object.keys(modelDictionary[chosenCompany].models);
 	let chosenModel = gptModelSelection[0];
 
+	function handlePaste(event) {
+        event.preventDefault();
+        
+        // Get plain text from clipboard
+        const text = event.clipboardData.getData('text/plain');
+        
+        // Insert text at cursor position
+        document.execCommand('insertText', false, text);
+    }
+
 	function selectCompany(company) {
 		chosenCompany=company;
 		companySelection = Object.keys(modelDictionary);
@@ -75,15 +83,23 @@
 		gptModelSelection = gptModelSelection.filter(m => m !== model);
 	}
 
-	
+	function sanitizeHtml(html) {
+		// Sanitize the HTML content
+		let sanitizedHtml = DOMPurify.sanitize(html, { ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'], ALLOWED_ATTRS: ['href'] });
+		// Convert the sanitized HTML to plain text
+		let tempDiv = document.createElement('div');
+		tempDiv.innerHTML = sanitizedHtml;
+		return tempDiv.textContent || tempDiv.innerText || '';
+	}
 
 	async function submitPrompt() {
-
-		prompt = prompt.replace(/&nbsp;/g, ' ');
-        if (prompt.trim()) {
+		const plainText = prompt;
+		const sanitizedPrompt = sanitizeHtml(plainText);
+		prompt = '';
+        if (plainText.trim()) {
             let userPrompt = {
                 by: 'user',
-                text: prompt.trim()
+                text: plainText.trim()
             };
 
 	            // Add user's message to chat history
@@ -95,17 +111,15 @@
 	        const uri = chosenCompany === "anthropic"
 	        	? '/api/claude'
 	        	: '/api/chatGPT';
-			
 
             const response = await fetch(uri, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt: prompt.trim(), model: modelDictionary[chosenCompany].models[chosenModel] }),
+                body: JSON.stringify({ prompt: sanitizedPrompt.trim(), model: modelDictionary[chosenCompany].models[chosenModel] }),
             });
 
-			prompt = '';
 	        placeholderVisible = true;
 
             const reader = response.body.getReader();
@@ -232,7 +246,6 @@
         }
     }
 
-
 </script>
 
 <svelte:head>
@@ -280,7 +293,9 @@
 		{#each chatHistory as chat}
 			{#if chat.by === 'user'}
 				<div class="user-chat">
-					<p>{chat.text}</p>
+					<p>
+						{@html chat.text}
+					</p>
 				</div>
 			{:else}
 				<div class="llm-container">
@@ -297,7 +312,7 @@
 						{#each chat.components || [] as component}
 				            {#if component.type === 'text'}
 				                <p class="content-paragraph">
-				                    {component.content.trim()}
+					                {@html marked(component.content.trim())}
 				                </p>
 				            {:else if component.type === 'code'}
 					            <div class="code-container">
@@ -327,7 +342,7 @@
 		<div class="prompt-bar">
 			<div 
 				contenteditable 
-				bind:innerHTML={prompt} 
+				bind:innerHTML={prompt}
 				on:input={() => placeholderVisible = false}
 				on:keydown={(event) => {
 					if (event.key === 'Enter' && !event.shiftKey) {
@@ -335,12 +350,13 @@
 						submitPrompt();
 					}
 				}}
+				on:paste={handlePaste}
 			>
 			    
 			</div>
 			<span 
 				class="placeholder" 
-				style="display: {placeholderVisible || prompt.length === 0 ? 'block' : 'none'};"
+				style="display: {placeholderVisible || prompt === '' ? 'block' : 'none'};"
 			>
 				Enter a prompt here
 			</span>
@@ -350,6 +366,35 @@
 
 
 <style lang=scss>
+
+	:global(h1, h2) {
+		margin: 0 0 20px 0;
+		padding: 0;
+	}
+
+	:global(h3, h4) {
+		margin: 0 0 10px 0;
+		padding: 0;
+	}
+
+	:global(p) {
+		margin: 0 0 20px 0;
+		padding: 0; 
+	}
+
+	:global(ol) {
+		margin: 0 20px 20px 20px;
+		padding: 10px 0;
+	}
+
+	:global(li) {
+		margin: 0 0 20px 0;
+		padding: 0;
+
+		:global(p) {
+			margin: 0 0 10px 0;
+		}
+	}
 
 	.main {
 		display: flex;
@@ -374,11 +419,6 @@
 			display: flex;
 			cursor: pointer;
 			z-index: 10;
-
-			.choose-company-container {
-				// border-radius: 50%;
-				// overflow: hidden;
-			}
 
 			.choose-llm-model-container {
 				border-radius: 10px !important;
@@ -446,6 +486,7 @@
 				width: max-content;
 				max-width: 500px;
 				margin-left: auto;
+				word-break: break-all;
 
 				p {
 					padding: 0;
@@ -483,11 +524,9 @@
 					padding: 3px;
 
 					.content-paragraph {
-						padding: 0;
-						margin: 0;
 						font-weight: 300;
 						line-height: 30px;
-						white-space: pre-wrap;
+						// white-space: pre-wrap;
 					}
 				}
 			}
