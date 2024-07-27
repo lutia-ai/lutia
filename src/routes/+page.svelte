@@ -92,6 +92,16 @@
 		return tempDiv.textContent || tempDiv.innerText || '';
 	}
 
+	function extractCodeBlock(inputString) {
+	    // Use a regular expression to match everything after the first ```
+		const match = inputString.match(/```[a-zA-Z]+\n([\s\S]*)/);
+
+		if (!match) {
+		    return null
+		} 
+	    return match[1];
+	}
+
 	async function submitPrompt() {
 		const plainText = prompt;
 		const sanitizedPrompt = sanitizeHtml(plainText);
@@ -102,7 +112,7 @@
                 text: plainText.trim()
             };
 
-	            // Add user's message to chat history
+	        // Add user's message to chat history
 	        chatHistory = [...chatHistory, userPrompt];
 	        
 	        // Initialize AI's response in chat history
@@ -132,31 +142,22 @@
 		    let responseComponents = [];
 		    let prevText = '';
 
-		    function extractCodeBlock(inputString) {
-			    // Use a regular expression to match everything after the first ```
-				const match = inputString.match(/```[a-zA-Z]+\n([\s\S]*)/);
-
-				if (!match) {
-				    return null
-				} 
-			    return match[1];
-			}
-
 		    while (true) {
 		    	const { value, done } = await reader.read();
-		    	if (done) break;
+		    	if (done && !prevText) break;
 
-		    	let newText = decoder.decode(value);
+		    	let newText = done ? '' : decoder.decode(value);
 		    	responseText += newText;
 		    	// split the string but keep the spaces
 		    	let newTextArray = newText.split(/(\s+)/);
+		    	console.log('newTextArray: ', newTextArray);
 
-		    	if (prevText && newTextArray[0].includes('`')) {
+		    	if (prevText) {
 		    		newTextArray[0] = prevText + newTextArray[0];
 		    	}
 
 		    	for (const [index, text] of newTextArray.entries()) {
-		    		if (index === newTextArray.length - 1 && !text.includes('```') && text.includes('`')) {
+		    		if (index === newTextArray.length - 1 && !text.includes('```') && text.includes('`') && !done) {
 		    			prevText = text;
 		    			continue;
 		    		}
