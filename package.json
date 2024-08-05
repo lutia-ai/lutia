@@ -12,6 +12,7 @@
 		"format": "prettier --write ."
 	},
 	"devDependencies": {
+		"@bulatdashiev/svelte-slider": "^1.0.3",
 		"@sveltejs/adapter-auto": "^3.0.0",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
@@ -32,9 +33,11 @@
 	"type": "module",
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.24.3",
+		"@google/generative-ai": "^0.16.0",
 		"dompurify": "^3.1.6",
 		"marked": "^13.0.2",
 		"openai": "^4.52.0",
-		"svelte-highlight": "^7.7.0"
+		"svelte-highlight": "^7.7.0",
+		"svelte-slider": "^1.0.1"
 	}
 }

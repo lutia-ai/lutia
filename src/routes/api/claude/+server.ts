@@ -1,27 +1,35 @@
 import { error } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
-const openAISecretKey = process.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
+const anthropicSecretKey =
+	process.env.VITE_ANTHROPIC_API_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY;
 
-const openai = new OpenAI({ apiKey: openAISecretKey });
+const client = new Anthropic({ apiKey: anthropicSecretKey });
 
 export async function POST({ request }) {
 	try {
 		const { prompt, model } = await request.json();
 
-		const stream = await openai.chat.completions.create({
-			model: model,
+		const stream = await client.messages.stream({
 			messages: [{ role: 'user', content: prompt }],
-			stream: true
+			model: model,
+			max_tokens: 1024
 		});
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
 				for await (const chunk of stream) {
-					const content = chunk.choices[0]?.delta?.content || '';
-					if (content) {
-						controller.enqueue(new TextEncoder().encode(`${content}`));
+					if (
+						chunk.type === 'content_block_start' ||
+						chunk.type === 'content_block_delta'
+					) {
+						const content = (chunk as any).delta?.text || '';
+						if (content) {
+							controller.enqueue(new TextEncoder().encode(content));
+						}
+					} else if (chunk.type === 'message_stop') {
+						break;
 					}
 				}
 				controller.close();

@@ -1,27 +1,26 @@
 import { error } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const openAISecretKey = process.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
+const googleSecretKey =
+	process.env.VITE_GOOGLE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_GEMINI_API_KEY;
 
-const openai = new OpenAI({ apiKey: openAISecretKey });
+const genAI = new GoogleGenerativeAI(googleSecretKey);
 
 export async function POST({ request }) {
 	try {
 		const { prompt, model } = await request.json();
 
-		const stream = await openai.chat.completions.create({
-			model: model,
-			messages: [{ role: 'user', content: prompt }],
-			stream: true
-		});
+		const genAIModel = genAI.getGenerativeModel({ model: model });
+
+		const result = await genAIModel.generateContentStream(prompt);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
-				for await (const chunk of stream) {
-					const content = chunk.choices[0]?.delta?.content || '';
+				for await (const chunk of result.stream) {
+					const content = (chunk as any).candidates[0].content.parts[0].text;
 					if (content) {
-						controller.enqueue(new TextEncoder().encode(`${content}`));
+						controller.enqueue(new TextEncoder().encode(content));
 					}
 				}
 				controller.close();

@@ -10,9 +10,7 @@ const config = {
 		adapter: adapter()
 	},
 	preprocess: preprocess({
-		scss: {
-
-		}
+		scss: {}
 	})
 };
 
