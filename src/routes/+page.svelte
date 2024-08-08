@@ -4,24 +4,24 @@
 	import { marked } from 'marked';
 	import typescript from 'svelte-highlight/languages/typescript';
 	import python from 'svelte-highlight/languages/python';
-	import ashes from 'svelte-highlight/styles/ashes';
-	import atelierSeaside from 'svelte-highlight/styles/atelier-seaside';
-	import atelierSulphurpool from 'svelte-highlight/styles/atelier-sulphurpool';
-	import base16IrBlack from 'svelte-highlight/styles/base16-ir-black';
-	import base16Monokai from 'svelte-highlight/styles/base16-monokai';
-	import bright from 'svelte-highlight/styles/bright';
-	import colors from 'svelte-highlight/styles/colors';
-	import githubDark from 'svelte-highlight/styles/github-dark';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
-	import windows10 from 'svelte-highlight/styles/windows-10';
-	import windowsNt from 'svelte-highlight/styles/windows-nt';
 	import { fly } from 'svelte/transition';
 	import { writable } from 'svelte/store';
 	import { onMount } from 'svelte';
-	import { chatHistory, numberPrevMessages, clearChatHistory } from '$lib/stores.js';
+	import {
+		chatHistory,
+		numberPrevMessages,
+		clearChatHistory,
+		darkMode,
+		inputPricing,
+		showPricing,
+		showLegacyModels
+	} from '$lib/stores.js';
 
-	import Toggle from '$lib/components/DarkModeToggle.svelte';
+	import { updateTokens } from '$lib/tokenizer.ts';
+	import SettingsContainer from '$lib/components/SettingsContainer.svelte';
 	import Slider from '$lib/components/Slider.svelte';
+	import Switch from '$lib/components/Switch.svelte';
 
 	import AnthropicIcon from '$lib/components/icons/Anthropic.svelte';
 	import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
@@ -42,6 +42,26 @@
 	 * @type {string}
 	 */
 	let prompt;
+
+	let fullPrompt;
+
+	/**
+	 * Stores the number of tokens that are within the input/prompt.
+	 * @type {number}
+	 */
+	let input_tokens = 0;
+
+	/**
+	 * Stores the cost of the prompt.
+	 * @type {number}
+	 */
+	let input_price = 0;
+
+	/**
+	 * Indicates whether the page has been mounted.
+	 * @type {boolean}
+	 */
+	let mounted = false;
 
 	/**
 	 * Indicates whether the placeholder is visible in the input field.
@@ -87,28 +107,125 @@
 		openAI: {
 			logo: OpenAiIcon,
 			models: {
-				'GPT 4o': 'gpt-4o',
-				'GPT 4o mini': 'gpt-4o-mini',
-				'GPT 4 Turbo': 'gpt-4-turbo',
-				'GPT 4': 'gpt-4',
-				'GPT 3.5 Turbo': 'gpt-3.5-turbo'
+				gpt4o: {
+					name: 'GPT 4o',
+					param: 'gpt-4o-2024-08-06',
+					legacy: false,
+					input_price: 2.5,
+					output_price: 10,
+					context_window: 128000,
+					hub: 'Xenova/gpt-4o'
+				},
+				gpt4mini: {
+					name: 'GPT 4o mini',
+					param: 'gpt-4o-mini',
+					legacy: false,
+					input_price: 0.15,
+					output_price: 0.6,
+					context_window: 128000,
+					hub: 'Xenova/gpt-4o'
+				},
+				gpt4turbo: {
+					name: 'GPT 4 Turbo',
+					param: 'gpt-4-turbo',
+					legacy: true,
+					input_price: 10,
+					output_price: 30,
+					context_window: 128000,
+					hub: 'Xenova/gpt-4'
+				},
+				gpt4: {
+					name: 'GPT 4',
+					param: 'gpt-4',
+					legacy: true,
+					input_price: 30,
+					output_price: 60,
+					context_window: 8000,
+					hub: 'Xenova/gpt-4'
+				},
+				gpt35turbo: {
+					name: 'GPT 3.5 Turbo',
+					param: 'gpt-3.5-turbo-0125',
+					legacy: true,
+					input_price: 0.5,
+					output_price: 1.5,
+					context_window: 16385,
+					hub: 'Xenova/gpt-3.5-turbo'
+				}
 			}
 		},
 		anthropic: {
 			logo: AnthropicIcon,
 			models: {
-				'Claude 3.5 Sonnet': 'claude-3-5-sonnet-20240620',
-				'Claude 3 Opus': 'claude-3-opus-20240229',
-				'Claude 3 Sonnet': 'claude-3-sonnet-20240229',
-				'Claude 3 Haiku': 'claude-3-haiku-20240307'
+				claude35Sonnet: {
+					name: 'Claude 3.5 Sonnet',
+					param: 'claude-3-5-sonnet-20240620',
+					legacy: false,
+					input_price: 3,
+					output_price: 15,
+					context_window: 200000,
+					hub: 'Xenova/claude-tokenizer'
+				},
+				claude3Opus: {
+					name: 'Claude 3 Opus',
+					param: 'claude-3-opus-20240229',
+					legacy: false,
+					input_price: 15,
+					output_price: 75,
+					context_window: 200000,
+					hub: 'Xenova/claude-tokenizer'
+				},
+				claude3Sonnet: {
+					name: 'Claude 3 Sonnet',
+					param: 'claude-3-sonnet-20240229',
+					legacy: true,
+					input_price: 3,
+					output_price: 15,
+					context_window: 200000,
+					hub: 'Xenova/claude-tokenizer'
+				},
+				claude3Haiku: {
+					name: 'Claude 3 Haiku',
+					param: 'claude-3-haiku-20240307',
+					legacy: false,
+					input_price: 0.25,
+					output_price: 1.25,
+					context_window: 200000,
+					hub: 'Xenova/claude-tokenizer'
+				}
 			}
 		},
 		google: {
 			logo: GoogleIcon,
 			models: {
-				'Gemini 1.5 Pro': 'gemini-1.5-pro',
-				'Gemini 1.5 Flash': 'gemini-1.5-flash',
-				'Gemini 1.0 Pro': 'gemini-1.0-pro'
+				gemini15Pro: {
+					name: 'Gemini 1.5 Pro',
+					param: 'gemini-1.5-pro',
+					legacy: false,
+					input_price: 3.5,
+					output_price: 10.5,
+					input_price_large: 7, // Price increases for prompts 128k or longer
+					output_price_large: 21, // Price increases for prompts 128k or longer
+					context_window: 2000000
+				},
+				gemini15Flash: {
+					name: 'Gemini 1.5 Flash',
+					param: 'gemini-1.5-flash',
+					legacy: false,
+					input_price: 0.35,
+					output_price: 1.05,
+					input_price_large: 0.7, // Price increases for prompts 128k or longer
+					output_price_large: 2.1, // Price increases for prompts 128k or longer
+					context_window: 1000000
+				},
+				gemini1Pro: {
+					name: 'Gemini 1.0 Pro',
+					param: 'gemini-1.0-pro',
+					legacy: true,
+					input_price: 0.5,
+					output_price: 1.5,
+					context_window: 1000000
+				}
 			}
 		}
 	};
@@ -130,14 +247,15 @@
 	 * List of available models for the chosen company.
 	 * @type {string[]}
 	 */
-	let gptModelSelection = Object.keys(modelDictionary[chosenCompany].models);
+	let gptModelSelection = Object.values(modelDictionary[chosenCompany].models);
 
 	/**
 	 * The currently selected AI model.
 	 * @type {string}
 	 */
 	let chosenModel = gptModelSelection[0];
-	gptModelSelection = gptModelSelection.slice(1);
+
+	$: if (prompt || $numberPrevMessages !== null) generateFullPrompt(prompt);
 
 	/**
 	 * Handles paste events, inserting plain text at the cursor position.
@@ -203,8 +321,8 @@
 		companySelection = Object.keys(modelDictionary);
 		companySelection = companySelection.filter((c) => c !== company);
 		gptModelSelection = Object.keys(modelDictionary[chosenCompany].models);
+		gptModelSelection = Object.values(modelDictionary[chosenCompany].models);
 		chosenModel = gptModelSelection[0];
-		gptModelSelection = gptModelSelection.slice(1);
 	}
 
 	/**
@@ -213,8 +331,7 @@
 	 */
 	function selectModel(model) {
 		chosenModel = model;
-		gptModelSelection = Object.keys(modelDictionary[chosenCompany].models);
-		gptModelSelection = gptModelSelection.filter((m) => m !== model);
+		gptModelSelection = Object.values(modelDictionary[chosenCompany].models);
 	}
 
 	/**
@@ -250,6 +367,37 @@
 	}
 
 	/**
+	 * Extracts the code block content from a string starting with a code fence.
+	 * @param {string} prompt - The current prompt.
+	 */
+	async function generateFullPrompt(prompt) {
+		if (!mounted) return;
+		const sanitizedPrompt = sanitizeHtml(prompt);
+
+		/**
+		 * @type {Array<{by: string, text: string}>}
+		 */
+		const currentHistory = $chatHistory;
+
+		/**
+		 * Extract and sanitize the previous messages from the chat history.
+		 * @type {Array<{by: string, text: string}>}
+		 */
+		const prevMessages = currentHistory.slice(-$numberPrevMessages * 2 - 1, -1).map(
+			/** @param {{by: string, text: string}} message */
+			({ by, text }) => ({ by, text: sanitizeHtml(text) })
+		);
+
+		fullPrompt = {
+			prevMessages,
+			prompt: sanitizedPrompt.trim()
+		};
+		const result = await updateTokens(fullPrompt, chosenModel);
+		input_tokens = result.tokens;
+		input_price = result.price;
+	}
+
+	/**
 	 * Submits the user's prompt, processes the AI's response, and updates the chat history.
 	 */
 	async function submitPrompt() {
@@ -272,29 +420,7 @@
 						? '/api/chatGPT'
 						: '/api/gemini';
 
-			/**
-			 * @type {Array<{by: string, text: string}>}
-			 */
-			let currentHistory = [];
-			const unsubscribe = chatHistory.subscribe((value) => {
-				currentHistory = value;
-			});
-
-			/**
-			 * Extract and sanitize the previous messages from the chat history.
-			 * @type {Array<{by: string, text: string}>}
-			 */
-			const prevMessages = currentHistory.slice(-$numberPrevMessages * 2 - 1, -1).map(
-				/** @param {{by: string, text: string}} message */
-				({ by, text }) => ({ by, text: sanitizeHtml(text) })
-			);
-
-			unsubscribe();
-
-			const fullPrompt = {
-				prevMessages,
-				prompt: sanitizedPrompt.trim()
-			};
+			generateFullPrompt(plainText);
 
 			const response = await fetch(uri, {
 				method: 'POST',
@@ -303,12 +429,12 @@
 				},
 				body: JSON.stringify({
 					prompt: JSON.stringify(fullPrompt),
-					model: modelDictionary[chosenCompany].models[chosenModel]
+					model: chosenModel.param
 				})
 			});
 
 			// Initialize AI's response in chat history
-			chatHistory.update((history) => [...history, { by: chosenModel, text: '' }]);
+			chatHistory.update((history) => [...history, { by: chosenModel.name, text: '', output_cost: 0 }]);
 
 			placeholderVisible = true;
 
@@ -449,6 +575,19 @@
 				}
 			}
 
+	       	const lastItem = $chatHistory[$chatHistory.length - 1];
+	       	const result = await updateTokens(lastItem.text, chosenModel, 'output');
+	       	chatHistory.update(history => {
+	       		return history.map((item, index) => {
+	       			if (index === history.length - 1) {
+	       				return {
+	       					...item,
+	       					output_cost: result.price
+	       				};
+	       			}
+	       			return item;
+	       		});
+	       	});
 			console.log($chatHistory[$chatHistory.length - 1]);
 		}
 	}
@@ -456,11 +595,12 @@
 	/**
 	 * Initializes the component and loads the saved chat history from local storage.
 	 */
-	onMount(() => {
+	onMount(async () => {
 		const savedChatHistory = localStorage.getItem('chatHistory');
 		if (savedChatHistory) {
 			chatHistory.set(JSON.parse(savedChatHistory));
 		}
+		mounted = true;
 	});
 </script>
 
@@ -492,11 +632,11 @@
 						class="company-logo-container"
 						role="button"
 						tabindex="0"
-						on:click={() => {
-							if (!placeholderVisible) submitPrompt();
+						on:click|stopPropagation={() => {
+							companyDropdownOpen = true;
 						}}
-						on:keydown={(e) => {
-							if (e.key === 'Enter' && !placeholderVisible) submitPrompt();
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') companyDropdownOpen = true;
 						}}
 					>
 						<svelte:component this={modelDictionary[chosenCompany].logo} />
@@ -506,11 +646,11 @@
 							<div
 								role="button"
 								tabindex="0"
-								on:click={() => {
+								on:click|stopPropagation={() => {
 									selectCompany(company);
 									companyDropdownOpen = false;
 								}}
-								on:keydown={(e) => {
+								on:keydown|stopPropagation={(e) => {
 									if (e.key === 'Enter') {
 										selectCompany(company);
 										companyDropdownOpen = false;
@@ -536,28 +676,94 @@
 					if (e.key === 'Enter') dropdownOpen = !dropdownOpen;
 				}}
 			>
-				<div class="options-container chosen-llm">
-					<p class="chosen-model-p">{chosenModel}</p>
+				<div
+					class="options-container chosen-llm"
+					style="
+						background: {dropdownOpen ? 'var(--bg-color-light)' : ''};
+					"
+				>
+					<p class="chosen-model-p">{chosenModel.name}</p>
 					<div class="dropdown-icon">
 						<DropdownIcon color="var(--text-color)" />
 					</div>
 				</div>
 				{#if dropdownOpen}
-					{#each gptModelSelection as model}
-						<div
-							class="options-container llm-options"
-							role="button"
-							tabindex="0"
-							on:click={() => {
-								selectModel(model);
-							}}
-							on:keydown={(e) => {
-								if (e.key === 'Enter') selectModel(model);
-							}}
-						>
-							<p>{model}</p>
+					<div
+						class="llm-dropdown-container"
+						style="
+							background: {$darkMode ? 'var(--bg-color-light)' : 'var(--bg-color)'};
+						"
+						role="button"
+						tabindex="0"
+						on:click|stopPropagation
+						on:keydown|stopPropagation
+					>
+						{#each gptModelSelection as model}
+							{#if !model.legacy || $showLegacyModels}
+								<div
+									class="llm-options"
+									role="button"
+									tabindex="0"
+									on:click|stopPropagation={() => {
+										selectModel(model);
+										dropdownOpen = false;
+									}}
+									on:keydown={(e) => {
+										if (e.key === 'Enter') selectModel(model);
+									}}
+								>
+									<div class="record">
+										<p>
+											{model.name}
+
+											{#if $showPricing}
+												<div class="pricing">
+													<span>
+														Input: ${model.input_price} / 1M
+													</span>
+													<span>
+														Output: ${model.output_price} / 1M
+													</span>
+												</div>
+											{/if}
+										</p>
+										{#if model.legacy}
+											<div class="legacy">
+												<p>Legacy</p>
+											</div>
+										{/if}
+										{#if chosenModel.name === model.name}
+											<div class="selected">
+												<TickIcon color="var(--bg-color)" strokeWidth={3} />
+											</div>
+										{/if}
+									</div>
+								</div>
+							{/if}
+						{/each}
+						<div class="toggles-container">
+							<div class="toggle">
+								<p
+									style="color: {!$showLegacyModels
+										? 'var(--text-color-light)'
+										: ''}"
+								>
+									Legacy models
+								</p>
+								<div class="switch">
+									<Switch bind:on={$showLegacyModels} />
+								</div>
+							</div>
+							<div class="toggle">
+								<p style="color: {!$showPricing ? 'var(--text-color-light)' : ''}">
+									Pricing
+								</p>
+								<div class="switch">
+									<Switch bind:on={$showPricing} />
+								</div>
+							</div>
 						</div>
-					{/each}
+					</div>
 				{/if}
 			</div>
 		</div>
@@ -570,6 +776,7 @@
 					tabindex="0"
 					on:click|stopPropagation={() => {
 						clearChatHistory();
+						generateFullPrompt(prompt);
 						isRotating = true;
 						setTimeout(() => {
 							isRotating = false;
@@ -578,6 +785,7 @@
 					on:keydown|stopPropagation={(e) => {
 						if (e.key === 'Enter') {
 							clearChatHistory();
+							generateFullPrompt(prompt);
 							isRotating = true;
 							setTimeout(() => {
 								isRotating = false;
@@ -629,7 +837,7 @@
 								<p>0</p>
 								<Slider
 									value={$numberPrevMessages}
-									on:change={(e) => numberPrevMessages.set(e.detail.value)}
+									on:change={(e) => numberPrevMessages.set(e.detail.value) }
 								/>
 								<p>max</p>
 							</div>
@@ -662,7 +870,7 @@
 				</div>
 				{#if settingsOpen}
 					<div class="settings-open-container">
-						<Toggle />
+						<SettingsContainer />
 					</div>
 				{/if}
 			</div>
@@ -680,15 +888,15 @@
 					</div>
 				{:else}
 					<div class="llm-container">
-						{#if Object.keys(modelDictionary.anthropic.models).includes(chat.by)}
+						{#if Object.values(modelDictionary.anthropic.models).some((model) => model.name === chat.by)}
 							<div class="claude-icon-container">
 								<img src={ClaudeIcon} alt="Claude's icon" />
 							</div>
-						{:else if Object.keys(modelDictionary.openAI.models).includes(chat.by)}
+						{:else if Object.values(modelDictionary.openAI.models).some((model) => model.name === chat.by)}
 							<div class="gpt-icon-container">
 								<ChatGPTIcon color="var(--text-color)" />
 							</div>
-						{:else if Object.keys(modelDictionary.google.models).includes(chat.by)}
+						{:else if Object.values(modelDictionary.google.models).some((model) => model.name === chat.by)}
 							<div class="gemini-icon-container">
 								<GeminiIcon />
 							</div>
@@ -757,7 +965,12 @@
 		</div>
 
 		<div class="prompt-bar-wrapper">
-			<div class="prompt-bar">
+			<div 
+				class="prompt-bar"
+				style="
+					margin: {$inputPricing ? '' : 'auto auto 30px auto'}
+				" 
+			>
 				<div
 					contenteditable
 					role="textbox"
@@ -795,6 +1008,12 @@
 					Enter a prompt here
 				</span>
 			</div>
+			{#if $inputPricing}
+				<div class="input-token-container">
+					<p>Input tokens: {input_tokens}</p>
+					<p class="right">Input cost: ${input_price}</p>
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>
@@ -929,9 +1148,115 @@
 						}
 					}
 
-					.llm-options {
-						border-radius: 10px !important;
-						padding: 5px 15px;
+					.llm-dropdown-container {
+						position: absolute;
+						top: 110%;
+						border: 1px solid var(--bg-color-dark);
+						background: var(--bg-color);
+						box-shadow: 0 5px 15px rgba(50, 50, 50, 0.15);
+						border-radius: 10px;
+						display: flex;
+						flex-direction: column;
+						z-index: inherit;
+						padding: 10px;
+						min-width: 300px;
+						cursor: default;
+
+						.llm-options {
+							display: flex;
+							height: 50px;
+							overflow: hidden;
+							transition: all 0.3s ease;
+							// margin: 10px;
+
+							.record {
+								display: flex;
+								gap: 10px;
+								align-items: center;
+								width: 100%;
+								height: 100%;
+								padding: 0 10px;
+								border-radius: 10px;
+								color: var(--text-color);
+								cursor: pointer;
+
+								&:hover {
+									background: var(--bg-color-light-alt);
+								}
+
+								p {
+									flex: 10;
+									display: flex;
+									gap: 5px;
+									flex-direction: column;
+									// align-items: center;
+									margin: 0;
+									padding: 0;
+									width: 140px;
+
+									.pricing {
+										display: flex;
+										gap: 10px;
+
+										span {
+											text-align: left;
+											color: var(--text-color-light);
+											font-size: 12px;
+											// margin-top: 5px;
+										}
+									}
+								}
+
+								.legacy {
+									border-radius: 20px;
+									border: 1px solid var(--text-color-light);
+									background: var(--bg-color-light);
+									padding: 5px 10px;
+									color: var(--text-color);
+
+									p {
+										width: max-content;
+										font-size: 14px;
+										color: var(--text-color-light);
+									}
+								}
+
+								.selected {
+									// flex: 2;
+									margin-left: auto;
+									width: 20px;
+									height: 20px;
+									padding: 2px;
+									box-sizing: border-box;
+									border-radius: 50%;
+									background: var(--text-color);
+								}
+							}
+						}
+
+						.toggles-container {
+							display: grid;
+							grid-template-columns: repeat(2, 1fr);
+							gap: 25px;
+							border-top: 1px solid var(--bg-color-dark);
+							margin-top: 5px;
+							padding: 10px;
+							padding-top: 15px;
+
+							.toggle {
+								display: flex;
+
+								p {
+									margin: auto 0;
+									font-size: 14px;
+									color: var(--text-color);
+								}
+
+								.switch {
+									margin: auto 0 auto auto;
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1154,10 +1479,12 @@
 				width: 900px;
 				background: var(--bg-color);
 				z-index: 1000;
+				display: flex;
+				flex-direction: column;
 
 				.prompt-bar {
 					position: relative;
-					margin: auto auto 30px auto;
+					margin: auto auto 0 auto;
 					width: 900px;
 					height: max-content;
 					background: var(--bg-color-light);
@@ -1199,6 +1526,26 @@
 						color: var(--text-color-light);
 						font-weight: 300 !important;
 						pointer-events: none;
+					}
+				}
+
+				.input-token-container {
+					position: relative;
+					display: flex;
+					width: 100%;
+					padding: 10px 50px 10px 50px;
+					box-sizing: border-box;
+
+					p {
+						text-align: left;
+						width: 100%;
+						color: var(--text-color-light);
+						margin: 0;
+						font-size: 12px;
+					}
+
+					.right {
+						text-align: right;
 					}
 				}
 			}

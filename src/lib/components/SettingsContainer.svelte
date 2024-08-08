@@ -1,9 +1,10 @@
 <script>
-	import { darkMode } from '$lib/stores.js';
+	import { darkMode, inputPricing } from '$lib/stores.js';
 	import { get } from 'svelte/store';
 	import { browser } from '$app/environment';
 
 	import MoonIcon from '$lib/components/icons/MoonIcon.svelte';
+	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 
 	/** @type {boolean} */
@@ -13,7 +14,7 @@
 	 * Toggles dark mode and updates the body class.
 	 * @param {boolean} darkModeOn - Whether dark mode should be enabled.
 	 */
-	function toggle(darkModeOn) {
+	function toggleDarkMode(darkModeOn) {
 		darkMode.set(darkModeOn);
 		window.document.body.classList.toggle('dark');
 	}
@@ -28,17 +29,17 @@
 </script>
 
 <div
-	class="dark-mode-container"
+	class="setting"
 	role="button"
 	tabindex="0"
 	on:click|stopPropagation={() => {
 		darkModeOn = !darkModeOn;
-		toggle(darkModeOn);
+		toggleDarkMode(darkModeOn);
 	}}
 	on:keydown|stopPropagation={(e) => {
 		if (e.key === 'Enter') {
 			darkModeOn = !darkModeOn;
-			toggle(darkModeOn);
+			toggleDarkMode(darkModeOn);
 		}
 	}}
 >
@@ -50,9 +51,30 @@
 		<Switch bind:on={darkModeOn} on:toggle={handleToggle} />
 	</div>
 </div>
+<div
+	class="setting"
+	role="button"
+	tabindex="0"
+	on:click|stopPropagation={() => {
+		inputPricing.set(!$inputPricing);
+	}}
+	on:keydown|stopPropagation={(e) => {
+		if (e.key === 'Enter') {
+			inputPricing.set(!$inputPricing);
+		}
+	}}
+>
+	<div class="icon-container">
+		<DollarIcon color="var(--text-color-light)" />
+	</div>
+	<p>Input pricing</p>
+	<div class="switch-wrapper">
+		<Switch bind:on={$inputPricing} />
+	</div>
+</div>
 
 <style lang="scss">
-	.dark-mode-container {
+	.setting {
 		color: var(--text-color);
 		cursor: pointer;
 		display: flex;
@@ -70,13 +92,14 @@
 		}
 
 		p {
+			flex: 1;
 			margin: auto 0;
 			font-size: 15px;
 			color: var(--text-color-light);
 		}
 
 		.switch-wrapper {
-			margin: auto 0 auto 20px;
+			margin: auto auto auto 20px;
 		}
 	}
 </style>
