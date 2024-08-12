@@ -6,7 +6,12 @@ const openAISecretKey = process.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_
 
 const openai = new OpenAI({ apiKey: openAISecretKey });
 
-export async function POST({ request }) {
+export async function POST({ request, locals }) {
+	let session = await locals.getSession();
+	if(!session) {
+	    throw error(401, "Forbidden");
+	}
+	
 	try {
 		const { prompt, model } = await request.json();
 

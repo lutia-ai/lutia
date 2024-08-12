@@ -60,12 +60,6 @@
 	let placeholderVisible = true;
 
 	/**
-	 * Indicates whether the request to the LLM is loading/waiting for response.
-	 * @type {boolean}
-	 */
-	let requestLoading = false;
-
-	/**
 	 * List of available company selections.
 	 * @type {string[]}
 	 */
@@ -182,15 +176,18 @@
 				text: plainText.trim()
 			};
 
-			requestLoading = true;
-
 			// Add user's message to chat history
 			chatHistory.update((history) => [...history, userPrompt]);
 
 			// Initialize AI's response in chat history
 			chatHistory.update((history) => [
 				...history,
-				{ by: chosenModel.name, text: '', output_cost: 0 }
+				{ 
+					by: chosenModel.name, 
+					text: '', 
+					output_cost: 0,
+					loading: true
+				}
 			]);
 
 
@@ -214,7 +211,6 @@
 				})
 			});
 
-			requestLoading = false;
 			placeholderVisible = true;
 
 			if (!response.body) {
@@ -361,7 +357,8 @@
 					if (index === history.length - 1) {
 						return {
 							...item,
-							output_cost: result.price
+							output_cost: result.price,
+							loading: false
 						};
 					}
 					return item;
@@ -380,8 +377,6 @@
 	{@html synthMidnightTerminalDark}
 </svelte:head>
 
-
-
 <div class="main">
 	<Sidebar {companySelection} {gptModelSelection} bind:chosenModel />
 	<div class="body">
@@ -396,7 +391,7 @@
 				{:else}
 					<div class="llm-container">
 						{#if Object.values(modelDictionary.anthropic.models).some((model) => model.name === chat.by)}
-							<div class="claude-icon-container">
+							<div class="claude-icon-container {chat.loading ? 'rotateLoading' : ''}">
 								<img src={ClaudeIcon} alt="Claude's icon" />
 							</div>
 						{:else if Object.values(modelDictionary.openAI.models).some((model) => model.name === chat.by)}
@@ -404,7 +399,7 @@
 								<ChatGPTIcon color="var(--text-color)" />
 							</div>
 						{:else if Object.values(modelDictionary.google.models).some((model) => model.name === chat.by)}
-							<div class="gemini-icon-container {requestLoading ? 'rotateLoading' : ''}">
+							<div class="gemini-icon-container {chat.loading ? 'rotateLoading' : ''}">
 								<GeminiIcon />
 							</div>
 						{/if}
@@ -465,6 +460,9 @@
 									</div>
 								{/if}
 							{/each}
+							{#if Object.values(modelDictionary.openAI.models).some((model) => model.name === chat.by) && chat.loading}
+								<span class="gpt-loading-dot" />
+							{/if}
 						</div>
 					</div>
 				{/if}
@@ -628,11 +626,25 @@
 						padding: 3px;
 
 						.content-paragraph {
+							display: flex;
+							flex-direction: column;
 							font-weight: 300;
 							line-height: 30px;
+							width: max-content;
+							max-width: 100%;
+
 						}
 					}
 				}
+			}
+
+			.gpt-loading-dot {
+				position: relative;
+				width: 15px !important;
+				height: 15px !important;
+				background: black;
+				border-radius: 50%;
+				display: flex;
 			}
 
 			.code-container {

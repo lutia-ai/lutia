@@ -1,5 +1,6 @@
 <script>
 	import { fly } from 'svelte/transition';
+	import { page } from "$app/stores";
 	import {
 		numberPrevMessages,
 		clearChatHistory,
@@ -332,7 +333,11 @@
 					cursor: {settingsOpen ? 'default' : ''} !important;
 				"
 			>
-				<SettingsIcon color="var(--text-color-light)" />
+				{#if $page.data.session}
+			        <img class="user-profile-img" src={$page.data.session.user?.image} alt="User profile" />
+			    {:else}
+					<SettingsIcon color="var(--text-color-light)" />
+			    {/if}
 				<p class="tag">Settings</p>
 			</div>
 			{#if settingsOpen}
@@ -591,6 +596,15 @@
 						width: max-content;
 						background: var(--bg-color-light);
 						transition: all 0.1s ease;
+					}
+
+					.user-profile-img {
+						position: absolute;
+						width: 100%;
+						left: 50%;
+						top: 50%;
+						transform: translate(-50%, -50%);
+						border-radius: 50%;
 					}
 				}
 

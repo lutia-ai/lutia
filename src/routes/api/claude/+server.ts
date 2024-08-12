@@ -7,7 +7,12 @@ const anthropicSecretKey =
 
 const client = new Anthropic({ apiKey: anthropicSecretKey });
 
-export async function POST({ request }) {
+export async function POST({ request, locals }) {
+	let session = await locals.getSession();
+	if(!session) {
+	    throw error(401, "Forbidden");
+	}
+
 	try {
 		const { prompt, model } = await request.json();
 
