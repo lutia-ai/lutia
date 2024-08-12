@@ -45,14 +45,19 @@ export function clearChatHistory() {
 
 /**
  * Persistent store for the dark mode setting.
- * @type {import('svelte/store').Writable<boolean>}
+ * @type {import('svelte/store').Writable<*>}
+ */
+export const chosenCompany = createPersistentStore('chosenCompany', 'anthropic');
+
+/**
+ * Persistent store for the dark mode setting.
+ * @type {import('svelte/store').Writable<*>}
  */
 export const darkMode = createPersistentStore('darkMode', false);
 
-
 /**
  * Persistent store for showing the input pricing.
- * @type {import('svelte/store').Writable<boolean>}
+ * @type {import('svelte/store').Writable<*>}
  */
 export const inputPricing = createPersistentStore('inputPricing', false);
 
@@ -70,12 +75,12 @@ export const numberPrevMessages = createPersistentStore('numberPrevMessages', 0)
 
 /**
  * Persistent store for showing the pricing in the LLM dropdown.
- * @type {import('svelte/store').Writable<boolean>}
+ * @type {import('svelte/store').Writable<*>}
  */
 export const showPricing = createPersistentStore('showPricing', false);
 
 /**
  * Persistent store for controlling the legacy models are showed in the LLM dropdown container.
- * @type {import('svelte/store').Writable<boolean>}
+ * @type {import('svelte/store').Writable<*>}
  */
 export const showLegacyModels = createPersistentStore('showLegacyModels', false);

@@ -13,15 +13,15 @@ interface Model {
 let timer: NodeJS.Timeout;
 let tokenizer: PreTrainedTokenizer;
 
-const isGemini = (param) => {
-    const firstWord = param.split('-')[0];
-    return firstWord === 'gemini';
-}
+const isGemini = (param: string) => {
+	const firstWord = param.split('-')[0];
+	return firstWord === 'gemini';
+};
 
 export const updateTokens = async (
 	prompt: string,
 	model: Model,
-    io: string = 'input'
+	io: string = 'input'
 ): Promise<{ tokens: number; price: number }> => {
 	return new Promise((resolve) => {
 		if (timer) {
@@ -30,12 +30,11 @@ export const updateTokens = async (
 
 		// Set a new timeout
 		timer = setTimeout(async () => {
-            console.log(isGemini(model.param));
-            if (isGemini(model.param)) {
-                const tokens = 0
-                const price = 0
-                return resolve({ tokens, price });
-            }
+			if (isGemini(model.param)) {
+				const tokens = 0;
+				const price = 0;
+				return resolve({ tokens, price });
+			}
 
 			// Only reinitialize the tokenizer if the model hub changes
 			if (!tokenizer || tokenizer.hub !== model.hub) {
@@ -47,7 +46,8 @@ export const updateTokens = async (
 			// Encode the prompt and calculate the number of tokens
 			const encoding = tokenizer.encode(JSON.stringify(prompt));
 			const tokens = encoding.length;
-			const price = (tokens / 1000000) * (io === 'input' ? model.input_price : model.output_price);
+			const price =
+				(tokens / 1000000) * (io === 'input' ? model.input_price : model.output_price);
 
 			resolve({ tokens, price }); // Resolve the promise with the token count
 		}, 500); // Timeout set to 500ms
