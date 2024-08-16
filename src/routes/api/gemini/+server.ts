@@ -9,8 +9,8 @@ const genAI = new GoogleGenerativeAI(googleSecretKey);
 
 export async function POST({ request, locals }) {
 	let session = await locals.getSession();
-	if(!session) {
-	    throw error(401, "Forbidden");
+	if (!session) {
+		throw error(401, 'Forbidden');
 	}
 
 	try {

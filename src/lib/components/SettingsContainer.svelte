@@ -1,7 +1,6 @@
 <script>
-	import { darkMode, inputPricing } from '$lib/stores.js';
+	import { darkMode, inputPricing } from '$lib/stores.ts';
 	import { get } from 'svelte/store';
-	import { browser } from '$app/environment';
 
 	import MoonIcon from '$lib/components/icons/MoonIcon.svelte';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
@@ -24,7 +23,7 @@
 	 * @param {CustomEvent} event - The custom event from the Switch component.
 	 */
 	function handleToggle(event) {
-		toggle(event.detail.on);
+		toggleDarkMode(event.detail.on);
 	}
 </script>
 

@@ -1,177 +1,236 @@
-<script>
-	import DOMPurify from 'dompurify';
+<script lang="ts">
+	import { onMount } from 'svelte';
 	import { HighlightAuto, LineNumbers } from 'svelte-highlight';
 	import { marked } from 'marked';
-	import typescript from 'svelte-highlight/languages/typescript';
-	import python from 'svelte-highlight/languages/python';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
-	import { fly } from 'svelte/transition';
-	import { writable } from 'svelte/store';
-	import { onMount } from 'svelte';
-	import {
-		chatHistory,
-		numberPrevMessages,
-		inputPricing,
-		chosenCompany
-	} from '$lib/stores.js';
+	import { chatHistory, numberPrevMessages, inputPricing, chosenCompany } from '$lib/stores.ts';
+	import type {
+		FullPrompt,
+		Model,
+		UserChat,
+		Component,
+		CodeComponent,
+		ChatComponent,
+		ModelDictionary
+	} from '$lib/types';
+
+	import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
 
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
-	import { updateTokens } from '$lib/tokenizer.ts';
+	import { countTokens } from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
+	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
+	import StarsIcon from '$lib/components/icons/StarsIcon.svelte';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 	import CopyIcon from '$lib/components/icons/CopyIcon.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import ArrowIcon from '$lib/components/icons/Arrow.svelte';
+	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 
-	/**
-	 * The current user input prompt.
-	 * @type {string}
-	 */
-	let prompt;
+	let prompt: string;
+	let fullPrompt: FullPrompt;
+	let input_tokens: number = 0;
+	let input_price: number = 0;
+	let mounted: boolean = false;
+	let placeholderVisible: boolean = true;
 
-	let fullPrompt;
-
-	/**
-	 * Stores the number of tokens that are within the input/prompt.
-	 * @type {number}
-	 */
-	let input_tokens = 0;
-
-	/**
-	 * Stores the cost of the prompt.
-	 * @type {number}
-	 */
-	let input_price = 0;
-
-	/**
-	 * Indicates whether the page has been mounted.
-	 * @type {boolean}
-	 */
-	let mounted = false;
-
-	/**
-	 * Indicates whether the placeholder is visible in the input field.
-	 * @type {boolean}
-	 */
-	let placeholderVisible = true;
-
-	/**
-	 * List of available company selections.
-	 * @type {string[]}
-	 */
-	let companySelection = Object.keys(modelDictionary);
+	let companySelection: string[] = Object.keys(modelDictionary);
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
 
-	/**
-	 * List of available models for the chosen company.
-	 * @type {Array<*>}
-	 */
-	let gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
-
-	/**
-	 * The currently selected AI model.
-	 * @type {*}
-	 */
+	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
 	let chosenModel = gptModelSelection[0];
 
 	$: if (prompt || $numberPrevMessages !== null) {
 		if (mounted) {
 			fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages);
-			handleUpdateTokens(fullPrompt, chosenModel);
+			handlecountTokens(fullPrompt, chosenModel);
 		}
 	}
 
-	async function handleUpdateTokens(fullPrompt, chosenModel) {
-		const result = await updateTokens(fullPrompt, chosenModel);
+	async function handlecountTokens(fullPrompt: FullPrompt, chosenModel: Model) {
+		const result = await countTokens(fullPrompt, chosenModel);
 		input_tokens = result.tokens;
 		input_price = result.price;
 	}
 
-	/**
-	 * Handles paste events, inserting plain text at the cursor position.
-	 * @param {ClipboardEvent} event - The paste event.
-	 */
-	function handlePaste(event) {
+	function handlePaste(event: ClipboardEvent): void {
 		event.preventDefault();
-
 		if (!event.clipboardData) return;
 
-		// Get plain text from clipboard
 		const text = event.clipboardData.getData('text/plain');
-
-		// Insert text at cursor position
 		document.execCommand('insertText', false, text);
 	}
 
-	/**
-	 * Copies the given text to the clipboard and updates the chat history to show a 'copied' state.
-	 * @param {string} text - The text to be copied to the clipboard.
-	 * @param {number} chatIndex - The index of the chat message in the history.
-	 * @param {number} componentIndex - The index of the component within the chat message.
-	 */
-	function copyToClipboard(text, chatIndex, componentIndex) {
-		if (navigator.clipboard) {
-			navigator.clipboard
-				.writeText(text)
-				.then(() => {
-					chatHistory.update((history) => {
-						const newHistory = [...history];
-						newHistory[chatIndex].components[componentIndex].copied = true;
-						return newHistory;
+	function copyToClipboard(text: string): Promise<void> {
+		return new Promise((resolve, reject) => {
+			if (navigator.clipboard) {
+				navigator.clipboard
+					.writeText(text)
+					.then(resolve)
+					.catch((err) => {
+						console.error('Failed to copy text:', err);
+						reject(err);
 					});
-					setTimeout(() => {
-						chatHistory.update((history) => {
-							const newHistory = [...history];
-							newHistory[chatIndex].components[componentIndex].copied = false;
-							return newHistory;
-						});
-					}, 3000);
-				})
-				.catch((err) => console.error('Failed to copy text:', err));
-		} else {
-			const textArea = document.createElement('textarea');
-			textArea.value = text;
-			document.body.appendChild(textArea);
-			textArea.select();
-			try {
-				document.execCommand('copy');
-			} catch (err) {
-				console.error('Failed to copy text:', err);
+			} else {
+				const textArea = document.createElement('textarea');
+				textArea.value = text;
+				document.body.appendChild(textArea);
+				textArea.select();
+				try {
+					document.execCommand('copy');
+					resolve();
+				} catch (err) {
+					console.error('Failed to copy text:', err);
+					reject(err);
+				} finally {
+					document.body.removeChild(textArea);
+				}
 			}
-			document.body.removeChild(textArea);
-		}
+		});
 	}
 
-	
+	function updateChatHistoryToCopiedState(chatIndex: number, componentIndex: number): void {
+		chatHistory.update((history) => {
+			const newHistory: ChatComponent[] = [...history];
+			if (isLlmChatComponent(newHistory[chatIndex])) {
+				if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
+					newHistory[chatIndex].components[componentIndex].copied = true;
+				} else {
+					newHistory[chatIndex].copied = true;
+				}
+			}
+			return newHistory;
+		});
 
-	/**
-	 * Extracts the code block content from a string starting with a code fence.
-	 * @param {string} inputString - The input string containing a code block.
-	 * @returns {string} The extracted code block content or null if not found.
-	 */
-	function extractCodeBlock(inputString) {
-		// Use a regular expression to match everything after the first ```
+		setTimeout(() => {
+			chatHistory.update((history) => {
+				const newHistory: ChatComponent[] = [...history];
+				if (isLlmChatComponent(newHistory[chatIndex])) {
+					if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
+						newHistory[chatIndex].components[componentIndex].copied = false;
+					} else {
+						newHistory[chatIndex].copied = false;
+					}
+				}
+				return newHistory;
+			});
+		}, 3000);
+	}
+
+	function extractCodeBlock(inputString: string): string {
 		const match = inputString.match(/```[a-zA-Z]+\n([\s\S]*)/);
-
 		if (!match) {
 			return '';
 		}
 		return match[1];
 	}
 
-	/**
-	 * Submits the user's prompt, processes the AI's response, and updates the chat history.
-	 */
-	async function submitPrompt() {
+	function calculateTabWidth(code: string): number {
+		const lines = code.split('\n');
+		let tabWidth: number = 0;
+
+		for (const line of lines) {
+			const match = line.match(/^( *)/);
+			if (match) {
+				const leadingSpaces = match[0];
+				const currentLevel = leadingSpaces.length;
+				if (currentLevel !== 0) {
+					tabWidth = currentLevel;
+					break;
+				}
+			}
+		}
+		return tabWidth;
+	}
+
+	function roundToFirstTwoNonZeroDecimals(num: number, roundUp: boolean = false): string {
+		let str = num.toFixed(20);
+		let match = str.match(/\.(?:0*[1-9]\d?|0*[1-9]\d|0+[1-9])\d?/);
+
+		if (match) {
+			let matchedPart = match[0];
+			let integerPart = str.split('.')[0];
+			let lastPosition = matchedPart.length - 1;
+
+			if (roundUp && matchedPart.length < str.length - integerPart.length - 1) {
+				let nextDigit = parseInt(str[integerPart.length + matchedPart.length]);
+				if (nextDigit >= 5) {
+					let roundedPart = (
+						parseFloat(matchedPart) + Math.pow(10, -lastPosition)
+					).toFixed(lastPosition);
+					return (parseFloat(integerPart) + parseFloat(roundedPart)).toString();
+				}
+			}
+			let result = parseFloat(integerPart + matchedPart);
+			return result.toString();
+		} else {
+			return str.split('.')[0];
+		}
+	}
+
+	function changeTabWidth(code: string, tabWidth: number = 4): string {
+		const lines = code.split('\n');
+		let originalIndentationLevel: number | null = null;
+
+		const adjustedLines = lines.map((line) => {
+			const match = line.match(/^( *)/);
+			if (match) {
+				const leadingSpaces = match[0];
+				const currentLevel = leadingSpaces.length;
+
+				// Initialize originalIndentationLevel if it's null and currentLevel is greater than 0
+				if (currentLevel > 0 && originalIndentationLevel === null) {
+					originalIndentationLevel = currentLevel;
+				}
+
+				// Ensure originalIndentationLevel is not null before performing division
+				if (originalIndentationLevel !== null) {
+					if (currentLevel === 0) {
+						return line;
+					} else {
+						const indentationUnits =
+							(currentLevel / originalIndentationLevel) * tabWidth;
+						const newIndentation = ' '.repeat(indentationUnits);
+						return newIndentation + line.trim();
+					}
+				}
+			}
+
+			// Return line as is if no match was found
+			return line;
+		});
+
+		return adjustedLines.join('\n');
+	}
+
+	function closeAllTabWidths(): void {
+		chatHistory.update((history) => {
+			return history.map((item) => {
+				if (isLlmChatComponent(item)) {
+					item.price_open = false;
+					if (Array.isArray(item.components)) {
+						item.components.forEach((component: Component) => {
+							if (isCodeComponent(component)) {
+								component.tabWidthOpen = false;
+							}
+						});
+					}
+				}
+				return item;
+			});
+		});
+	}
+
+	async function submitPrompt(): Promise<void> {
 		const plainText = prompt;
 		const sanitizedPrompt = sanitizeHtml(plainText);
 		prompt = '';
 		if (plainText.trim()) {
-			let userPrompt = {
+			let userPrompt: UserChat = {
 				by: 'user',
 				text: plainText.trim()
 			};
@@ -182,206 +241,254 @@
 			// Initialize AI's response in chat history
 			chatHistory.update((history) => [
 				...history,
-				{ 
-					by: chosenModel.name, 
-					text: '', 
+				{
+					by: chosenModel.name,
+					text: '',
+					input_cost: 0,
 					output_cost: 0,
-					loading: true
+					price_open: false,
+					loading: true,
+					copied: false
 				}
 			]);
 
+			try {
+				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
 
-			const uri =
-				$chosenCompany === 'anthropic'
-					? '/api/claude'
-					: $chosenCompany === 'openAI'
-						? '/api/chatGPT'
-						: '/api/gemini';
+				const uri =
+					$chosenCompany === 'anthropic'
+						? '/api/claude'
+						: $chosenCompany === 'openAI'
+							? '/api/chatGPT'
+							: '/api/gemini';
 
-			const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
-
-			const response = await fetch(uri, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					prompt: JSON.stringify(fullPrompt),
-					model: chosenModel.param
-				})
-			});
-
-			placeholderVisible = true;
-
-			if (!response.body) {
-				console.error('Response body is null');
-				return;
-			}
-
-			const reader = response.body.getReader();
-			const decoder = new TextDecoder();
-			let responseText = '';
-
-			let isInCodeBlock = false;
-			let codeBlockContent = '';
-			let language = '';
-			let responseComponents = [];
-			let prevText = '';
-
-			while (true) {
-				const { value, done } = await reader.read();
-				if (done && !prevText) break;
-
-				let newText = done ? '' : decoder.decode(value);
-				responseText += newText;
-				// split the string but keep the spaces
-				let newTextArray = newText.split(/(\s+)/);
-
-				if (prevText) {
-					newTextArray[0] = prevText + newTextArray[0];
-				}
-
-				for (let index = 0; index < newTextArray.length; index++) {
-					const text = newTextArray[index];
-
-					// if current word is last in the array and contains a ` then add it to prevText
-					if (index === newTextArray.length - 1 && text.includes('`') && !done) {
-						prevText = text;
-						continue;
-					}
-
-					// if current word is just text then add it as text
-					else if (!text.includes('```') && !isInCodeBlock) {
-						if (
-							responseComponents.length > 0 &&
-							responseComponents[responseComponents.length - 1].type === 'text'
-						) {
-							responseComponents[responseComponents.length - 1].content += text;
-						} else {
-							responseComponents.push({
-								type: 'text',
-								content: text
-							});
-						}
-					}
-
-					// if current word is start of code block
-					else if (text.includes('```') && !isInCodeBlock) {
-						isInCodeBlock = true;
-						// extract any text before codeBlock
-						if (
-							responseComponents.length > 0 &&
-							responseComponents[responseComponents.length - 1].type === 'text'
-						) {
-							responseComponents[responseComponents.length - 1].content +=
-								text.split('```')[0];
-						} else {
-							responseComponents.push({
-								type: 'text',
-								content: text.split('```')[0]
-							});
-						}
-
-						// extract any code after ```
-						codeBlockContent = extractCodeBlock(text);
-						const langMatch = text.match(/```(\w+)/);
-						language = langMatch ? langMatch[1] : '';
-						if (codeBlockContent) {
-							responseComponents.push({
-								type: 'code',
-								language,
-								code: codeBlockContent,
-								copied: false
-							});
-						}
-					}
-
-					// if current word is end of code block
-					else if (text.includes('```') && isInCodeBlock) {
-						isInCodeBlock = false;
-						// add any remaining code before end of codeBlock
-						if (
-							responseComponents.length > 0 &&
-							responseComponents[responseComponents.length - 1].type === 'code'
-						) {
-							responseComponents[responseComponents.length - 1].code +=
-								text.split('```')[0];
-						} else {
-							responseComponents.push({
-								type: 'code',
-								language: '',
-								code: text.split('```')[0],
-								copied: false
-							});
-						}
-
-						if (text.split('```')[1]) {
-							responseComponents.push({
-								type: 'text',
-								content: newText.split('```')[1]
-							});
-						}
-					} else if (isInCodeBlock) {
-						if (
-							responseComponents.length > 0 &&
-							responseComponents[responseComponents.length - 1].type === 'code'
-						) {
-							responseComponents[responseComponents.length - 1].code += text;
-						} else {
-							responseComponents.push({
-								type: 'code',
-								language,
-								code: text,
-								copied: false
-							});
-						}
-					}
-
-					// Update only the AI's response in chat history
-					chatHistory.update((history) =>
-						history.map((msg, index) =>
-							index === history.length - 1
-								? { ...msg, text: responseText, components: responseComponents }
-								: msg
-						)
-					);
-
-					prevText = '';
-				}
-			}
-
-			const lastItem = $chatHistory[$chatHistory.length - 1];
-			const result = await updateTokens(lastItem.text, chosenModel, 'output');
-			chatHistory.update((history) => {
-				return history.map((item, index) => {
-					if (index === history.length - 1) {
-						return {
-							...item,
-							output_cost: result.price,
-							loading: false
-						};
-					}
-					return item;
+				const response = await fetch(uri, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						prompt: JSON.stringify(fullPrompt),
+						model: chosenModel.param
+					})
 				});
-			});
-			console.log($chatHistory[$chatHistory.length - 1]);
+
+				placeholderVisible = true;
+
+				if (!response.body) {
+					throw new Error('Response body is null');
+				}
+
+				const reader = response.body.getReader();
+				const decoder = new TextDecoder();
+				let responseText = '';
+
+				let isInCodeBlock = false;
+				let codeBlockContent = '';
+				let language = '';
+				let responseComponents = [];
+				let prevText = '';
+
+				while (true) {
+					const { value, done } = await reader.read();
+					if (done && !prevText) break;
+
+					let newText = done ? '' : decoder.decode(value);
+					responseText += newText;
+					// split the string but keep the spaces
+					let newTextArray = newText.split(/(\s+)/);
+
+					if (prevText) {
+						newTextArray[0] = prevText + newTextArray[0];
+					}
+
+					for (let index = 0; index < newTextArray.length; index++) {
+						const text = newTextArray[index];
+						const lastComponent = responseComponents[responseComponents.length - 1];
+
+						// if current word is last in the array and contains a ` then add it to prevText
+						if (index === newTextArray.length - 1 && text.includes('`') && !done) {
+							prevText = text;
+							continue;
+						}
+
+						// if current word is just text then add it as text
+						else if (!text.includes('```') && !isInCodeBlock) {
+							if (lastComponent && lastComponent.type === 'text') {
+								lastComponent.content += text;
+							} else {
+								responseComponents.push({
+									type: 'text',
+									content: text
+								});
+							}
+						}
+
+						// if current word is start of code block
+						else if (text.includes('```') && !isInCodeBlock) {
+							isInCodeBlock = true;
+							// extract any text before codeBlock
+							if (lastComponent && lastComponent.type === 'text') {
+								lastComponent.content += text.split('```')[0];
+							} else {
+								responseComponents.push({
+									type: 'text',
+									content: text.split('```')[0]
+								});
+							}
+
+							// extract any code after ```
+							codeBlockContent = extractCodeBlock(text);
+							const langMatch = text.match(/```(\w+)/);
+							language = langMatch ? langMatch[1] : '';
+							if (codeBlockContent) {
+								responseComponents.push({
+									type: 'code',
+									language,
+									code: codeBlockContent.trimStart(),
+									copied: false,
+									tabWidthOpen: false,
+									tabWidth: null
+								});
+							}
+						}
+
+						// if current word is end of code block
+						else if (text.includes('```') && isInCodeBlock) {
+							isInCodeBlock = false;
+
+							// add any remaining code before end of codeBlock
+							if (lastComponent && lastComponent.type === 'code') {
+								const codeComponent = lastComponent as CodeComponent;
+								const additionalCode = text.split('```')[0].trimEnd();
+
+								// Add any remaining code before the end of the code block
+								codeComponent.code += additionalCode;
+								codeComponent.tabWidth = calculateTabWidth(codeComponent.code);
+								codeComponent.code = codeComponent.code.trim();
+							} else {
+								responseComponents.push({
+									type: 'code',
+									language: '',
+									code: text.split('```')[0].trimEnd(),
+									copied: false,
+									tabWidthOpen: false,
+									tabWidth: calculateTabWidth(text.split('```')[0])
+								});
+							}
+
+							if (text.split('```')[1]) {
+								responseComponents.push({
+									type: 'text',
+									content: newText.split('```')[1]
+								});
+							}
+						} else if (isInCodeBlock) {
+							if (lastComponent && lastComponent.type === 'code') {
+								const codeComponent = lastComponent as CodeComponent;
+								lastComponent.code = codeComponent.code.trimStart() + text;
+							} else {
+								responseComponents.push({
+									type: 'code',
+									language,
+									code: text.trimStart(),
+									copied: false
+								});
+							}
+						}
+
+						// Update only the AI's response in chat history
+						chatHistory.update((history) =>
+							history.map((msg, index) =>
+								index === history.length - 1
+									? { ...msg, text: responseText, components: responseComponents }
+									: msg
+							)
+						);
+
+						prevText = '';
+					}
+				}
+
+				const lastItem = $chatHistory[$chatHistory.length - 1];
+				const outputPriceResult = await countTokens(lastItem.text, chosenModel, 'output');
+				const inputPriceResult = await countTokens(fullPrompt, chosenModel, 'input');
+				chatHistory.update((history) => {
+					return history.map((item, index) => {
+						if (index === history.length - 1) {
+							return {
+								...item,
+								input_cost: inputPriceResult.price,
+								output_cost: outputPriceResult.price,
+								loading: false
+							};
+						}
+						return item;
+					});
+				});
+				console.log($chatHistory[$chatHistory.length - 1]);
+			} catch (error) {
+				if (error instanceof Error) {
+					console.error('Error:', error.message);
+				} else {
+					console.error('Error:', error); // Handle the case where the error is not an instance of Error
+				}
+				// Set loading to false in case of error
+				chatHistory.update((history) => {
+					return history.map((item, index) => {
+						if (index === history.length - 1) {
+							return {
+								...item,
+								loading: false
+							};
+						}
+						return item;
+					});
+				});
+			}
 		}
+	}
+
+	// Helper function to check if a model belongs to a specific company
+	function isModelByCompany(company: keyof ModelDictionary, modelName: string): boolean {
+		return Object.values(modelDictionary[company].models).some(
+			(model) => (model as Model).name === modelName
+		);
+	}
+
+	function isModelAnthropic(modelName: string): boolean {
+		return isModelByCompany('anthropic', modelName);
+	}
+
+	function isModelOpenAI(modelName: string): boolean {
+		return isModelByCompany('openAI', modelName);
+	}
+
+	function isModelGoogle(modelName: string): boolean {
+		return isModelByCompany('google', modelName);
 	}
 
 	onMount(() => {
 		mounted = true;
-	})
+	});
 </script>
 
 <svelte:head>
 	{@html synthMidnightTerminalDark}
 </svelte:head>
 
+<svelte:window
+	on:click={() => {
+		closeAllTabWidths();
+	}}
+/>
+
 <div class="main">
 	<Sidebar {companySelection} {gptModelSelection} bind:chosenModel />
 	<div class="body">
 		<div class="chat-history">
 			{#each $chatHistory as chat, chatIndex}
+				<!-- {#if chat.by === 'user'} -->
 				{#if chat.by === 'user'}
 					<div class="user-chat">
 						<p>
@@ -390,78 +497,236 @@
 					</div>
 				{:else}
 					<div class="llm-container">
-						{#if Object.values(modelDictionary.anthropic.models).some((model) => model.name === chat.by)}
-							<div class="claude-icon-container {chat.loading ? 'rotateLoading' : ''}">
-								<img src={ClaudeIcon} alt="Claude's icon" />
-							</div>
-						{:else if Object.values(modelDictionary.openAI.models).some((model) => model.name === chat.by)}
-							<div class="gpt-icon-container">
-								<ChatGPTIcon color="var(--text-color)" />
-							</div>
-						{:else if Object.values(modelDictionary.google.models).some((model) => model.name === chat.by)}
-							<div class="gemini-icon-container {chat.loading ? 'rotateLoading' : ''}">
-								<GeminiIcon />
-							</div>
+						{#if isLlmChatComponent(chat)}
+							{#if isModelAnthropic(chat.by)}
+								<div
+									class="claude-icon-container {chat.loading
+										? 'rotateLoading'
+										: ''}"
+								>
+									<img src={ClaudeIcon} alt="Claude's icon" />
+								</div>
+							{:else if isModelOpenAI(chat.by)}
+								<div class="gpt-icon-container">
+									<ChatGPTIcon color="var(--text-color)" />
+								</div>
+							{:else if isModelGoogle(chat.by)}
+								<div
+									class="gemini-icon-container {chat.loading
+										? 'rotateLoading'
+										: ''}"
+								>
+									<GeminiIcon />
+								</div>
+							{/if}
 						{/if}
 						<div class="llm-chat">
-							{#each chat.components || [] as component, componentIndex}
-								{#if component.type === 'text'}
-									<p class="content-paragraph">
-										{@html marked(
-											component.content ? component.content.trim() : ''
-										)}
-									</p>
-								{:else if component.type === 'code'}
-									<div class="code-container">
-										<div class="code-header">
-											<p>{component.language}</p>
-											<div
-												class="copy-code-container"
-												role="button"
-												tabindex="0"
-												on:click={() =>
-													copyToClipboard(
-														component.code ? component.code : '',
-														chatIndex,
-														componentIndex
-													)}
-												on:keydown|stopPropagation={(e) => {
-													if (e.key === 'Enter') {
+							{#if isLlmChatComponent(chat)}
+								{#each chat.components || [] as component, componentIndex}
+									{#if component.type === 'text'}
+										<p class="content-paragraph">
+											{@html marked(
+												component.content ? component.content.trim() : ''
+											)}
+										</p>
+									{:else if component.type === 'code'}
+										<div class="code-container">
+											<div class="code-header">
+												<p>{component.language}</p>
+												<div
+													class="tab-width-container"
+													role="button"
+													tabindex="0"
+													on:click|stopPropagation={() =>
+														(component.tabWidthOpen = true)}
+													on:keydown|stopPropagation={(e) => {
+														if (e.key === 'Enter') {
+															component.tabWidthOpen = true;
+														}
+													}}
+												>
+													<div class="dropdown-icon">
+														<DropdownIcon
+															color="rgba(255,255,255,0.65)"
+														/>
+													</div>
+													<p>
+														Tab width: {component.tabWidth
+															? component.tabWidth
+															: '?'}
+													</p>
+													{#if component.tabWidthOpen}
+														<div class="tab-width-open-container">
+															{#each [2, 4, 6, 8] as tabWidth, index}
+																<div
+																	role="button"
+																	tabindex="0"
+																	on:click={() => {
+																		component.code =
+																			changeTabWidth(
+																				component.code,
+																				tabWidth
+																			);
+																		component.tabWidth =
+																			tabWidth;
+																	}}
+																	on:keydown|stopPropagation={(
+																		e
+																	) => {
+																		if (e.key === 'Enter') {
+																			component.code =
+																				changeTabWidth(
+																					component.code,
+																					tabWidth
+																				);
+																			component.tabWidth =
+																				tabWidth;
+																		}
+																	}}
+																>
+																	<p>Tab width: {tabWidth}</p>
+																</div>
+															{/each}
+														</div>
+													{/if}
+												</div>
+												<div
+													class="copy-code-container"
+													role="button"
+													tabindex="0"
+													on:click={() => {
 														copyToClipboard(
-															component.code ? component.code : '',
+															component.code ? component.code : ''
+														);
+														updateChatHistoryToCopiedState(
 															chatIndex,
 															componentIndex
 														);
-													}
-												}}
-											>
-												{#if component.copied}
-													<div class="tick-container">
-														<TickIcon color="rgba(255,255,255,0.65)" />
-													</div>
-												{:else}
-													<div class="copy-icon-container">
-														<CopyIcon color="rgba(255,255,255,0.65)" />
-													</div>
-												{/if}
-												<p>{component.copied ? 'copied' : 'copy'}</p>
+													}}
+													on:keydown|stopPropagation={(e) => {
+														if (e.key === 'Enter') {
+															copyToClipboard(
+																component.code ? component.code : ''
+															);
+															updateChatHistoryToCopiedState(
+																chatIndex,
+																componentIndex
+															);
+														}
+													}}
+												>
+													{#if component.copied}
+														<div class="tick-container">
+															<TickIcon
+																color="rgba(255,255,255,0.65)"
+															/>
+														</div>
+													{:else}
+														<div class="copy-icon-container">
+															<CopyIcon
+																color="rgba(255,255,255,0.65)"
+															/>
+														</div>
+													{/if}
+													<p>{component.copied ? 'copied' : 'copy'}</p>
+												</div>
+											</div>
+											<div class="code-content">
+												<HighlightAuto
+													code={component.code}
+													let:highlighted
+												>
+													<LineNumbers
+														{highlighted}
+														--line-number-color="rgba(255, 255, 255, 0.3)"
+														--border-color="rgba(255, 255, 255, 0.1)"
+														--padding-left="2em"
+														--padding-right="1em"
+														style="max-width: 100%;"
+													/>
+												</HighlightAuto>
 											</div>
 										</div>
-										<HighlightAuto code={component.code} let:highlighted>
-											<LineNumbers
-												{highlighted}
-												--line-number-color="rgba(255, 255, 255, 0.3)"
-												--border-color="rgba(255, 255, 255, 0.1)"
-												--padding-left="2em"
-												--padding-right="1em"
-												style="max-width: 100%;"
-											/>
-										</HighlightAuto>
+									{/if}
+								{/each}
+								{#if isModelOpenAI(chat.by) && chat.loading}
+									<span class="gpt-loading-dot" />
+								{/if}
+								{#if !chat.loading}
+									<div
+										class="chat-toolbar-container"
+										style="opacity: {chat.price_open ? '1' : ''};"
+									>
+										<div
+											class="toolbar-item"
+											role="button"
+											tabindex="0"
+											on:click={() => {
+												copyToClipboard(chat.text);
+												updateChatHistoryToCopiedState(chatIndex, 0);
+											}}
+											on:keydown|stopPropagation={(e) => {
+												if (e.key === 'Enter') {
+													copyToClipboard(chat.text);
+													updateChatHistoryToCopiedState(chatIndex, 0);
+												}
+											}}
+										>
+											{#if chat.copied}
+												<TickIcon color="var(--text-color-light)" />
+											{:else}
+												<CopyIcon color="var(--text-color-light)" />
+											{/if}
+											<p>{chat.copied ? 'copied' : 'copy'}</p>
+										</div>
+										<div
+											class="toolbar-item"
+											role="button"
+											tabindex="0"
+											on:click|stopPropagation={() => {
+												chat.price_open = true;
+											}}
+											on:keydown|stopPropagation={(e) => {
+												chat.price_open = true;
+											}}
+										>
+											<DollarIcon color="var(--text-color-light)" />
+											<p>Price</p>
+											{#if chat.price_open}
+												<div class="price-open-container">
+													<div class="price-record">
+														<p>Input:</p>
+														<span
+															>${roundToFirstTwoNonZeroDecimals(
+																chat.input_cost
+															)}</span
+														>
+													</div>
+													<div class="price-record">
+														<p>Output:</p>
+														<span
+															>${roundToFirstTwoNonZeroDecimals(
+																chat.output_cost
+															)}</span
+														>
+													</div>
+													<div class="price-record">
+														<p>Total:</p>
+														<span
+															>${roundToFirstTwoNonZeroDecimals(
+																chat.input_cost + chat.output_cost
+															)}</span
+														>
+													</div>
+												</div>
+											{/if}
+										</div>
+										<div class="toolbar-item">
+											<StarsIcon color="var(--text-color-light)" />
+											<p>{chat.by}</p>
+										</div>
 									</div>
 								{/if}
-							{/each}
-							{#if Object.values(modelDictionary.openAI.models).some((model) => model.name === chat.by) && chat.loading}
-								<span class="gpt-loading-dot" />
 							{/if}
 						</div>
 					</div>
@@ -516,7 +781,7 @@
 			{#if $inputPricing}
 				<div class="input-token-container">
 					<p>Input tokens: {input_tokens}</p>
-					<p class="right">Input cost: ${input_price}</p>
+					<p class="right">Input cost: ${roundToFirstTwoNonZeroDecimals(input_price)}</p>
 				</div>
 			{/if}
 		</div>
@@ -540,12 +805,12 @@
 	}
 
 	:global(ol) {
-		margin: 0 20px 20px 20px;
+		margin: 0 20px 0px 20px;
 		padding: 10px 0 0 0;
 	}
 
 	:global(li) {
-		margin: 0 0 20px 0;
+		margin: 0 0 10px 0;
 		padding: 0;
 
 		:global(p) {
@@ -559,8 +824,6 @@
 		width: 100%;
 		height: 100%;
 		font-family: 'Albert Sans', sans-serif;
-
-		
 
 		.body {
 			position: relative;
@@ -621,9 +884,16 @@
 					}
 
 					.llm-chat {
+						position: relative;
 						flex: 1;
 						width: 420px;
 						padding: 3px;
+
+						&:hover {
+							.chat-toolbar-container {
+								opacity: 1;
+							}
+						}
 
 						.content-paragraph {
 							display: flex;
@@ -632,7 +902,88 @@
 							line-height: 30px;
 							width: max-content;
 							max-width: 100%;
+						}
 
+						.chat-toolbar-container {
+							position: absolute;
+							transform: translateY(-20px);
+							opacity: 0;
+							display: flex;
+							gap: 10px;
+							transition: all 0.3s ease-in-out;
+							padding: 5px;
+							box-sizing: border-box;
+							border-radius: 10px;
+							border: 1px solid var(--text-color-light-opacity);
+							z-index: 9;
+
+							.toolbar-item {
+								position: relative;
+								border-radius: 5px;
+								padding: 5px;
+								box-sizing: border-box;
+								width: 28px;
+								height: 28px;
+								cursor: pointer;
+
+								&:hover {
+									background: var(--bg-color-light);
+									p {
+										opacity: 1;
+									}
+								}
+
+								p {
+									position: absolute;
+									pointer-events: none;
+									top: 140%;
+									left: 50%;
+									transform: translateX(-50%);
+									opacity: 0;
+									transition: all 0.3s ease;
+									font-size: 13px;
+									width: max-content;
+								}
+
+								.price-open-container {
+									position: absolute;
+									display: flex;
+									gap: 15px;
+									flex-direction: column;
+									bottom: 40px;
+									left: -10px;
+									background: var(--bg-color-light);
+									padding: 10px;
+									border-radius: 10px;
+									border: 1px solid var(--text-color-light-opacity);
+									width: max-content;
+
+									.price-record {
+										position: relative;
+										display: flex;
+										gap: 5px;
+
+										p {
+											position: relative;
+											margin: 0;
+											transition: none;
+											opacity: 1;
+											font-size: 14px;
+											width: 50px;
+											padding: 0;
+											left: 0;
+											top: 0;
+											transform: translateX(0);
+										}
+
+										span {
+											position: relative;
+											margin: 0;
+											width: max-content;
+										}
+									}
+								}
+							}
 						}
 					}
 				}
@@ -642,13 +993,13 @@
 				position: relative;
 				width: 15px !important;
 				height: 15px !important;
-				background: black;
+				background: var(--text-color);
 				border-radius: 50%;
 				display: flex;
 			}
 
 			.code-container {
-				overflow: hidden;
+				padding-bottom: 10px;
 				border-radius: 10px;
 				margin: 20px 0;
 
@@ -656,10 +1007,52 @@
 					display: flex;
 					padding: 10px 20px;
 					background: rgba(46, 56, 66, 255);
+					border-top-left-radius: 10px;
+					border-top-right-radius: 10px;
+
+					.tab-width-container {
+						position: relative;
+						display: flex;
+						margin-left: auto;
+						gap: 5px;
+						cursor: pointer;
+
+						.dropdown-icon {
+							width: 15px;
+							height: 15px;
+							transform: translateY(1px);
+						}
+
+						.tab-width-open-container {
+							position: absolute;
+							top: 180%;
+							width: 100%;
+							display: flex;
+							gap: 10px;
+							flex-direction: column;
+							background: rgba(46, 56, 66, 1);
+							z-index: 100;
+							border-radius: 5px;
+							padding: 5px;
+
+							p {
+								margin: auto;
+								width: 100%;
+								text-align: center;
+								padding: 5px;
+								box-sizing: border-box;
+								border-radius: 5px;
+
+								&:hover {
+									background: rgba(55, 66, 76, 1);
+								}
+							}
+						}
+					}
 
 					.copy-code-container {
 						display: flex;
-						margin-left: auto;
+						margin-left: 30px;
 						gap: 5px;
 						cursor: pointer;
 
@@ -688,6 +1081,12 @@
 						font-weight: 300;
 						font-size: 12px;
 					}
+				}
+
+				.code-content {
+					overflow: hidden;
+					border-bottom-left-radius: 10px;
+					border-bottom-right-radius: 10px;
 				}
 			}
 

@@ -1,6 +1,7 @@
-<script>
+<script lang="ts">
 	import { fly } from 'svelte/transition';
-	import { page } from "$app/stores";
+	import { page } from '$app/stores';
+	import { signIn, signOut } from '@auth/sveltekit/client';
 	import {
 		numberPrevMessages,
 		clearChatHistory,
@@ -8,7 +9,10 @@
 		showPricing,
 		showLegacyModels,
 		chosenCompany
-	} from '$lib/stores.js';
+	} from '$lib/stores.ts';
+    import type {
+		Model,
+	} from '$lib/types';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 
 	import SettingsContainer from '$lib/components/SettingsContainer.svelte';
@@ -21,62 +25,40 @@
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
 
-	export let companySelection;
-	export let gptModelSelection;
-	export let chosenModel;
+	export let companySelection: string[];
+	export let gptModelSelection: Model[];
+	export let chosenModel: Model;
 
-	/**
-	 * Controls the visibility of the model dropdown.
-	 * @type {boolean}
-	 */
-	let modelDropdownOpen = false;
+	// Controls the visibility of the model dropdown.
+	let modelDropdownOpen: boolean = false;
 
-	/**
-	 * Controls the visibility of the company dropdown.
-	 * @type {boolean}
-	 */
-	let companyDropdownOpen = false;
+	// Controls the visibility of the company dropdown.	 
+	let companyDropdownOpen: boolean = false;
 
-	/**
-	 * Controls the visibility of the settings panel.
-	 * @type {boolean}
-	 */
-	let settingsOpen = false;
+	// Controls the visibility of the settings panel.
+	let settingsOpen: boolean = false;
 
-	/**
-	 * Controls the visibility of the context window.
-	 * @type {boolean}
-	 */
-	let contextOpen = false;
+    // Controls the visibility of the context window.
+	let contextOpen: boolean = false;
 
-	/**
-	 * Indicates whether an animation is currently rotating.
-	 * @type {boolean}
-	 */
-	let isRotating = false;
+	// Indicates whether an animation is currently rotating. 
+	let isRotating: boolean = false;
 
-	/**
-	 * Updates the chosen company and resets the model selection based on the new company.
-	 * @param {string} company - The name of the selected company.
-	 */
-	function selectCompany(company) {
+	
+	// Updates the chosen company and resets the model selection based on the new company.
+	function selectCompany(company: string) {
 		chosenCompany.set(company);
 		companySelection = Object.keys(modelDictionary);
 		companySelection = companySelection.filter((c) => c !== company);
-		gptModelSelection = Object.keys(modelDictionary[$chosenCompany].models);
 		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
 		chosenModel = gptModelSelection[0];
 	}
 
-	/**
-	 * Updates the chosen model and resets the model selection list.
-	 * @param {string} model - The name of the selected model.
-	 */
-	function selectModel(model) {
+	// Updates the chosen model and resets the model selection list.
+	function selectModel(model: Model) {
 		chosenModel = model;
 		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
 	}
-	
 </script>
 
 <svelte:window
@@ -213,11 +195,7 @@
 					{/each}
 					<div class="toggles-container">
 						<div class="toggle">
-							<p
-								style="color: {!$showLegacyModels
-									? 'var(--text-color-light)'
-									: ''}"
-							>
+							<p style="color: {!$showLegacyModels ? 'var(--text-color-light)' : ''}">
 								Legacy models
 							</p>
 							<div class="switch">
@@ -319,8 +297,12 @@
 				role="button"
 				tabindex="0"
 				on:click|stopPropagation={() => {
-					settingsOpen = !settingsOpen;
-					contextOpen = false;
+					if ($page.data.session) {
+						settingsOpen = !settingsOpen;
+						contextOpen = false;
+					} else {
+						signIn('google');
+					}
 				}}
 				on:keydown|stopPropagation={(e) => {
 					if (e.key === 'Enter') {
@@ -334,10 +316,14 @@
 				"
 			>
 				{#if $page.data.session}
-			        <img class="user-profile-img" src={$page.data.session.user?.image} alt="User profile" />
-			    {:else}
+					<img
+						class="user-profile-img"
+						src={$page.data.session.user?.image}
+						alt="User profile"
+					/>
+				{:else}
 					<SettingsIcon color="var(--text-color-light)" />
-			    {/if}
+				{/if}
 				<p class="tag">Settings</p>
 			</div>
 			{#if settingsOpen}
@@ -348,7 +334,6 @@
 		</div>
 	</div>
 </div>
-
 
 <style lang="scss">
 	.sidebar {

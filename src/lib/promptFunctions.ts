@@ -1,41 +1,34 @@
 import DOMPurify from 'dompurify';
-import { updateTokens } from '$lib/tokenizer.ts';
+import type { FullPrompt } from '$lib/types';
 
-/**
- * Sanitizes HTML content by removing potentially unsafe tags and attributes.
- * @param {string} html - The HTML content to be sanitized.
- * @returns {string} The sanitized plain text.
- */
-export function sanitizeHtml(html) {
-	// Sanitize the HTML content
+export function sanitizeHtml(html: string): string {
 	let sanitizedHtml = DOMPurify.sanitize(html, {
 		ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
-		ALLOWED_ATTRS: ['href']
+		ALLOWED_ATTR: ['href']
 	});
-	// Convert the sanitized HTML to plain text
+
 	let tempDiv = document.createElement('div');
 	tempDiv.innerHTML = sanitizedHtml;
 	return tempDiv.textContent || tempDiv.innerText || '';
 }
 
+export function generateFullPrompt(
+	prompt: string,
+	currentHistory: { by: string; text: string }[],
+	numberPrevMessages: number
+): FullPrompt {
+	if (numberPrevMessages === 0 || currentHistory.length === 0) {
+		return {
+			prevMessages: [],
+			prompt: sanitizeHtml(prompt).trim()
+		};
+	}
 
-/**
- * Generates the full prompt including previous messages
- * @param {string} prompt - The current prompt.
- */
-export function generateFullPrompt(prompt, currentHistory, numberPrevMessages) {
-	if (numberPrevMessages === 0 || currentHistory.length === 0) return sanitizeHtml(prompt).trim();
+	const prevMessages = currentHistory
+		.slice(-numberPrevMessages * 2, -1)
+		.map(({ by, text }) => ({ by, text: sanitizeHtml(text) }));
 
-	/**
-	 * Extract and sanitize the previous messages from the chat history.
-	 * @type {Array<{by: string, text: string}>}
-	 */
-	const prevMessages = currentHistory.slice(-numberPrevMessages * 2 - 1, -1).map(
-		/** @param {{by: string, text: string}} message */
-		({ by, text }) => ({ by, text: sanitizeHtml(text) })
-	);
-
-	const fullPrompt = {
+	const fullPrompt: FullPrompt = {
 		prevMessages,
 		prompt: sanitizeHtml(prompt).trim()
 	};

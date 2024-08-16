@@ -1,5 +1,4 @@
 <script>
-	import { darkMode } from '$lib/stores.js';
 	import { createEventDispatcher } from 'svelte';
 
 	export let on = false;

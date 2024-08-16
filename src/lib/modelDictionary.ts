@@ -1,12 +1,12 @@
+import type { ModelDictionary } from '$lib/types';
+// @ts-ignore
 import AnthropicIcon from '$lib/components/icons/Anthropic.svelte';
+// @ts-ignore
 import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
+// @ts-ignore
 import OpenAiIcon from '$lib/components/icons/OpenAiIcon.svelte';
 
-/**
- * Dictionary of AI companies, their logos, and available models.
- * @type {Object.<string, {logo: any, models: Object.<string, string>}>}
- */
-export const modelDictionary = {
+export const modelDictionary: ModelDictionary = {
 	openAI: {
 		logo: OpenAiIcon,
 		models: {

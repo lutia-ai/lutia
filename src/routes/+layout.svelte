@@ -1,7 +1,6 @@
 <script>
-	import { darkMode } from '$lib/stores.js';
+	import { darkMode } from '$lib/stores.ts';
 	import { onMount } from 'svelte';
-	import { get } from 'svelte/store';
 
 	/** @type {boolean} */
 	let darkModeOn;

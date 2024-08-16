@@ -1,5 +1,5 @@
 import adapter from '@sveltejs/adapter-auto';
-import preprocess from 'svelte-preprocess';
+import preprocess, { sveltePreprocess } from 'svelte-preprocess';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -9,8 +9,9 @@ const config = {
 		// See https://kit.svelte.dev/docs/adapters for more information about adapters.
 		adapter: adapter()
 	},
-	preprocess: preprocess({
-		scss: {}
+	preprocess: sveltePreprocess({
+		scss: {},
+        typescript: true,
 	})
 };
 

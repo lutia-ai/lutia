@@ -8,10 +8,10 @@ const openai = new OpenAI({ apiKey: openAISecretKey });
 
 export async function POST({ request, locals }) {
 	let session = await locals.getSession();
-	if(!session) {
-	    throw error(401, "Forbidden");
+	if (!session) {
+		throw error(401, 'Forbidden');
 	}
-	
+
 	try {
 		const { prompt, model } = await request.json();
 
