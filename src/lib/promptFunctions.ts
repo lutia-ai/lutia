@@ -25,7 +25,7 @@ export function generateFullPrompt(
 	}
 
 	const prevMessages = currentHistory
-		.slice(-numberPrevMessages * 2, -1)
+		.slice(-(numberPrevMessages + 1) * 2, -2)
 		.map(({ by, text }) => ({ by, text: sanitizeHtml(text) }));
 
 	const fullPrompt: FullPrompt = {
