@@ -37,6 +37,9 @@
 	let input_price: number = 0;
 	let mounted: boolean = false;
 	let placeholderVisible: boolean = true;
+    let promptBar: HTMLDivElement;
+    let promptBarHeight: number = 0;
+    let scrollAnimationFrame: number | null = null;
 
 	let companySelection: string[] = Object.keys(modelDictionary);
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -147,31 +150,6 @@
 		return tabWidth;
 	}
 
-	function roundToFirstTwoNonZeroDecimals(num: number, roundUp: boolean = false): string {
-		let str = num.toFixed(20);
-		let match = str.match(/\.(?:0*[1-9]\d?|0*[1-9]\d|0+[1-9])\d?/);
-
-		if (match) {
-			let matchedPart = match[0];
-			let integerPart = str.split('.')[0];
-			let lastPosition = matchedPart.length - 1;
-
-			if (roundUp && matchedPart.length < str.length - integerPart.length - 1) {
-				let nextDigit = parseInt(str[integerPart.length + matchedPart.length]);
-				if (nextDigit >= 5) {
-					let roundedPart = (
-						parseFloat(matchedPart) + Math.pow(10, -lastPosition)
-					).toFixed(lastPosition);
-					return (parseFloat(integerPart) + parseFloat(roundedPart)).toString();
-				}
-			}
-			let result = parseFloat(integerPart + matchedPart);
-			return result.toString();
-		} else {
-			return str.split('.')[0];
-		}
-	}
-
 	function changeTabWidth(code: string, tabWidth: number = 4): string {
 		const lines = code.split('\n');
 		let originalIndentationLevel: number | null = null;
@@ -227,7 +205,6 @@
 
 	async function submitPrompt(): Promise<void> {
 		const plainText = prompt;
-		const sanitizedPrompt = sanitizeHtml(plainText);
 		prompt = '';
 		if (plainText.trim()) {
 			let userPrompt: UserChat = {
@@ -237,6 +214,7 @@
 
 			// Add user's message to chat history
 			chatHistory.update((history) => [...history, userPrompt]);
+            scrollToBottom();
 
 			// Initialize AI's response in chat history
 			chatHistory.update((history) => [
@@ -261,6 +239,8 @@
 						: $chosenCompany === 'openAI'
 							? '/api/chatGPT'
 							: '/api/gemini';
+
+                console.log(fullPrompt);
 
 				const response = await fetch(uri, {
 					method: 'POST',
@@ -406,6 +386,8 @@
 							)
 						);
 
+                        if (isScrollingProgrammatically) scrollToBottom();
+
 						prevText = '';
 					}
 				}
@@ -468,8 +450,58 @@
 		return isModelByCompany('google', modelName);
 	}
 
+    let isScrollingProgrammatically = false;
+    let lastScrollPos = 0;
+
+    function scrollToBottom() {
+        // Cancel any ongoing animation frame
+        if (scrollAnimationFrame !== null) {
+            cancelAnimationFrame(scrollAnimationFrame);
+        }
+
+        isScrollingProgrammatically = true;
+
+        // Smooth scrolling function
+        const scrollStep = function() {
+            const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            const targetPosition = document.documentElement.scrollHeight;
+            const distanceToScroll = targetPosition - currentScrollPosition - window.innerHeight;
+
+            // Check if the end is reached, we can stop scrolling
+            if (distanceToScroll > 0 && isScrollingProgrammatically) {
+                // Calculate a variable scroll distance, using easing
+                const scrollDistance = Math.min(distanceToScroll, Math.max(1, distanceToScroll / 20)); // Dynamic distance based on remaining distance
+
+                window.scrollBy(0, scrollDistance);
+                scrollAnimationFrame = requestAnimationFrame(scrollStep);
+            } else {
+                // Clear frame if finished
+                scrollAnimationFrame = null;
+            }
+        };
+
+        // Initiate the scroll
+        scrollStep();
+    }
+
+    function handleScroll() {
+        const currentScrollPos = window.pageYOffset || document.documentElement.scrollTop;
+
+        // Check scroll direction
+        if (currentScrollPos < lastScrollPos) {
+            // Scrolling up, stop programmatic scrolling
+            isScrollingProgrammatically = false;
+        }
+        
+        lastScrollPos = currentScrollPos; // Update last scroll position
+    }
+
 	onMount(() => {
 		mounted = true;
+        if (promptBar) {
+            // Get the height of the prompt bar
+            promptBarHeight = promptBar.offsetHeight;
+        }
 	});
 </script>
 
@@ -481,14 +513,17 @@
 	on:click={() => {
 		closeAllTabWidths();
 	}}
+    on:scroll={() => {handleScroll();}}
 />
 
 <div class="main">
 	<Sidebar {companySelection} {gptModelSelection} bind:chosenModel />
 	<div class="body">
-		<div class="chat-history">
+		<div 
+            class="chat-history"
+            style="padding-bottom: {100 + (promptBarHeight*.3)}px;"
+        >
 			{#each $chatHistory as chat, chatIndex}
-				<!-- {#if chat.by === 'user'} -->
 				{#if chat.by === 'user'}
 					<div class="user-chat">
 						<p>
@@ -533,103 +568,106 @@
 										<div class="code-container">
 											<div class="code-header">
 												<p>{component.language}</p>
-												<div
-													class="tab-width-container"
-													role="button"
-													tabindex="0"
-													on:click|stopPropagation={() =>
-														(component.tabWidthOpen = true)}
-													on:keydown|stopPropagation={(e) => {
-														if (e.key === 'Enter') {
-															component.tabWidthOpen = true;
-														}
-													}}
-												>
-													<div class="dropdown-icon">
-														<DropdownIcon
-															color="rgba(255,255,255,0.65)"
-														/>
-													</div>
-													<p>
-														Tab width: {component.tabWidth
-															? component.tabWidth
-															: '?'}
-													</p>
-													{#if component.tabWidthOpen}
-														<div class="tab-width-open-container">
-															{#each [2, 4, 6, 8] as tabWidth, index}
-																<div
-																	role="button"
-																	tabindex="0"
-																	on:click={() => {
-																		component.code =
-																			changeTabWidth(
-																				component.code,
-																				tabWidth
-																			);
-																		component.tabWidth =
-																			tabWidth;
-																	}}
-																	on:keydown|stopPropagation={(
-																		e
-																	) => {
-																		if (e.key === 'Enter') {
-																			component.code =
-																				changeTabWidth(
-																					component.code,
-																					tabWidth
-																				);
-																			component.tabWidth =
-																				tabWidth;
-																		}
-																	}}
-																>
-																	<p>Tab width: {tabWidth}</p>
-																</div>
-															{/each}
-														</div>
-													{/if}
-												</div>
-												<div
-													class="copy-code-container"
-													role="button"
-													tabindex="0"
-													on:click={() => {
-														copyToClipboard(
-															component.code ? component.code : ''
-														);
-														updateChatHistoryToCopiedState(
-															chatIndex,
-															componentIndex
-														);
-													}}
-													on:keydown|stopPropagation={(e) => {
-														if (e.key === 'Enter') {
-															copyToClipboard(
-																component.code ? component.code : ''
-															);
-															updateChatHistoryToCopiedState(
-																chatIndex,
-																componentIndex
-															);
-														}
-													}}
-												>
-													{#if component.copied}
-														<div class="tick-container">
-															<TickIcon
-																color="rgba(255,255,255,0.65)"
-															/>
-														</div>
-													{:else}
-														<div class="copy-icon-container">
-															<CopyIcon
-																color="rgba(255,255,255,0.65)"
-															/>
-														</div>
-													{/if}
-													<p>{component.copied ? 'copied' : 'copy'}</p>
-												</div>
+
+                                                <div class="right-side-container">
+                                                    {#if component.tabWidth}
+                                                        <div
+                                                            class="tab-width-container"
+                                                            role="button"
+                                                            tabindex="0"
+                                                            on:click|stopPropagation={() =>
+                                                                (component.tabWidthOpen = true)}
+                                                            on:keydown|stopPropagation={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    component.tabWidthOpen = true;
+                                                                }
+                                                            }}
+                                                        >
+                                                            <div class="dropdown-icon">
+                                                                <DropdownIcon
+                                                                    color="rgba(255,255,255,0.65)"
+                                                                />
+                                                            </div>
+                                                            <p>
+                                                                Tab width: {component.tabWidth}
+                                                            </p>
+                                                            {#if component.tabWidthOpen}
+                                                                <div class="tab-width-open-container">
+                                                                    {#each [2, 4, 6, 8] as tabWidth, index}
+                                                                        <div
+                                                                            role="button"
+                                                                            tabindex="0"
+                                                                            on:click={() => {
+                                                                                component.code =
+                                                                                    changeTabWidth(
+                                                                                        component.code,
+                                                                                        tabWidth
+                                                                                    );
+                                                                                component.tabWidth =
+                                                                                    tabWidth;
+                                                                            }}
+                                                                            on:keydown|stopPropagation={(
+                                                                                e
+                                                                            ) => {
+                                                                                if (e.key === 'Enter') {
+                                                                                    component.code =
+                                                                                        changeTabWidth(
+                                                                                            component.code,
+                                                                                            tabWidth
+                                                                                        );
+                                                                                    component.tabWidth =
+                                                                                        tabWidth;
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <p>Tab width: {tabWidth}</p>
+                                                                        </div>
+                                                                    {/each}
+                                                                </div>
+                                                            {/if}
+                                                        </div>
+                                                    {/if}
+                                                    <div
+                                                        class="copy-code-container"
+                                                        role="button"
+                                                        tabindex="0"
+                                                        on:click={() => {
+                                                            copyToClipboard(
+                                                                component.code ? component.code : ''
+                                                            );
+                                                            updateChatHistoryToCopiedState(
+                                                                chatIndex,
+                                                                componentIndex
+                                                            );
+                                                        }}
+                                                        on:keydown|stopPropagation={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                copyToClipboard(
+                                                                    component.code ? component.code : ''
+                                                                );
+                                                                updateChatHistoryToCopiedState(
+                                                                    chatIndex,
+                                                                    componentIndex
+                                                                );
+                                                            }
+                                                        }}
+                                                    >
+                                                        {#if component.copied}
+                                                            <div class="tick-container">
+                                                                <TickIcon
+                                                                    color="rgba(255,255,255,0.65)"
+                                                                />
+                                                            </div>
+                                                        {:else}
+                                                            <div class="copy-icon-container">
+                                                                <CopyIcon
+                                                                    color="rgba(255,255,255,0.65)"
+                                                                />
+                                                            </div>
+                                                        {/if}
+                                                        <p>{component.copied ? 'copied' : 'copy'}</p>
+                                                    </div>
+                                                </div>
 											</div>
 											<div class="code-content">
 												<HighlightAuto
@@ -675,7 +713,7 @@
 											{#if chat.copied}
 												<TickIcon color="var(--text-color-light)" />
 											{:else}
-												<CopyIcon color="var(--text-color-light)" />
+												<CopyIconFilled color="var(--text-color-light)" />
 											{/if}
 											<p>{chat.copied ? 'copied' : 'copy'}</p>
 										</div>
@@ -738,19 +776,24 @@
 			<div
 				class="prompt-bar"
 				style="
-					margin: {$inputPricing ? '' : 'auto auto 30px auto'}
+					margin: {$inputPricing ? '' : 'auto auto 30px auto'};
 				"
 			>
 				<div
 					contenteditable
+                    bind:this={promptBar}
 					role="textbox"
 					tabindex="0"
 					bind:innerHTML={prompt}
-					on:input={() => (placeholderVisible = false)}
+					on:input={() => {
+                        placeholderVisible = false;
+                        promptBarHeight = promptBar.offsetHeight;
+                    }}
 					on:keydown={(event) => {
 						if (event.key === 'Enter' && !event.shiftKey) {
 							event.preventDefault();
 							submitPrompt();
+                            promptBarHeight = promptBar.offsetHeight;
 						}
 					}}
 					on:paste={handlePaste}
@@ -832,8 +875,8 @@
 
 			.chat-history {
 				width: 850px;
+                height: 100%;
 				margin: 50px auto 0 auto;
-				padding-bottom: 200px;
 				display: flex;
 				flex-direction: column;
 				gap: 50px;
@@ -1010,69 +1053,73 @@
 					border-top-left-radius: 10px;
 					border-top-right-radius: 10px;
 
-					.tab-width-container {
-						position: relative;
-						display: flex;
-						margin-left: auto;
-						gap: 5px;
-						cursor: pointer;
+                    .right-side-container {
+                        display: flex;
+                        margin-left: auto;
 
-						.dropdown-icon {
-							width: 15px;
-							height: 15px;
-							transform: translateY(1px);
-						}
+                        .tab-width-container {
+                            position: relative;
+                            display: flex;
+                            gap: 5px;
+                            cursor: pointer;
 
-						.tab-width-open-container {
-							position: absolute;
-							top: 180%;
-							width: 100%;
-							display: flex;
-							gap: 10px;
-							flex-direction: column;
-							background: rgba(46, 56, 66, 1);
-							z-index: 100;
-							border-radius: 5px;
-							padding: 5px;
+                            .dropdown-icon {
+                                width: 15px;
+                                height: 15px;
+                                transform: translateY(1px);
+                            }
 
-							p {
-								margin: auto;
-								width: 100%;
-								text-align: center;
-								padding: 5px;
-								box-sizing: border-box;
-								border-radius: 5px;
+                            .tab-width-open-container {
+                                position: absolute;
+                                top: 180%;
+                                width: 100%;
+                                display: flex;
+                                gap: 10px;
+                                flex-direction: column;
+                                background: rgba(46, 56, 66, 1);
+                                z-index: 100;
+                                border-radius: 5px;
+                                padding: 5px;
 
-								&:hover {
-									background: rgba(55, 66, 76, 1);
-								}
-							}
-						}
-					}
+                                p {
+                                    margin: auto;
+                                    width: 100%;
+                                    text-align: center;
+                                    padding: 5px;
+                                    box-sizing: border-box;
+                                    border-radius: 5px;
 
-					.copy-code-container {
-						display: flex;
-						margin-left: 30px;
-						gap: 5px;
-						cursor: pointer;
+                                    &:hover {
+                                        background: rgba(55, 66, 76, 1);
+                                    }
+                                }
+                            }
+                        }
 
-						.tick-container {
-							width: 15px;
-							height: 15px;
-							border: 1px solid rgba(255, 255, 255, 0.65);
-							border-radius: 50%;
-							box-sizing: border-box;
-						}
+                        .copy-code-container {
+                            display: flex;
+                            margin-left: 30px;
+                            gap: 5px;
+                            cursor: pointer;
 
-						.copy-icon-container {
-							height: 15px;
-							width: 15px;
-						}
+                            .tick-container {
+                                width: 15px;
+                                height: 15px;
+                                border: 1px solid rgba(255, 255, 255, 0.65);
+                                border-radius: 50%;
+                                box-sizing: border-box;
+                            }
 
-						p {
-							margin: auto 0;
-						}
-					}
+                            .copy-icon-container {
+                                height: 15px;
+                                width: 15px;
+                            }
+
+                            p {
+                                margin: auto 0;
+                            }
+                        }
+                    }
 
 					p {
 						margin: auto 0;
