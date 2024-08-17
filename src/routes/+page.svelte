@@ -15,10 +15,9 @@
 	} from '$lib/types';
 
 	import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
-
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
-	import { countTokens } from '$lib/tokenizer.ts';
+	import { countTokens, roundToFirstTwoNonZeroDecimals } from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
@@ -27,6 +26,7 @@
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 	import CopyIcon from '$lib/components/icons/CopyIcon.svelte';
+    import CopyIconFilled from '$lib/components/icons/CopyIconFilled.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import ArrowIcon from '$lib/components/icons/Arrow.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';

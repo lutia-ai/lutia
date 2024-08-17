@@ -44,3 +44,28 @@ export const countTokens = async (
 		}, 500); // Timeout set to 500ms
 	});
 };
+
+export function roundToFirstTwoNonZeroDecimals(num: number, roundUp: boolean = true): string {
+    let str = num.toFixed(20);
+    let match = str.match(/\.(?:0*[1-9]\d?|0*[1-9]\d|0+[1-9])\d?/);
+
+    if (match) {
+        let matchedPart = match[0];
+        let integerPart = str.split('.')[0];
+        let lastPosition = matchedPart.length - 1;
+
+        if (roundUp && matchedPart.length < str.length - integerPart.length - 1) {
+            let nextDigit = parseInt(str[integerPart.length + matchedPart.length]);
+            if (nextDigit >= 5) {
+                let roundedPart = (
+                    parseFloat(matchedPart) + Math.pow(10, -lastPosition)
+                ).toFixed(lastPosition);
+                return (parseFloat(integerPart) + parseFloat(roundedPart)).toString();
+            }
+        }
+        let result = parseFloat(integerPart + matchedPart);
+        return result.toString();
+    } else {
+        return str.split('.')[0];
+    }
+};

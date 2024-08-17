@@ -35,7 +35,7 @@ export function clearChatHistory() {
 }
 
 
-// Persistent store for the dark mode setting
+// Persistent store for the chosenCompany setting
 export const chosenCompany = createPersistentStore<string>('chosenCompany', 'anthropic');
 
 // Persistent store for the dark mode setting
