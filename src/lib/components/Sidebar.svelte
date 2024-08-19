@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { page } from '$app/stores';
-	import { signIn, signOut } from '@auth/sveltekit/client';
+	import { signIn } from '@auth/sveltekit/client';
 	import {
 		numberPrevMessages,
 		clearChatHistory,
@@ -59,6 +59,7 @@
 		chosenModel = model;
 		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
 	}
+
 </script>
 
 <svelte:window
@@ -297,7 +298,7 @@
 				role="button"
 				tabindex="0"
 				on:click|stopPropagation={() => {
-					if ($page.data.session) {
+					if ($page.data.user) {
 						settingsOpen = !settingsOpen;
 						contextOpen = false;
 					} else {
@@ -315,12 +316,20 @@
 					cursor: {settingsOpen ? 'default' : ''} !important;
 				"
 			>
-				{#if $page.data.session}
-					<img
-						class="user-profile-img"
-						src={$page.data.session.user?.image}
-						alt="User profile"
-					/>
+				{#if $page.data.user}
+                    {#if $page.data.user.image}
+                        <img
+                            class="user-profile-img"
+                            src={$page.data.user.image}
+                            alt="User profile"
+                        />
+                    {:else}
+                        <div class="user-profile-noimg">
+                            <h1>
+                                {$page.data.user.name[0]}
+                            </h1>
+                        </div>
+                    {/if}
 				{:else}
 					<SettingsIcon color="var(--text-color-light)" />
 				{/if}
@@ -583,7 +592,7 @@
 						transition: all 0.1s ease;
 					}
 
-					.user-profile-img {
+					.user-profile-img, .user-profile-noimg {
 						position: absolute;
 						width: 100%;
 						left: 50%;
@@ -591,12 +600,29 @@
 						transform: translate(-50%, -50%);
 						border-radius: 50%;
 					}
+
+                    .user-profile-noimg {
+                        background: #008080;
+                        width: inherit;
+                        height: inherit;
+                        display: flex;
+
+                        h1 {
+                            position: relative;
+                            margin: auto;
+                            padding: 0;
+                            width: max-content;
+                            font-size: 24px;
+                            font-weight: 400;
+                            color: var(--bg-color);
+                        }
+                    }
 				}
 
 				.settings-open-container {
 					position: absolute;
 					border: 1px solid var(--bg-color-dark);
-					background: var(--bg-color-light);
+					background: var(--bg-color);
 					box-shadow: 0 5px 15px rgba(50, 50, 50, 0.15);
 					border-radius: 10px;
 					left: 120%;

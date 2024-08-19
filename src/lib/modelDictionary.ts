@@ -5,6 +5,8 @@ import AnthropicIcon from '$lib/components/icons/Anthropic.svelte';
 import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
 // @ts-ignore
 import OpenAiIcon from '$lib/components/icons/OpenAiIcon.svelte';
+// @ts-ignore
+import MetaIcon from '$lib/components/icons/MetaIcon.svelte';
 
 export const modelDictionary: ModelDictionary = {
 	openAI: {
@@ -130,5 +132,38 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 1000000
 			}
 		}
-	}
+	},
+    // meta: {
+	// 	logo: MetaIcon,
+	// 	models: {
+	// 		gemini15Pro: {
+	// 			name: 'Gemini 1.5 Pro',
+	// 			param: 'gemini-1.5-pro',
+	// 			legacy: false,
+	// 			input_price: 3.5,
+	// 			output_price: 10.5,
+	// 			input_price_large: 7, // Price increases for prompts 128k or longer
+	// 			output_price_large: 21, // Price increases for prompts 128k or longer
+	// 			context_window: 2000000
+	// 		},
+	// 		gemini15Flash: {
+	// 			name: 'Gemini 1.5 Flash',
+	// 			param: 'gemini-1.5-flash',
+	// 			legacy: false,
+	// 			input_price: 0.35,
+	// 			output_price: 1.05,
+	// 			input_price_large: 0.7, // Price increases for prompts 128k or longer
+	// 			output_price_large: 2.1, // Price increases for prompts 128k or longer
+	// 			context_window: 1000000
+	// 		},
+	// 		gemini1Pro: {
+	// 			name: 'Gemini 1.0 Pro',
+	// 			param: 'gemini-1.0-pro',
+	// 			legacy: true,
+	// 			input_price: 0.5,
+	// 			output_price: 1.5,
+	// 			context_window: 1000000
+	// 		}
+	// 	}
+	// }
 };

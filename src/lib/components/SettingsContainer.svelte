@@ -1,9 +1,11 @@
 <script>
 	import { darkMode, inputPricing } from '$lib/stores.ts';
 	import { get } from 'svelte/store';
+    import { signOut } from '@auth/sveltekit/client';
 
 	import MoonIcon from '$lib/components/icons/MoonIcon.svelte';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
+    import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 
 	/** @type {boolean} */
@@ -70,6 +72,24 @@
 	<div class="switch-wrapper">
 		<Switch bind:on={$inputPricing} />
 	</div>
+</div>
+<div
+	class="setting"
+	role="button"
+	tabindex="0"
+	on:click|stopPropagation={() => {
+		signOut();
+	}}
+	on:keydown|stopPropagation={(e) => {
+		if (e.key === 'Enter') {
+			signOut();
+		}
+	}}
+>
+	<div class="icon-container">
+		<LogOutIcon color="var(--text-color-light)" />
+	</div>
+	<p>Log out</p>
 </div>
 
 <style lang="scss">

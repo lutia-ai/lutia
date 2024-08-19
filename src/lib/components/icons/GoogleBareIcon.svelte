@@ -26,9 +26,6 @@
 		display: flex;
 		width: 100%;
 		height: 100%;
-		background: rgb(69, 67, 67);
-		border-radius: 50%;
-		padding: 10px;
 		box-sizing: border-box;
 	}
 </style>

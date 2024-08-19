@@ -19,6 +19,10 @@ export const countTokens = async (
 			clearTimeout(timer);
 		}
 
+        if (prompt === '') {
+            return resolve({ tokens: 0, price: 0 });
+        }
+
 		// Set a new timeout
 		timer = setTimeout(async () => {
 			if (isGemini(model.param)) {
@@ -64,7 +68,8 @@ export function roundToFirstTwoNonZeroDecimals(num: number, roundUp: boolean = t
             }
         }
         let result = parseFloat(integerPart + matchedPart);
-        return result.toString();
+        // check if the result is in scientific notation, if so then just return 0 as number is so small
+        return /^-?\d+(\.\d+)?[eE][-+]?\d+$/.test(result.toString()) ? '0' : result.toString();
     } else {
         return str.split('.')[0];
     }
