@@ -57,3 +57,15 @@ interface ModelDetails {
 }
 
 export type ModelDictionary = Record<string, ModelDetails>;
+
+
+export type UserSignupData = {
+    email: string;
+    name?: string;
+    password_hash?: string;
+}
+
+export type ChatCompletionMessageParam = {
+    role: 'user' | 'assistant';
+    content: string;
+};

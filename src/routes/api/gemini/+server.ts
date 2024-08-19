@@ -1,6 +1,9 @@
 import { error } from '@sveltejs/kit';
-import { json } from '@sveltejs/kit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import type {
+    FullPrompt,
+    ChatCompletionMessageParam
+} from '$lib/types';
 
 const googleSecretKey =
 	process.env.VITE_GOOGLE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_GEMINI_API_KEY;
@@ -16,9 +19,29 @@ export async function POST({ request, locals }) {
 	try {
 		const { prompt, model } = await request.json();
 
+        const parsedPrompt: FullPrompt = JSON.parse(prompt);
+
+        const messages: ChatCompletionMessageParam[] = [];
+
+        if (parsedPrompt.prevMessages) {
+            parsedPrompt.prevMessages.forEach((message) => {
+                messages.push({
+                    role: message.by === 'user' ? 'user' : 'assistant',
+                    content: message.text
+                });
+            })
+        }
+
+        messages.push({
+            role: 'user',
+            content: parsedPrompt.prompt
+        });
+
 		const genAIModel = genAI.getGenerativeModel({ model: model });
 
-		const result = await genAIModel.generateContentStream(prompt);
+        console.log(JSON.stringify(messages));
+
+		const result = await genAIModel.generateContentStream(JSON.stringify(messages));
 
 		const readableStream = new ReadableStream({
 			async start(controller) {

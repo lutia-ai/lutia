@@ -1,6 +1,9 @@
 import { error } from '@sveltejs/kit';
-import { json } from '@sveltejs/kit';
 import OpenAI from 'openai';
+import type {
+    FullPrompt,
+    ChatCompletionMessageParam
+} from '$lib/types';
 
 const openAISecretKey = process.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
 
@@ -15,9 +18,27 @@ export async function POST({ request, locals }) {
 	try {
 		const { prompt, model } = await request.json();
 
+        const parsedPrompt: FullPrompt = JSON.parse(prompt);
+
+        const messages: ChatCompletionMessageParam[] = [];
+
+        if (parsedPrompt.prevMessages) {
+            parsedPrompt.prevMessages.forEach((message) => {
+                messages.push({
+                    role: message.by === 'user' ? 'user' : 'assistant',
+                    content: message.text
+                });
+            })
+        }
+
+        messages.push({
+            role: 'user',
+            content: parsedPrompt.prompt
+        });
+
 		const stream = await openai.chat.completions.create({
 			model: model,
-			messages: [{ role: 'user', content: prompt }],
+			messages: messages,
 			stream: true
 		});
 

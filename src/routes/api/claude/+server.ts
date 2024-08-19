@@ -1,6 +1,9 @@
 import { error } from '@sveltejs/kit';
-import { json } from '@sveltejs/kit';
 import Anthropic from '@anthropic-ai/sdk';
+import type {
+    FullPrompt,
+    ChatCompletionMessageParam
+} from '$lib/types';
 
 const anthropicSecretKey =
 	process.env.VITE_ANTHROPIC_API_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY;
@@ -16,8 +19,26 @@ export async function POST({ request, locals }) {
 	try {
 		const { prompt, model } = await request.json();
 
+        const parsedPrompt: FullPrompt = JSON.parse(prompt);
+
+        const messages: ChatCompletionMessageParam[] = [];
+
+        if (parsedPrompt.prevMessages) {
+            parsedPrompt.prevMessages.forEach((message) => {
+                messages.push({
+                    role: message.by === 'user' ? 'user' : 'assistant',
+                    content: message.text
+                });
+            })
+        }
+
+        messages.push({
+            role: 'user',
+            content: parsedPrompt.prompt
+        });
+
 		const stream = await client.messages.stream({
-			messages: [{ role: 'user', content: prompt }],
+			messages: messages,
 			model: model,
 			max_tokens: 1024
 		});
