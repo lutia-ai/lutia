@@ -32,7 +32,7 @@
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 
 	let prompt: string;
-	let fullPrompt: FullPrompt;
+	let fullPrompt: FullPrompt | string;
 	let input_tokens: number = 0;
 	let input_price: number = 0;
 	let mounted: boolean = false;
@@ -47,14 +47,15 @@
 	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
 	let chosenModel = gptModelSelection[0];
 
-	$: if (prompt || $numberPrevMessages !== null) {
+	$: if ((prompt || prompt === '') || $numberPrevMessages) {
 		if (mounted) {
-			fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages);
-			handlecountTokens(fullPrompt, chosenModel);
+            fullPrompt = sanitizeHtml(prompt);
+            if ($numberPrevMessages > 0) fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages);
+			handleCountTokens(fullPrompt, chosenModel);
 		}
 	}
 
-	async function handlecountTokens(fullPrompt: FullPrompt, chosenModel: Model) {
+	async function handleCountTokens(fullPrompt: FullPrompt | string, chosenModel: Model) {
 		const result = await countTokens(fullPrompt, chosenModel);
 		input_tokens = result.tokens;
 		input_price = result.price;
@@ -206,6 +207,7 @@
 	async function submitPrompt(): Promise<void> {
 		const plainText = prompt;
 		prompt = '';
+        handleCountTokens(prompt, chosenModel);
 		if (plainText.trim()) {
 			let userPrompt: UserChat = {
 				by: 'user',
@@ -233,12 +235,18 @@
 			try {
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
 
-				const uri =
-					$chosenCompany === 'anthropic'
-						? '/api/claude'
-						: $chosenCompany === 'openAI'
-							? '/api/chatGPT'
-							: '/api/gemini';
+				let uri: string;
+
+                switch ($chosenCompany) {
+                    case 'anthropic':
+                        uri = '/api/claude';
+                        break;
+                    case 'openAI':
+                        uri = '/api/chatGPT';
+                        break;
+                    default:
+                        uri = '/api/gemini';
+                }
 
                 console.log(fullPrompt);
 
@@ -408,6 +416,7 @@
 						return item;
 					});
 				});
+                promptBarHeight = promptBar.offsetHeight;
 				console.log($chatHistory[$chatHistory.length - 1]);
 			} catch (error) {
 				if (error instanceof Error) {
@@ -484,7 +493,7 @@
         scrollStep();
     }
 
-    function handleScroll() {
+    function handleScroll(): void {
         const currentScrollPos = window.pageYOffset || document.documentElement.scrollTop;
 
         // Check scroll direction
@@ -494,6 +503,21 @@
         }
         
         lastScrollPos = currentScrollPos; // Update last scroll position
+    }
+
+    function isAtBottom(): boolean {
+        const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+
+        // Check if we are at the bottom of the page
+        return currentScrollPosition + windowHeight + 200 >= documentHeight;
+    }
+
+    $: if (promptBarHeight) {
+        if (isAtBottom()) {
+            scrollToBottom();
+        }
     }
 
 	onMount(() => {
@@ -542,7 +566,10 @@
 									<img src={ClaudeIcon} alt="Claude's icon" />
 								</div>
 							{:else if isModelOpenAI(chat.by)}
-								<div class="gpt-icon-container">
+								<div class="gpt-icon-container {chat.loading
+                                    ? 'rotateLoading'
+                                    : ''}"
+                                >
 									<ChatGPTIcon color="var(--text-color)" />
 								</div>
 							{:else if isModelGoogle(chat.by)}
@@ -593,11 +620,11 @@
                                                             </p>
                                                             {#if component.tabWidthOpen}
                                                                 <div class="tab-width-open-container">
-                                                                    {#each [2, 4, 6, 8] as tabWidth, index}
+                                                                    {#each [2, 4, 6, 8] as tabWidth}
                                                                         <div
                                                                             role="button"
                                                                             tabindex="0"
-                                                                            on:click={() => {
+                                                                            on:click|stopPropagation={() => {
                                                                                 component.code =
                                                                                     changeTabWidth(
                                                                                         component.code,
@@ -605,6 +632,7 @@
                                                                                     );
                                                                                 component.tabWidth =
                                                                                     tabWidth;
+                                                                                component.tabWidthOpen = false;
                                                                             }}
                                                                             on:keydown|stopPropagation={(
                                                                                 e
@@ -687,7 +715,7 @@
 										</div>
 									{/if}
 								{/each}
-								{#if isModelOpenAI(chat.by) && chat.loading}
+								{#if chat.loading}
 									<span class="gpt-loading-dot" />
 								{/if}
 								{#if !chat.loading}
