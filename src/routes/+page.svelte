@@ -5,7 +5,8 @@
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
 	import { chatHistory, numberPrevMessages, inputPricing, chosenCompany } from '$lib/stores.ts';
 	import type {
-		FullPrompt,
+		Message,
+        Image,
 		Model,
 		UserChat,
 		Component,
@@ -13,12 +14,12 @@
 		ChatComponent,
 		ModelDictionary
 	} from '$lib/types';
-
-	import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
+	import { isCodeComponent, isLlmChatComponent, isUserChatComponent } from '$lib/typeGuards';
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 	import { countTokens, roundToFirstTwoNonZeroDecimals } from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
+    import Settings from '$lib/components/Settings.svelte';
 
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import StarsIcon from '$lib/components/icons/StarsIcon.svelte';
@@ -30,9 +31,11 @@
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import ArrowIcon from '$lib/components/icons/Arrow.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
+	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
+	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 
 	let prompt: string;
-	let fullPrompt: FullPrompt | string;
+	let fullPrompt: Message[] | string;
 	let input_tokens: number = 0;
 	let input_price: number = 0;
 	let mounted: boolean = false;
@@ -40,6 +43,9 @@
     let promptBar: HTMLDivElement;
     let promptBarHeight: number = 0;
     let scrollAnimationFrame: number | null = null;
+    let isSettingsOpen: boolean = false;
+    let fileInput: HTMLInputElement;
+    let imagePreview: Image[] = [];
 
 	let companySelection: string[] = Object.keys(modelDictionary);
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -50,24 +56,38 @@
 	$: if ((prompt || prompt === '') || $numberPrevMessages) {
 		if (mounted) {
             fullPrompt = sanitizeHtml(prompt);
-            if ($numberPrevMessages > 0) fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages);
+            if ($numberPrevMessages > 0) {
+                fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages);
+                if (fullPrompt.length === 1 && fullPrompt[0].content.length === 0) {
+                    fullPrompt = prompt;
+                }
+            }
 			handleCountTokens(fullPrompt, chosenModel);
 		}
 	}
 
-	async function handleCountTokens(fullPrompt: FullPrompt | string, chosenModel: Model) {
+	async function handleCountTokens(fullPrompt: Message[] | string, chosenModel: Model) {
 		const result = await countTokens(fullPrompt, chosenModel);
 		input_tokens = result.tokens;
 		input_price = result.price;
 	}
 
 	function handlePaste(event: ClipboardEvent): void {
-		event.preventDefault();
-		if (!event.clipboardData) return;
+        event.preventDefault();
+        if (!event.clipboardData) return;
 
-		const text = event.clipboardData.getData('text/plain');
-		document.execCommand('insertText', false, text);
-	}
+        const text = event.clipboardData.getData('text/plain');
+        
+        // Preserve whitespace and line breaks
+        const formattedText = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>')
+            .replace(/\s/g, '&nbsp;');
+
+        document.execCommand('insertHTML', false, formattedText);
+    }
 
 	function copyToClipboard(text: string): Promise<void> {
 		return new Promise((resolve, reject) => {

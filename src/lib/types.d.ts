@@ -12,10 +12,6 @@ export type CodeComponent = {
 	tabWidthOpen: boolean;
 };
 
-export function isCodeComponent(component: Component): component is CodeComponent {
-	return component.type === 'code';
-}
-
 export type Component = CodeComponent | TextComponent;
 
 export type LlmChat = {
@@ -32,14 +28,10 @@ export type LlmChat = {
 export type UserChat = {
 	by: string;
 	text: string;
+    image?: Image[];
 };
 
 export type ChatComponent = LlmChat | UserChat;
-
-export type FullPrompt = {
-	prevMessages?: { by: string; text: string }[];
-	prompt: string;
-};
 
 export type Model = {
 	name: string;
@@ -69,3 +61,36 @@ export type ChatCompletionMessageParam = {
     role: 'user' | 'assistant';
     content: string;
 };
+
+export type Message = {
+	role: 'user' | 'assistant';
+	content: string | Object[];
+};
+
+export type Image = {
+    data: string;
+    media_type: string;
+}
+
+export type ChatGPTImage = {
+    type: "image_url";
+    image_url: {
+        url: string;
+    };
+}
+
+export type ClaudeImage = {
+    type: "image"
+    source: {
+        type: "base64";
+        media_type: string;
+        data: string;
+    }
+}
+
+export type GeminiImage = {
+    inlineData: {
+        data: string;
+        mimeType: string;
+    }
+}

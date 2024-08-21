@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import type { FullPrompt } from '$lib/types';
+import type { Message, Image } from '$lib/types';
 
 export function sanitizeHtml(html: string): string {
 	let sanitizedHtml = DOMPurify.sanitize(html, {
@@ -12,26 +12,23 @@ export function sanitizeHtml(html: string): string {
 	return tempDiv.textContent || tempDiv.innerText || '';
 }
 
+
 export function generateFullPrompt(
-	prompt: string,
-	currentHistory: { by: string; text: string }[],
-	numberPrevMessages: number
-): FullPrompt {
-	if (numberPrevMessages === 0 || currentHistory.length === 0) {
-		return {
-			prevMessages: [],
-			prompt: sanitizeHtml(prompt).trim()
-		};
-	}
+    prompt: string,
+    currentHistory: { by: string; text: string }[],
+    numberPrevMessages: number,
+): Message[] {
+    const fullPrompt: Message[] = [];
 
-	const prevMessages = currentHistory
-		.slice(-(numberPrevMessages + 1) * 2, -2)
-		.map(({ by, text }) => ({ by, text: sanitizeHtml(text) }));
+    if (numberPrevMessages > 0 && currentHistory.length > 0) {
+        const prevMessages = currentHistory.slice(-(numberPrevMessages + 1) * 2, -2);
 
-	const fullPrompt: FullPrompt = {
-		prevMessages,
-		prompt: sanitizeHtml(prompt).trim()
-	};
+        for (const { by, text } of prevMessages) {
+            fullPrompt.push({ role: by === 'user' ? 'user' : 'assistant', content: sanitizeHtml(text).trim() });
+        }
+    }
+    
+    fullPrompt.push({ role: 'user', content: sanitizeHtml(prompt).trim() });
 
-	return fullPrompt;
+    return fullPrompt;
 }
