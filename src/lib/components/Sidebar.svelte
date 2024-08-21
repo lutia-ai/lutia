@@ -10,9 +10,7 @@
 		showLegacyModels,
 		chosenCompany
 	} from '$lib/stores.ts';
-    import type {
-		Model,
-	} from '$lib/types';
+	import type { Model } from '$lib/types';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 
 	import Slider from '$lib/components/Slider.svelte';
@@ -28,24 +26,23 @@
 	export let companySelection: string[];
 	export let gptModelSelection: Model[];
 	export let chosenModel: Model;
-    export let isSettingsOpen: boolean;
+	export let isSettingsOpen: boolean;
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
 
-	// Controls the visibility of the company dropdown.	 
+	// Controls the visibility of the company dropdown.
 	let companyDropdownOpen: boolean = false;
 
 	// Controls the visibility of the settings panel.
 	let settingsOpen: boolean = false;
 
-    // Controls the visibility of the context window.
+	// Controls the visibility of the context window.
 	let contextOpen: boolean = false;
 
-	// Indicates whether an animation is currently rotating. 
+	// Indicates whether an animation is currently rotating.
 	let isRotating: boolean = false;
 
-	
 	// Updates the chosen company and resets the model selection based on the new company.
 	function selectCompany(company: string) {
 		chosenCompany.set(company);
@@ -60,7 +57,6 @@
 		chosenModel = model;
 		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
 	}
-
 </script>
 
 <svelte:window
@@ -318,19 +314,19 @@
 				"
 			>
 				{#if $page.data.user}
-                    {#if $page.data.user.image}
-                        <img
-                            class="user-profile-img"
-                            src={$page.data.user.image}
-                            alt="User profile"
-                        />
-                    {:else}
-                        <div class="user-profile-noimg">
-                            <h1>
-                                {$page.data.user.name[0]}
-                            </h1>
-                        </div>
-                    {/if}
+					{#if $page.data.user.image}
+						<img
+							class="user-profile-img"
+							src={$page.data.user.image}
+							alt="User profile"
+						/>
+					{:else}
+						<div class="user-profile-noimg">
+							<h1>
+								{$page.data.user.name[0]}
+							</h1>
+						</div>
+					{/if}
 				{:else}
 					<SettingsIcon color="var(--text-color-light)" />
 				{/if}
@@ -593,7 +589,8 @@
 						transition: all 0.1s ease;
 					}
 
-					.user-profile-img, .user-profile-noimg {
+					.user-profile-img,
+					.user-profile-noimg {
 						position: absolute;
 						width: 100%;
 						left: 50%;
@@ -602,22 +599,22 @@
 						border-radius: 50%;
 					}
 
-                    .user-profile-noimg {
-                        background: #008080;
-                        width: inherit;
-                        height: inherit;
-                        display: flex;
+					.user-profile-noimg {
+						background: #008080;
+						width: inherit;
+						height: inherit;
+						display: flex;
 
-                        h1 {
-                            position: relative;
-                            margin: auto;
-                            padding: 0;
-                            width: max-content;
-                            font-size: 24px;
-                            font-weight: 400;
-                            color: var(--bg-color);
-                        }
-                    }
+						h1 {
+							position: relative;
+							margin: auto;
+							padding: 0;
+							width: max-content;
+							font-size: 24px;
+							font-weight: 400;
+							color: var(--bg-color);
+						}
+					}
 				}
 
 				.settings-open-container {

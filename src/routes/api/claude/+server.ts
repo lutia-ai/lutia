@@ -1,11 +1,6 @@
 import { error } from '@sveltejs/kit';
 import Anthropic from '@anthropic-ai/sdk';
-import type {
-    Message,
-    Model,
-    Image,
-    ClaudeImage
-} from '$lib/types';
+import type { Message, Model, Image, ClaudeImage } from '$lib/types';
 import fetch from 'node-fetch';
 
 const anthropicSecretKey =
@@ -22,30 +17,30 @@ export async function POST({ request, locals }) {
 	try {
 		const { promptStr, modelStr, imagesStr } = await request.json();
 
-        const model: Model = JSON.parse(modelStr);
-        const messages: Message[] = JSON.parse(promptStr);
-        const images: Image[] = JSON.parse(imagesStr);
+		const model: Model = JSON.parse(modelStr);
+		const messages: Message[] = JSON.parse(promptStr);
+		const images: Image[] = JSON.parse(imagesStr);
 
-        let claudeImages: ClaudeImage[] = [];
+		let claudeImages: ClaudeImage[] = [];
 
-        if (images.length > 0) {
-            const textObject = {
-                type: "text",
-                text: messages[messages.length-1].content
-            }
-            claudeImages = images.map(image => ({
-                type: "image",
-                source: {
-                    type: "base64",
-                    media_type: image.media_type,
-                    data: image.data.split(',')[1],
-                }
-            }));
-            messages[messages.length-1].content = [textObject, ...claudeImages];
-        }
+		if (images.length > 0) {
+			const textObject = {
+				type: 'text',
+				text: messages[messages.length - 1].content
+			};
+			claudeImages = images.map((image) => ({
+				type: 'image',
+				source: {
+					type: 'base64',
+					media_type: image.media_type,
+					data: image.data.split(',')[1]
+				}
+			}));
+			messages[messages.length - 1].content = [textObject, ...claudeImages];
+		}
 
 		const stream = await client.messages.stream({
-            // @ts-ignore
+			// @ts-ignore
 			messages: messages,
 			model: model.param,
 			max_tokens: 1024

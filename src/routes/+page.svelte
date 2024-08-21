@@ -6,7 +6,7 @@
 	import { chatHistory, numberPrevMessages, inputPricing, chosenCompany } from '$lib/stores.ts';
 	import type {
 		Message,
-        Image,
+		Image,
 		Model,
 		UserChat,
 		Component,
@@ -19,7 +19,7 @@
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 	import { countTokens, roundToFirstTwoNonZeroDecimals } from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
-    import Settings from '$lib/components/Settings.svelte';
+	import Settings from '$lib/components/Settings.svelte';
 
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import StarsIcon from '$lib/components/icons/StarsIcon.svelte';
@@ -27,7 +27,7 @@
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 	import CopyIcon from '$lib/components/icons/CopyIcon.svelte';
-    import CopyIconFilled from '$lib/components/icons/CopyIconFilled.svelte';
+	import CopyIconFilled from '$lib/components/icons/CopyIconFilled.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import ArrowIcon from '$lib/components/icons/Arrow.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
@@ -40,12 +40,12 @@
 	let input_price: number = 0;
 	let mounted: boolean = false;
 	let placeholderVisible: boolean = true;
-    let promptBar: HTMLDivElement;
-    let promptBarHeight: number = 0;
-    let scrollAnimationFrame: number | null = null;
-    let isSettingsOpen: boolean = false;
-    let fileInput: HTMLInputElement;
-    let imagePreview: Image[] = [];
+	let promptBar: HTMLDivElement;
+	let promptBarHeight: number = 0;
+	let scrollAnimationFrame: number | null = null;
+	let isSettingsOpen: boolean = false;
+	let fileInput: HTMLInputElement;
+	let imagePreview: Image[] = [];
 
 	let companySelection: string[] = Object.keys(modelDictionary);
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -53,15 +53,15 @@
 	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
 	let chosenModel = gptModelSelection[0];
 
-	$: if ((prompt || prompt === '') || $numberPrevMessages) {
+	$: if (prompt || prompt === '' || $numberPrevMessages) {
 		if (mounted) {
-            fullPrompt = sanitizeHtml(prompt);
-            if ($numberPrevMessages > 0) {
-                fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages);
-                if (fullPrompt.length === 1 && fullPrompt[0].content.length === 0) {
-                    fullPrompt = prompt;
-                }
-            }
+			fullPrompt = sanitizeHtml(prompt);
+			if ($numberPrevMessages > 0) {
+				fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages);
+				if (fullPrompt.length === 1 && fullPrompt[0].content.length === 0) {
+					fullPrompt = prompt;
+				}
+			}
 			handleCountTokens(fullPrompt, chosenModel);
 		}
 	}
@@ -73,21 +73,21 @@
 	}
 
 	function handlePaste(event: ClipboardEvent): void {
-        event.preventDefault();
-        if (!event.clipboardData) return;
+		event.preventDefault();
+		if (!event.clipboardData) return;
 
-        const text = event.clipboardData.getData('text/plain');
-        
-        // Preserve whitespace and line breaks
-        const formattedText = text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\n/g, '<br>')
-            .replace(/\s/g, '&nbsp;');
+		const text = event.clipboardData.getData('text/plain');
 
-        document.execCommand('insertHTML', false, formattedText);
-    }
+		// Preserve whitespace and line breaks
+		const formattedText = text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/\n/g, '<br>')
+			.replace(/\s/g, '&nbsp;');
+
+		document.execCommand('insertHTML', false, formattedText);
+	}
 
 	function copyToClipboard(text: string): Promise<void> {
 		return new Promise((resolve, reject) => {
@@ -226,20 +226,20 @@
 
 	async function submitPrompt(): Promise<void> {
 		const plainText = prompt;
-        const imageArray = imagePreview;
+		const imageArray = imagePreview;
 		prompt = '';
-        imagePreview = [];
-        handleCountTokens(prompt, chosenModel);
+		imagePreview = [];
+		handleCountTokens(prompt, chosenModel);
 		if (plainText.trim()) {
 			let userPrompt: UserChat = {
 				by: 'user',
 				text: plainText.trim(),
-                image: imageArray
+				image: imageArray
 			};
 
 			// Add user's message to chat history
 			chatHistory.update((history) => [...history, userPrompt]);
-            scrollToBottom();
+			scrollToBottom();
 
 			// Initialize AI's response in chat history
 			chatHistory.update((history) => [
@@ -260,18 +260,18 @@
 
 				let uri: string;
 
-                switch ($chosenCompany) {
-                    case 'anthropic':
-                        uri = '/api/claude';
-                        break;
-                    case 'openAI':
-                        uri = '/api/chatGPT';
-                        break;
-                    default:
-                        uri = '/api/gemini';
-                }
+				switch ($chosenCompany) {
+					case 'anthropic':
+						uri = '/api/claude';
+						break;
+					case 'openAI':
+						uri = '/api/chatGPT';
+						break;
+					default:
+						uri = '/api/gemini';
+				}
 
-                console.log(fullPrompt);
+				console.log(fullPrompt);
 
 				const response = await fetch(uri, {
 					method: 'POST',
@@ -281,7 +281,7 @@
 					body: JSON.stringify({
 						promptStr: JSON.stringify(fullPrompt),
 						modelStr: JSON.stringify(chosenModel),
-                        imagesStr: JSON.stringify(imageArray),
+						imagesStr: JSON.stringify(imageArray)
 					})
 				});
 
@@ -418,7 +418,7 @@
 							)
 						);
 
-                        if (isScrollingProgrammatically) scrollToBottom();
+						if (isScrollingProgrammatically) scrollToBottom();
 
 						prevText = '';
 					}
@@ -440,7 +440,7 @@
 						return item;
 					});
 				});
-                promptBarHeight = promptBar.offsetHeight;
+				promptBarHeight = promptBar.offsetHeight;
 				console.log($chatHistory[$chatHistory.length - 1]);
 			} catch (error) {
 				if (error instanceof Error) {
@@ -483,101 +483,104 @@
 		return isModelByCompany('google', modelName);
 	}
 
-    let isScrollingProgrammatically = false;
-    let lastScrollPos = 0;
+	let isScrollingProgrammatically = false;
+	let lastScrollPos = 0;
 
-    function scrollToBottom() {
-        // Cancel any ongoing animation frame
-        if (scrollAnimationFrame !== null) {
-            cancelAnimationFrame(scrollAnimationFrame);
-        }
+	function scrollToBottom() {
+		// Cancel any ongoing animation frame
+		if (scrollAnimationFrame !== null) {
+			cancelAnimationFrame(scrollAnimationFrame);
+		}
 
-        isScrollingProgrammatically = true;
+		isScrollingProgrammatically = true;
 
-        // Smooth scrolling function
-        const scrollStep = function() {
-            const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-            const targetPosition = document.documentElement.scrollHeight;
-            const distanceToScroll = targetPosition - currentScrollPosition - window.innerHeight;
+		// Smooth scrolling function
+		const scrollStep = function () {
+			const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+			const targetPosition = document.documentElement.scrollHeight;
+			const distanceToScroll = targetPosition - currentScrollPosition - window.innerHeight;
 
-            // Check if the end is reached, we can stop scrolling
-            if (distanceToScroll > 0 && isScrollingProgrammatically) {
-                // Calculate a variable scroll distance, using easing
-                const scrollDistance = Math.min(distanceToScroll, Math.max(1, distanceToScroll / 20)); // Dynamic distance based on remaining distance
+			// Check if the end is reached, we can stop scrolling
+			if (distanceToScroll > 0 && isScrollingProgrammatically) {
+				// Calculate a variable scroll distance, using easing
+				const scrollDistance = Math.min(
+					distanceToScroll,
+					Math.max(1, distanceToScroll / 20)
+				); // Dynamic distance based on remaining distance
 
-                window.scrollBy(0, scrollDistance);
-                scrollAnimationFrame = requestAnimationFrame(scrollStep);
-            } else {
-                // Clear frame if finished
-                scrollAnimationFrame = null;
-            }
-        };
+				window.scrollBy(0, scrollDistance);
+				scrollAnimationFrame = requestAnimationFrame(scrollStep);
+			} else {
+				// Clear frame if finished
+				scrollAnimationFrame = null;
+			}
+		};
 
-        // Initiate the scroll
-        scrollStep();
-    }
+		// Initiate the scroll
+		scrollStep();
+	}
 
-    function handleScroll(): void {
-        const currentScrollPos = window.pageYOffset || document.documentElement.scrollTop;
+	function handleScroll(): void {
+		const currentScrollPos = window.pageYOffset || document.documentElement.scrollTop;
 
-        // Check scroll direction
-        if (currentScrollPos < lastScrollPos) {
-            // Scrolling up, stop programmatic scrolling
-            isScrollingProgrammatically = false;
-        }
-        
-        lastScrollPos = currentScrollPos; // Update last scroll position
-    }
+		// Check scroll direction
+		if (currentScrollPos < lastScrollPos) {
+			// Scrolling up, stop programmatic scrolling
+			isScrollingProgrammatically = false;
+		}
 
-    function isAtBottom(): boolean {
-        const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-        const windowHeight = window.innerHeight;
-        const documentHeight = document.documentElement.scrollHeight;
+		lastScrollPos = currentScrollPos; // Update last scroll position
+	}
 
-        // Check if we are at the bottom of the page
-        return currentScrollPosition + windowHeight + 200 >= documentHeight;
-    }
+	function isAtBottom(): boolean {
+		const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+		const windowHeight = window.innerHeight;
+		const documentHeight = document.documentElement.scrollHeight;
 
-    function handleFileSelect(event: Event): void {
-        const target = event.target as HTMLInputElement;
-        const files = target.files;
-        if (files && files.length > 0) {
-            const newPreviews: Image[] = [];
-            
-            for (const file of files) {
-                const reader = new FileReader();
-                
-                reader.onload = (e: ProgressEvent<FileReader>) => {
-                    if (e.target?.result) {
-                        newPreviews.push({
-                            data: e.target.result as string,
-                            media_type: file.type,
-                        });
-                        
-                        // If all files have been processed, update the imagePreview array
-                        if (newPreviews.length === files.length) {
-                            imagePreview = [...imagePreview, ...newPreviews];
-                        }
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-    }
+		// Check if we are at the bottom of the page
+		return currentScrollPosition + windowHeight + 200 >= documentHeight;
+	}
 
-    $: if (promptBarHeight) {
-        if (isAtBottom()) {
-            scrollToBottom();
-        }
-    }
+	function handleFileSelect(event: Event): void {
+		const target = event.target as HTMLInputElement;
+		const files = target.files;
+		if (files && files.length > 0) {
+			const newPreviews: Image[] = [];
+
+			for (const file of files) {
+				const reader = new FileReader();
+
+				reader.onload = (e: ProgressEvent<FileReader>) => {
+					if (e.target?.result) {
+						newPreviews.push({
+							data: e.target.result as string,
+							media_type: file.type
+						});
+
+						// If all files have been processed, update the imagePreview array
+						if (newPreviews.length === files.length) {
+							imagePreview = [...imagePreview, ...newPreviews];
+						}
+					}
+				};
+				reader.readAsDataURL(file);
+			}
+		}
+	}
+
+	$: if (promptBarHeight) {
+		if (isAtBottom()) {
+			scrollToBottom();
+		}
+	}
 
 	onMount(() => {
 		mounted = true;
-        scrollToBottom();
-        if (promptBar) {
-            // Get the height of the prompt bar
-            promptBarHeight = promptBar.offsetHeight;
-        }
+		scrollToBottom();
+		if (promptBar) {
+			// Get the height of the prompt bar
+			promptBarHeight = promptBar.offsetHeight;
+		}
 	});
 </script>
 
@@ -589,37 +592,36 @@
 	on:click={() => {
 		closeAllTabWidths();
 	}}
-    on:scroll={() => {handleScroll();}}
+	on:scroll={() => {
+		handleScroll();
+	}}
 />
 
-<div class="main" class:settings-open={isSettingsOpen} >
+<div class="main" class:settings-open={isSettingsOpen}>
 	<Sidebar {companySelection} {gptModelSelection} bind:chosenModel bind:isSettingsOpen />
-    {#if isSettingsOpen}
-        <Settings bind:isOpen={isSettingsOpen} />
-    {/if}
+	{#if isSettingsOpen}
+		<Settings bind:isOpen={isSettingsOpen} />
+	{/if}
 	<div class="body">
-		<div 
-            class="chat-history"
-            style="padding-bottom: {100 + (promptBarHeight*.3)}px;"
-        >
+		<div class="chat-history" style="padding-bottom: {100 + promptBarHeight * 0.3}px;">
 			{#each $chatHistory as chat, chatIndex}
 				{#if isUserChatComponent(chat) && chat.by === 'user'}
-                <div class="user-chat-wrapper">
-                    {#if chat.image}
-                    <div class="user-images">
-                        {#each chat.image as image}
-                        <div class="user-image-container">
-                            <img src={image.data} alt="user file" />
-                        </div>
-                        {/each}
-                    </div>
-                    {/if}
-					<div class="user-chat">
-                        <p>
-                            {@html chat.text}
-						</p>
+					<div class="user-chat-wrapper">
+						{#if chat.image}
+							<div class="user-images">
+								{#each chat.image as image}
+									<div class="user-image-container">
+										<img src={image.data} alt="user file" />
+									</div>
+								{/each}
+							</div>
+						{/if}
+						<div class="user-chat">
+							<p>
+								{@html chat.text}
+							</p>
+						</div>
 					</div>
-                </div>
 				{:else}
 					<div class="llm-container">
 						{#if isLlmChatComponent(chat)}
@@ -632,10 +634,9 @@
 									<img src={ClaudeIcon} alt="Claude's icon" />
 								</div>
 							{:else if isModelOpenAI(chat.by)}
-								<div class="gpt-icon-container {chat.loading
-                                    ? 'rotateLoading'
-                                    : ''}"
-                                >
+								<div
+									class="gpt-icon-container {chat.loading ? 'rotateLoading' : ''}"
+								>
 									<ChatGPTIcon color="var(--text-color)" />
 								</div>
 							{:else if isModelGoogle(chat.by)}
@@ -662,106 +663,117 @@
 											<div class="code-header">
 												<p>{component.language}</p>
 
-                                                <div class="right-side-container">
-                                                    {#if component.tabWidth}
-                                                        <div
-                                                            class="tab-width-container"
-                                                            role="button"
-                                                            tabindex="0"
-                                                            on:click|stopPropagation={() =>
-                                                                (component.tabWidthOpen = true)}
-                                                            on:keydown|stopPropagation={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    component.tabWidthOpen = true;
-                                                                }
-                                                            }}
-                                                        >
-                                                            <div class="dropdown-icon">
-                                                                <DropdownIcon
-                                                                    color="rgba(255,255,255,0.65)"
-                                                                />
-                                                            </div>
-                                                            <p>
-                                                                Tab width: {component.tabWidth}
-                                                            </p>
-                                                            {#if component.tabWidthOpen}
-                                                                <div class="tab-width-open-container">
-                                                                    {#each [2, 4, 6, 8] as tabWidth}
-                                                                        <div
-                                                                            role="button"
-                                                                            tabindex="0"
-                                                                            on:click|stopPropagation={() => {
-                                                                                component.code =
-                                                                                    changeTabWidth(
-                                                                                        component.code,
-                                                                                        tabWidth
-                                                                                    );
-                                                                                component.tabWidth =
-                                                                                    tabWidth;
-                                                                                component.tabWidthOpen = false;
-                                                                            }}
-                                                                            on:keydown|stopPropagation={(
-                                                                                e
-                                                                            ) => {
-                                                                                if (e.key === 'Enter') {
-                                                                                    component.code =
-                                                                                        changeTabWidth(
-                                                                                            component.code,
-                                                                                            tabWidth
-                                                                                        );
-                                                                                    component.tabWidth =
-                                                                                        tabWidth;
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            <p>Tab width: {tabWidth}</p>
-                                                                        </div>
-                                                                    {/each}
-                                                                </div>
-                                                            {/if}
-                                                        </div>
-                                                    {/if}
-                                                    <div
-                                                        class="copy-code-container"
-                                                        role="button"
-                                                        tabindex="0"
-                                                        on:click={() => {
-                                                            copyToClipboard(
-                                                                component.code ? component.code : ''
-                                                            );
-                                                            updateChatHistoryToCopiedState(
-                                                                chatIndex,
-                                                                componentIndex
-                                                            );
-                                                        }}
-                                                        on:keydown|stopPropagation={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                copyToClipboard(
-                                                                    component.code ? component.code : ''
-                                                                );
-                                                                updateChatHistoryToCopiedState(
-                                                                    chatIndex,
-                                                                    componentIndex
-                                                                );
-                                                            }
-                                                        }}
-                                                    >
-                                                        {#if component.copied}
-                                                            <div class="tick-container">
-                                                                <TickIcon
-                                                                    color="rgba(255,255,255,0.65)"
-                                                                />
-                                                            </div>
-                                                        {:else}
-                                                            <div class="copy-icon-container">
-                                                                <CopyIcon
-                                                                    color="rgba(255,255,255,0.65)"
-                                                                />
-                                                            </div>
-                                                        {/if}
-                                                        <p>{component.copied ? 'copied' : 'copy'}</p>
-                                                    </div>
-                                                </div>
+												<div class="right-side-container">
+													{#if component.tabWidth}
+														<div
+															class="tab-width-container"
+															role="button"
+															tabindex="0"
+															on:click|stopPropagation={() =>
+																(component.tabWidthOpen = true)}
+															on:keydown|stopPropagation={(e) => {
+																if (e.key === 'Enter') {
+																	component.tabWidthOpen = true;
+																}
+															}}
+														>
+															<div class="dropdown-icon">
+																<DropdownIcon
+																	color="rgba(255,255,255,0.65)"
+																/>
+															</div>
+															<p>
+																Tab width: {component.tabWidth}
+															</p>
+															{#if component.tabWidthOpen}
+																<div
+																	class="tab-width-open-container"
+																>
+																	{#each [2, 4, 6, 8] as tabWidth}
+																		<div
+																			role="button"
+																			tabindex="0"
+																			on:click|stopPropagation={() => {
+																				component.code =
+																					changeTabWidth(
+																						component.code,
+																						tabWidth
+																					);
+																				component.tabWidth =
+																					tabWidth;
+																				component.tabWidthOpen = false;
+																			}}
+																			on:keydown|stopPropagation={(
+																				e
+																			) => {
+																				if (
+																					e.key ===
+																					'Enter'
+																				) {
+																					component.code =
+																						changeTabWidth(
+																							component.code,
+																							tabWidth
+																						);
+																					component.tabWidth =
+																						tabWidth;
+																				}
+																			}}
+																		>
+																			<p>
+																				Tab width: {tabWidth}
+																			</p>
+																		</div>
+																	{/each}
+																</div>
+															{/if}
+														</div>
+													{/if}
+													<div
+														class="copy-code-container"
+														role="button"
+														tabindex="0"
+														on:click={() => {
+															copyToClipboard(
+																component.code ? component.code : ''
+															);
+															updateChatHistoryToCopiedState(
+																chatIndex,
+																componentIndex
+															);
+														}}
+														on:keydown|stopPropagation={(e) => {
+															if (e.key === 'Enter') {
+																copyToClipboard(
+																	component.code
+																		? component.code
+																		: ''
+																);
+																updateChatHistoryToCopiedState(
+																	chatIndex,
+																	componentIndex
+																);
+															}
+														}}
+													>
+														{#if component.copied}
+															<div class="tick-container">
+																<TickIcon
+																	color="rgba(255,255,255,0.65)"
+																/>
+															</div>
+														{:else}
+															<div class="copy-icon-container">
+																<CopyIcon
+																	color="rgba(255,255,255,0.65)"
+																/>
+															</div>
+														{/if}
+														<p>
+															{component.copied ? 'copied' : 'copy'}
+														</p>
+													</div>
+												</div>
 											</div>
 											<div class="code-content">
 												<HighlightAuto
@@ -867,31 +879,30 @@
 		</div>
 
 		<div class="prompt-bar-wrapper">
-            {#if imagePreview.length > 0}
-                <div class="image-viewer">
-                    {#each imagePreview as image, index}
-                        <div class="image-container">
-                            <img src={image.data} alt="Uploaded file" />
-                            <div 
-                                class="close-button" 
-                                role="button"
-                                tabindex="0"
-                                on:click={() => {
-                                    imagePreview = imagePreview.filter((_, i) => i !== index);
-                                }}
-                                on:keydown={(event) => {
-                                    if (event.key === 'Enter') {
-                                        imagePreview = imagePreview.filter((_, i) => i !== index);
-                                        
-                                    }
-                                }}
-                            >
-                                <CrossIcon color="var(--text-color-light)" />
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-            {/if}
+			{#if imagePreview.length > 0}
+				<div class="image-viewer">
+					{#each imagePreview as image, index}
+						<div class="image-container">
+							<img src={image.data} alt="Uploaded file" />
+							<div
+								class="close-button"
+								role="button"
+								tabindex="0"
+								on:click={() => {
+									imagePreview = imagePreview.filter((_, i) => i !== index);
+								}}
+								on:keydown={(event) => {
+									if (event.key === 'Enter') {
+										imagePreview = imagePreview.filter((_, i) => i !== index);
+									}
+								}}
+							>
+								<CrossIcon color="var(--text-color-light)" />
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/if}
 			<div
 				class="prompt-bar"
 				style="
@@ -900,66 +911,66 @@
 			>
 				<div
 					contenteditable
-                    bind:this={promptBar}
+					bind:this={promptBar}
 					role="textbox"
 					tabindex="0"
 					bind:innerHTML={prompt}
 					on:input={() => {
-                        placeholderVisible = false;
-                        promptBarHeight = promptBar.offsetHeight;
-                    }}
+						placeholderVisible = false;
+						promptBarHeight = promptBar.offsetHeight;
+					}}
 					on:keydown={(event) => {
 						if (event.key === 'Enter' && !event.shiftKey) {
 							event.preventDefault();
 							submitPrompt();
-                            promptBarHeight = promptBar.offsetHeight;
+							promptBarHeight = promptBar.offsetHeight;
 						}
 					}}
 					on:paste={handlePaste}
 				/>
-                <div class="prompt-bar-buttons-container">
-                    <div
-                        class="button"
-                        role="button"
-                        tabindex="0"
-                        on:click={() => {
-                            fileInput.click();
-                        }}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                fileInput.click();
-                            }
-                        }}
-                    >   
-                        <AttachmentIcon color="var(--text-color)" strokeWidth={2} />
-                        <input
-                            bind:this={fileInput}
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            style="display: none;"
-                            on:change={handleFileSelect}
-                            multiple={$chosenCompany !== 'google'}
-                        />
-                        <div class="hover-tag">
-                            <p>Add file</p>
-                        </div>
-                    </div>
-                    <div
-                        class="button submit-container"
-                        role="button"
-                        tabindex="0"
-                        on:click={() => {
-                            if (!placeholderVisible) submitPrompt();
-                        }}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                if (!placeholderVisible) submitPrompt();
-                            }
-                        }}
-                    >
-                        <ArrowIcon color="var(--bg-color)" />
-                    </div>
-                </div>
+				<div class="prompt-bar-buttons-container">
+					<div
+						class="button"
+						role="button"
+						tabindex="0"
+						on:click={() => {
+							fileInput.click();
+						}}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								fileInput.click();
+							}
+						}}
+					>
+						<AttachmentIcon color="var(--text-color)" strokeWidth={2} />
+						<input
+							bind:this={fileInput}
+							type="file"
+							accept="image/jpeg,image/png,image/webp"
+							style="display: none;"
+							on:change={handleFileSelect}
+							multiple={$chosenCompany !== 'google'}
+						/>
+						<div class="hover-tag">
+							<p>Add file</p>
+						</div>
+					</div>
+					<div
+						class="button submit-container"
+						role="button"
+						tabindex="0"
+						on:click={() => {
+							if (!placeholderVisible) submitPrompt();
+						}}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								if (!placeholderVisible) submitPrompt();
+							}
+						}}
+					>
+						<ArrowIcon color="var(--bg-color)" />
+					</div>
+				</div>
 				<span
 					class="placeholder"
 					style="display: {placeholderVisible || prompt === '' ? 'block' : 'none'};"
@@ -978,11 +989,10 @@
 </div>
 
 <style lang="scss">
-
-    .settings-open {
-        // overflow-x: hidden;
-        height: 100vh;
-    }
+	.settings-open {
+		// overflow-x: hidden;
+		height: 100vh;
+	}
 
 	:global(h1, h2) {
 		margin: 0 0 20px 0;
@@ -1027,66 +1037,65 @@
 
 			.chat-history {
 				width: 850px;
-                height: 100%;
+				height: 100%;
 				margin: 50px auto 0 auto;
 				display: flex;
 				flex-direction: column;
 				gap: 50px;
 
-                
-                .user-chat-wrapper {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 5px;
-                    margin-left: auto;
-                    
-                    .user-images {
-                        display: grid;
-                        grid-template-columns: repeat(2, 1fr);
-                        max-width: 500px;
-                        width: max-content;
-                        margin-left: auto;
-                        
-                        .user-image-container {
-                            position: relative;
-                            flex: 0 0 auto;
-                            border-radius: 12px;
-                            overflow: hidden;
-                            width: 200px;
-                            height: 200px;
-                            margin-left: auto;
+				.user-chat-wrapper {
+					display: flex;
+					flex-direction: column;
+					gap: 5px;
+					margin-left: auto;
 
-                            &:first-child {
-                                grid-column: 2;
-                            }
-                            
-                            img {
-                                position: relative;
-                                width: 100%;
-                                height: 100%;
-                                object-fit: contain;
-                            }
-                        }
-                    }
-                    
-                    .user-chat {
-                        max-width: 500px;
-                        border-radius: 20px;
-                        background: var(--bg-color-light);
-                        padding: 10px 20px;
-                        width: max-content;
-                        word-break: break-word;
-                        overflow-wrap: break-word;
-                        margin-left: auto;
-                        
-                        p {
-                            padding: 0;
-                            margin: 0;
-                            font-weight: 300;
-                            line-height: 30px;
-                        }
-                    }
-                }
+					.user-images {
+						display: grid;
+						grid-template-columns: repeat(2, 1fr);
+						max-width: 500px;
+						width: max-content;
+						margin-left: auto;
+
+						.user-image-container {
+							position: relative;
+							flex: 0 0 auto;
+							border-radius: 12px;
+							overflow: hidden;
+							width: 200px;
+							height: 200px;
+							margin-left: auto;
+
+							&:first-child {
+								grid-column: 2;
+							}
+
+							img {
+								position: relative;
+								width: 100%;
+								height: 100%;
+								object-fit: contain;
+							}
+						}
+					}
+
+					.user-chat {
+						max-width: 500px;
+						border-radius: 20px;
+						background: var(--bg-color-light);
+						padding: 10px 20px;
+						width: max-content;
+						word-break: break-word;
+						overflow-wrap: break-word;
+						margin-left: auto;
+
+						p {
+							padding: 0;
+							margin: 0;
+							font-weight: 300;
+							line-height: 30px;
+						}
+					}
+				}
 
 				.llm-container {
 					display: flex;
@@ -1226,7 +1235,7 @@
 				width: 15px !important;
 				height: 15px !important;
 				background: var(--text-color);
-                transform: translateY(4px);
+				transform: translateY(4px);
 				border-radius: 50%;
 				display: flex;
 			}
@@ -1243,73 +1252,73 @@
 					border-top-left-radius: 10px;
 					border-top-right-radius: 10px;
 
-                    .right-side-container {
-                        display: flex;
-                        margin-left: auto;
+					.right-side-container {
+						display: flex;
+						margin-left: auto;
 
-                        .tab-width-container {
-                            position: relative;
-                            display: flex;
-                            gap: 5px;
-                            cursor: pointer;
+						.tab-width-container {
+							position: relative;
+							display: flex;
+							gap: 5px;
+							cursor: pointer;
 
-                            .dropdown-icon {
-                                width: 15px;
-                                height: 15px;
-                                transform: translateY(1px);
-                            }
+							.dropdown-icon {
+								width: 15px;
+								height: 15px;
+								transform: translateY(1px);
+							}
 
-                            .tab-width-open-container {
-                                position: absolute;
-                                top: 180%;
-                                width: 100%;
-                                display: flex;
-                                gap: 10px;
-                                flex-direction: column;
-                                background: rgba(46, 56, 66, 1);
-                                z-index: 100;
-                                border-radius: 5px;
-                                padding: 5px;
+							.tab-width-open-container {
+								position: absolute;
+								top: 180%;
+								width: 100%;
+								display: flex;
+								gap: 10px;
+								flex-direction: column;
+								background: rgba(46, 56, 66, 1);
+								z-index: 100;
+								border-radius: 5px;
+								padding: 5px;
 
-                                p {
-                                    margin: auto;
-                                    width: 100%;
-                                    text-align: center;
-                                    padding: 5px;
-                                    box-sizing: border-box;
-                                    border-radius: 5px;
+								p {
+									margin: auto;
+									width: 100%;
+									text-align: center;
+									padding: 5px;
+									box-sizing: border-box;
+									border-radius: 5px;
 
-                                    &:hover {
-                                        background: rgba(55, 66, 76, 1);
-                                    }
-                                }
-                            }
-                        }
+									&:hover {
+										background: rgba(55, 66, 76, 1);
+									}
+								}
+							}
+						}
 
-                        .copy-code-container {
-                            display: flex;
-                            margin-left: 30px;
-                            gap: 5px;
-                            cursor: pointer;
+						.copy-code-container {
+							display: flex;
+							margin-left: 30px;
+							gap: 5px;
+							cursor: pointer;
 
-                            .tick-container {
-                                width: 15px;
-                                height: 15px;
-                                border: 1px solid rgba(255, 255, 255, 0.65);
-                                border-radius: 50%;
-                                box-sizing: border-box;
-                            }
+							.tick-container {
+								width: 15px;
+								height: 15px;
+								border: 1px solid rgba(255, 255, 255, 0.65);
+								border-radius: 50%;
+								box-sizing: border-box;
+							}
 
-                            .copy-icon-container {
-                                height: 15px;
-                                width: 15px;
-                            }
+							.copy-icon-container {
+								height: 15px;
+								width: 15px;
+							}
 
-                            p {
-                                margin: auto 0;
-                            }
-                        }
-                    }
+							p {
+								margin: auto 0;
+							}
+						}
+					}
 
 					p {
 						margin: auto 0;
@@ -1338,62 +1347,62 @@
 				display: flex;
 				flex-direction: column;
 
-                .image-viewer {
-                    position: absolute;
-                    display: flex;
-                    gap: 10px;
-                    bottom: 110%;
-                    border-radius: 10px;
-                    background: var(--bg-color-light-opacity);
-                    width: 900px;
-                    padding: 10px;
-                    box-sizing: border-box;
-                    overflow-x: auto;
-                    white-space: nowrap;
+				.image-viewer {
+					position: absolute;
+					display: flex;
+					gap: 10px;
+					bottom: 110%;
+					border-radius: 10px;
+					background: var(--bg-color-light-opacity);
+					width: 900px;
+					padding: 10px;
+					box-sizing: border-box;
+					overflow-x: auto;
+					white-space: nowrap;
 
-                    .image-container {
-                        position: relative;
-                        width: 100px;
-                        height: 100px;
-                        flex: 0 0 auto;
-                        border-radius: 12px;
-                        overflow: hidden;
+					.image-container {
+						position: relative;
+						width: 100px;
+						height: 100px;
+						flex: 0 0 auto;
+						border-radius: 12px;
+						overflow: hidden;
 
-                        &:hover {
-                            outline: 1px solid var(--text-color);
+						&:hover {
+							outline: 1px solid var(--text-color);
 
-                            .close-button {
-                                opacity: 1;
-                            }
-                        }
+							.close-button {
+								opacity: 1;
+							}
+						}
 
-                        img {
-                            position: relative;
-                            width: 100%;
-                            height: 100%;
-                            object-fit: contain;
-                        }
+						img {
+							position: relative;
+							width: 100%;
+							height: 100%;
+							object-fit: contain;
+						}
 
-                        .close-button {
-                            position: absolute;
-                            top: 4px;
-                            left: 4px;
-                            width: 20px;
-                            height: 20px;
-                            // transform: translate(-10%, -10%);
-                            border-radius: 50%;
-                            cursor: pointer;
-                            box-sizing: border-box;
-                            background: var(--bg-color-light);
-                            opacity: 0;  
-                            outline: 1px solid var(--text-color);
-                            
-                            &:hover {
-                                background: rgb(255, 81, 81);
-                            }
-                        }
-                    }
-                }
+						.close-button {
+							position: absolute;
+							top: 4px;
+							left: 4px;
+							width: 20px;
+							height: 20px;
+							// transform: translate(-10%, -10%);
+							border-radius: 50%;
+							cursor: pointer;
+							box-sizing: border-box;
+							background: var(--bg-color-light);
+							opacity: 0;
+							outline: 1px solid var(--text-color);
+
+							&:hover {
+								background: rgb(255, 81, 81);
+							}
+						}
+					}
+				}
 
 				.prompt-bar {
 					position: relative;
@@ -1415,53 +1424,53 @@
 						width: 100%;
 					}
 
-                    .prompt-bar-buttons-container {
-                        margin: auto 10px 10px auto;
-                        display: flex;
+					.prompt-bar-buttons-container {
+						margin: auto 10px 10px auto;
+						display: flex;
 
-                        .button {
-                            position: relative;
-                            width: 40px !important;
-                            height: 40px !important;
-                            border-radius: 50%;
-                            padding: 5px;
-                            box-sizing: border-box;
-                            cursor: pointer;
-                            transition: background 0.1s ease;
+						.button {
+							position: relative;
+							width: 40px !important;
+							height: 40px !important;
+							border-radius: 50%;
+							padding: 5px;
+							box-sizing: border-box;
+							cursor: pointer;
+							transition: background 0.1s ease;
 
-                            &:hover {
-                                .hover-tag {
-                                    opacity: 1;
-                                }
-                            }
+							&:hover {
+								.hover-tag {
+									opacity: 1;
+								}
+							}
 
-                            .hover-tag {
-                                position: absolute;
-                                bottom: 130%;
-                                left: 50%;
-                                transform: translateX(-50%);
-                                background: var(--bg-color-light);
-                                padding: 10px;
-                                box-sizing: border-box;
-                                border-radius: 10px;
-                                width: max-content;
-                                opacity: 0;
-                                transition: all 0.5s ease-in;
+							.hover-tag {
+								position: absolute;
+								bottom: 130%;
+								left: 50%;
+								transform: translateX(-50%);
+								background: var(--bg-color-light);
+								padding: 10px;
+								box-sizing: border-box;
+								border-radius: 10px;
+								width: max-content;
+								opacity: 0;
+								transition: all 0.5s ease-in;
 
-                                p {
-                                    margin: 0;
-                                }
-                            }
-                        }
-                        
-                        .submit-container {
-                            background: var(--text-color);
-    
-                            &:hover {
-                                background: var(--text-color-hover);
-                            }
-                        }
-                    }
+								p {
+									margin: 0;
+								}
+							}
+						}
+
+						.submit-container {
+							background: var(--text-color);
+
+							&:hover {
+								background: var(--text-color-hover);
+							}
+						}
+					}
 
 					.placeholder {
 						position: absolute;

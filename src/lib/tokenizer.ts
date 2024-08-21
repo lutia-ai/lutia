@@ -19,9 +19,9 @@ export const countTokens = async (
 			clearTimeout(timer);
 		}
 
-        if (prompt === '') {
-            return resolve({ tokens: 0, price: 0 });
-        }
+		if (prompt === '') {
+			return resolve({ tokens: 0, price: 0 });
+		}
 
 		// Set a new timeout
 		timer = setTimeout(async () => {
@@ -34,7 +34,9 @@ export const countTokens = async (
 
 			// Encode the prompt and calculate the number of tokens
 			const encoding = tokenizer.encode(JSON.stringify(prompt));
-			const tokens = isGemini(model.param) ? Math.round(encoding.length*1.12) : encoding.length;
+			const tokens = isGemini(model.param)
+				? Math.round(encoding.length * 1.12)
+				: encoding.length;
 			const price =
 				(tokens / 1000000) * (io === 'input' ? model.input_price : model.output_price);
 
@@ -44,27 +46,27 @@ export const countTokens = async (
 };
 
 export function roundToFirstTwoNonZeroDecimals(num: number, roundUp: boolean = true): string {
-    let str = num.toFixed(20);
-    let match = str.match(/\.(?:0*[1-9]\d?|0*[1-9]\d|0+[1-9])\d?/);
+	let str = num.toFixed(20);
+	let match = str.match(/\.(?:0*[1-9]\d?|0*[1-9]\d|0+[1-9])\d?/);
 
-    if (match) {
-        let matchedPart = match[0];
-        let integerPart = str.split('.')[0];
-        let lastPosition = matchedPart.length - 1;
+	if (match) {
+		let matchedPart = match[0];
+		let integerPart = str.split('.')[0];
+		let lastPosition = matchedPart.length - 1;
 
-        if (roundUp && matchedPart.length < str.length - integerPart.length - 1) {
-            let nextDigit = parseInt(str[integerPart.length + matchedPart.length]);
-            if (nextDigit >= 5) {
-                let roundedPart = (
-                    parseFloat(matchedPart) + Math.pow(10, -lastPosition)
-                ).toFixed(lastPosition);
-                return (parseFloat(integerPart) + parseFloat(roundedPart)).toString();
-            }
-        }
-        let result = parseFloat(integerPart + matchedPart);
-        // check if the result is in scientific notation, if so then just return 0 as number is so small
-        return /^-?\d+(\.\d+)?[eE][-+]?\d+$/.test(result.toString()) ? '0' : result.toString();
-    } else {
-        return str.split('.')[0];
-    }
-};
+		if (roundUp && matchedPart.length < str.length - integerPart.length - 1) {
+			let nextDigit = parseInt(str[integerPart.length + matchedPart.length]);
+			if (nextDigit >= 5) {
+				let roundedPart = (parseFloat(matchedPart) + Math.pow(10, -lastPosition)).toFixed(
+					lastPosition
+				);
+				return (parseFloat(integerPart) + parseFloat(roundedPart)).toString();
+			}
+		}
+		let result = parseFloat(integerPart + matchedPart);
+		// check if the result is in scientific notation, if so then just return 0 as number is so small
+		return /^-?\d+(\.\d+)?[eE][-+]?\d+$/.test(result.toString()) ? '0' : result.toString();
+	} else {
+		return str.split('.')[0];
+	}
+}

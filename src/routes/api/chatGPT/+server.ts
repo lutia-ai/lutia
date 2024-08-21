@@ -1,11 +1,6 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
-import type {
-    Message,
-    Model,
-    Image,
-    ChatGPTImage
-} from '$lib/types';
+import type { Message, Model, Image, ChatGPTImage } from '$lib/types';
 
 const openAISecretKey = process.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
 
@@ -20,36 +15,36 @@ export async function POST({ request, locals }) {
 	try {
 		const { promptStr, modelStr, imagesStr } = await request.json();
 
-        const model: Model = JSON.parse(modelStr);
+		const model: Model = JSON.parse(modelStr);
 
-        let messages: Message[] = JSON.parse(promptStr);
+		let messages: Message[] = JSON.parse(promptStr);
 
-        const images: Image[] = JSON.parse(imagesStr);
+		const images: Image[] = JSON.parse(imagesStr);
 
-        let gptImages: ChatGPTImage[] = [];
+		let gptImages: ChatGPTImage[] = [];
 
-        if (images.length > 0) {
-            const textObject = {
-                type: "text",
-                text: messages[messages.length-1].content
-            }
-            gptImages = images.map(image => ({
-                type: "image_url",
-                image_url: {
-                    url: image.data,
-                }
-            }));
-            messages[messages.length-1].content = [textObject, ...gptImages];
-        }
+		if (images.length > 0) {
+			const textObject = {
+				type: 'text',
+				text: messages[messages.length - 1].content
+			};
+			gptImages = images.map((image) => ({
+				type: 'image_url',
+				image_url: {
+					url: image.data
+				}
+			}));
+			messages[messages.length - 1].content = [textObject, ...gptImages];
+		}
 
 		const stream = await openai.chat.completions.create({
 			model: model.param,
-            // @ts-ignore
+			// @ts-ignore
 			messages: messages,
 			stream: true
 		});
 
-        console.log(stream);
+		console.log(stream);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {

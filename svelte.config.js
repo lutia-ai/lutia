@@ -11,7 +11,7 @@ const config = {
 	},
 	preprocess: sveltePreprocess({
 		scss: {},
-        typescript: true,
+		typescript: true
 	})
 };
 

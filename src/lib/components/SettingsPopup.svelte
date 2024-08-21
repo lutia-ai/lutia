@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { darkMode, inputPricing } from '$lib/stores.ts';
 	import { get } from 'svelte/store';
-    import { signOut } from '@auth/sveltekit/client';
+	import { signOut } from '@auth/sveltekit/client';
 
 	import MoonIcon from '$lib/components/icons/MoonIcon.svelte';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
-    import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
-    import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
+	import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
+	import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 
-    export let isSettingsOpen: boolean 
+	export let isSettingsOpen: boolean;
 
 	let darkModeOn: boolean = get(darkMode);
 

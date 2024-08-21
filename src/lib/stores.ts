@@ -34,7 +34,6 @@ export function clearChatHistory() {
 	}
 }
 
-
 // Persistent store for the chosenCompany setting
 export const chosenCompany = createPersistentStore<string>('chosenCompany', 'anthropic');
 

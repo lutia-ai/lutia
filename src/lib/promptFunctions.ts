@@ -12,23 +12,25 @@ export function sanitizeHtml(html: string): string {
 	return tempDiv.textContent || tempDiv.innerText || '';
 }
 
-
 export function generateFullPrompt(
-    prompt: string,
-    currentHistory: { by: string; text: string }[],
-    numberPrevMessages: number,
+	prompt: string,
+	currentHistory: { by: string; text: string }[],
+	numberPrevMessages: number
 ): Message[] {
-    const fullPrompt: Message[] = [];
+	const fullPrompt: Message[] = [];
 
-    if (numberPrevMessages > 0 && currentHistory.length > 0) {
-        const prevMessages = currentHistory.slice(-(numberPrevMessages + 1) * 2, -2);
+	if (numberPrevMessages > 0 && currentHistory.length > 0) {
+		const prevMessages = currentHistory.slice(-(numberPrevMessages + 1) * 2, -2);
 
-        for (const { by, text } of prevMessages) {
-            fullPrompt.push({ role: by === 'user' ? 'user' : 'assistant', content: sanitizeHtml(text).trim() });
-        }
-    }
-    
-    fullPrompt.push({ role: 'user', content: sanitizeHtml(prompt).trim() });
+		for (const { by, text } of prevMessages) {
+			fullPrompt.push({
+				role: by === 'user' ? 'user' : 'assistant',
+				content: sanitizeHtml(text).trim()
+			});
+		}
+	}
 
-    return fullPrompt;
+	fullPrompt.push({ role: 'user', content: sanitizeHtml(prompt).trim() });
+
+	return fullPrompt;
 }

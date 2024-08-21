@@ -28,7 +28,7 @@ export type LlmChat = {
 export type UserChat = {
 	by: string;
 	text: string;
-    image?: Image[];
+	image?: Image[];
 };
 
 export type ChatComponent = LlmChat | UserChat;
@@ -36,7 +36,7 @@ export type ChatComponent = LlmChat | UserChat;
 export type Model = {
 	name: string;
 	param: string;
-    legacy: boolean;
+	legacy: boolean;
 	input_price: number;
 	output_price: number;
 	context_window: number;
@@ -50,16 +50,15 @@ interface ModelDetails {
 
 export type ModelDictionary = Record<string, ModelDetails>;
 
-
 export type UserSignupData = {
-    email: string;
-    name?: string;
-    password_hash?: string;
-}
+	email: string;
+	name?: string;
+	password_hash?: string;
+};
 
 export type ChatCompletionMessageParam = {
-    role: 'user' | 'assistant';
-    content: string;
+	role: 'user' | 'assistant';
+	content: string;
 };
 
 export type Message = {
@@ -68,29 +67,29 @@ export type Message = {
 };
 
 export type Image = {
-    data: string;
-    media_type: string;
-}
+	data: string;
+	media_type: string;
+};
 
 export type ChatGPTImage = {
-    type: "image_url";
-    image_url: {
-        url: string;
-    };
-}
+	type: 'image_url';
+	image_url: {
+		url: string;
+	};
+};
 
 export type ClaudeImage = {
-    type: "image"
-    source: {
-        type: "base64";
-        media_type: string;
-        data: string;
-    }
-}
+	type: 'image';
+	source: {
+		type: 'base64';
+		media_type: string;
+		data: string;
+	};
+};
 
 export type GeminiImage = {
-    inlineData: {
-        data: string;
-        mimeType: string;
-    }
-}
+	inlineData: {
+		data: string;
+		mimeType: string;
+	};
+};
