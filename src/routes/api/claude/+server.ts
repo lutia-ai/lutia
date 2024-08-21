@@ -1,9 +1,12 @@
 import { error } from '@sveltejs/kit';
 import Anthropic from '@anthropic-ai/sdk';
 import type {
-    FullPrompt,
-    ChatCompletionMessageParam
+    Message,
+    Model,
+    Image,
+    ClaudeImage
 } from '$lib/types';
+import fetch from 'node-fetch';
 
 const anthropicSecretKey =
 	process.env.VITE_ANTHROPIC_API_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY;
@@ -17,29 +20,34 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const { prompt, model } = await request.json();
+		const { promptStr, modelStr, imagesStr } = await request.json();
 
-        const parsedPrompt: FullPrompt = JSON.parse(prompt);
+        const model: Model = JSON.parse(modelStr);
+        const messages: Message[] = JSON.parse(promptStr);
+        const images: Image[] = JSON.parse(imagesStr);
 
-        const messages: ChatCompletionMessageParam[] = [];
+        let claudeImages: ClaudeImage[] = [];
 
-        if (parsedPrompt.prevMessages) {
-            parsedPrompt.prevMessages.forEach((message) => {
-                messages.push({
-                    role: message.by === 'user' ? 'user' : 'assistant',
-                    content: message.text
-                });
-            })
+        if (images.length > 0) {
+            const textObject = {
+                type: "text",
+                text: messages[messages.length-1].content
+            }
+            claudeImages = images.map(image => ({
+                type: "image",
+                source: {
+                    type: "base64",
+                    media_type: image.media_type,
+                    data: image.data.split(',')[1],
+                }
+            }));
+            messages[messages.length-1].content = [textObject, ...claudeImages];
         }
 
-        messages.push({
-            role: 'user',
-            content: parsedPrompt.prompt
-        });
-
 		const stream = await client.messages.stream({
+            // @ts-ignore
 			messages: messages,
-			model: model,
+			model: model.param,
 			max_tokens: 1024
 		});
 

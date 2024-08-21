@@ -1,8 +1,10 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import type {
-    FullPrompt,
-    ChatCompletionMessageParam
+    Message,
+    Model,
+    Image,
+    ChatGPTImage
 } from '$lib/types';
 
 const openAISecretKey = process.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
@@ -16,31 +18,38 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const { prompt, model } = await request.json();
+		const { promptStr, modelStr, imagesStr } = await request.json();
 
-        const parsedPrompt: FullPrompt = JSON.parse(prompt);
+        const model: Model = JSON.parse(modelStr);
 
-        const messages: ChatCompletionMessageParam[] = [];
+        let messages: Message[] = JSON.parse(promptStr);
 
-        if (parsedPrompt.prevMessages) {
-            parsedPrompt.prevMessages.forEach((message) => {
-                messages.push({
-                    role: message.by === 'user' ? 'user' : 'assistant',
-                    content: message.text
-                });
-            })
+        const images: Image[] = JSON.parse(imagesStr);
+
+        let gptImages: ChatGPTImage[] = [];
+
+        if (images.length > 0) {
+            const textObject = {
+                type: "text",
+                text: messages[messages.length-1].content
+            }
+            gptImages = images.map(image => ({
+                type: "image_url",
+                image_url: {
+                    url: image.data,
+                }
+            }));
+            messages[messages.length-1].content = [textObject, ...gptImages];
         }
 
-        messages.push({
-            role: 'user',
-            content: parsedPrompt.prompt
-        });
-
 		const stream = await openai.chat.completions.create({
-			model: model,
+			model: model.param,
+            // @ts-ignore
 			messages: messages,
 			stream: true
 		});
+
+        console.log(stream);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {

@@ -226,12 +226,15 @@
 
 	async function submitPrompt(): Promise<void> {
 		const plainText = prompt;
+        const imageArray = imagePreview;
 		prompt = '';
+        imagePreview = [];
         handleCountTokens(prompt, chosenModel);
 		if (plainText.trim()) {
 			let userPrompt: UserChat = {
 				by: 'user',
-				text: plainText.trim()
+				text: plainText.trim(),
+                image: imageArray
 			};
 
 			// Add user's message to chat history
@@ -276,8 +279,9 @@
 						'Content-Type': 'application/json'
 					},
 					body: JSON.stringify({
-						prompt: JSON.stringify(fullPrompt),
-						model: chosenModel.param
+						promptStr: JSON.stringify(fullPrompt),
+						modelStr: JSON.stringify(chosenModel),
+                        imagesStr: JSON.stringify(imageArray),
 					})
 				});
 
@@ -534,6 +538,33 @@
         return currentScrollPosition + windowHeight + 200 >= documentHeight;
     }
 
+    function handleFileSelect(event: Event): void {
+        const target = event.target as HTMLInputElement;
+        const files = target.files;
+        if (files && files.length > 0) {
+            const newPreviews: Image[] = [];
+            
+            for (const file of files) {
+                const reader = new FileReader();
+                
+                reader.onload = (e: ProgressEvent<FileReader>) => {
+                    if (e.target?.result) {
+                        newPreviews.push({
+                            data: e.target.result as string,
+                            media_type: file.type,
+                        });
+                        
+                        // If all files have been processed, update the imagePreview array
+                        if (newPreviews.length === files.length) {
+                            imagePreview = [...imagePreview, ...newPreviews];
+                        }
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+
     $: if (promptBarHeight) {
         if (isAtBottom()) {
             scrollToBottom();
@@ -542,6 +573,7 @@
 
 	onMount(() => {
 		mounted = true;
+        scrollToBottom();
         if (promptBar) {
             // Get the height of the prompt bar
             promptBarHeight = promptBar.offsetHeight;
@@ -560,20 +592,34 @@
     on:scroll={() => {handleScroll();}}
 />
 
-<div class="main">
-	<Sidebar {companySelection} {gptModelSelection} bind:chosenModel />
+<div class="main" class:settings-open={isSettingsOpen} >
+	<Sidebar {companySelection} {gptModelSelection} bind:chosenModel bind:isSettingsOpen />
+    {#if isSettingsOpen}
+        <Settings bind:isOpen={isSettingsOpen} />
+    {/if}
 	<div class="body">
 		<div 
             class="chat-history"
             style="padding-bottom: {100 + (promptBarHeight*.3)}px;"
         >
 			{#each $chatHistory as chat, chatIndex}
-				{#if chat.by === 'user'}
+				{#if isUserChatComponent(chat) && chat.by === 'user'}
+                <div class="user-chat-wrapper">
+                    {#if chat.image}
+                    <div class="user-images">
+                        {#each chat.image as image}
+                        <div class="user-image-container">
+                            <img src={image.data} alt="user file" />
+                        </div>
+                        {/each}
+                    </div>
+                    {/if}
 					<div class="user-chat">
-						<p>
-							{@html chat.text}
+                        <p>
+                            {@html chat.text}
 						</p>
 					</div>
+                </div>
 				{:else}
 					<div class="llm-container">
 						{#if isLlmChatComponent(chat)}
@@ -821,6 +867,31 @@
 		</div>
 
 		<div class="prompt-bar-wrapper">
+            {#if imagePreview.length > 0}
+                <div class="image-viewer">
+                    {#each imagePreview as image, index}
+                        <div class="image-container">
+                            <img src={image.data} alt="Uploaded file" />
+                            <div 
+                                class="close-button" 
+                                role="button"
+                                tabindex="0"
+                                on:click={() => {
+                                    imagePreview = imagePreview.filter((_, i) => i !== index);
+                                }}
+                                on:keydown={(event) => {
+                                    if (event.key === 'Enter') {
+                                        imagePreview = imagePreview.filter((_, i) => i !== index);
+                                        
+                                    }
+                                }}
+                            >
+                                <CrossIcon color="var(--text-color-light)" />
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+            {/if}
 			<div
 				class="prompt-bar"
 				style="
@@ -846,22 +917,49 @@
 					}}
 					on:paste={handlePaste}
 				/>
-
-				<div
-					class="submit-container"
-					role="button"
-					tabindex="0"
-					on:click={() => {
-						if (!placeholderVisible) submitPrompt();
-					}}
-					on:keydown|stopPropagation={(e) => {
-						if (e.key === 'Enter') {
-							if (!placeholderVisible) submitPrompt();
-						}
-					}}
-				>
-					<ArrowIcon color="var(--bg-color)" />
-				</div>
+                <div class="prompt-bar-buttons-container">
+                    <div
+                        class="button"
+                        role="button"
+                        tabindex="0"
+                        on:click={() => {
+                            fileInput.click();
+                        }}
+                        on:keydown|stopPropagation={(e) => {
+                            if (e.key === 'Enter') {
+                                fileInput.click();
+                            }
+                        }}
+                    >   
+                        <AttachmentIcon color="var(--text-color)" strokeWidth={2} />
+                        <input
+                            bind:this={fileInput}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            style="display: none;"
+                            on:change={handleFileSelect}
+                            multiple={$chosenCompany !== 'google'}
+                        />
+                        <div class="hover-tag">
+                            <p>Add file</p>
+                        </div>
+                    </div>
+                    <div
+                        class="button submit-container"
+                        role="button"
+                        tabindex="0"
+                        on:click={() => {
+                            if (!placeholderVisible) submitPrompt();
+                        }}
+                        on:keydown|stopPropagation={(e) => {
+                            if (e.key === 'Enter') {
+                                if (!placeholderVisible) submitPrompt();
+                            }
+                        }}
+                    >
+                        <ArrowIcon color="var(--bg-color)" />
+                    </div>
+                </div>
 				<span
 					class="placeholder"
 					style="display: {placeholderVisible || prompt === '' ? 'block' : 'none'};"
@@ -880,6 +978,12 @@
 </div>
 
 <style lang="scss">
+
+    .settings-open {
+        // overflow-x: hidden;
+        height: 100vh;
+    }
+
 	:global(h1, h2) {
 		margin: 0 0 20px 0;
 		padding: 0;
@@ -929,23 +1033,60 @@
 				flex-direction: column;
 				gap: 50px;
 
-				.user-chat {
-					border-radius: 20px;
-					background: var(--bg-color-light);
-					padding: 10px 20px;
-					width: max-content;
-					max-width: 500px;
-					margin-left: auto;
-					word-break: break-word;
-					overflow-wrap: break-word;
+                
+                .user-chat-wrapper {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                    margin-left: auto;
+                    
+                    .user-images {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        max-width: 500px;
+                        width: max-content;
+                        margin-left: auto;
+                        
+                        .user-image-container {
+                            position: relative;
+                            flex: 0 0 auto;
+                            border-radius: 12px;
+                            overflow: hidden;
+                            width: 200px;
+                            height: 200px;
+                            margin-left: auto;
 
-					p {
-						padding: 0;
-						margin: 0;
-						font-weight: 300;
-						line-height: 30px;
-					}
-				}
+                            &:first-child {
+                                grid-column: 2;
+                            }
+                            
+                            img {
+                                position: relative;
+                                width: 100%;
+                                height: 100%;
+                                object-fit: contain;
+                            }
+                        }
+                    }
+                    
+                    .user-chat {
+                        max-width: 500px;
+                        border-radius: 20px;
+                        background: var(--bg-color-light);
+                        padding: 10px 20px;
+                        width: max-content;
+                        word-break: break-word;
+                        overflow-wrap: break-word;
+                        margin-left: auto;
+                        
+                        p {
+                            padding: 0;
+                            margin: 0;
+                            font-weight: 300;
+                            line-height: 30px;
+                        }
+                    }
+                }
 
 				.llm-container {
 					display: flex;
@@ -1085,6 +1226,7 @@
 				width: 15px !important;
 				height: 15px !important;
 				background: var(--text-color);
+                transform: translateY(4px);
 				border-radius: 50%;
 				display: flex;
 			}
@@ -1196,6 +1338,63 @@
 				display: flex;
 				flex-direction: column;
 
+                .image-viewer {
+                    position: absolute;
+                    display: flex;
+                    gap: 10px;
+                    bottom: 110%;
+                    border-radius: 10px;
+                    background: var(--bg-color-light-opacity);
+                    width: 900px;
+                    padding: 10px;
+                    box-sizing: border-box;
+                    overflow-x: auto;
+                    white-space: nowrap;
+
+                    .image-container {
+                        position: relative;
+                        width: 100px;
+                        height: 100px;
+                        flex: 0 0 auto;
+                        border-radius: 12px;
+                        overflow: hidden;
+
+                        &:hover {
+                            outline: 1px solid var(--text-color);
+
+                            .close-button {
+                                opacity: 1;
+                            }
+                        }
+
+                        img {
+                            position: relative;
+                            width: 100%;
+                            height: 100%;
+                            object-fit: contain;
+                        }
+
+                        .close-button {
+                            position: absolute;
+                            top: 4px;
+                            left: 4px;
+                            width: 20px;
+                            height: 20px;
+                            // transform: translate(-10%, -10%);
+                            border-radius: 50%;
+                            cursor: pointer;
+                            box-sizing: border-box;
+                            background: var(--bg-color-light);
+                            opacity: 0;  
+                            outline: 1px solid var(--text-color);
+                            
+                            &:hover {
+                                background: rgb(255, 81, 81);
+                            }
+                        }
+                    }
+                }
+
 				.prompt-bar {
 					position: relative;
 					margin: auto auto 0 auto;
@@ -1216,21 +1415,53 @@
 						width: 100%;
 					}
 
-					.submit-container {
-						width: 40px !important;
-						height: 40px !important;
-						margin: auto 10px 10px auto;
-						background: var(--text-color);
-						border-radius: 50%;
-						padding: 5px;
-						box-sizing: border-box;
-						cursor: pointer;
-						transition: background 0.1s ease;
+                    .prompt-bar-buttons-container {
+                        margin: auto 10px 10px auto;
+                        display: flex;
 
-						&:hover {
-							background: var(--text-color-hover);
-						}
-					}
+                        .button {
+                            position: relative;
+                            width: 40px !important;
+                            height: 40px !important;
+                            border-radius: 50%;
+                            padding: 5px;
+                            box-sizing: border-box;
+                            cursor: pointer;
+                            transition: background 0.1s ease;
+
+                            &:hover {
+                                .hover-tag {
+                                    opacity: 1;
+                                }
+                            }
+
+                            .hover-tag {
+                                position: absolute;
+                                bottom: 130%;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                background: var(--bg-color-light);
+                                padding: 10px;
+                                box-sizing: border-box;
+                                border-radius: 10px;
+                                width: max-content;
+                                opacity: 0;
+                                transition: all 0.5s ease-in;
+
+                                p {
+                                    margin: 0;
+                                }
+                            }
+                        }
+                        
+                        .submit-container {
+                            background: var(--text-color);
+    
+                            &:hover {
+                                background: var(--text-color-hover);
+                            }
+                        }
+                    }
 
 					.placeholder {
 						position: absolute;
