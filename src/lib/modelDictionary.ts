@@ -111,7 +111,8 @@ export const modelDictionary: ModelDictionary = {
 				output_price: 10.5,
 				input_price_large: 7, // Price increases for prompts 128k or longer
 				output_price_large: 21, // Price increases for prompts 128k or longer
-				context_window: 2000000
+				context_window: 2000000,
+                hub: 'Xenova/gpt-4o'
 			},
 			gemini15Flash: {
 				name: 'Gemini 1.5 Flash',
@@ -121,7 +122,8 @@ export const modelDictionary: ModelDictionary = {
 				output_price: 1.05,
 				input_price_large: 0.7, // Price increases for prompts 128k or longer
 				output_price_large: 2.1, // Price increases for prompts 128k or longer
-				context_window: 1000000
+				context_window: 1000000,
+                hub: 'Xenova/gpt-4o'
 			},
 			gemini1Pro: {
 				name: 'Gemini 1.0 Pro',
@@ -129,7 +131,8 @@ export const modelDictionary: ModelDictionary = {
 				legacy: true,
 				input_price: 0.5,
 				output_price: 1.5,
-				context_window: 1000000
+				context_window: 1000000,
+                hub: 'Xenova/gpt-4o'
 			}
 		}
 	},
