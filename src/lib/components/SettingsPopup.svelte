@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { darkMode, inputPricing } from '$lib/stores.ts';
 	import { get } from 'svelte/store';
     import { signOut } from '@auth/sveltekit/client';
@@ -6,25 +6,21 @@
 	import MoonIcon from '$lib/components/icons/MoonIcon.svelte';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
     import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
+    import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 
-	/** @type {boolean} */
-	let darkModeOn = get(darkMode);
+    export let isSettingsOpen: boolean 
 
-	/**
-	 * Toggles dark mode and updates the body class.
-	 * @param {boolean} darkModeOn - Whether dark mode should be enabled.
-	 */
-	function toggleDarkMode(darkModeOn) {
+	let darkModeOn: boolean = get(darkMode);
+
+	// Toggles dark mode and updates the body class.
+	function toggleDarkMode(darkModeOn: boolean) {
 		darkMode.set(darkModeOn);
 		window.document.body.classList.toggle('dark');
 	}
 
-	/**
-	 * Handles the toggle event from the Switch component.
-	 * @param {CustomEvent} event - The custom event from the Switch component.
-	 */
-	function handleToggle(event) {
+	// Handles the toggle event from the Switch component.
+	function handleToggle(event: CustomEvent) {
 		toggleDarkMode(event.detail.on);
 	}
 </script>
@@ -72,6 +68,24 @@
 	<div class="switch-wrapper">
 		<Switch bind:on={$inputPricing} />
 	</div>
+</div>
+<div
+	class="setting"
+	role="button"
+	tabindex="0"
+	on:click|stopPropagation={() => {
+		isSettingsOpen = true;
+	}}
+	on:keydown|stopPropagation={(e) => {
+		if (e.key === 'Enter') {
+			isSettingsOpen = true;
+		}
+	}}
+>
+	<div class="icon-container">
+		<SettingsIcon color="var(--text-color-light)" />
+	</div>
+	<p>Settings</p>
 </div>
 <div
 	class="setting"

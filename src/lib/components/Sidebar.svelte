@@ -15,7 +15,6 @@
 	} from '$lib/types';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 
-	import SettingsContainer from '$lib/components/SettingsContainer.svelte';
 	import Slider from '$lib/components/Slider.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 
@@ -24,10 +23,12 @@
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
+	import SettingsPopup from '$lib/components/SettingsPopup.svelte';
 
 	export let companySelection: string[];
 	export let gptModelSelection: Model[];
 	export let chosenModel: Model;
+    export let isSettingsOpen: boolean;
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
@@ -337,7 +338,7 @@
 			</div>
 			{#if settingsOpen}
 				<div class="settings-open-container">
-					<SettingsContainer />
+					<SettingsPopup bind:isSettingsOpen />
 				</div>
 			{/if}
 		</div>
