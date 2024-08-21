@@ -24,7 +24,7 @@ export async function POST({ request, locals }) {
 
 		const prompt = {
 			contents: messages.map((message) => ({
-				role: message.role,
+				role: message.role === 'user' ? message.role : 'model',
 				parts: [{ text: message.content }]
 			}))
 		};
