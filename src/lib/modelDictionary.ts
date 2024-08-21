@@ -19,7 +19,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 2.5,
 				output_price: 10,
 				context_window: 128000,
-				hub: 'Xenova/gpt-4o'
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 5
 			},
 			gpt4mini: {
 				name: 'GPT 4o mini',
@@ -28,7 +30,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 0.15,
 				output_price: 0.6,
 				context_window: 128000,
-				hub: 'Xenova/gpt-4o'
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 5
 			},
 			gpt4turbo: {
 				name: 'GPT 4 Turbo',
@@ -37,7 +41,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 10,
 				output_price: 30,
 				context_window: 128000,
-				hub: 'Xenova/gpt-4'
+				hub: 'Xenova/gpt-4',
+				handlesImages: true,
+				maxImages: 5
 			},
 			gpt4: {
 				name: 'GPT 4',
@@ -46,7 +52,8 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 30,
 				output_price: 60,
 				context_window: 8000,
-				hub: 'Xenova/gpt-4'
+				hub: 'Xenova/gpt-4',
+				handlesImages: false
 			},
 			gpt35turbo: {
 				name: 'GPT 3.5 Turbo',
@@ -55,7 +62,8 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 0.5,
 				output_price: 1.5,
 				context_window: 16385,
-				hub: 'Xenova/gpt-3.5-turbo'
+				hub: 'Xenova/gpt-3.5-turbo',
+				handlesImages: false
 			}
 		}
 	},
@@ -69,7 +77,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 3,
 				output_price: 15,
 				context_window: 200000,
-				hub: 'Xenova/claude-tokenizer'
+				hub: 'Xenova/claude-tokenizer',
+				handlesImages: true,
+				maxImages: 5
 			},
 			claude3Opus: {
 				name: 'Claude 3 Opus',
@@ -78,7 +88,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 15,
 				output_price: 75,
 				context_window: 200000,
-				hub: 'Xenova/claude-tokenizer'
+				hub: 'Xenova/claude-tokenizer',
+				handlesImages: true,
+				maxImages: 5
 			},
 			claude3Sonnet: {
 				name: 'Claude 3 Sonnet',
@@ -87,7 +99,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 3,
 				output_price: 15,
 				context_window: 200000,
-				hub: 'Xenova/claude-tokenizer'
+				hub: 'Xenova/claude-tokenizer',
+				handlesImages: true,
+				maxImages: 5
 			},
 			claude3Haiku: {
 				name: 'Claude 3 Haiku',
@@ -96,7 +110,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 0.25,
 				output_price: 1.25,
 				context_window: 200000,
-				hub: 'Xenova/claude-tokenizer'
+				hub: 'Xenova/claude-tokenizer',
+				handlesImages: true,
+				maxImages: 5
 			}
 		}
 	},
@@ -112,7 +128,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price_large: 7, // Price increases for prompts 128k or longer
 				output_price_large: 21, // Price increases for prompts 128k or longer
 				context_window: 2000000,
-				hub: 'Xenova/gpt-4o'
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 1
 			},
 			gemini15Flash: {
 				name: 'Gemini 1.5 Flash',
@@ -123,7 +141,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price_large: 0.7, // Price increases for prompts 128k or longer
 				output_price_large: 2.1, // Price increases for prompts 128k or longer
 				context_window: 1000000,
-				hub: 'Xenova/gpt-4o'
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 1
 			},
 			gemini1Pro: {
 				name: 'Gemini 1.0 Pro',
@@ -132,7 +152,9 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 0.5,
 				output_price: 1.5,
 				context_window: 1000000,
-				hub: 'Xenova/gpt-4o'
+				hub: 'Xenova/gpt-4o',
+				handlesImages: false,
+				maxImages: 1
 			}
 		}
 	}

@@ -33,6 +33,7 @@
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
+	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
 
 	let prompt: string;
 	let fullPrompt: Message[] | string;
@@ -44,6 +45,7 @@
 	let promptBarHeight: number = 0;
 	let scrollAnimationFrame: number | null = null;
 	let isSettingsOpen: boolean = false;
+	let isDragging: boolean = false;
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
 
@@ -226,7 +228,7 @@
 
 	async function submitPrompt(): Promise<void> {
 		const plainText = prompt;
-		const imageArray = imagePreview;
+		const imageArray = chosenModel.handlesImages ? imagePreview : [];
 		prompt = '';
 		imagePreview = [];
 		handleCountTokens(prompt, chosenModel);
@@ -541,9 +543,15 @@
 		return currentScrollPosition + windowHeight + 200 >= documentHeight;
 	}
 
-	function handleFileSelect(event: Event): void {
-		const target = event.target as HTMLInputElement;
-		const files = target.files;
+	function handleFileSelect(event: Event | any): void {
+		let files;
+		if (isDragging) {
+			isDragging = false;
+			files = event.dataTransfer.files;
+		} else {
+			const target = event.target as HTMLInputElement;
+			files = target.files;
+		}
 		if (files && files.length > 0) {
 			const newPreviews: Image[] = [];
 
@@ -602,7 +610,14 @@
 	{#if isSettingsOpen}
 		<Settings bind:isOpen={isSettingsOpen} />
 	{/if}
-	<div class="body">
+	<div
+		class="body"
+		role="region"
+		on:dragover|preventDefault={(event) => {
+			event.preventDefault;
+			isDragging = true;
+		}}
+	>
 		<div class="chat-history" style="padding-bottom: {100 + promptBarHeight * 0.3}px;">
 			{#each $chatHistory as chat, chatIndex}
 				{#if isUserChatComponent(chat) && chat.by === 'user'}
@@ -879,28 +894,50 @@
 		</div>
 
 		<div class="prompt-bar-wrapper">
-			{#if imagePreview.length > 0}
-				<div class="image-viewer">
-					{#each imagePreview as image, index}
-						<div class="image-container">
-							<img src={image.data} alt="Uploaded file" />
-							<div
-								class="close-button"
-								role="button"
-								tabindex="0"
-								on:click={() => {
-									imagePreview = imagePreview.filter((_, i) => i !== index);
-								}}
-								on:keydown={(event) => {
-									if (event.key === 'Enter') {
+			{#if (imagePreview.length > 0 || isDragging) && chosenModel.handlesImages}
+				<div
+					class="image-viewer"
+					role="region"
+					on:drop={(event) => {
+						event.stopPropagation();
+						event.preventDefault();
+						handleFileSelect(event);
+					}}
+				>
+					{#if !isDragging}
+						{#each imagePreview as image, index}
+							<div class="image-container">
+								<img src={image.data} alt="Uploaded file" />
+								<div
+									class="close-button"
+									role="button"
+									tabindex="0"
+									on:click={() => {
 										imagePreview = imagePreview.filter((_, i) => i !== index);
-									}
-								}}
-							>
-								<CrossIcon color="var(--text-color-light)" />
+									}}
+									on:keydown={(event) => {
+										if (event.key === 'Enter') {
+											imagePreview = imagePreview.filter(
+												(_, i) => i !== index
+											);
+										}
+									}}
+								>
+									<CrossIcon color="var(--text-color-light)" />
+								</div>
+							</div>
+						{/each}
+					{:else}
+						<div class="image-drop-container">
+							<div class="image-icon">
+								<ImageIcon color="var(--text-color)" />
+							</div>
+							<div class="text-container">
+								<h1>Drop images here</h1>
+								<p>Max 5 files per chat</p>
 							</div>
 						</div>
-					{/each}
+					{/if}
 				</div>
 			{/if}
 			<div
@@ -929,32 +966,34 @@
 					on:paste={handlePaste}
 				/>
 				<div class="prompt-bar-buttons-container">
-					<div
-						class="button"
-						role="button"
-						tabindex="0"
-						on:click={() => {
-							fileInput.click();
-						}}
-						on:keydown|stopPropagation={(e) => {
-							if (e.key === 'Enter') {
+					{#if chosenModel.handlesImages}
+						<div
+							class="button"
+							role="button"
+							tabindex="0"
+							on:click={() => {
 								fileInput.click();
-							}
-						}}
-					>
-						<AttachmentIcon color="var(--text-color)" strokeWidth={2} />
-						<input
-							bind:this={fileInput}
-							type="file"
-							accept="image/jpeg,image/png,image/webp"
-							style="display: none;"
-							on:change={handleFileSelect}
-							multiple={$chosenCompany !== 'google'}
-						/>
-						<div class="hover-tag">
-							<p>Add file</p>
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									fileInput.click();
+								}
+							}}
+						>
+							<AttachmentIcon color="var(--text-color)" strokeWidth={2} />
+							<input
+								bind:this={fileInput}
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								style="display: none;"
+								on:change={handleFileSelect}
+								multiple={$chosenCompany !== 'google'}
+							/>
+							<div class="hover-tag">
+								<p>Add file</p>
+							</div>
 						</div>
-					</div>
+					{/if}
 					<div
 						class="button submit-container"
 						role="button"
@@ -1052,6 +1091,7 @@
 					.user-images {
 						display: grid;
 						grid-template-columns: repeat(2, 1fr);
+						gap: 20px;
 						max-width: 500px;
 						width: max-content;
 						margin-left: auto;
@@ -1061,11 +1101,11 @@
 							flex: 0 0 auto;
 							border-radius: 12px;
 							overflow: hidden;
-							width: 200px;
-							height: 200px;
+							max-width: 200px;
+							max-height: 200px;
 							margin-left: auto;
 
-							&:first-child {
+							&:only-child {
 								grid-column: 2;
 							}
 
@@ -1355,6 +1395,7 @@
 					border-radius: 10px;
 					background: var(--bg-color-light-opacity);
 					width: 900px;
+					min-height: 100px;
 					padding: 10px;
 					box-sizing: border-box;
 					overflow-x: auto;
@@ -1362,7 +1403,6 @@
 
 					.image-container {
 						position: relative;
-						width: 100px;
 						height: 100px;
 						flex: 0 0 auto;
 						border-radius: 12px;
@@ -1399,6 +1439,48 @@
 
 							&:hover {
 								background: rgb(255, 81, 81);
+							}
+						}
+					}
+
+					.image-drop-container {
+						height: inherit;
+						width: 100%;
+						border: 3px dashed var(--text-color-light);
+						border-radius: inherit;
+						display: flex;
+						gap: 20px;
+						background: var(--bg-color-light);
+
+						.image-icon {
+							margin: auto 0 auto auto;
+							width: 40px;
+							height: 40px;
+						}
+
+						.text-container {
+							margin: auto auto auto 0;
+							gap: 5px;
+							display: flex;
+							flex-direction: column;
+
+							h1,
+							p {
+								text-align: center;
+								margin: 0;
+								width: max-content;
+							}
+
+							h1 {
+								font-size: 24px;
+								font-weight: 400;
+								color: var(--text-color);
+							}
+
+							p {
+								font-size: 14px;
+								font-weight: 300;
+								color: var(--text-color-light);
 							}
 						}
 					}

@@ -41,6 +41,8 @@ export type Model = {
 	output_price: number;
 	context_window: number;
 	hub: string;
+	handlesImages: boolean;
+	maxImages: number;
 };
 
 interface ModelDetails {

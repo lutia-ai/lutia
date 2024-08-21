@@ -19,6 +19,7 @@
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
+	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
 	import SettingsPopup from '$lib/components/SettingsPopup.svelte';
@@ -182,11 +183,21 @@
 											<p>Legacy</p>
 										</div>
 									{/if}
-									{#if chosenModel.name === model.name}
-										<div class="selected">
-											<TickIcon color="var(--bg-color)" strokeWidth={3} />
+									{#if model.handlesImages}
+										<div class="image">
+											<ImageIcon color="var(--text-color" />
 										</div>
 									{/if}
+									<div
+										class="selected-container"
+										style="margin-left: {model.handlesImages ? '0' : 'auto'}"
+									>
+										{#if chosenModel.name === model.name}
+											<div class="selected">
+												<TickIcon color="var(--bg-color)" strokeWidth={3} />
+											</div>
+										{/if}
+									</div>
 								</div>
 							</div>
 						{/if}
@@ -456,7 +467,7 @@
 
 						.record {
 							display: flex;
-							gap: 10px;
+							gap: 20px;
 							align-items: center;
 							width: 100%;
 							height: 100%;
@@ -470,14 +481,14 @@
 							}
 
 							p {
-								flex: 10;
+								// flex: 10;
 								display: flex;
 								gap: 5px;
 								flex-direction: column;
 								// align-items: center;
 								margin: 0;
 								padding: 0;
-								width: 140px;
+								width: 200px;
 
 								.pricing {
 									display: flex;
@@ -487,7 +498,6 @@
 										text-align: left;
 										color: var(--text-color-light);
 										font-size: 12px;
-										// margin-top: 5px;
 									}
 								}
 							}
@@ -506,15 +516,24 @@
 								}
 							}
 
-							.selected {
-								// flex: 2;
-								margin-left: auto;
+							.image {
 								width: 20px;
 								height: 20px;
-								padding: 2px;
-								box-sizing: border-box;
-								border-radius: 50%;
-								background: var(--text-color);
+								margin-left: auto;
+							}
+
+							.selected-container {
+								width: 20px;
+								height: 20px;
+
+								.selected {
+									width: inherit;
+									height: inherit;
+									padding: 2px;
+									box-sizing: border-box;
+									border-radius: 50%;
+									background: var(--text-color);
+								}
 							}
 						}
 					}

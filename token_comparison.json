@@ -372,5 +372,73 @@
 				"price": 0.0048405
 			}
 		}
+	},
+	{
+		"timestamp": 1724277171237,
+		"input": {
+			"actual": 2,
+			"gpt": {
+				"tokens": 24,
+				"price": 0.00008400000000000001
+			}
+		},
+		"output": {
+			"actual": 12,
+			"gpt": {
+				"tokens": 15,
+				"price": 0.0001575
+			}
+		}
+	},
+	{
+		"timestamp": 1724277316361,
+		"input": {
+			"actual": 18,
+			"gpt": {
+				"tokens": 71,
+				"price": 0.0002485
+			}
+		},
+		"output": {
+			"actual": 43,
+			"gpt": {
+				"tokens": 43,
+				"price": 0.0004515
+			}
+		}
+	},
+	{
+		"timestamp": 1724277336032,
+		"input": {
+			"actual": 354,
+			"gpt": {
+				"tokens": 106,
+				"price": 0.000371
+			}
+		},
+		"output": {
+			"actual": 7,
+			"gpt": {
+				"tokens": 10,
+				"price": 0.000105
+			}
+		}
+	},
+	{
+		"timestamp": 1724277363256,
+		"input": {
+			"actual": 318,
+			"gpt": {
+				"tokens": 73,
+				"price": 0.000025549999999999998
+			}
+		},
+		"output": {
+			"actual": 5,
+			"gpt": {
+				"tokens": 7,
+				"price": 0.00000735
+			}
+		}
 	}
 ]
