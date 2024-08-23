@@ -25,7 +25,6 @@ export async function createUser(userData: Partial<User>): Promise<User> {
 export async function retrieveUserByEmail(email: string): Promise<User | null> {
 	const userRepository: Repository<User> = AppDataSource.getRepository(User);
 	email = handleGmail(email);
-
 	return await userRepository.findOne({ where: { email } });
 }
 

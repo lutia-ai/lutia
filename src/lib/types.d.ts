@@ -45,8 +45,10 @@ export type Model = {
 	maxImages: number;
 };
 
+export type ModelLogos = Record<string, { logo: any }>;
+
 interface ModelDetails {
-	logo: any;
+	// logo: any;
 	models: Record<Model>;
 }
 
@@ -94,4 +96,24 @@ export type GeminiImage = {
 		data: string;
 		mimeType: string;
 	};
+};
+
+type SerializedMessage = {
+	id: number;
+	prompt: string;
+	response: string;
+	pictures: Image[];
+};
+
+type SerializedApiRequest = {
+	id: number;
+	apiProvider: typeof ApiProvider;
+	apiModel: typeof ApiModel;
+	requestTimestamp: string;
+	inputTokens: number;
+	inputCost: string;
+	outputTokens: number;
+	outputCost: string;
+	totalCost: string;
+	message: SerializedMessage | null;
 };

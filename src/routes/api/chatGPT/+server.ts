@@ -1,19 +1,25 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import type { Message, Model, Image, ChatGPTImage } from '$lib/types';
+import { countTokens } from '$lib/tokenizer';
+import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
+import { Message as MessageEntity } from '$lib/db/entities/Message';
+import { createMessage } from '$lib/db/crud/message';
 
 const openAISecretKey = process.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
 
 const openai = new OpenAI({ apiKey: openAISecretKey });
 
 export async function POST({ request, locals }) {
-	let session = await locals.getSession();
-	if (!session) {
+	let session = await locals.auth();
+	if (!session || !session.user || !session.user.email) {
 		throw error(401, 'Forbidden');
 	}
 
 	try {
-		const { promptStr, modelStr, imagesStr } = await request.json();
+		const { plainTextPrompt, promptStr, modelStr, imagesStr } = await request.json();
+
+		const plainText: string = JSON.parse(plainTextPrompt);
 
 		const model: Model = JSON.parse(modelStr);
 
@@ -44,17 +50,45 @@ export async function POST({ request, locals }) {
 			stream: true
 		});
 
-		console.log(stream);
+		const inputGPTCount = await countTokens(messages, model, 'input');
+		let outputTokens: number = 0;
+		const chunks: string[] = [];
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
 				for await (const chunk of stream) {
 					const content = chunk.choices[0]?.delta?.content || '';
 					if (content) {
+						outputTokens++;
+						chunks.push(content);
 						controller.enqueue(new TextEncoder().encode(`${content}`));
 					}
 				}
 				controller.close();
+
+				const response = chunks.join('');
+				const outputCost = (outputTokens / 1000000) * model.input_price;
+
+				// NEED TO ADD IMAGE COST CALCULATOR
+
+				const message: MessageEntity = await createMessage(
+					plainText,
+					response,
+					images
+					// need to add previous message ids
+				);
+
+				await createApiRequestEntry(
+					session.user!.email!,
+					'openAI',
+					model.name,
+					inputGPTCount.tokens,
+					inputGPTCount.price,
+					outputTokens,
+					outputCost,
+					inputGPTCount.price + outputCost,
+					message
+				);
 			}
 		});
 

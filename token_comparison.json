@@ -440,5 +440,158 @@
 				"price": 0.00000735
 			}
 		}
+	},
+	{
+		"timestamp": 1724317521845,
+		"input": {
+			"actual": 292,
+			"gpt": {
+				"tokens": 40,
+				"price": 0.00014000000000000001
+			}
+		},
+		"output": {
+			"actual": 1726,
+			"gpt": {
+				"tokens": 2023,
+				"price": 0.0212415
+			}
+		}
+	},
+	{
+		"timestamp": 1724318588226,
+		"input": {
+			"actual": 557,
+			"gpt": {
+				"tokens": 599,
+				"price": 0.0020965000000000003
+			}
+		},
+		"output": {
+			"actual": 912,
+			"gpt": {
+				"tokens": 1047,
+				"price": 0.0109935
+			}
+		}
+	},
+	{
+		"timestamp": 1724318668469,
+		"input": {
+			"actual": 295,
+			"gpt": {
+				"tokens": 300,
+				"price": 0.00105
+			}
+		},
+		"output": {
+			"actual": 597,
+			"gpt": {
+				"tokens": 704,
+				"price": 0.007392
+			}
+		}
+	},
+	{
+		"timestamp": 1724318728672,
+		"input": {
+			"actual": 915,
+			"gpt": {
+				"tokens": 1095,
+				"price": 0.0038325
+			}
+		},
+		"output": {
+			"actual": 345,
+			"gpt": {
+				"tokens": 401,
+				"price": 0.0042105
+			}
+		}
+	},
+	{
+		"timestamp": 1724318974532,
+		"input": {
+			"actual": 280,
+			"gpt": {
+				"tokens": 335,
+				"price": 0.0011725
+			}
+		},
+		"output": {
+			"actual": 502,
+			"gpt": {
+				"tokens": 580,
+				"price": 0.00609
+			}
+		}
+	},
+	{
+		"timestamp": 1724319258382,
+		"input": {
+			"actual": 29,
+			"gpt": {
+				"tokens": 54,
+				"price": 0.00018899999999999999
+			}
+		},
+		"output": {
+			"actual": 291,
+			"gpt": {
+				"tokens": 342,
+				"price": 0.003591
+			}
+		}
+	},
+	{
+		"timestamp": 1724320761247,
+		"input": {
+			"actual": 1563,
+			"gpt": {
+				"tokens": 1494,
+				"price": 0.005229
+			}
+		},
+		"output": {
+			"actual": 1202,
+			"gpt": {
+				"tokens": 1382,
+				"price": 0.014511
+			}
+		}
+	},
+	{
+		"timestamp": 1724320832186,
+		"input": {
+			"actual": 2808,
+			"gpt": {
+				"tokens": 3035,
+				"price": 0.0106225
+			}
+		},
+		"output": {
+			"actual": 529,
+			"gpt": {
+				"tokens": 601,
+				"price": 0.0063105
+			}
+		}
+	},
+	{
+		"timestamp": 1724321210785,
+		"input": {
+			"actual": 1211,
+			"gpt": {
+				"tokens": 1072,
+				"price": 0.003752
+			}
+		},
+		"output": {
+			"actual": 505,
+			"gpt": {
+				"tokens": 597,
+				"price": 0.0062685
+			}
+		}
 	}
 ]

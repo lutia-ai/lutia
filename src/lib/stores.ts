@@ -27,11 +27,6 @@ function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
 export function clearChatHistory() {
 	// Clear the chatHistory store
 	chatHistory.set([]);
-
-	// Clear the chatHistory from localStorage
-	if (browser) {
-		localStorage.removeItem('chatHistory');
-	}
 }
 
 // Persistent store for the chosenCompany setting
@@ -43,8 +38,8 @@ export const darkMode = createPersistentStore<boolean>('darkMode', false);
 // Persistent store for showing the input pricing
 export const inputPricing = createPersistentStore<boolean>('inputPricing', false);
 
-// Persistent store for the chat history
-export const chatHistory = createPersistentStore<ChatComponent[]>('chatHistory', []);
+// store for the chat history
+export const chatHistory = writable<ChatComponent[]>([]);
 
 // Persistent store for the number of previous messages
 export const numberPrevMessages = createPersistentStore<number>('numberPrevMessages', 0);

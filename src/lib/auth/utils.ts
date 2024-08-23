@@ -53,7 +53,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 				if (account?.provider === 'google') {
 					try {
 						let existingUser = await retrieveUserByEmail(user.email!);
-						console.log(existingUser);
 						if (existingUser && !existingUser.oauth) {
 							throw new Error('ExistingNonOAuthUser');
 						}

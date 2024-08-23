@@ -73,10 +73,10 @@
 	class="setting"
 	role="button"
 	tabindex="0"
-	on:click|stopPropagation={() => {
+	on:click={() => {
 		isSettingsOpen = true;
 	}}
-	on:keydown|stopPropagation={(e) => {
+	on:keydown={(e) => {
 		if (e.key === 'Enter') {
 			isSettingsOpen = true;
 		}

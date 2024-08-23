@@ -23,6 +23,7 @@
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
 	import SettingsPopup from '$lib/components/SettingsPopup.svelte';
+	import { modelLogos } from '$lib/modelLogos';
 
 	export let companySelection: string[];
 	export let gptModelSelection: Model[];
@@ -90,7 +91,7 @@
 						if (e.key === 'Enter') companyDropdownOpen = true;
 					}}
 				>
-					<svelte:component this={modelDictionary[$chosenCompany].logo} />
+					<svelte:component this={modelLogos[$chosenCompany].logo} />
 				</div>
 				{#each companySelection as company, index}
 					{#if companyDropdownOpen}
@@ -111,7 +112,7 @@
 							out:fly={{ y: -50, duration: 450, delay: index * 50 }}
 						>
 							<div class="company-logo-container">
-								<svelte:component this={modelDictionary[company].logo} />
+								<svelte:component this={modelLogos[company].logo} />
 							</div>
 						</div>
 					{/if}

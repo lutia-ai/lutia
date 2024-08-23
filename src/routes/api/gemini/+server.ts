@@ -1,8 +1,9 @@
 import { error } from '@sveltejs/kit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Message, Model, Image, GeminiImage } from '$lib/types';
-import { countTokens } from '$lib/tokenizer';
-import fs from 'fs/promises';
+import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
+import { Message as MessageEntity } from '$lib/db/entities/Message';
+import { createMessage } from '$lib/db/crud/message';
 
 const googleSecretKey =
 	process.env.VITE_GOOGLE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_GEMINI_API_KEY;
@@ -10,14 +11,15 @@ const googleSecretKey =
 const genAI = new GoogleGenerativeAI(googleSecretKey);
 
 export async function POST({ request, locals }) {
-	let session = await locals.getSession();
+	let session = await locals.auth();
 	if (!session) {
 		throw error(401, 'Forbidden');
 	}
 
 	try {
-		const { promptStr, modelStr, imagesStr } = await request.json();
+		const { plainTextPrompt, promptStr, modelStr, imagesStr } = await request.json();
 
+		const plainText: string = JSON.parse(plainTextPrompt);
 		const messages: Message[] = JSON.parse(promptStr);
 		const model: Model = JSON.parse(modelStr);
 		const images: Image[] = JSON.parse(imagesStr);
@@ -48,20 +50,17 @@ export async function POST({ request, locals }) {
 		const chunks: string[] = [];
 
 		let result;
+		let inputCost: number = 0;
 		if (geminiImage) {
 			result = await genAIModel.generateContentStream([JSON.stringify(prompt), geminiImage]);
 			inputCountResult = await genAIModel.countTokens([JSON.stringify(prompt), geminiImage]);
-			// @ts-ignore
-			inputCountResult.price = (inputCountResult.totalTokens / 1000000) * model.input_price;
-			inputGPTCount = await countTokens(JSON.stringify(prompt), model, 'input');
+			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		} else {
 			// @ts-ignore
 			result = await genAIModel.generateContentStream(prompt);
 			// @ts-ignore
 			inputCountResult = await genAIModel.countTokens(prompt);
-			// @ts-ignore
-			inputCountResult.price = (inputCountResult.totalTokens / 1000000) * model.input_price;
-			inputGPTCount = await countTokens(JSON.stringify(prompt), model, 'input');
+			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		}
 
 		const readableStream = new ReadableStream({
@@ -76,55 +75,28 @@ export async function POST({ request, locals }) {
 				}
 				controller.close();
 
-				const completeResult = chunks.join('');
-				const outputCountResult = await genAIModel.countTokens(completeResult);
-				// @ts-ignore
-				outputCountResult.price =
-					(outputCountResult.totalTokens / 1000000) * model.output_price;
-				const outputGPTCount = await countTokens(completeResult, model, 'output');
+				const response = chunks.join('');
+				const outputCountResult = await genAIModel.countTokens(response);
+				const outputCost = (outputCountResult.totalTokens / 1000000) * model.output_price;
 
-				try {
-					// Read existing data from file, initializing with an empty array if it doesn't exist
-					let existingData = [];
-					try {
-						const fileContents = await fs.readFile('token_comparison.json', 'utf-8');
-						existingData = JSON.parse(fileContents);
-					} catch (err: any) {
-						if (err.code === 'ENOENT') {
-							// File doesn't exist, start with an empty array
-							existingData = [];
-						} else {
-							console.error('Error reading token data:', err);
-							// You might want to handle other errors differently
-						}
-					}
+				const message: MessageEntity = await createMessage(
+					plainText,
+					response,
+					images
+					// need to add previous message ids
+				);
 
-					// Prepare data to append
-					const dataToWrite = {
-						timestamp: Date.now(),
-						input: {
-							actual: inputCountResult.totalTokens,
-							gpt: inputGPTCount
-						},
-						output: {
-							actual: outputCountResult.totalTokens,
-							gpt: outputGPTCount
-						}
-					};
-
-					// Append the new data to the existing data
-					existingData.push(dataToWrite);
-
-					// Write the entire array back to the file
-					await fs.writeFile(
-						'token_comparison.json',
-						JSON.stringify(existingData, null, 2)
-					); // Pretty-print for readability
-					console.log('Token data appended to file successfully.');
-				} catch (err) {
-					console.error('Error:', err);
-					throw error(500, 'An error occurred while processing your request');
-				}
+				await createApiRequestEntry(
+					session.user!.email!,
+					'google',
+					model.name,
+					inputCountResult.totalTokens,
+					inputCost,
+					outputCountResult.totalTokens,
+					outputCost,
+					inputCost + outputCost,
+					message
+				);
 			}
 		});
 

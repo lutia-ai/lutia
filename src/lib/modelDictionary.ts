@@ -1,16 +1,7 @@
 import type { ModelDictionary } from '$lib/types';
-// @ts-ignore
-import AnthropicIcon from '$lib/components/icons/Anthropic.svelte';
-// @ts-ignore
-import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
-// @ts-ignore
-import OpenAiIcon from '$lib/components/icons/OpenAiIcon.svelte';
-// @ts-ignore
-import MetaIcon from '$lib/components/icons/MetaIcon.svelte';
 
 export const modelDictionary: ModelDictionary = {
 	openAI: {
-		logo: OpenAiIcon,
 		models: {
 			gpt4o: {
 				name: 'GPT 4o',
@@ -68,7 +59,6 @@ export const modelDictionary: ModelDictionary = {
 		}
 	},
 	anthropic: {
-		logo: AnthropicIcon,
 		models: {
 			claude35Sonnet: {
 				name: 'Claude 3.5 Sonnet',
@@ -117,7 +107,6 @@ export const modelDictionary: ModelDictionary = {
 		}
 	},
 	google: {
-		logo: GoogleIcon,
 		models: {
 			gemini15Pro: {
 				name: 'Gemini 1.5 Pro',
@@ -159,7 +148,6 @@ export const modelDictionary: ModelDictionary = {
 		}
 	}
 	// meta: {
-	// 	logo: MetaIcon,
 	// 	models: {
 	// 		gemini15Pro: {
 	// 			name: 'Gemini 1.5 Pro',

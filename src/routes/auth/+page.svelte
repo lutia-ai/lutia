@@ -151,7 +151,7 @@
 					required
 				/>
 			{/if}
-			{#if formData.password.length > 0 && !(eightChars && specialCharacter && capital && number)}
+			{#if showSignup && formData.password.length > 0 && !(eightChars && specialCharacter && capital && number)}
 				<div class="password-checks-container" transition:fade={{ duration: 500 }}>
 					<div class="item-container">
 						<div

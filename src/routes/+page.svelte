@@ -12,7 +12,8 @@
 		Component,
 		CodeComponent,
 		ChatComponent,
-		ModelDictionary
+		ModelDictionary,
+		LlmChat
 	} from '$lib/types';
 	import { isCodeComponent, isLlmChatComponent, isUserChatComponent } from '$lib/typeGuards';
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
@@ -34,6 +35,17 @@
 	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
+	import {
+		calculateTabWidth,
+		changeTabWidth,
+		closeAllTabWidths,
+		extractCodeBlock,
+		loadChatHistory
+	} from '$lib/chatHistory.js';
+
+	export let data;
+
+	chatHistory.set(loadChatHistory(data.apiRequests));
 
 	let prompt: string;
 	let fullPrompt: Message[] | string;
@@ -119,113 +131,6 @@
 		});
 	}
 
-	function updateChatHistoryToCopiedState(chatIndex: number, componentIndex: number): void {
-		chatHistory.update((history) => {
-			const newHistory: ChatComponent[] = [...history];
-			if (isLlmChatComponent(newHistory[chatIndex])) {
-				if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
-					newHistory[chatIndex].components[componentIndex].copied = true;
-				} else {
-					newHistory[chatIndex].copied = true;
-				}
-			}
-			return newHistory;
-		});
-
-		setTimeout(() => {
-			chatHistory.update((history) => {
-				const newHistory: ChatComponent[] = [...history];
-				if (isLlmChatComponent(newHistory[chatIndex])) {
-					if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
-						newHistory[chatIndex].components[componentIndex].copied = false;
-					} else {
-						newHistory[chatIndex].copied = false;
-					}
-				}
-				return newHistory;
-			});
-		}, 3000);
-	}
-
-	function extractCodeBlock(inputString: string): string {
-		const match = inputString.match(/```[a-zA-Z]+\n([\s\S]*)/);
-		if (!match) {
-			return '';
-		}
-		return match[1];
-	}
-
-	function calculateTabWidth(code: string): number {
-		const lines = code.split('\n');
-		let tabWidth: number = 0;
-
-		for (const line of lines) {
-			const match = line.match(/^( *)/);
-			if (match) {
-				const leadingSpaces = match[0];
-				const currentLevel = leadingSpaces.length;
-				if (currentLevel !== 0) {
-					tabWidth = currentLevel;
-					break;
-				}
-			}
-		}
-		return tabWidth;
-	}
-
-	function changeTabWidth(code: string, tabWidth: number = 4): string {
-		const lines = code.split('\n');
-		let originalIndentationLevel: number | null = null;
-
-		const adjustedLines = lines.map((line) => {
-			const match = line.match(/^( *)/);
-			if (match) {
-				const leadingSpaces = match[0];
-				const currentLevel = leadingSpaces.length;
-
-				// Initialize originalIndentationLevel if it's null and currentLevel is greater than 0
-				if (currentLevel > 0 && originalIndentationLevel === null) {
-					originalIndentationLevel = currentLevel;
-				}
-
-				// Ensure originalIndentationLevel is not null before performing division
-				if (originalIndentationLevel !== null) {
-					if (currentLevel === 0) {
-						return line;
-					} else {
-						const indentationUnits =
-							(currentLevel / originalIndentationLevel) * tabWidth;
-						const newIndentation = ' '.repeat(indentationUnits);
-						return newIndentation + line.trim();
-					}
-				}
-			}
-
-			// Return line as is if no match was found
-			return line;
-		});
-
-		return adjustedLines.join('\n');
-	}
-
-	function closeAllTabWidths(): void {
-		chatHistory.update((history) => {
-			return history.map((item) => {
-				if (isLlmChatComponent(item)) {
-					item.price_open = false;
-					if (Array.isArray(item.components)) {
-						item.components.forEach((component: Component) => {
-							if (isCodeComponent(component)) {
-								component.tabWidthOpen = false;
-							}
-						});
-					}
-				}
-				return item;
-			});
-		});
-	}
-
 	async function submitPrompt(): Promise<void> {
 		const plainText = prompt;
 		const imageArray = chosenModel.handlesImages ? imagePreview : [];
@@ -281,6 +186,7 @@
 						'Content-Type': 'application/json'
 					},
 					body: JSON.stringify({
+						plainTextPrompt: JSON.stringify(plainText),
 						promptStr: JSON.stringify(fullPrompt),
 						modelStr: JSON.stringify(chosenModel),
 						imagesStr: JSON.stringify(imageArray)
@@ -466,6 +372,37 @@
 		}
 	}
 
+	export function updateChatHistoryToCopiedState(
+		chatIndex: number,
+		componentIndex: number
+	): void {
+		chatHistory.update((history) => {
+			const newHistory: ChatComponent[] = [...history];
+			if (isLlmChatComponent(newHistory[chatIndex])) {
+				if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
+					newHistory[chatIndex].components[componentIndex].copied = true;
+				} else {
+					newHistory[chatIndex].copied = true;
+				}
+			}
+			return newHistory;
+		});
+
+		setTimeout(() => {
+			chatHistory.update((history) => {
+				const newHistory: ChatComponent[] = [...history];
+				if (isLlmChatComponent(newHistory[chatIndex])) {
+					if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
+						newHistory[chatIndex].components[componentIndex].copied = false;
+					} else {
+						newHistory[chatIndex].copied = false;
+					}
+				}
+				return newHistory;
+			});
+		}, 3000);
+	}
+
 	// Helper function to check if a model belongs to a specific company
 	function isModelByCompany(company: keyof ModelDictionary, modelName: string): boolean {
 		return Object.values(modelDictionary[company].models).some(
@@ -589,6 +526,7 @@
 			// Get the height of the prompt bar
 			promptBarHeight = promptBar.offsetHeight;
 		}
+		console.log($chatHistory);
 	});
 </script>
 
@@ -990,7 +928,7 @@
 								multiple={$chosenCompany !== 'google'}
 							/>
 							<div class="hover-tag">
-								<p>Add file</p>
+								<p>Attach image</p>
 							</div>
 						</div>
 					{/if}
@@ -1391,11 +1329,11 @@
 					position: absolute;
 					display: flex;
 					gap: 10px;
-					bottom: 110%;
+					top: -120px;
 					border-radius: 10px;
 					background: var(--bg-color-light-opacity);
 					width: 900px;
-					min-height: 100px;
+					height: 100px;
 					padding: 10px;
 					box-sizing: border-box;
 					overflow-x: auto;
@@ -1403,10 +1341,11 @@
 
 					.image-container {
 						position: relative;
-						height: 100px;
+						height: 100%;
 						flex: 0 0 auto;
 						border-radius: 12px;
 						overflow: hidden;
+						box-sizing: border-box;
 
 						&:hover {
 							outline: 1px solid var(--text-color);

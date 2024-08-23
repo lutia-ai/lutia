@@ -54,7 +54,9 @@
 
 		.settings-body {
 			background: var(--bg-color-light);
-			width: 1200px;
+			max-width: 1200px;
+			width: 80%;
+			min-width: 800px;
 			height: 800px;
 			margin: auto;
 			border-radius: 10px;
