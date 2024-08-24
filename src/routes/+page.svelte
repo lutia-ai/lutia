@@ -526,6 +526,7 @@
 							// If all files have been processed, update the imagePreview array
 							if (processedFiles === files.length) {
 								imagePreview = [...imagePreview, ...newPreviews];
+								fileInput.value = '';
 							}
 						};
 						img.src = e.target.result as string;
@@ -1065,11 +1066,11 @@
 					margin-right: auto;
 
 					.user-images {
-						display: grid;
-						grid-template-columns: repeat(2, 1fr);
+						display: flex;
+						flex-wrap: wrap;
 						gap: 20px;
 						max-width: 500px;
-						width: max-content;
+						width: 100%;
 						margin-left: auto;
 
 						.user-image-container {
@@ -1079,6 +1080,8 @@
 							overflow: hidden;
 							max-width: 200px;
 							max-height: 200px;
+							width: 100%;
+							// height: 100%;
 							margin-left: auto;
 
 							&:only-child {
@@ -1592,7 +1595,7 @@
 
 	@media (max-width: 710px) {
 		.user-chat {
-			width: 100% !important;
+			max-width: 100% !important;
 		}
 	}
 </style>

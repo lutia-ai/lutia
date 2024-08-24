@@ -7,11 +7,11 @@ import { deleteAllUserMessages } from '$lib/db/crud/message';
 export const load: PageServerLoad = async (event: RequestEvent) => {
 	const session = await event.locals.auth();
 
-	if (!session) {
+	if (!session || !session.user || !session.user.email) {
 		throw redirect(307, '/auth');
 	}
 
-	const apiRequests = await retrieveApiRequestsWithMessage(session.user!.email!);
+	const apiRequests = await retrieveApiRequestsWithMessage(session.user?.email);
 	const serializedApiRequests = apiRequests.map(serializeApiRequest);
 
 	// User is authenticated, continue with the load function
