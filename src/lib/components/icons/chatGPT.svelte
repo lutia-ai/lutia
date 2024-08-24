@@ -1,10 +1,12 @@
 <script>
 	export let color;
+	export let width = '100%';
+	export let height = '100%';
 </script>
 
 <svg
-	width="2500"
-	height="2500"
+	{width}
+	{height}
 	fill="none"
 	xmlns="http://www.w3.org/2000/svg"
 	stroke-width="1.5"
@@ -19,8 +21,10 @@
 
 <style lang="scss">
 	svg {
-		display: flex;
-		width: 100%;
-		height: 100%;
+		position: relative;
+		// display: flex;
+		// margin: auto;
+		// width: 28px;
+		// height: 28px;
 	}
 </style>

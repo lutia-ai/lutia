@@ -602,9 +602,7 @@
 						{#if isLlmChatComponent(chat)}
 							{#if isModelAnthropic(chat.by)}
 								<div
-									class="claude-icon-container {chat.loading
-										? 'rotateLoading'
-										: ''}"
+									class="llm-icon-container {chat.loading ? 'rotateLoading' : ''}"
 								>
 									<img src={ClaudeIcon} alt="Claude's icon" />
 								</div>
@@ -612,13 +610,15 @@
 								<div
 									class="gpt-icon-container {chat.loading ? 'rotateLoading' : ''}"
 								>
-									<ChatGPTIcon color="var(--text-color)" />
+									<ChatGPTIcon
+										color="var(--text-color)"
+										width="22px"
+										height="22px"
+									/>
 								</div>
 							{:else if isModelGoogle(chat.by)}
 								<div
-									class="gemini-icon-container {chat.loading
-										? 'rotateLoading'
-										: ''}"
+									class="llm-icon-container {chat.loading ? 'rotateLoading' : ''}"
 								>
 									<GeminiIcon />
 								</div>
@@ -854,58 +854,60 @@
 		</div>
 
 		<div class="prompt-bar-wrapper">
-			{#if (imagePreview.length > 0 || isDragging) && chosenModel.handlesImages}
-				<div
-					class="image-viewer"
-					role="region"
-					on:drop={(event) => {
-						event.stopPropagation();
-						event.preventDefault();
-						handleFileSelect(event);
-					}}
-				>
-					{#if !isDragging}
-						{#each imagePreview as image, index}
-							<div class="image-container">
-								<img src={image.data} alt="Uploaded file" />
-								<div
-									class="close-button"
-									role="button"
-									tabindex="0"
-									on:click={() => {
-										imagePreview = imagePreview.filter((_, i) => i !== index);
-									}}
-									on:keydown={(event) => {
-										if (event.key === 'Enter') {
-											imagePreview = imagePreview.filter(
-												(_, i) => i !== index
-											);
-										}
-									}}
-								>
-									<CrossIcon color="var(--text-color-light)" />
-								</div>
-							</div>
-						{/each}
-					{:else}
-						<div class="image-drop-container">
-							<div class="image-icon">
-								<ImageIcon color="var(--text-color)" />
-							</div>
-							<div class="text-container">
-								<h1>Drop images here</h1>
-								<p>Max 5 files per chat</p>
-							</div>
-						</div>
-					{/if}
-				</div>
-			{/if}
 			<div
 				class="prompt-bar"
 				style="
-					margin: {$inputPricing ? '' : 'auto auto 30px auto'};
-				"
+                    margin: {$inputPricing ? '' : 'auto auto 20px auto'};
+                "
 			>
+				{#if (imagePreview.length > 0 || isDragging) && chosenModel.handlesImages}
+					<div
+						class="image-viewer"
+						role="region"
+						on:drop={(event) => {
+							event.stopPropagation();
+							event.preventDefault();
+							handleFileSelect(event);
+						}}
+					>
+						{#if !isDragging}
+							{#each imagePreview as image, index}
+								<div class="image-container">
+									<img src={image.data} alt="Uploaded file" />
+									<div
+										class="close-button"
+										role="button"
+										tabindex="0"
+										on:click={() => {
+											imagePreview = imagePreview.filter(
+												(_, i) => i !== index
+											);
+										}}
+										on:keydown={(event) => {
+											if (event.key === 'Enter') {
+												imagePreview = imagePreview.filter(
+													(_, i) => i !== index
+												);
+											}
+										}}
+									>
+										<CrossIcon color="var(--text-color-light)" />
+									</div>
+								</div>
+							{/each}
+						{:else}
+							<div class="image-drop-container">
+								<div class="image-icon">
+									<ImageIcon color="var(--text-color)" />
+								</div>
+								<div class="text-container">
+									<h1>Drop images here</h1>
+									<p>Max 5 files per chat</p>
+								</div>
+							</div>
+						{/if}
+					</div>
+				{/if}
 				<div
 					contenteditable
 					bind:this={promptBar}
@@ -976,20 +978,21 @@
 				>
 					Enter a prompt here
 				</span>
+				{#if $inputPricing}
+					<div class="input-token-container">
+						<p>Input tokens: {input_tokens}</p>
+						<p class="right">
+							Input cost: ${roundToFirstTwoNonZeroDecimals(input_price)}
+						</p>
+					</div>
+				{/if}
 			</div>
-			{#if $inputPricing}
-				<div class="input-token-container">
-					<p>Input tokens: {input_tokens}</p>
-					<p class="right">Input cost: ${roundToFirstTwoNonZeroDecimals(input_price)}</p>
-				</div>
-			{/if}
 		</div>
 	</div>
 </div>
 
 <style lang="scss">
 	.settings-open {
-		// overflow-x: hidden;
 		height: 100vh;
 	}
 
@@ -1023,30 +1026,43 @@
 	}
 
 	.main {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
 		font-family: 'Albert Sans', sans-serif;
+		// overflow-x: hidden;
 
 		.body {
 			position: relative;
+			width: 100%;
+			background: var(--bg-color);
+			z-index: 1000;
 			display: flex;
+			flex-direction: column;
+			box-sizing: border-box;
 			padding-left: 60px;
 
 			.chat-history {
-				width: 850px;
+				position: relative;
+				width: 100%;
 				height: 100%;
-				margin: 50px auto 0 auto;
+				padding: 0 50px;
+				margin: 50px auto 240px auto;
 				display: flex;
 				flex-direction: column;
+				box-sizing: border-box;
 				gap: 50px;
 
 				.user-chat-wrapper {
 					display: flex;
 					flex-direction: column;
 					gap: 5px;
+					width: 100%;
+					max-width: 850px;
 					margin-left: auto;
+					margin-right: auto;
 
 					.user-images {
 						display: grid;
@@ -1079,11 +1095,14 @@
 					}
 
 					.user-chat {
+						position: relative;
 						max-width: 500px;
 						border-radius: 20px;
 						background: var(--bg-color-light);
 						padding: 10px 20px;
 						width: max-content;
+						flex-shrink: 1;
+						box-sizing: border-box;
 						word-break: break-word;
 						overflow-wrap: break-word;
 						margin-left: auto;
@@ -1098,37 +1117,39 @@
 				}
 
 				.llm-container {
+					position: relative;
 					display: flex;
 					gap: 20px;
+					width: 100%;
+					box-sizing: border-box;
+					max-width: 850px;
+					margin-left: auto;
+					margin-right: auto;
 
 					.gpt-icon-container {
-						width: 28px !important;
-						height: 18px !important;
+						position: relative;
+						width: 22px;
+						height: 22px;
+						display: flex;
 						border-radius: 50%;
-						padding: 8px 4px;
+						padding: 4px;
 						border: 1px solid var(--text-color-light-opacity);
 					}
 
-					.claude-icon-container {
-						width: 28px !important;
-						height: 18px !important;
-						padding: 8px 4px;
-
-						img {
-							width: 100%;
-						}
-					}
-
-					.gemini-icon-container {
+					.llm-icon-container {
+						position: relative;
+						display: flex;
 						width: 28px;
 						height: 28px;
+						padding-top: 4px;
+						flex: 1;
 					}
 
 					.llm-chat {
 						position: relative;
-						flex: 1;
-						width: 420px;
+						width: calc(100% - 50px);
 						padding: 3px;
+						box-sizing: border-box;
 
 						&:hover {
 							.chat-toolbar-container {
@@ -1341,121 +1362,127 @@
 				left: 50%;
 				bottom: 0%;
 				transform: translateX(calc(-50% + 30px));
-				width: 900px;
+				width: 100%;
 				background: var(--bg-color);
 				z-index: 1000;
 				display: flex;
 				flex-direction: column;
-
-				.image-viewer {
-					position: absolute;
-					display: flex;
-					gap: 10px;
-					top: -120px;
-					border-radius: 10px;
-					background: var(--bg-color-light-opacity);
-					width: 900px;
-					height: 100px;
-					padding: 10px;
-					box-sizing: border-box;
-					overflow-x: auto;
-					white-space: nowrap;
-
-					.image-container {
-						position: relative;
-						height: 100%;
-						flex: 0 0 auto;
-						border-radius: 12px;
-						overflow: hidden;
-						box-sizing: border-box;
-
-						&:hover {
-							outline: 1px solid var(--text-color);
-
-							.close-button {
-								opacity: 1;
-							}
-						}
-
-						img {
-							position: relative;
-							width: 100%;
-							height: 100%;
-							object-fit: contain;
-						}
-
-						.close-button {
-							position: absolute;
-							top: 4px;
-							left: 4px;
-							width: 20px;
-							height: 20px;
-							// transform: translate(-10%, -10%);
-							border-radius: 50%;
-							cursor: pointer;
-							box-sizing: border-box;
-							background: var(--bg-color-light);
-							opacity: 0;
-							outline: 1px solid var(--text-color);
-
-							&:hover {
-								background: rgb(255, 81, 81);
-							}
-						}
-					}
-
-					.image-drop-container {
-						height: inherit;
-						width: 100%;
-						border: 3px dashed var(--text-color-light);
-						border-radius: inherit;
-						display: flex;
-						gap: 20px;
-						background: var(--bg-color-light);
-
-						.image-icon {
-							margin: auto 0 auto auto;
-							width: 40px;
-							height: 40px;
-						}
-
-						.text-container {
-							margin: auto auto auto 0;
-							gap: 5px;
-							display: flex;
-							flex-direction: column;
-
-							h1,
-							p {
-								text-align: center;
-								margin: 0;
-								width: max-content;
-							}
-
-							h1 {
-								font-size: 24px;
-								font-weight: 400;
-								color: var(--text-color);
-							}
-
-							p {
-								font-size: 14px;
-								font-weight: 300;
-								color: var(--text-color-light);
-							}
-						}
-					}
-				}
+				box-sizing: border-box;
+				padding: 0 50px;
 
 				.prompt-bar {
 					position: relative;
-					margin: auto auto 0 auto;
-					width: 900px;
+					margin: auto auto 35px auto;
+					width: 100%;
+					max-width: 900px;
+					// min-width: 590px;
 					height: max-content;
+					box-sizing: border-box;
 					background: var(--bg-color-light);
 					border-radius: 30px;
 					display: flex;
 					gap: 5px;
+
+					.image-viewer {
+						position: absolute;
+						display: flex;
+						gap: 10px;
+						top: -120px;
+						border-radius: 10px;
+						left: 0%;
+						background: var(--bg-color-light-opacity);
+						width: 100%;
+						height: 100px;
+						padding: 10px;
+						box-sizing: border-box;
+						overflow-x: auto;
+						white-space: nowrap;
+
+						.image-container {
+							position: relative;
+							height: 100%;
+							flex: 0 0 auto;
+							border-radius: 12px;
+							overflow: hidden;
+							box-sizing: border-box;
+
+							&:hover {
+								outline: 1px solid var(--text-color);
+
+								.close-button {
+									opacity: 1;
+								}
+							}
+
+							img {
+								position: relative;
+								width: 100%;
+								height: 100%;
+								object-fit: contain;
+							}
+
+							.close-button {
+								position: absolute;
+								top: 4px;
+								left: 4px;
+								width: 20px;
+								height: 20px;
+								border-radius: 50%;
+								cursor: pointer;
+								box-sizing: border-box;
+								background: var(--bg-color-light);
+								opacity: 0;
+								outline: 1px solid var(--text-color);
+
+								&:hover {
+									background: rgb(255, 81, 81);
+								}
+							}
+						}
+
+						.image-drop-container {
+							height: 100%;
+							width: 100%;
+							border: 3px dashed var(--text-color-light);
+							border-radius: inherit;
+							display: flex;
+							box-sizing: border-box;
+							gap: 20px;
+							background: var(--bg-color-light);
+
+							.image-icon {
+								margin: auto 0 auto auto;
+								width: 40px;
+								height: 40px;
+							}
+
+							.text-container {
+								margin: auto auto auto 0;
+								gap: 5px;
+								display: flex;
+								flex-direction: column;
+
+								h1,
+								p {
+									text-align: center;
+									margin: 0;
+									width: max-content;
+								}
+
+								h1 {
+									font-size: 24px;
+									font-weight: 400;
+									color: var(--text-color);
+								}
+
+								p {
+									font-size: 14px;
+									font-weight: 300;
+									color: var(--text-color-light);
+								}
+							}
+						}
+					}
 
 					div[contenteditable] {
 						max-height: 350px;
@@ -1527,7 +1554,8 @@
 				}
 
 				.input-token-container {
-					position: relative;
+					position: absolute;
+					top: 100%;
 					display: flex;
 					width: 100%;
 					padding: 10px 50px 10px 50px;
@@ -1559,6 +1587,12 @@
 		}
 		to {
 			transform: rotate(360deg);
+		}
+	}
+
+	@media (max-width: 710px) {
+		.user-chat {
+			width: 100% !important;
 		}
 	}
 </style>

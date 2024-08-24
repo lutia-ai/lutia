@@ -20,8 +20,9 @@
 
 <style lang="scss">
 	svg {
-		display: flex;
-		width: 100%;
-		height: 100%;
+		position: relative;
+		// display: flex;
+		// width: 100%;
+		// height: 100%;
 	}
 </style>
