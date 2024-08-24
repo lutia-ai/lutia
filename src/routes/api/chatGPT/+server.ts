@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import type { Message, Model, Image, ChatGPTImage } from '$lib/types';
-import { countTokens } from '$lib/tokenizer';
+import { calculateGptVisionPricing, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { Message as MessageEntity } from '$lib/db/entities/Message';
 import { createMessage } from '$lib/db/crud/message';
@@ -29,6 +29,8 @@ export async function POST({ request, locals }) {
 
 		let gptImages: ChatGPTImage[] = [];
 
+		const inputGPTCount = await countTokens(messages, model, 'input');
+
 		if (images.length > 0) {
 			const textObject = {
 				type: 'text',
@@ -50,7 +52,6 @@ export async function POST({ request, locals }) {
 			stream: true
 		});
 
-		const inputGPTCount = await countTokens(messages, model, 'input');
 		let outputTokens: number = 0;
 		const chunks: string[] = [];
 
@@ -69,7 +70,13 @@ export async function POST({ request, locals }) {
 				const response = chunks.join('');
 				const outputCost = (outputTokens / 1000000) * model.input_price;
 
-				// NEED TO ADD IMAGE COST CALCULATOR
+				let imageCost = 0;
+				let imageTokens = 0;
+				for (const image of images) {
+					const result = calculateGptVisionPricing(image.width, image.height);
+					imageCost += result.price;
+					imageTokens += result.tokens;
+				}
 
 				const message: MessageEntity = await createMessage(
 					plainText,
@@ -82,11 +89,11 @@ export async function POST({ request, locals }) {
 					session.user!.email!,
 					'openAI',
 					model.name,
-					inputGPTCount.tokens,
-					inputGPTCount.price,
+					inputGPTCount.tokens + imageTokens,
+					inputGPTCount.price + imageCost,
 					outputTokens,
 					outputCost,
-					inputGPTCount.price + outputCost,
+					inputGPTCount.price + imageCost + outputCost,
 					message
 				);
 			}

@@ -1,7 +1,8 @@
-import { redirect, type RequestEvent } from '@sveltejs/kit';
+import { fail, redirect, type Actions, type RequestEvent } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { retrieveApiRequests } from '$lib/db/crud/apiRequest';
+import { retrieveApiRequestsWithMessage } from '$lib/db/crud/apiRequest';
 import { serializeApiRequest } from '$lib/chatHistory';
+import { deleteAllUserMessages } from '$lib/db/crud/message';
 
 export const load: PageServerLoad = async (event: RequestEvent) => {
 	const session = await event.locals.auth();
@@ -10,12 +11,30 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 		throw redirect(307, '/auth');
 	}
 
-	const apiRequests = await retrieveApiRequests(session.user!.email!);
+	const apiRequests = await retrieveApiRequestsWithMessage(session.user!.email!);
 	const serializedApiRequests = apiRequests.map(serializeApiRequest);
-	console.log(serializedApiRequests[serializedApiRequests.length - 1].message?.pictures[0]);
 
 	// User is authenticated, continue with the load function
 	return {
 		apiRequests: serializedApiRequests
 	};
 };
+
+export const actions = {
+	clearChatHistory: async (event) => {
+		// Access the auth object from locals
+		const session = await event.locals.auth();
+
+		// Now you can use the session information
+		if (!session || !session.user) {
+			throw redirect(307, '/auth');
+		}
+		const userId = session.user.id;
+
+		console.log(userId);
+
+		await deleteAllUserMessages(parseInt(userId!, 10));
+
+		return { success: true };
+	}
+} satisfies Actions;

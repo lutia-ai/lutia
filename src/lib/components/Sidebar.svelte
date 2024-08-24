@@ -4,7 +4,6 @@
 	import { signIn } from '@auth/sveltekit/client';
 	import {
 		numberPrevMessages,
-		clearChatHistory,
 		darkMode,
 		showPricing,
 		showLegacyModels,
@@ -24,6 +23,7 @@
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
 	import SettingsPopup from '$lib/components/SettingsPopup.svelte';
 	import { modelLogos } from '$lib/modelLogos';
+	import { clearChatHistory } from '$lib/chatHistory';
 
 	export let companySelection: string[];
 	export let gptModelSelection: Model[];

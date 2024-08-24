@@ -73,6 +73,8 @@ export type Message = {
 export type Image = {
 	data: string;
 	media_type: string;
+	width: number;
+	height: number;
 };
 
 export type ChatGPTImage = {

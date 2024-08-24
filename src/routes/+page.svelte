@@ -9,16 +9,19 @@
 		Image,
 		Model,
 		UserChat,
-		Component,
 		CodeComponent,
 		ChatComponent,
-		ModelDictionary,
-		LlmChat
+		ModelDictionary
 	} from '$lib/types';
 	import { isCodeComponent, isLlmChatComponent, isUserChatComponent } from '$lib/typeGuards';
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
-	import { countTokens, roundToFirstTwoNonZeroDecimals } from '$lib/tokenizer.ts';
+	import {
+		calculateClaudeImageCost,
+		calculateGptVisionPricing,
+		countTokens,
+		roundToFirstTwoNonZeroDecimals
+	} from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import Settings from '$lib/components/Settings.svelte';
 
@@ -67,7 +70,7 @@
 	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
 	let chosenModel = gptModelSelection[0];
 
-	$: if (prompt || prompt === '' || $numberPrevMessages) {
+	$: if (prompt || prompt === '' || $numberPrevMessages || imagePreview) {
 		if (mounted) {
 			fullPrompt = sanitizeHtml(prompt);
 			if ($numberPrevMessages > 0) {
@@ -82,8 +85,20 @@
 
 	async function handleCountTokens(fullPrompt: Message[] | string, chosenModel: Model) {
 		const result = await countTokens(fullPrompt, chosenModel);
-		input_tokens = result.tokens;
-		input_price = result.price;
+		let imageCost = 0;
+		let imageTokens = 0;
+		for (const image of imagePreview) {
+			let result;
+			if ($chosenCompany === 'openAI') {
+				result = calculateGptVisionPricing(image.width, image.height);
+			} else {
+				result = calculateClaudeImageCost(image.width, image.height, chosenModel);
+			}
+			imageCost += result.price;
+			imageTokens += result.tokens;
+		}
+		input_tokens = result.tokens + imageTokens;
+		input_price = result.price + imageCost;
 	}
 
 	function handlePaste(event: ClipboardEvent): void {
@@ -491,21 +506,29 @@
 		}
 		if (files && files.length > 0) {
 			const newPreviews: Image[] = [];
+			let processedFiles = 0;
 
 			for (const file of files) {
 				const reader = new FileReader();
 
 				reader.onload = (e: ProgressEvent<FileReader>) => {
 					if (e.target?.result) {
-						newPreviews.push({
-							data: e.target.result as string,
-							media_type: file.type
-						});
+						const img = new Image();
+						img.onload = () => {
+							newPreviews.push({
+								data: e.target!.result as string,
+								media_type: file.type,
+								width: img.width,
+								height: img.height
+							});
 
-						// If all files have been processed, update the imagePreview array
-						if (newPreviews.length === files.length) {
-							imagePreview = [...imagePreview, ...newPreviews];
-						}
+							processedFiles++;
+							// If all files have been processed, update the imagePreview array
+							if (processedFiles === files.length) {
+								imagePreview = [...imagePreview, ...newPreviews];
+							}
+						};
+						img.src = e.target.result as string;
 					}
 				};
 				reader.readAsDataURL(file);
@@ -526,7 +549,6 @@
 			// Get the height of the prompt bar
 			promptBarHeight = promptBar.offsetHeight;
 		}
-		console.log($chatHistory);
 	});
 </script>
 

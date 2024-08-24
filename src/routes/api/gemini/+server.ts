@@ -45,8 +45,6 @@ export async function POST({ request, locals }) {
 		const genAIModel = genAI.getGenerativeModel({ model: model.param });
 
 		let inputCountResult;
-		let inputGPTCount;
-
 		const chunks: string[] = [];
 
 		let result;
