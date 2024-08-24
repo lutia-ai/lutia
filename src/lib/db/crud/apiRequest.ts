@@ -1,5 +1,5 @@
 import { AppDataSource } from '../database';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { ApiModel, ApiProvider, ApiRequest } from '$lib/db/entities/ApiRequest';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import type { Message } from '../entities/Message';
@@ -62,6 +62,34 @@ export async function retrieveApiRequests(userEmail: string): Promise<ApiRequest
 		const apiRequests = await apiRequestRepository.find({
 			where: { user: { id: user.id } },
 			relations: ['message'] // Load related entities if needed
+		});
+
+		return apiRequests;
+	} catch (error) {
+		console.error('Error retrieving API requests for user:', error);
+		throw error;
+	}
+}
+
+export async function retrieveApiRequestsWithMessage(userEmail: string): Promise<ApiRequest[]> {
+	try {
+		// Get the repository for the ApiRequest entity
+		const apiRequestRepository: Repository<ApiRequest> =
+			AppDataSource.getRepository(ApiRequest);
+
+		// Find the ApiRequests associated with a specific user email
+		// Assuming you have a method to retrieve user by email
+		const user = await retrieveUserByEmail(userEmail);
+		if (!user) {
+			throw new Error('User not found');
+		}
+
+		const apiRequests = await apiRequestRepository.find({
+			where: {
+				user: { id: user.id },
+				message: { id: Not(IsNull()) } // This ensures that only ApiRequests with a message are returned
+			},
+			relations: ['message'] // Load related message entity
 		});
 
 		return apiRequests;

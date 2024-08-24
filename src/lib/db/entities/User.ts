@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { ApiRequest } from './ApiRequest';
 

@@ -6,9 +6,11 @@ import type {
 	UserChat,
 	Image
 } from '$lib/types';
+import { deserialize } from '$app/forms';
 import type { ApiRequest } from '$lib/db/entities/ApiRequest';
 import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
 import { chatHistory } from '$lib/stores';
+import type { ActionResult } from '@sveltejs/kit';
 
 export function serializeApiRequest(apiRequest: ApiRequest): SerializedApiRequest {
 	return {
@@ -184,4 +186,22 @@ export function closeAllTabWidths(): void {
 			return item;
 		});
 	});
+}
+
+export async function clearChatHistory() {
+	try {
+		const response = await fetch('?/clearChatHistory', {
+			method: 'POST',
+			body: new FormData()
+		});
+		const result: ActionResult = deserialize(await response.text());
+
+		if (result.type === 'success' && result.data) {
+			chatHistory.set([]);
+		} else if (result.type === 'failure' && result.data) {
+			console.error('Failed to clear chat history');
+		}
+	} catch (error) {
+		console.error('Error clearing chat history:', error);
+	}
 }

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
 import type { Image } from '$lib/types';
 

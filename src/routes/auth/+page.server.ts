@@ -2,8 +2,6 @@ import bcrypt from 'bcrypt';
 import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { retrieveUserByEmail, createUser } from '$lib/db/crud/user';
-import { signIn } from '$lib/auth/utils';
-import type { RequestEvent } from '@sveltejs/kit';
 
 export const actions = {
 	checkEmailExists: async ({ request }) => {

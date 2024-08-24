@@ -64,6 +64,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 							};
 							existingUser = await createUser(userData);
 						}
+						user.id = existingUser.id.toString();
 						return true;
 					} catch (error) {
 						if (error instanceof Error && error.message === 'ExistingNonOAuthUser') {
@@ -74,6 +75,18 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 					}
 				}
 				return true;
+			},
+			async jwt({ token, user }) {
+				if (user) {
+					token.user_id = user.id;
+				}
+				return token;
+			},
+			async session({ session, token }) {
+				if (token.user_id) {
+					(session.user as any).id = token.user_id;
+				}
+				return session;
 			}
 		},
 		pages: {

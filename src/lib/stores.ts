@@ -24,11 +24,6 @@ function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
 	return store;
 }
 
-export function clearChatHistory() {
-	// Clear the chatHistory store
-	chatHistory.set([]);
-}
-
 // Persistent store for the chosenCompany setting
 export const chosenCompany = createPersistentStore<string>('chosenCompany', 'anthropic');
 

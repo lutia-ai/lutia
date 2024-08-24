@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { User } from '$lib/db/entities/User';
 import { Message } from '$lib/db/entities/Message';
@@ -25,8 +27,6 @@ export const ApiProvider: Record<any, any> = createEnumFromUnion(Object.keys(mod
 
 // Create the ApiModelEnum from the model parameters
 export const ApiModel: Record<any, any> = createEnumFromUnion(modelParams);
-
-console.log(ApiProvider, ApiModel);
 
 @Entity()
 export class ApiRequest {
