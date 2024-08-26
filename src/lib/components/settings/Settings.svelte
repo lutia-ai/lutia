@@ -5,37 +5,37 @@
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import UsageIcon from '$lib/components/icons/UsageIcon.svelte';
 
-    import GeneralSettingsPage from '$lib/components/settings/GeneralSettingsPage.svelte';
-    import BillingSettingsPage from '$lib/components/settings/BillingSettingsPage.svelte';
-    import UsageSettingsPage from '$lib/components/settings/UsageSettingsPage.svelte';
-    import ContextSettingsPage from '$lib/components/settings/ContextSettingsPage.svelte';
+	import GeneralSettingsPage from '$lib/components/settings/GeneralSettingsPage.svelte';
+	import BillingSettingsPage from '$lib/components/settings/BillingSettingsPage.svelte';
+	import UsageSettingsPage from '$lib/components/settings/UsageSettingsPage.svelte';
+	import ContextSettingsPage from '$lib/components/settings/ContextSettingsPage.svelte';
 
 	export let isOpen: boolean;
-    
-    const settingsTabs = [
-        {
-            name: 'General',
-            icon: SettingsIcon,
-            window: GeneralSettingsPage,
-        },
-        {
-            name: 'Billing',
-            icon: DollarIcon,
-            window: BillingSettingsPage,
-        },
-        {
-            name: 'Usage',
-            icon: UsageIcon,
-            window: UsageSettingsPage,
-        },
-        {
-            name: 'Context',
-            icon: ContextWindowIcon,
-            window: ContextSettingsPage,
-        },
-    ];
 
-    let selectedTab = settingsTabs[0];
+	const settingsTabs = [
+		{
+			name: 'General',
+			icon: SettingsIcon,
+			window: GeneralSettingsPage
+		},
+		{
+			name: 'Billing',
+			icon: DollarIcon,
+			window: BillingSettingsPage
+		},
+		{
+			name: 'Usage',
+			icon: UsageIcon,
+			window: UsageSettingsPage
+		},
+		{
+			name: 'Context',
+			icon: ContextWindowIcon,
+			window: ContextSettingsPage
+		}
+	];
+
+	let selectedTab = settingsTabs[0];
 
 	// @ts-ignore
 	const wheel = (node: HTMLElement, options) => {
@@ -73,29 +73,31 @@
 		</div>
 		<div class="settings-body">
 			<div class="settings-sidebar">
-                {#each settingsTabs as tab}
-                    <div 
-                        class="sidebar-option"
-                        style="background: {selectedTab.name === tab.name ? 'var(--bg-color-light-opacity-alt)' : ''};"
-                        tabindex="0"
-                        role="button"
-                        on:click={()=> selectedTab = tab}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                selectedTab = tab;
-                            }
-                        }}
-                    >
-                        <div class="icon-container">
-                            <svelte:component this={tab.icon} color="var(--text-color-light)" />
-                        </div>
-                        <p>{tab.name}</p>
-                    </div>
-                {/each}
+				{#each settingsTabs as tab}
+					<div
+						class="sidebar-option"
+						style="background: {selectedTab.name === tab.name
+							? 'var(--bg-color-light-opacity-alt)'
+							: ''};"
+						tabindex="0"
+						role="button"
+						on:click={() => (selectedTab = tab)}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								selectedTab = tab;
+							}
+						}}
+					>
+						<div class="icon-container">
+							<svelte:component this={tab.icon} color="var(--text-color-light)" />
+						</div>
+						<p>{tab.name}</p>
+					</div>
+				{/each}
 			</div>
 			<div class="settings-page">
-                <svelte:component this={selectedTab.window} />
-            </div>
+				<svelte:component this={selectedTab.window} />
+			</div>
 		</div>
 	</div>
 </div>
@@ -165,7 +167,7 @@
 					border-right: 1px solid var(--text-color-light-opacity);
 					height: 100%;
 					border-radius: 10px;
-                    border-top-left-radius: 0;
+					border-top-left-radius: 0;
 					overflow: hidden;
 					flex: 1;
 
@@ -182,9 +184,9 @@
 							background-color: var(--bg-color-light-opacity-alt);
 						}
 
-                        &:first-child {
-                            border-top-left-radius: 0;
-                        }
+						&:first-child {
+							border-top-left-radius: 0;
+						}
 
 						.icon-container {
 							width: 25px;
@@ -202,7 +204,7 @@
 				.settings-page {
 					width: 100%;
 					height: 680px;
-                    padding: 10px;
+					padding: 10px;
 					flex: 4;
 				}
 			}

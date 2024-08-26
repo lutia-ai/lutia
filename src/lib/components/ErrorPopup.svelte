@@ -4,7 +4,7 @@
 
 	export let message: string = '';
 	export let subMessage: string | null = '';
-    export let color: 'success' | 'error' = 'error';
+	export let color: 'success' | 'error' = 'error';
 
 	let visible = false;
 
@@ -15,14 +15,14 @@
 	});
 
 	export function showError(
-        msg: string, 
-        subMsg: string | null = null, 
-        duration: number = 5000,
-        colorParam: 'success' | 'error' = 'error'
-    ) {
+		msg: string,
+		subMsg: string | null = null,
+		duration: number = 5000,
+		colorParam: 'success' | 'error' = 'error'
+	) {
 		message = msg;
 		subMessage = subMsg;
-        color = colorParam;
+		color = colorParam;
 		visible = true;
 		setTimeout(() => {
 			visible = false;
@@ -31,13 +31,13 @@
 </script>
 
 {#if visible}
-	<div 
-        class="error-container" 
-        style="
+	<div
+		class="error-container"
+		style="
             background: {color === 'success' ? 'rgb(27, 201, 27)' : '#ff4136'}
         "
-        transition:fade={{ duration: 300 }}
-    >
+		transition:fade={{ duration: 300 }}
+	>
 		<h1>{message}</h1>
 		{#if subMessage}
 			<p>{subMessage}</p>

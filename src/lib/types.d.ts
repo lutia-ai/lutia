@@ -119,17 +119,18 @@ type SerializedApiRequest = {
 	message: SerializedMessage | null;
 };
 
-
 type User = {
-    name: string;
-    email: string;
-    oauth: 'google' | ''; 
-}
+	name: string;
+	email: string;
+	oauth: 'google' | '';
+};
 
-type UserUpdateFields = Partial<Pick<User, 'email' | 'name' | 'password_hash' | 'oauth' | 'oauth_link_token'>>;
+type UserUpdateFields = Partial<
+	Pick<User, 'email' | 'name' | 'password_hash' | 'oauth' | 'oauth_link_token'>
+>;
 
 type UsageObject = {
-    date: string;
-    model: string;
-    value: number;
-  }
+	date: string;
+	model: string;
+	value: number;
+};

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { signIn } from '@auth/sveltekit/client';
-    import { darkMode, inputPricing } from '$lib/stores.ts';
+	import { onMount } from 'svelte';
+	import { signIn } from '@auth/sveltekit/client';
+	import { darkMode, inputPricing } from '$lib/stores.ts';
 	import { get } from 'svelte/store';
 	import { signOut } from '@auth/sveltekit/client';
 
@@ -17,7 +17,7 @@
 	import { goto } from '$app/navigation';
 
 	let darkModeOn: boolean = get(darkMode);
-    let userDetails: User;
+	let userDetails: User;
 
 	// Toggles dark mode and updates the body class.
 	function toggleDarkMode(darkModeOn: boolean) {
@@ -30,141 +30,143 @@
 		toggleDarkMode(event.detail.on);
 	}
 
-    async function getAccountDetails() {
-        try {
-            const response = await fetch('?/getAccountDetails', {
-                method: 'POST',
-                body: new FormData()
-            });
-            const result: ActionResult = deserialize(await response.text());
+	async function getAccountDetails() {
+		try {
+			const response = await fetch('?/getAccountDetails', {
+				method: 'POST',
+				body: new FormData()
+			});
+			const result: ActionResult = deserialize(await response.text());
 
-            if (result.type === 'success' && result.data) {
-                const user = result.data;
-                userDetails = {
-                    name: user.name,
-                    email: user.email,
-                    oauth: user.oauth
-                }
-            } else if (result.type === 'failure' && result.data) {
-                console.error('Failed to fetch account details');
-            }
-        } catch (error) {
-            console.error('Error clearing chat history:', error);
-        }
-    }
+			if (result.type === 'success' && result.data) {
+				const user = result.data;
+				userDetails = {
+					name: user.name,
+					email: user.email,
+					oauth: user.oauth
+				};
+			} else if (result.type === 'failure' && result.data) {
+				console.error('Failed to fetch account details');
+			}
+		} catch (error) {
+			console.error('Error clearing chat history:', error);
+		}
+	}
 
-    async function linkGoogle() {
-        const response = await fetch('/api/link-google', { method: 'GET' });
-        const data = await response.json();
-        if (data.linkingToken) {
+	async function linkGoogle() {
+		const response = await fetch('/api/link-google', { method: 'GET' });
+		const data = await response.json();
+		if (data.linkingToken) {
+			const callbackUrl = `/?linkingToken=${data.linkingToken}`;
+			signIn(
+				'google',
+				{ callbackUrl, linkingToken: data.linkingToken },
+				{ linkingToken: data.linkingToken }
+			);
+		} else {
+			// Handle error
+			console.error('Failed to initiate Google linking');
+		}
+	}
 
-            const callbackUrl = `/?linkingToken=${data.linkingToken}`;
-            signIn('google', { callbackUrl, linkingToken: data.linkingToken }, { linkingToken: data.linkingToken });
-        } else {
-            // Handle error
-            console.error('Failed to initiate Google linking');
-        }
-    }
-
-    onMount(async () => {
-        getAccountDetails();
-    });
+	onMount(async () => {
+		getAccountDetails();
+	});
 </script>
 
 <div>
-    <h1>Appearance</h1>
-    <div
-        class="setting"
-        role="button"
-        tabindex="0"
-        on:click|stopPropagation={() => {
-            darkModeOn = !darkModeOn;
-            toggleDarkMode(darkModeOn);
-        }}
-        on:keydown|stopPropagation={(e) => {
-            if (e.key === 'Enter') {
-                darkModeOn = !darkModeOn;
-                toggleDarkMode(darkModeOn);
-            }
-        }}
-    >
-        <div class="icon-container">
-            <MoonIcon color="var(--text-color-light)" />
-        </div>
-        <p>Dark mode</p>
-        <div class="switch-wrapper">
-            <Switch bind:on={darkModeOn} on:toggle={handleToggle} />
-        </div>
-    </div>
-    <div
-        class="setting"
-        role="button"
-        tabindex="0"
-        on:click|stopPropagation={() => {
-            inputPricing.set(!$inputPricing);
-        }}
-        on:keydown|stopPropagation={(e) => {
-            if (e.key === 'Enter') {
-                inputPricing.set(!$inputPricing);
-            }
-        }}
-    >
-        <div class="icon-container">
-            <DollarIcon color="var(--text-color-light)" />
-        </div>
-        <p>Input pricing</p>
-        <div class="switch-wrapper">
-            <Switch bind:on={$inputPricing} />
-        </div>
-    </div>
-    
-    <h1>Account</h1>
-    {#if userDetails && userDetails.oauth !== 'google'}
-        <div
-            class="setting"
-            tabindex="0"
-            role="button"
-            on:click|stopPropagation={() => {
-                linkGoogle();
-            }}
-            on:keydown|stopPropagation={(e) => {
-                if (e.key === 'Enter') {
-                    linkGoogle();
-                }
-            }}
-        >
-            <div class="google-icon-container">
-                <GoogleIcon padding="2px" />
-            </div>
-            <p>Link Google account <span>Must link with {userDetails.email}</span></p>
-        </div>
-    {/if}
-    <div
-        class="setting"
-        role="button"
-        tabindex="0"
-        on:click|stopPropagation={() => {
-            signOut();
-        }}
-        on:keydown|stopPropagation={(e) => {
-            if (e.key === 'Enter') {
-                signOut();
-            }
-        }}
-    >
-        <div class="icon-container">
-            <LogOutIcon color="var(--text-color-light)" />
-        </div>
-        <p>Log out</p>
-    </div>
+	<h1>Appearance</h1>
+	<div
+		class="setting"
+		role="button"
+		tabindex="0"
+		on:click|stopPropagation={() => {
+			darkModeOn = !darkModeOn;
+			toggleDarkMode(darkModeOn);
+		}}
+		on:keydown|stopPropagation={(e) => {
+			if (e.key === 'Enter') {
+				darkModeOn = !darkModeOn;
+				toggleDarkMode(darkModeOn);
+			}
+		}}
+	>
+		<div class="icon-container">
+			<MoonIcon color="var(--text-color-light)" />
+		</div>
+		<p>Dark mode</p>
+		<div class="switch-wrapper">
+			<Switch bind:on={darkModeOn} on:toggle={handleToggle} />
+		</div>
+	</div>
+	<div
+		class="setting"
+		role="button"
+		tabindex="0"
+		on:click|stopPropagation={() => {
+			inputPricing.set(!$inputPricing);
+		}}
+		on:keydown|stopPropagation={(e) => {
+			if (e.key === 'Enter') {
+				inputPricing.set(!$inputPricing);
+			}
+		}}
+	>
+		<div class="icon-container">
+			<DollarIcon color="var(--text-color-light)" />
+		</div>
+		<p>Input pricing</p>
+		<div class="switch-wrapper">
+			<Switch bind:on={$inputPricing} />
+		</div>
+	</div>
 
+	<h1>Account</h1>
+	{#if userDetails && userDetails.oauth !== 'google'}
+		<div
+			class="setting"
+			tabindex="0"
+			role="button"
+			on:click|stopPropagation={() => {
+				linkGoogle();
+			}}
+			on:keydown|stopPropagation={(e) => {
+				if (e.key === 'Enter') {
+					linkGoogle();
+				}
+			}}
+		>
+			<div class="google-icon-container">
+				<GoogleIcon padding="2px" />
+			</div>
+			<p>Link Google account <span>Must link with {userDetails.email}</span></p>
+		</div>
+	{/if}
+	<div
+		class="setting"
+		role="button"
+		tabindex="0"
+		on:click|stopPropagation={() => {
+			signOut();
+		}}
+		on:keydown|stopPropagation={(e) => {
+			if (e.key === 'Enter') {
+				signOut();
+			}
+		}}
+	>
+		<div class="icon-container">
+			<LogOutIcon color="var(--text-color-light)" />
+		</div>
+		<p>Log out</p>
+	</div>
 </div>
 
 <style lang="scss">
-    h1 {
-        font-size: 20px;
-        margin: 20px 35px;
-    }
+	h1 {
+		font-size: 20px;
+		margin: 20px 35px;
+	}
 
 	.setting {
 		color: var(--text-color);
@@ -177,9 +179,9 @@
 		&:hover {
 			background: var(--bg-color-light-opacity-alt);
 
-            span {
-                opacity: 1;
-            }
+			span {
+				opacity: 1;
+			}
 		}
 
 		.icon-container {
@@ -187,27 +189,27 @@
 			height: 20px;
 		}
 
-        .google-icon-container {
-            margin: auto 0;
-            width: 30px;
-            height: 30px;
-            transform: translateX(-5px);
-        }
+		.google-icon-container {
+			margin: auto 0;
+			width: 30px;
+			height: 30px;
+			transform: translateX(-5px);
+		}
 
 		p {
 			flex: 1;
 			margin: auto 0;
 			font-size: 15px;
 			color: var(--text-color-light);
-            display: flex;
+			display: flex;
 
-            span {
-                font-size: 12px;
-                color: var(--text-color-light);
-                margin: auto 0 auto auto;
-                opacity: 0;
-                transition: all 0.3s ease;
-            }
+			span {
+				font-size: 12px;
+				color: var(--text-color-light);
+				margin: auto 0 auto auto;
+				opacity: 0;
+				transition: all 0.3s ease;
+			}
 		}
 
 		.switch-wrapper {

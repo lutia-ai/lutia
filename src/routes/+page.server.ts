@@ -8,10 +8,10 @@ import { retrieveUserByEmail } from '$lib/db/crud/user';
 
 export const load: PageServerLoad = async (event: RequestEvent) => {
 	const session = await event.locals.auth();
-    
-    if (!session || !session.user || !session.user.email) {
-        throw redirect(307, '/auth');
-    }
+
+	if (!session || !session.user || !session.user.email) {
+		throw redirect(307, '/auth');
+	}
 
 	const apiRequests = await retrieveApiRequestsWithMessage(session.user?.email);
 	const serializedApiRequests = apiRequests.map(serializeApiRequest);
@@ -36,8 +36,8 @@ export const actions = {
 
 		return { success: true };
 	},
-    getAccountDetails: async (event) => {
-        // Access the auth object from locals
+	getAccountDetails: async (event) => {
+		// Access the auth object from locals
 		const session = await event.locals.auth();
 
 		if (!session || !session.user) {
@@ -45,12 +45,12 @@ export const actions = {
 		}
 		const userEmail = session.user.email;
 
-        const user: UserEntity = await retrieveUserByEmail(userEmail!);
+		const user: UserEntity = await retrieveUserByEmail(userEmail!);
 
-        return {
-            name: user.name,
-            email: user.email,
-            oauth: user.oauth ? user.oauth : ''
-        };
-    }
+		return {
+			name: user.name,
+			email: user.email,
+			oauth: user.oauth ? user.oauth : ''
+		};
+	}
 } satisfies Actions;

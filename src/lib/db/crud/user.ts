@@ -24,64 +24,62 @@ export async function createUser(userData: Partial<User>): Promise<User> {
 	return await userRepository.save(newUser);
 }
 
-
 export async function retrieveUserByEmail(email: string): Promise<User> {
-    const userRepository: Repository<User> = AppDataSource.getRepository(User);
-    
-    try {
-        if (!email) {
-            throw new Error('Email is required');
-        }
+	const userRepository: Repository<User> = AppDataSource.getRepository(User);
 
-        email = handleGmail(email);
-        const user = await userRepository.findOne({ where: { email } });
-        
-        if (!user) {
-            throw new UserNotFoundError(email);
-        }
-        
-        return user;
-        
-    } catch (error: unknown) {
-        if (error instanceof UserNotFoundError) {
-            // Rethrow UserNotFoundError to be handled by the caller
-            throw error;
-        } else if (error instanceof Error) {
-            console.error(`Error retrieving user by email: ${error.message}`);
-            throw new DatabaseError('Failed to retrieve user', error);
-        } else {
-            console.error('An unknown error occurred while retrieving user by email');
-            throw new UnknownError('An unknown error occurred');
-        }
-    }
+	try {
+		if (!email) {
+			throw new Error('Email is required');
+		}
+
+		email = handleGmail(email);
+		const user = await userRepository.findOne({ where: { email } });
+
+		if (!user) {
+			throw new UserNotFoundError(email);
+		}
+
+		return user;
+	} catch (error: unknown) {
+		if (error instanceof UserNotFoundError) {
+			// Rethrow UserNotFoundError to be handled by the caller
+			throw error;
+		} else if (error instanceof Error) {
+			console.error(`Error retrieving user by email: ${error.message}`);
+			throw new DatabaseError('Failed to retrieve user', error);
+		} else {
+			console.error('An unknown error occurred while retrieving user by email');
+			throw new UnknownError('An unknown error occurred');
+		}
+	}
 }
 
 export async function updateUser(userId: number, updateFields: UserUpdateFields): Promise<User> {
-    const userRepository = AppDataSource.getRepository(User);
+	const userRepository = AppDataSource.getRepository(User);
 
-    try {
-        // First, check if the user exists
-        const user = await userRepository.findOne({ where: { id: userId } });
-        if (!user) {
-            throw new Error(`User with ID ${userId} not found`);
-        }
+	try {
+		// First, check if the user exists
+		const user = await userRepository.findOne({ where: { id: userId } });
+		if (!user) {
+			throw new Error(`User with ID ${userId} not found`);
+		}
 
-        // Update only the provided fields
-        Object.assign(user, updateFields);
+		// Update only the provided fields
+		Object.assign(user, updateFields);
 
-        // Save the updated user
-        const updatedUser = await userRepository.save(user);
-        
-        return updatedUser;
-    } catch (error) {
-        if (error instanceof Error) {
-            console.error(`Error updating user: ${error.message}`);
-            throw new Error(`Failed to update user: ${error.message}`);
-        } else {
-            console.error('An unknown error occurred while updating user');
-            throw new Error('An unknown error occurred while updating user');
-        }
-    }
+		// Save the updated user
+		const updatedUser = await userRepository.save(user);
+
+		return updatedUser;
+	} catch (error) {
+		if (error instanceof Error) {
+			console.error(`Error updating user: ${error.message}`);
+			throw new Error(`Failed to update user: ${error.message}`);
+		} else {
+			console.error('An unknown error occurred while updating user');
+			throw new Error('An unknown error occurred while updating user');
+		}
+	}
 }
 
 function handleGmail(email: string): string {

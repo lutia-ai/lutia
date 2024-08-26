@@ -324,26 +324,26 @@
 					pointer-events: {settingsOpen ? 'none' : ''};
 					cursor: {settingsOpen ? 'default' : ''} !important;
                 "
-            >
-                {#if $page.data.user}
+			>
+				{#if $page.data.user}
 					{#if $page.data.user.image}
-                        <img
-                            class="user-profile-img"
-                            src={$page.data.user.image}
-                            alt="User profile"
-                        />
+						<img
+							class="user-profile-img"
+							src={$page.data.user.image}
+							alt="User profile"
+						/>
 					{:else}
-                        <div class="user-profile-noimg">
-                            <h1>
-                                {$page.data.user.name[0]}
-                            </h1>
-                        </div>
+						<div class="user-profile-noimg">
+							<h1>
+								{$page.data.user.name[0]}
+							</h1>
+						</div>
 					{/if}
-                {:else}
-                    <SettingsIcon color="var(--text-color-light)" />
-                {/if}
-                <p class="tag">Settings</p>
-            </div>
+				{:else}
+					<SettingsIcon color="var(--text-color-light)" />
+				{/if}
+				<p class="tag">Settings</p>
+			</div>
 		</div>
 	</div>
 </div>

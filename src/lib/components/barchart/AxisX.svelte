@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
 
-    //@ts-ignore
+	//@ts-ignore
 	const { width, height, xScale, yRange } = getContext('LayerCake');
 
 	export let gridlines = true;
@@ -17,13 +17,14 @@
 
 	$: isBandwidth = typeof $xScale.bandwidth === 'function';
 
-	$: tickVals = Array.isArray(ticks) ? ticks :
-		isBandwidth ?
-			$xScale.domain() :
-			typeof ticks === 'function' ?
-				// @ts-ignore
-				ticks($xScale.ticks()) :
-					$xScale.ticks(ticks);
+	$: tickVals = Array.isArray(ticks)
+		? ticks
+		: isBandwidth
+			? $xScale.domain()
+			: typeof ticks === 'function'
+				? // @ts-ignore
+					ticks($xScale.ticks())
+				: $xScale.ticks(ticks);
 
 	function textAnchor(i: number) {
 		if (snapTicks === true) {
@@ -38,31 +39,38 @@
 	}
 </script>
 
-<g class='axis x-axis' class:snapTicks>
+<g class="axis x-axis" class:snapTicks>
 	{#each tickVals as tick, i}
-		<g class='tick tick-{ i }' transform='translate({$xScale(tick)},{$yRange[0]})'>
+		<g class="tick tick-{i}" transform="translate({$xScale(tick)},{$yRange[0]})">
 			{#if gridlines !== false}
-				<line class="gridline" y1='{$height * -1}' y2='0' x1='0' x2='0'></line>
+				<line class="gridline" y1={$height * -1} y2="0" x1="0" x2="0"></line>
 			{/if}
 			{#if tickMarks === true}
-				<line class="tick-mark" y1='{0}' y2='{6}' x1='{xTick || isBandwidth ? $xScale.bandwidth() / 2 : 0}' x2='{xTick || isBandwidth ? $xScale.bandwidth() / 2 : 0}'></line>
+				<line
+					class="tick-mark"
+					y1={0}
+					y2={6}
+					x1={xTick || isBandwidth ? $xScale.bandwidth() / 2 : 0}
+					x2={xTick || isBandwidth ? $xScale.bandwidth() / 2 : 0}
+				></line>
 			{/if}
 			<text
-				x="{xTick || isBandwidth ? $xScale.bandwidth() / 2 : 0}"
-				y='{yTick}'
-				dx='{dxTick}'
-				dy='{dyTick}'
-				text-anchor='{textAnchor(i)}'>{formatTick(tick)}</text>
+				x={xTick || isBandwidth ? $xScale.bandwidth() / 2 : 0}
+				y={yTick}
+				dx={dxTick}
+				dy={dyTick}
+				text-anchor={textAnchor(i)}>{formatTick(tick)}</text
+			>
 		</g>
 	{/each}
 	{#if baseline === true}
-		<line class="baseline" y1='{$height + 0.5}' y2='{$height + 0.5}' x1='0' x2='{$width}'></line>
+		<line class="baseline" y1={$height + 0.5} y2={$height + 0.5} x1="0" x2={$width}></line>
 	{/if}
 </g>
 
 <style>
 	.tick {
-		font-size: .725em;
+		font-size: 0.725em;
 		font-weight: 200;
 	}
 

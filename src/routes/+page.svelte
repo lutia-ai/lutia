@@ -24,7 +24,7 @@
 	} from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import Settings from '$lib/components/settings/Settings.svelte';
-    import ErrorPopup from '$lib/components/ErrorPopup.svelte';
+	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
 
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import StarsIcon from '$lib/components/icons/StarsIcon.svelte';
@@ -52,7 +52,7 @@
 
 	chatHistory.set(loadChatHistory(data.apiRequests));
 
-    let errorPopup: ErrorPopup;
+	let errorPopup: ErrorPopup;
 	let prompt: string;
 	let fullPrompt: Message[] | string;
 	let input_tokens: number = 0;
@@ -547,14 +547,14 @@
 	}
 
 	onMount(() => {
-        const successParam = $page.url.searchParams.get('success');
-        console.log(successParam);
-        if (successParam && errorPopup) {
-            if (successParam === 'AccountLinkSuccess') {
-                const message = 'Linked accounts successfully!';
-                errorPopup.showError(message, null, 5000, 'success');
-            }
-        }
+		const successParam = $page.url.searchParams.get('success');
+		console.log(successParam);
+		if (successParam && errorPopup) {
+			if (successParam === 'AccountLinkSuccess') {
+				const message = 'Linked accounts successfully!';
+				errorPopup.showError(message, null, 5000, 'success');
+			}
+		}
 		mounted = true;
 		scrollToBottom();
 		if (promptBar) {
@@ -577,7 +577,7 @@
 	}}
 />
 
-<ErrorPopup bind:this={errorPopup}/>
+<ErrorPopup bind:this={errorPopup} />
 
 <div class="main" class:settings-open={isSettingsOpen}>
 	<Sidebar {companySelection} {gptModelSelection} bind:chosenModel bind:isSettingsOpen />

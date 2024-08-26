@@ -14,23 +14,23 @@
 // ];
 
 export default [
-	{date: '16', model: 'GPT 4o', value: 3840},
-	{date: '16', model: 'bananas', value: 1920},
-	{date: '16', model: 'cherries', value: 960},
-	{date: '16', model: 'dates', value: 400},
+	{ date: '16', model: 'GPT 4o', value: 3840 },
+	{ date: '16', model: 'bananas', value: 1920 },
+	{ date: '16', model: 'cherries', value: 960 },
+	{ date: '16', model: 'dates', value: 400 },
 
-	{date: '17', model: 'GPT 4o', value: 1600},
-	{date: '17', model: 'bananas', value: 1440},
-	{date: '17', model: 'cherries', value: 960},
-	{date: '17', model: 'dates', value: 400},
+	{ date: '17', model: 'GPT 4o', value: 1600 },
+	{ date: '17', model: 'bananas', value: 1440 },
+	{ date: '17', model: 'cherries', value: 960 },
+	{ date: '17', model: 'dates', value: 400 },
 
-	{date: 'Google', model: 'GPT 4o', value: 820},
-	{date: 'Google', model: 'bananas', value: 1000},
-	{date: 'Google', model: 'cherries', value: 640},
-	{date: 'Google', model: 'dates', value: 400},
+	{ date: 'Google', model: 'GPT 4o', value: 820 },
+	{ date: 'Google', model: 'bananas', value: 1000 },
+	{ date: 'Google', model: 'cherries', value: 640 },
+	{ date: 'Google', model: 'dates', value: 400 },
 
-	{date: '2016', model: 'GPT 4o', value: 820},
-	{date: '2016', model: 'bananas', value: 560},
-	{date: '2016', model: 'cherries', value: 720},
-	{date: '2016', model: 'dates', value: 400},
+	{ date: '2016', model: 'GPT 4o', value: 820 },
+	{ date: '2016', model: 'bananas', value: 560 },
+	{ date: '2016', model: 'cherries', value: 720 },
+	{ date: '2016', model: 'dates', value: 400 }
 ];

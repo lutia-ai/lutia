@@ -99,38 +99,37 @@ export async function retrieveApiRequestsWithMessage(userEmail: string): Promise
 	}
 }
 
-
 export async function retrieveUserRequestsInDateRange(
-    userId: number,
-    startDate: Date,
-    endDate: Date
+	userId: number,
+	startDate: Date,
+	endDate: Date
 ): Promise<Partial<ApiRequest>[]> {
-    try {
-        const apiRequestRepository = AppDataSource.getRepository(ApiRequest);
+	try {
+		const apiRequestRepository = AppDataSource.getRepository(ApiRequest);
 
-        const apiRequests = await apiRequestRepository.find({
-            select: [
-                'requestTimestamp',
-                'apiProvider',
-                'apiModel',
-                'inputCost',
-                'inputTokens',
-                'outputCost',
-                'outputTokens',
-                'totalCost',
-            ],
-            where: {
-                user: { id: userId },
-                requestTimestamp: Between(startDate, endDate),
-            },
-            order: {
-                requestTimestamp: 'DESC',
-            },
-        });
+		const apiRequests = await apiRequestRepository.find({
+			select: [
+				'requestTimestamp',
+				'apiProvider',
+				'apiModel',
+				'inputCost',
+				'inputTokens',
+				'outputCost',
+				'outputTokens',
+				'totalCost'
+			],
+			where: {
+				user: { id: userId },
+				requestTimestamp: Between(startDate, endDate)
+			},
+			order: {
+				requestTimestamp: 'DESC'
+			}
+		});
 
-        return apiRequests;
-    } catch (error) {
-        console.error('Error retrieving API requests for user:', error);
-        throw error;
-    }
+		return apiRequests;
+	} catch (error) {
+		console.error('Error retrieving API requests for user:', error);
+		throw error;
+	}
 }
