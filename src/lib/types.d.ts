@@ -48,7 +48,6 @@ export type Model = {
 export type ModelLogos = Record<string, { logo: any }>;
 
 interface ModelDetails {
-	// logo: any;
 	models: Record<Model>;
 }
 
@@ -119,3 +118,18 @@ type SerializedApiRequest = {
 	totalCost: string;
 	message: SerializedMessage | null;
 };
+
+
+type User = {
+    name: string;
+    email: string;
+    oauth: 'google' | ''; 
+}
+
+type UserUpdateFields = Partial<Pick<User, 'email' | 'name' | 'password_hash' | 'oauth' | 'oauth_link_token'>>;
+
+type UsageObject = {
+    date: string;
+    model: string;
+    value: number;
+  }

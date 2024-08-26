@@ -1,5 +1,5 @@
 import { AppDataSource } from '../database';
-import { IsNull, Not, Repository } from 'typeorm';
+import { Between, IsNull, Not, Repository } from 'typeorm';
 import { ApiModel, ApiProvider, ApiRequest } from '$lib/db/entities/ApiRequest';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import type { Message } from '../entities/Message';
@@ -97,4 +97,40 @@ export async function retrieveApiRequestsWithMessage(userEmail: string): Promise
 		console.error('Error retrieving API requests for user:', error);
 		throw error;
 	}
+}
+
+
+export async function retrieveUserRequestsInDateRange(
+    userId: number,
+    startDate: Date,
+    endDate: Date
+): Promise<Partial<ApiRequest>[]> {
+    try {
+        const apiRequestRepository = AppDataSource.getRepository(ApiRequest);
+
+        const apiRequests = await apiRequestRepository.find({
+            select: [
+                'requestTimestamp',
+                'apiProvider',
+                'apiModel',
+                'inputCost',
+                'inputTokens',
+                'outputCost',
+                'outputTokens',
+                'totalCost',
+            ],
+            where: {
+                user: { id: userId },
+                requestTimestamp: Between(startDate, endDate),
+            },
+            order: {
+                requestTimestamp: 'DESC',
+            },
+        });
+
+        return apiRequests;
+    } catch (error) {
+        console.error('Error retrieving API requests for user:', error);
+        throw error;
+    }
 }
