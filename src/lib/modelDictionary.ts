@@ -12,7 +12,7 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 128000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 5
+				maxImages: 5,
 			},
 			gpt4mini: {
 				name: 'GPT 4o mini',

@@ -63,7 +63,9 @@
 		--bg-color: rgba(255, 255, 255, 1);
 		--bg-color-light: rgba(233, 238, 246, 1);
 		--bg-color-light-alt: rgba(233, 238, 246, 1);
+        --bg-color-light-alt-opp: rgba(255, 255, 255, 1);
 		--bg-color-light-opacity: rgba(233, 238, 246, 0.5);
+        --bg-color-light-opacity-alt: rgba(233, 238, 246, 0.5);
 		--bg-color-dark: rgba(200, 205, 213, 1);
 
 		--text-color: rgba(0, 0, 0, 1);
@@ -81,7 +83,9 @@
 		--bg-color: rgba(25, 25, 25, 255);
 		--bg-color-light: rgba(42, 42, 42, 1);
 		--bg-color-light-alt: rgba(80, 80, 80, 1);
+        --bg-color-light-alt-opp: rgba(42, 42, 42, 1);
 		--bg-color-light-opacity: rgba(42, 42, 42, 0.5);
+        --bg-color-light-opacity-alt: rgba(80, 80, 80, 1);
 		--bg-color-dark: rgba(80, 80, 80, 1);
 
 		--text-color: rgba(255, 255, 255, 1);

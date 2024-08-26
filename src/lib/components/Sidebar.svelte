@@ -21,7 +21,7 @@
 	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
-	import SettingsPopup from '$lib/components/SettingsPopup.svelte';
+	import SettingsPopup from '$lib/components/settings/SettingsPopup.svelte';
 	import { modelLogos } from '$lib/modelLogos';
 	import { clearChatHistory } from '$lib/chatHistory';
 
@@ -308,7 +308,7 @@
 				tabindex="0"
 				on:click|stopPropagation={() => {
 					if ($page.data.user) {
-						settingsOpen = !settingsOpen;
+						isSettingsOpen = true;
 						contextOpen = false;
 					} else {
 						signIn('google');
@@ -316,39 +316,34 @@
 				}}
 				on:keydown|stopPropagation={(e) => {
 					if (e.key === 'Enter') {
-						settingsOpen = !settingsOpen;
+						isSettingsOpen = !true;
 						contextOpen = false;
 					}
 				}}
 				style="
 					pointer-events: {settingsOpen ? 'none' : ''};
 					cursor: {settingsOpen ? 'default' : ''} !important;
-				"
-			>
-				{#if $page.data.user}
+                "
+            >
+                {#if $page.data.user}
 					{#if $page.data.user.image}
-						<img
-							class="user-profile-img"
-							src={$page.data.user.image}
-							alt="User profile"
-						/>
+                        <img
+                            class="user-profile-img"
+                            src={$page.data.user.image}
+                            alt="User profile"
+                        />
 					{:else}
-						<div class="user-profile-noimg">
-							<h1>
-								{$page.data.user.name[0]}
-							</h1>
-						</div>
+                        <div class="user-profile-noimg">
+                            <h1>
+                                {$page.data.user.name[0]}
+                            </h1>
+                        </div>
 					{/if}
-				{:else}
-					<SettingsIcon color="var(--text-color-light)" />
-				{/if}
-				<p class="tag">Settings</p>
-			</div>
-			{#if settingsOpen}
-				<div class="settings-open-container">
-					<SettingsPopup bind:isSettingsOpen />
-				</div>
-			{/if}
+                {:else}
+                    <SettingsIcon color="var(--text-color-light)" />
+                {/if}
+                <p class="tag">Settings</p>
+            </div>
 		</div>
 	</div>
 </div>

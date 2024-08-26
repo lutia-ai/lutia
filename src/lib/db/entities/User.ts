@@ -20,6 +20,9 @@ export class User {
 	@Column({ type: 'varchar', nullable: true })
 	oauth?: string;
 
+    @Column({ type: 'varchar', nullable: true })
+	oauth_link_token?: string;
+
 	@OneToMany(() => ApiRequest, (request) => request.user)
 	requests!: ApiRequest[];
 }
