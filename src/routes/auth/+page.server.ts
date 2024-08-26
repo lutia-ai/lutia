@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { retrieveUserByEmail, createUser } from '$lib/db/crud/user';
+import { UserNotFoundError } from '$lib/customErrors';
 
 export const actions = {
 	checkEmailExists: async ({ request }) => {
@@ -19,8 +20,14 @@ export const actions = {
 				isGoogleUser: user?.oauth === 'google'
 			};
 		} catch (err) {
-			console.error('Error checking email existence: ', err);
-			return fail(500, { message: 'Internal server error' });
+            if (err instanceof UserNotFoundError) {
+                return {
+                    exists: false,
+                    isGoogleUser: false
+                };
+            }
+            console.error('Error checking email existence: ', err);
+            return fail(500, { message: 'Internal server error' });
 		}
 	},
 	logIn: async ({ request }) => {
@@ -38,12 +45,7 @@ export const actions = {
 
 		try {
 			const user = await retrieveUserByEmail(email);
-
-			if (!user || !user.password_hash) {
-				return fail(401, { message: 'Invalid email or password' });
-			}
-
-			const isMatch = await bcrypt.compare(password, user.password_hash);
+			const isMatch = await bcrypt.compare(password, user.password_hash!);
 
 			if (!isMatch) {
 				return fail(401, { message: 'Invalid email or password' });
@@ -53,6 +55,9 @@ export const actions = {
 				success: true
 			};
 		} catch (err) {
+            if (err instanceof UserNotFoundError) {
+                return fail(401, { message: 'Invalid email or password' });
+            }
 			console.error('Error during login: ', err);
 			return fail(500, { message: 'Internal server error' });
 		}
@@ -99,15 +104,23 @@ export const actions = {
 				password_hash: password as string
 			};
 
-			const user = await retrieveUserByEmail(email);
-			if (user) {
-				return fail(400, { message: 'Account with that email already exists' });
-			}
-			await createUser(userData);
-
-			return {
-				success: true
-			};
+            try {
+                const user = await retrieveUserByEmail(email);
+                if (user.oauth === 'google') {
+                    return fail(401, { message: "Looks like you're using an email that's already linked with Google" });
+                }
+    
+                if (user) {
+                    return fail(400, { message: 'Account with that email already exists' });
+                }
+            } catch(err) {
+                if (err instanceof UserNotFoundError) {
+                    await createUser(userData);
+                    return {
+                        success: true
+                    };
+                }
+            }
 		} catch (err) {
 			console.error('Error during login: ', err);
 			return fail(500, { message: 'Internal server error' });
