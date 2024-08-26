@@ -5,7 +5,37 @@
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import UsageIcon from '$lib/components/icons/UsageIcon.svelte';
 
+    import GeneralSettingsPage from '$lib/components/settings/GeneralSettingsPage.svelte';
+    import BillingSettingsPage from '$lib/components/settings/BillingSettingsPage.svelte';
+    import UsageSettingsPage from '$lib/components/settings/UsageSettingsPage.svelte';
+    import ContextSettingsPage from '$lib/components/settings/ContextSettingsPage.svelte';
+
 	export let isOpen: boolean;
+    
+    const settingsTabs = [
+        {
+            name: 'General',
+            icon: SettingsIcon,
+            window: GeneralSettingsPage,
+        },
+        {
+            name: 'Billing',
+            icon: DollarIcon,
+            window: BillingSettingsPage,
+        },
+        {
+            name: 'Usage',
+            icon: UsageIcon,
+            window: UsageSettingsPage,
+        },
+        {
+            name: 'Context',
+            icon: ContextWindowIcon,
+            window: ContextSettingsPage,
+        },
+    ];
+
+    let selectedTab = settingsTabs[0];
 
 	// @ts-ignore
 	const wheel = (node: HTMLElement, options) => {
@@ -31,7 +61,7 @@
 	};
 </script>
 
-<svelte:window use:wheel={{ isOpen }} />
+<!-- <svelte:window use:wheel={{ isOpen }} /> -->
 
 <div class="settings-container">
 	<div class="settings-panel">
@@ -43,32 +73,29 @@
 		</div>
 		<div class="settings-body">
 			<div class="settings-sidebar">
-				<div class="sidebar-option">
-					<div class="icon-container">
-						<SettingsIcon color="var(--text-color-light)" />
-					</div>
-					<p>General</p>
-				</div>
-				<div class="sidebar-option">
-					<div class="icon-container">
-						<DollarIcon color="var(--text-color-light)" />
-					</div>
-					<p>Billing</p>
-				</div>
-				<div class="sidebar-option">
-					<div class="icon-container">
-						<UsageIcon color="var(--text-color-light)" />
-					</div>
-					<p>Usage</p>
-				</div>
-				<div class="sidebar-option">
-					<div class="icon-container">
-						<ContextWindowIcon color="var(--text-color-light)" />
-					</div>
-					<p>Context</p>
-				</div>
+                {#each settingsTabs as tab}
+                    <div 
+                        class="sidebar-option"
+                        style="background: {selectedTab.name === tab.name ? 'var(--bg-color-light-opacity-alt)' : ''};"
+                        tabindex="0"
+                        role="button"
+                        on:click={()=> selectedTab = tab}
+                        on:keydown|stopPropagation={(e) => {
+                            if (e.key === 'Enter') {
+                                selectedTab = tab;
+                            }
+                        }}
+                    >
+                        <div class="icon-container">
+                            <svelte:component this={tab.icon} color="var(--text-color-light)" />
+                        </div>
+                        <p>{tab.name}</p>
+                    </div>
+                {/each}
 			</div>
-			<div class="settings-page"></div>
+			<div class="settings-page">
+                <svelte:component this={selectedTab.window} />
+            </div>
 		</div>
 	</div>
 </div>
@@ -87,7 +114,7 @@
 
 		.settings-panel {
 			position: relative;
-			background: var(--bg-color-light);
+			background: var(--bg-color-light-alt-opp);
 			max-width: 1200px;
 			width: 80%;
 			min-width: 800px;
@@ -122,7 +149,7 @@
 					padding: 0;
 
 					&:hover {
-						background: var(--text-color-light-opacity);
+						background: var(--bg-color-light-opacity-alt);
 					}
 				}
 			}
@@ -138,6 +165,7 @@
 					border-right: 1px solid var(--text-color-light-opacity);
 					height: 100%;
 					border-radius: 10px;
+                    border-top-left-radius: 0;
 					overflow: hidden;
 					flex: 1;
 
@@ -148,11 +176,15 @@
 						display: flex;
 						gap: 15px;
 						cursor: pointer;
-						border-radius: 5px;
+						border-radius: 5px 0 0 5px;
 
 						&:hover {
-							background-color: var(--bg-color);
+							background-color: var(--bg-color-light-opacity-alt);
 						}
+
+                        &:first-child {
+                            border-top-left-radius: 0;
+                        }
 
 						.icon-container {
 							width: 25px;
@@ -169,7 +201,8 @@
 
 				.settings-page {
 					width: 100%;
-					height: 100%;
+					height: 680px;
+                    padding: 10px;
 					flex: 4;
 				}
 			}

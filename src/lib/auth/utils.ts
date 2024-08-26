@@ -8,9 +8,15 @@ import {
 	SECRET_AUTH
 } from '$env/static/private';
 import Credentials from '@auth/core/providers/credentials';
-import { retrieveUserByEmail, createUser } from '$lib/db/crud/user';
+import { retrieveUserByEmail, createUser, updateUser } from '$lib/db/crud/user';
+import { UserNotFoundError } from '$lib/customErrors';
+
+let requestBody: any;
 
 export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
+    if (event.request.body) {
+        requestBody = await event.request;
+    }
 	const authOptions: SvelteKitAuthConfig = {
 		providers: [
 			Google({
@@ -18,9 +24,9 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 				clientSecret: SECRET_GOOGLE_CLIENT_SECRET,
 				authorization: {
 					params: {
-						scope: 'openid email profile'
+						scope: 'openid email profile',
 					}
-				}
+				},
 			}),
 			Credentials({
 				async authorize(credentials) {
@@ -49,33 +55,69 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 			})
 		],
 		callbacks: {
-			async signIn({ user, account, profile }) {
-				if (account?.provider === 'google') {
-					try {
-						let existingUser = await retrieveUserByEmail(user.email!);
-						if (existingUser && !existingUser.oauth) {
-							throw new Error('ExistingNonOAuthUser');
-						}
-						if (!existingUser) {
-							const userData = {
-								email: user.email!,
-								name: user.name!,
-								oauth: 'google'
-							};
-							existingUser = await createUser(userData);
-						}
-						user.id = existingUser.id.toString();
-						return true;
-					} catch (error) {
-						if (error instanceof Error && error.message === 'ExistingNonOAuthUser') {
-							return '/auth?error=ExistingNonOAuthUser';
-						}
-						console.error('Error saving user to database: ', error);
-						return false;
-					}
-				}
-				return true;
-			},
+			async signIn({ user, account }) {
+                if (account?.provider === 'google') {
+                    try {
+                        let existingUser;
+                        const url = new URL(requestBody.url);
+                        const linkingToken = url.searchParams.get('linkingToken');
+                        requestBody = undefined;
+
+                        try {
+                            existingUser = await retrieveUserByEmail(user.email!);
+                        } catch (error) {
+                            if (linkingToken) { // a new user can't link accounts
+                                throw new Error('WrongAccountLinking');
+                            }
+                            
+                            // New user, create account
+                            const userData = {
+                                email: user.email!,
+                                name: user.name!,
+                                oauth: 'google'
+                            };
+                            existingUser = await createUser(userData);
+                            user.id = existingUser.id.toString();
+                            return true;
+                        }
+
+                        if (existingUser) {
+                            if (!existingUser.oauth) {
+                                if (linkingToken) {
+                                    // Verify the linking token
+                                    if (existingUser.oauth_link_token === linkingToken) {
+                                        // Update the existing user to link with Google and clear the linking token
+                                        await updateUser(existingUser.id, { 
+                                            oauth: 'google',
+                                            oauth_link_token: null 
+                                        });
+                                        return '/?success=AccountLinkSuccess';
+                                    } else {
+                                        throw new Error('InvalidLinkingToken');
+                                    }
+                                }
+                                throw new Error('ExistingNonOAuthUser');
+                            }
+                            if (linkingToken) { // Account already exists and is an oauth acc so cant link again
+                                throw new Error('LinkingExistingOAuthAccount');
+                            }
+                            // Existing OAuth user, proceed with sign in
+                            user.id = existingUser.id.toString();
+                            return true;
+                        }
+                    } catch (error) {
+                        if (error instanceof Error && error.message === 'ExistingNonOAuthUser') {
+                            return `/auth?error=${error.message}`;
+                        }
+                        if (error instanceof Error && (error.message === 'WrongAccountLinking' || error.message ===' LinkingExistingOAuthAccount')) {
+                            return `/?error=${error.message}`;
+                        }
+                        console.error('Error saving user to database: ', error);
+                        return false;
+                    }
+                }
+                return true;
+            },
 			async jwt({ token, user }) {
 				if (user) {
 					token.user_id = user.id;
