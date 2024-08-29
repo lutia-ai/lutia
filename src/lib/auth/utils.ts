@@ -34,21 +34,25 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 						typeof credentials.email === 'string' &&
 						typeof credentials.password === 'string'
 					) {
-						const isValid = await verifyCredentials(
-							credentials.email,
-							credentials.password
-						);
-						if (isValid) {
-							const user = await retrieveUserByEmail(credentials.email);
-							if (user) {
-								return {
-									id: user.id.toString(),
-									email: user.email,
-									name: user.name
-								};
+						try {
+							const { isValid, user } = await verifyCredentials(
+								credentials.email,
+								credentials.password
+							);
+							if (isValid) {
+								if (user) {
+									return {
+										id: user.id.toString(),
+										email: user.email,
+										name: user.name
+									};
+								}
+							}
+						} catch (error) {
+							if (error instanceof UserNotFoundError) {
+								return null;
 							}
 						}
-						console.error('Credentials are invalid');
 					}
 					return null;
 				}
@@ -65,7 +69,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 
 						try {
 							existingUser = await retrieveUserByEmail(user.email!);
-						} catch (error) {
+						} catch (UserNotFoundError) {
 							if (linkingToken) {
 								// a new user can't link accounts
 								throw new Error('WrongAccountLinking');
@@ -147,10 +151,24 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 	return authOptions;
 });
 
-export async function verifyCredentials(email: string, password: string) {
-	const user = await retrieveUserByEmail(email);
-	if (!user || !user.password_hash) {
-		return null;
+export async function verifyCredentials(
+	email: string,
+	password: string
+): Promise<{ isValid: boolean; user: User }> {
+	try {
+		const user: User = await retrieveUserByEmail(email);
+		if (!user.password_hash) {
+			return {
+				isValid: false,
+				user
+			};
+		}
+		const isValid = await bcrypt.compare(password, user.password_hash);
+		return {
+			isValid,
+			user
+		};
+	} catch (error) {
+		throw error;
 	}
-	return await bcrypt.compare(password, user.password_hash);
 }

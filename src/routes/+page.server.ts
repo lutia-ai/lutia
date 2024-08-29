@@ -5,6 +5,7 @@ import { serializeApiRequest } from '$lib/chatHistory';
 import { deleteAllUserMessages } from '$lib/db/crud/message';
 import type { User as UserEntity } from '$lib/db/entities/User';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
+import { UserNotFoundError } from '$lib/customErrors';
 
 export const load: PageServerLoad = async (event: RequestEvent) => {
 	const session = await event.locals.auth();
@@ -13,11 +14,12 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 		throw redirect(307, '/auth');
 	}
 
-	const apiRequests = await retrieveApiRequestsWithMessage(session.user?.email);
+	const apiRequests = await retrieveApiRequestsWithMessage(session.user!.email);
 	const serializedApiRequests = apiRequests.map(serializeApiRequest);
 
 	// User is authenticated, continue with the load function
 	return {
+		user: session.user,
 		apiRequests: serializedApiRequests
 	};
 };
@@ -45,12 +47,19 @@ export const actions = {
 		}
 		const userEmail = session.user.email;
 
-		const user: UserEntity = await retrieveUserByEmail(userEmail!);
+		let user: UserEntity;
+		try {
+			user = await retrieveUserByEmail(userEmail!);
+		} catch (error) {
+			if (error instanceof UserNotFoundError) {
+				throw error;
+			}
+		}
 
 		return {
-			name: user.name,
-			email: user.email,
-			oauth: user.oauth ? user.oauth : ''
+			name: user!.name,
+			email: user!.email,
+			oauth: user!.oauth ? user!.oauth : ''
 		};
 	}
 } satisfies Actions;
