@@ -1,38 +1,32 @@
-<script>
+<script lang="ts">
+	import { browser } from '$app/environment';
 	import { darkMode } from '$lib/stores.ts';
 	import { onMount } from 'svelte';
 
-	/** @type {boolean} */
-	let darkModeOn;
+	export let data: { colorScheme: string };
 
-	/**
-	 * Checks the current color scheme preference and updates the dark mode state.
-	 */
+	let darkModeOn: boolean = data.colorScheme === 'dark';
+
 	function checkColorScheme() {
 		const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 		darkModeOn = prefersDarkScheme;
-		toggle(darkModeOn);
+		setColorScheme(darkModeOn);
 	}
 
-	/**
-	 * Toggles the dark mode state and updates the body class.
-	 * @param {boolean} darkModeOn - Whether dark mode should be enabled.
-	 */
-	function toggle(darkModeOn) {
-		darkMode.set(darkModeOn);
-		window.document.body.classList.toggle('dark');
-	}
-
-	/**
-	 * Initializes the dark mode state and sets up event listeners.
-	 */
-	onMount(() => {
-		if (typeof window !== 'undefined') {
-			const hasDarkClass = document.body.classList.contains('dark');
-			darkMode.set(hasDarkClass);
-			darkModeOn = hasDarkClass;
+	function setColorScheme(isDark: boolean) {
+		if (browser) {
+			darkModeOn = isDark;
+			darkMode.set(isDark);
+			document.cookie = `color-scheme=${isDark ? 'dark' : 'light'}; path=/; max-age=31536000; SameSite=Lax`;
 		}
+	}
 
+	darkMode.subscribe((value) => {
+		setColorScheme(value);
+	});
+
+	onMount(() => {
+		checkColorScheme();
 		// Add event listener for color scheme changes
 		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 		mediaQuery.addEventListener('change', checkColorScheme);
@@ -43,18 +37,7 @@
 	});
 </script>
 
-<svelte:head>
-	{#if typeof window !== 'undefined'}
-		<script>
-			// Check for dark mode preference and apply it immediately
-			if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-				document.body.classList.add('dark');
-			}
-		</script>
-	{/if}
-</svelte:head>
-
-<body>
+<body class={darkModeOn ? 'dark' : ''}>
 	<slot />
 </body>
 

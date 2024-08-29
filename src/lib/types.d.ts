@@ -134,3 +134,13 @@ type UsageObject = {
 	model: string;
 	value: number;
 };
+
+type Company = 'openAI' | 'anthropic' | 'google';
+
+declare global {
+	namespace App {
+		interface Locals {
+			colorScheme: string;
+		}
+	}
+}
