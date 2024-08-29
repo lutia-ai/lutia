@@ -12,6 +12,7 @@
 
 	import tempData from '$lib/components/barchart/fruitOrdinal.js';
 	import { pivot } from '$lib/components/barchart/utils.ts';
+	import Tooltip from './Tooltip.svelte';
 
 	interface DataItem {
 		[groupBy: string]: string | number;
@@ -20,7 +21,10 @@
 	export let data = tempData;
 	console.log(data);
 	export let keyColors: string[];
-	let layout = 'stacked'; // stacked, grouped, percent, or separated
+	export let layout = 'stacked'; // stacked, grouped, percent, or separated
+	let hoveredItem: any;
+	let tooltipX = 0;
+	let tooltipY = 0;
 
 	$: options =
 		layout === 'grouped'
@@ -36,7 +40,7 @@
 	const pivotData = pivot(data, groupBy, stackBy, (items) => sum(items, (d: any) => d.value));
 	const stackKeys = Object.keys(pivotData[0]).filter((d) => d !== groupBy);
 	const formatTickY = (d: any) =>
-		format(layout === 'percent' ? `.0%` : `.${precisionFixed(d)}s`)(d);
+		layout === 'percent' ? format('.0%')(d) : '$' + format('.2f')(d);
 	const yAccessor = (d: DataItem) => d;
 	const rAccessor = (d: DataItem) => d;
 
@@ -45,19 +49,6 @@
 		y: getStackExtents(data, groupBy, stackBy, options.offset)
 	};
 </script>
-
-<label>
-	<input type="radio" bind:group={layout} value="stacked" />
-	Stacked
-</label>
-<label>
-	<input type="radio" bind:group={layout} value="grouped" />
-	Grouped
-</label>
-<label>
-	<input type="radio" bind:group={layout} value="percent" />
-	Percent
-</label>
 
 <div class="chart-container">
 	<LayerCake
@@ -76,11 +67,19 @@
 	>
 		<Svg>
 			<AxisX gridlines={false} />
-			<AxisY ticks={4} gridlines={false} formatTick={formatTickY} />
+			<AxisY ticks={4} gridlines={true} formatTick={formatTickY} />
 
-			<Bar {groupBy} {stackBy} {...options} />
+			<Bar {groupBy} {stackBy} {...options} bind:hoveredItem bind:tooltipX bind:tooltipY />
 		</Svg>
 	</LayerCake>
+	{#if hoveredItem}
+		<Tooltip
+			model={hoveredItem.key}
+			cost={hoveredItem.values[1] - hoveredItem.values[0]}
+			x={tooltipX}
+			y={tooltipY}
+		/>
+	{/if}
 </div>
 
 <style>
@@ -94,5 +93,6 @@
 		width: 100%;
 		height: 250px;
 		_background-color: rgba(0, 0, 0, 0.1);
+		overflow: hidden;
 	}
 </style>

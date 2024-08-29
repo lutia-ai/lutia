@@ -41,6 +41,7 @@
 			if (result.type === 'success' && result.data) {
 				const user = result.data;
 				userDetails = {
+					id: user.id,
 					name: user.name,
 					email: user.email,
 					oauth: user.oauth

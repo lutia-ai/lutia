@@ -120,7 +120,7 @@
 			max-width: 1200px;
 			width: 80%;
 			min-width: 800px;
-			height: 800px;
+			height: 850px;
 			margin: auto;
 			border-radius: 10px;
 			padding: 40px;
@@ -170,6 +170,7 @@
 					border-top-left-radius: 0;
 					overflow: hidden;
 					flex: 1;
+					min-width: 130px;
 
 					.sidebar-option {
 						width: 100%;

@@ -74,7 +74,7 @@
 	}
 
 	.tick text {
-		fill: #666;
+		fill: var(--text-color-light-opacity);
 	}
 
 	.tick.tick-0 line {

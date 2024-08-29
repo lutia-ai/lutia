@@ -69,6 +69,9 @@
 	export let layout = 'stacked'; // stacked or grouped
 	export let offset = stackOffsetNone;
 	export let delay = 300;
+	export let hoveredItem: any;
+	export let tooltipX = 0;
+	export let tooltipY = 0;
 
 	$: pivotData = pivot($data, groupBy, stackBy, (items) => sum(items, (d: any) => d.value));
 	$: stackKeys = Object.keys(pivotData[0]).filter((d) => d !== groupBy);
@@ -125,6 +128,10 @@
 			}}
 			{...getDimensions(item)}
 			{...$$restProps}
+			{item}
+			bind:hoveredItem
+			bind:tooltipX
+			bind:tooltipY
 		/>
 	{/each}
 </g>
