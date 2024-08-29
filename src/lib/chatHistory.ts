@@ -205,3 +205,18 @@ export async function clearChatHistory() {
 		console.error('Error clearing chat history:', error);
 	}
 }
+
+export function sanitizeLLmContent(content: string) {
+	if (!content) return '';
+
+	// Trim the content
+	content = content.trim();
+
+	// Replace <style>, <script>, and <html> tags with backtick-wrapped versions in one pass
+	content = content.replace(/<(style|script|html)>/g, (match, p1) => `\`<${p1}>\``);
+
+	// Replace </style>, </script>, and </html> tags with backtick-wrapped versions in one pass
+	content = content.replace(/<(style|script|html)>/g, (match, p1) => `\`<${p1}>\``);
+
+	return content;
+}

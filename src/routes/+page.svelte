@@ -44,7 +44,8 @@
 		changeTabWidth,
 		closeAllTabWidths,
 		extractCodeBlock,
-		loadChatHistory
+		loadChatHistory,
+		sanitizeLLmContent
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
 
@@ -324,12 +325,12 @@
 						} else if (isInCodeBlock) {
 							if (lastComponent && lastComponent.type === 'code') {
 								const codeComponent = lastComponent as CodeComponent;
-								lastComponent.code = codeComponent.code.trimStart() + text;
+								lastComponent.code = codeComponent.code + text;
 							} else {
 								responseComponents.push({
 									type: 'code',
 									language,
-									code: text.trimStart(),
+									code: text,
 									copied: false
 								});
 							}
@@ -644,7 +645,9 @@
 									{#if component.type === 'text'}
 										<p class="content-paragraph">
 											{@html marked(
-												component.content ? component.content.trim() : ''
+												component.content
+													? sanitizeLLmContent(component.content.trim())
+													: ''
 											)}
 										</p>
 									{:else if component.type === 'code'}
@@ -766,7 +769,7 @@
 											</div>
 											<div class="code-content">
 												<HighlightAuto
-													code={component.code}
+													code={component.code.trim()}
 													let:highlighted
 												>
 													<LineNumbers
@@ -1045,6 +1048,7 @@
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
+		min-width: 450px;
 		font-family: 'Albert Sans', sans-serif;
 		// overflow-x: hidden;
 
@@ -1391,7 +1395,7 @@
 					margin: auto auto 35px auto;
 					width: 100%;
 					max-width: 900px;
-					// min-width: 590px;
+					min-width: 300px;
 					height: max-content;
 					box-sizing: border-box;
 					background: var(--bg-color-light);

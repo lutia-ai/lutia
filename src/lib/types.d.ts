@@ -120,9 +120,11 @@ type SerializedApiRequest = {
 };
 
 type User = {
+	id: number;
 	name: string;
 	email: string;
-	oauth: 'google' | '';
+	oauth?: 'google' | '';
+	image?: string;
 };
 
 type UserUpdateFields = Partial<
