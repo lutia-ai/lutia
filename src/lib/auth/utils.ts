@@ -10,10 +10,13 @@ import {
 import Credentials from '@auth/core/providers/credentials';
 import { retrieveUserByEmail, createUser, updateUser } from '$lib/db/crud/user';
 import { UserNotFoundError } from '$lib/customErrors';
+import { initializeDatabase } from '$lib/db/database';
+import type { User } from '$lib/db/entities/User';
 
 let requestBody: any;
 
 export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
+	await initializeDatabase();
 	if (event.request.body) {
 		requestBody = await event.request;
 	}

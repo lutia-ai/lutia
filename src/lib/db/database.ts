@@ -18,11 +18,24 @@ export const AppDataSource = new DataSource({
 	logging: false
 });
 
-// Initialize the database connection
-AppDataSource.initialize()
-	.then(() => {
-		console.log('Data Source has been initialized!');
-	})
-	.catch((err) => {
-		console.error('Error during Data Source initialization', err);
-	});
+let databaseInitialized = false;
+let initializationPromise: Promise<void> | null = null;
+
+export async function initializeDatabase() {
+	if (!initializationPromise) {
+		initializationPromise = (async () => {
+			if (!databaseInitialized) {
+				try {
+					await AppDataSource.initialize();
+					databaseInitialized = true;
+					console.log('Data Source has been initialized!');
+				} catch (error) {
+					console.error('Error during Data Source initialization:', error);
+					initializationPromise = null;
+					throw error;
+				}
+			}
+		})();
+	}
+	return initializationPromise;
+}
