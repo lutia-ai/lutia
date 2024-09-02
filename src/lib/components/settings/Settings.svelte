@@ -8,7 +8,6 @@
 	import GeneralSettingsPage from '$lib/components/settings/GeneralSettingsPage.svelte';
 	import BillingSettingsPage from '$lib/components/settings/BillingSettingsPage.svelte';
 	import UsageSettingsPage from '$lib/components/settings/UsageSettingsPage.svelte';
-	import ContextSettingsPage from '$lib/components/settings/ContextSettingsPage.svelte';
 
 	export let isOpen: boolean;
 
@@ -27,11 +26,6 @@
 			name: 'Usage',
 			icon: UsageIcon,
 			window: UsageSettingsPage
-		},
-		{
-			name: 'Context',
-			icon: ContextWindowIcon,
-			window: ContextSettingsPage
 		}
 	];
 

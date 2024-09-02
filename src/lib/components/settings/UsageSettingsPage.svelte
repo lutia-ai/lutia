@@ -2,11 +2,11 @@
 	import { onMount } from 'svelte';
 	import StackedBarChart from '$lib/components/barchart/StackedBarChart.svelte';
 	import { modelDictionary } from '$lib/modelDictionary';
-	import { ApiRequest } from '$lib/db/entities/ApiRequest';
 	import type { UsageObject, Company } from '$lib/types';
 	import { modelLogos } from '$lib/modelLogos';
 	import PieChart from '$lib/components/barchart/PieChart.svelte';
 	import { capitalizeFirstLetter } from '$lib/components/barchart/utils';
+	import { ApiModel, type ApiProvider } from '@prisma/client';
 
 	let mounted = false;
 
@@ -47,9 +47,13 @@
 
 	async function getMonthlyUsage(startDate: Date, endDate: Date): Promise<void> {
 		try {
+			const formatDate = (date: Date) => {
+				return date.toLocaleDateString('en-CA'); // 'en-CA' uses YYYY-MM-DD format
+			};
+
 			const params = new URLSearchParams({
-				startDate: startDate.toISOString().split('T')[0],
-				endDate: endDate.toISOString().split('T')[0]
+				startDate: formatDate(startDate),
+				endDate: formatDate(endDate)
 			});
 
 			const response = await fetch(`/api/usage?${params.toString()}`, {
@@ -61,7 +65,7 @@
 			}
 
 			const data = await response.json();
-
+			console.log(data);
 			usageData = processData(data.apiRequests);
 			console.log(usageData);
 		} catch (err) {
@@ -70,10 +74,10 @@
 	}
 
 	interface PartialApiRequest {
-		apiProvider: string;
-		apiModel: string;
-		requestTimestamp: string;
-		totalCost: string;
+		api_provider: ApiProvider;
+		api_model: ApiModel;
+		request_timestamp: string;
+		total_cost: string;
 	}
 
 	function processData(inputArray: PartialApiRequest[]): Record<string, UsageObject[]> {
@@ -82,36 +86,39 @@
 
 		// Initialize the result object with empty arrays for each day
 		const result: Record<string, UsageObject[]> = {};
-
+		console.log('inputArray: ', inputArray);
 		// Group by apiProvider
 		const groupedByProvider = inputArray.reduce(
 			(acc, curr) => {
-				if (!acc[curr.apiProvider]) {
-					acc[curr.apiProvider] = [];
+				if (!acc[curr.api_provider]) {
+					acc[curr.api_provider] = [];
 				}
-				acc[curr.apiProvider].push(curr);
+				acc[curr.api_provider].push(curr);
 				return acc;
 			},
 			{} as Record<string, PartialApiRequest[]>
 		);
+
+		console.log('grouped by provider: ', groupedByProvider);
 
 		// Process each provider
 		for (const [provider, objects] of Object.entries(groupedByProvider)) {
 			result[provider] = [];
 
 			// Create a map to store data for each day and model
-			const dayModelMap = new Map<string, Map<string, number>>();
+			const dayModelMap = new Map<string, Map<ApiModel, number>>();
 
 			// Initialize the map with all days of the month
 			for (let day = 1; day <= daysInMonth; day++) {
-				dayModelMap.set(day.toString(), new Map<string, number>());
+				dayModelMap.set(day.toString(), new Map<ApiModel, number>());
 			}
 
 			// Process each object
 			for (const obj of objects) {
-				const day = new Date(obj.requestTimestamp).getDate().toString();
-				const model = obj.apiModel;
-				const value = parseFloat(obj.totalCost);
+				const day = new Date(obj.request_timestamp).getDate().toString();
+				const modelString = obj.api_model;
+				const model = ApiModel[modelString]; // Convert string to enum value
+				const value = parseFloat(obj.total_cost);
 
 				const modelMap = dayModelMap.get(day)!;
 				modelMap.set(model, (modelMap.get(model) || 0) + value);
@@ -131,7 +138,7 @@
 				}
 
 				// Add entries for models with no data on this day
-				const allModels = new Set(objects.map((obj) => obj.apiModel));
+				const allModels = new Set(objects.map((obj) => obj.api_model));
 				for (const model of allModels) {
 					if (!modelMap.has(model)) {
 						result[provider].push({
@@ -183,17 +190,19 @@
 </script>
 
 <div class="usage-body">
-	{#if mounted}
-		<div class="usage-top-panel">
-			<div class="month-selector">
-				<button on:click={() => changeMonth(-1)} aria-label="Previous month">&lt;</button>
-				<span>{formatMonth(currentDate)}</span>
-				<button on:click={() => changeMonth(1)} aria-label="Next month">&gt;</button>
-			</div>
+	<div class="usage-top-panel">
+		<div class="month-selector">
+			<button on:click={() => changeMonth(-1)} aria-label="Previous month">&lt;</button>
+			<span>{formatMonth(currentDate)}</span>
+			<button on:click={() => changeMonth(1)} aria-label="Next month">&gt;</button>
+		</div>
+		{#if mounted}
 			<div class="doughnut-container">
 				<PieChart {usageData} companyColors={pieColors} />
 			</div>
-		</div>
+		{/if}
+	</div>
+	{#if mounted}
 		{#each Object.entries(usageData) as [company, data]}
 			{@const currentLayout = isValidCompany(company) ? companyVars[company].layout : ''}
 			<div class="title">
@@ -282,17 +291,18 @@
 			.month-selector {
 				display: flex;
 				gap: 30px;
-				color: var(--text-color);
+				color: var(--bg-color);
 				padding: 10px;
 				border-radius: 10px;
 				height: max-content;
 				border: 1px solid var(--text-color);
 				width: 220px;
+				background: var(--text-color);
 
 				button {
 					background: none;
 					border: none;
-					color: var(--text-color);
+					color: var(--bg-color);
 					font-size: 15px;
 					cursor: pointer;
 				}

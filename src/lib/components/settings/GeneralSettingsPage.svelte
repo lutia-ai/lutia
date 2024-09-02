@@ -1,20 +1,20 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { signIn } from '@auth/sveltekit/client';
-	import { darkMode, inputPricing } from '$lib/stores.ts';
+	import { darkMode, inputPricing, numberPrevMessages } from '$lib/stores.ts';
 	import { get } from 'svelte/store';
 	import { signOut } from '@auth/sveltekit/client';
 
 	import MoonIcon from '$lib/components/icons/MoonIcon.svelte';
+	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
-	import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import { deserialize } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
 	import type { User } from '$lib/types';
 	import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
-	import { goto } from '$app/navigation';
+	import Slider from '$lib/components/Slider.svelte';
 
 	let darkModeOn: boolean = get(darkMode);
 	let userDetails: User;
@@ -121,7 +121,27 @@
 			<Switch bind:on={$inputPricing} />
 		</div>
 	</div>
-
+	<h1>Context window</h1>
+	<h2>
+		The context window adjusts how many of your previous messages will get sent with your
+		prompt.<br /><br />
+		The more previous messages you include, the more memory the AI will have of your conversation,
+		but the higher the cost of the message.
+	</h2>
+	<div class="context setting">
+		<div class="icon-container">
+			<ContextWindowIcon color="var(--text-color-light)" />
+		</div>
+		<p>Adjust context window manually</p>
+	</div>
+	<div class="slider-container">
+		<p>0</p>
+		<Slider
+			value={$numberPrevMessages}
+			on:change={(e) => numberPrevMessages.set(e.detail.value)}
+		/>
+		<p>max</p>
+	</div>
 	<h1>Account</h1>
 	{#if userDetails && userDetails.oauth !== 'google'}
 		<div
@@ -166,7 +186,14 @@
 <style lang="scss">
 	h1 {
 		font-size: 20px;
-		margin: 20px 35px;
+		margin: 30px 35px 20px 35px;
+	}
+
+	h2 {
+		margin: 0px 35px;
+		font-size: 16px;
+		font-weight: 300;
+		color: var(--text-color-light);
 	}
 
 	.setting {
@@ -216,5 +243,29 @@
 		.switch-wrapper {
 			margin: auto auto auto 20px;
 		}
+	}
+
+	.context {
+		color: var(--text-color);
+		display: flex;
+		gap: 10px;
+		padding: 35px 35px 0 35px;
+		transition: none;
+		cursor: default;
+
+		&:hover {
+			background: inherit !important;
+		}
+	}
+
+	.slider-container {
+		display: flex;
+		gap: 5px;
+		padding: 20px 35px;
+		--track-bgcolor: var(--text-color-light-opacity);
+		--track-highlight-bg: linear-gradient(90deg, var(--text-color), var(--text-color-light));
+		--tooltip-bgcolor: var(--text-color);
+		--tooltip-bg: linear-gradient(90deg, var(--text-color), var(--text-color-light));
+		--tooltip-text: var(--bg-color);
 	}
 </style>
