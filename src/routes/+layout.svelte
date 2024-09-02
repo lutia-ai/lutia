@@ -7,10 +7,11 @@
 
 	let darkModeOn: boolean = data.colorScheme === 'dark';
 
-	function checkColorScheme() {
-		const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-		darkModeOn = prefersDarkScheme;
-		setColorScheme(darkModeOn);
+	function checkColorScheme(event?: MediaQueryListEvent) {
+		const prefersDarkScheme = event
+			? event.matches
+			: window.matchMedia('(prefers-color-scheme: dark)').matches;
+		setColorScheme(prefersDarkScheme);
 	}
 
 	function setColorScheme(isDark: boolean) {
@@ -18,6 +19,7 @@
 			darkModeOn = isDark;
 			darkMode.set(isDark);
 			document.cookie = `color-scheme=${isDark ? 'dark' : 'light'}; path=/; max-age=31536000; SameSite=Lax`;
+			document.body.classList.toggle('dark', isDark);
 		}
 	}
 
@@ -27,6 +29,7 @@
 
 	onMount(() => {
 		checkColorScheme();
+
 		// Add event listener for color scheme changes
 		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 		mediaQuery.addEventListener('change', checkColorScheme);
