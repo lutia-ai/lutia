@@ -1,15 +1,17 @@
-import { AppDataSource } from '../database';
-import { Between, IsNull, Not, Repository } from 'typeorm';
-import { ApiModel, ApiProvider, ApiRequest } from '$lib/db/entities/ApiRequest';
+import { Between, type DataSource, IsNull, Not, Repository } from 'typeorm';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import type { User as UserEntity } from '$lib/db/entities/User.js';
-import type { Message } from '../entities/Message';
+// import { User as UserEntity } from '$lib/db/entities/User';
+// import { ApiRequest, ApiProvider, ApiModel } from '$lib/db/entities/ApiRequest';
+// import type { Message } from '../entities/Message';
 import { UserNotFoundError } from '$lib/customErrors';
+import prisma from '$lib/prisma';
+import type { ApiModel, ApiProvider, ApiRequest, Message, Prisma, User } from '@prisma/client';
+import type { ApiRequestWithMessage } from '$lib/types';
 
 export async function createApiRequestEntry(
 	userEmail: string,
-	apiProvider: keyof typeof ApiProvider,
-	apiModel: keyof typeof ApiModel,
+	apiProvider: ApiProvider,
+	apiModel: ApiModel,
 	inputTokens: number,
 	inputCost: number,
 	outputTokens: number,
@@ -18,29 +20,27 @@ export async function createApiRequestEntry(
 	message: Message
 ): Promise<void> {
 	try {
-		const apiRequestRepository: Repository<ApiRequest> =
-			AppDataSource.getRepository(ApiRequest);
-
 		// Find the user for whom we are creating this request
 		const user = await retrieveUserByEmail(userEmail);
-		if (!user) {
-			throw new Error('User not found');
-		}
 
-		// Create a new ApiRequest instance
-		const apiRequest = new ApiRequest();
-		apiRequest.user = user;
-		apiRequest.apiProvider = apiProvider;
-		apiRequest.apiModel = apiModel;
-		apiRequest.inputTokens = inputTokens;
-		apiRequest.inputCost = inputCost;
-		apiRequest.outputTokens = outputTokens;
-		apiRequest.outputCost = outputCost;
-		apiRequest.totalCost = totalCost;
-		apiRequest.message = message;
-
-		// Save the new ApiRequest to the database
-		await apiRequestRepository.save(apiRequest);
+		// Create a new ApiRequest entry
+		await prisma.apiRequest.create({
+			data: {
+				user: {
+					connect: { id: user.id } // Link the user to the ApiRequest
+				},
+				api_provider: apiProvider,
+				api_model: apiModel,
+				input_tokens: inputTokens,
+				input_cost: inputCost,
+				output_tokens: outputTokens,
+				output_cost: outputCost,
+				total_cost: totalCost,
+				message: {
+					connect: { id: message.id } // Link the message to the ApiRequest
+				}
+			}
+		});
 		console.log('ApiRequest saved successfully');
 	} catch (error) {
 		console.error('Error adding API request entry:', error);
@@ -50,20 +50,17 @@ export async function createApiRequestEntry(
 
 export async function retrieveApiRequests(userEmail: string): Promise<ApiRequest[]> {
 	try {
-		// Get the repository for the ApiRequest entity
-		const apiRequestRepository: Repository<ApiRequest> =
-			AppDataSource.getRepository(ApiRequest);
-
 		// Find the ApiRequests associated with a specific user email
 		// Assuming you have a method to retrieve user by email
 		const user = await retrieveUserByEmail(userEmail);
-		if (!user) {
-			throw new Error('User not found');
-		}
 
-		const apiRequests = await apiRequestRepository.find({
-			where: { user: { id: user.id } },
-			relations: ['message'] // Load related entities if needed
+		const apiRequests = await prisma.apiRequest.findMany({
+			where: {
+				user_id: user.id // Filter by user ID
+			},
+			include: {
+				message: true // Load related messages
+			}
 		});
 
 		return apiRequests;
@@ -73,27 +70,25 @@ export async function retrieveApiRequests(userEmail: string): Promise<ApiRequest
 	}
 }
 
-export async function retrieveApiRequestsWithMessage(userEmail: string): Promise<ApiRequest[]> {
+export async function retrieveApiRequestsWithMessage(
+	userEmail: string
+): Promise<ApiRequestWithMessage[]> {
 	try {
-		// Get the repository for the ApiRequest entity
-		const apiRequestRepository: Repository<ApiRequest> =
-			AppDataSource.getRepository(ApiRequest);
+		const user = await retrieveUserByEmail(userEmail);
 
-		let user: UserEntity;
-		try {
-			user = await retrieveUserByEmail(userEmail);
-		} catch (error) {
-			if (error instanceof UserNotFoundError) {
-				throw error;
-			}
-		}
-
-		const apiRequests = await apiRequestRepository.find({
+		const apiRequests = await prisma.apiRequest.findMany({
 			where: {
-				user: { id: user!.id },
-				message: { id: Not(IsNull()) } // This ensures that only ApiRequests with a message are returned
+				user_id: user.id, // Filter by user ID
+				message: {
+					// Ensure that the message relation exists (is not null)
+					NOT: {
+						id: undefined
+					}
+				}
 			},
-			relations: ['message'] // Load related message entity
+			include: {
+				message: true // Include the related message entity
+			}
 		});
 
 		return apiRequests;
@@ -109,25 +104,26 @@ export async function retrieveUserRequestsInDateRange(
 	endDate: Date
 ): Promise<Partial<ApiRequest>[]> {
 	try {
-		const apiRequestRepository = AppDataSource.getRepository(ApiRequest);
-
-		const apiRequests = await apiRequestRepository.find({
-			select: [
-				'requestTimestamp',
-				'apiProvider',
-				'apiModel',
-				'inputCost',
-				'inputTokens',
-				'outputCost',
-				'outputTokens',
-				'totalCost'
-			],
-			where: {
-				user: { id: userId },
-				requestTimestamp: Between(startDate, endDate)
+		const apiRequests = await prisma.apiRequest.findMany({
+			select: {
+				request_timestamp: true,
+				api_provider: true,
+				api_model: true,
+				input_cost: true,
+				input_tokens: true,
+				output_cost: true,
+				output_tokens: true,
+				total_cost: true
 			},
-			order: {
-				requestTimestamp: 'DESC'
+			where: {
+				user_id: userId,
+				request_timestamp: {
+					gte: startDate,
+					lte: endDate
+				}
+			},
+			orderBy: {
+				request_timestamp: 'desc'
 			}
 		});
 

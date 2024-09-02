@@ -62,7 +62,7 @@ export const actions = {
 			return fail(500, { message: 'Internal server error' });
 		}
 	},
-	register: async ({ request, url }) => {
+	register: async ({ request }) => {
 		const data = await request.formData();
 		const email = data.get('email');
 		const name = data.get('name');
@@ -98,12 +98,6 @@ export const actions = {
 		}
 
 		try {
-			const userData = {
-				email: email as string,
-				name: name as string,
-				password_hash: password as string
-			};
-
 			try {
 				const user = await retrieveUserByEmail(email);
 				if (user.oauth === 'google') {
@@ -118,7 +112,7 @@ export const actions = {
 				}
 			} catch (err) {
 				if (err instanceof UserNotFoundError) {
-					await createUser(userData);
+					await createUser(email, name, password);
 					return {
 						success: true
 					};

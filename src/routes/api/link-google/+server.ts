@@ -1,8 +1,8 @@
 import { error, json } from '@sveltejs/kit';
 import crypto from 'crypto';
 import { retrieveUserByEmail, updateUser } from '$lib/db/crud/user';
-import type { User as UserEntity } from '$lib/db/entities/User.js';
 import { UserNotFoundError } from '$lib/customErrors';
+import { type User as UserEntity } from '@prisma/client';
 
 export async function GET({ locals }) {
 	let session = await locals.auth();

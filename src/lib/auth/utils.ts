@@ -10,13 +10,11 @@ import {
 import Credentials from '@auth/core/providers/credentials';
 import { retrieveUserByEmail, createUser, updateUser } from '$lib/db/crud/user';
 import { UserNotFoundError } from '$lib/customErrors';
-import { initializeDatabase } from '$lib/db/database';
-import type { User } from '$lib/db/entities/User';
+import type { User } from '@prisma/client';
 
 let requestBody: any;
 
 export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
-	await initializeDatabase();
 	if (event.request.body) {
 		requestBody = await event.request;
 	}
@@ -38,7 +36,9 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 						typeof credentials.password === 'string'
 					) {
 						try {
-							const { isValid, user } = await verifyCredentials(
+							const user: User = await retrieveUserByEmail(credentials.email);
+							const isValid = await verifyCredentials(
+								user,
 								credentials.email,
 								credentials.password
 							);
@@ -84,8 +84,8 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 								name: user.name!,
 								oauth: 'google'
 							};
-							existingUser = await createUser(userData);
-							user.id = existingUser.id.toString();
+							existingUser = await createUser(user.email!, user.name!, 'google');
+							user.id = existingUser!.id.toString();
 							return true;
 						}
 
@@ -97,7 +97,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 										// Update the existing user to link with Google and clear the linking token
 										await updateUser(existingUser.id, {
 											oauth: 'google',
-											oauth_link_token: null
+											oauth_link_token: undefined
 										});
 										return '/?success=AccountLinkSuccess';
 									} else {
@@ -155,22 +155,15 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 });
 
 export async function verifyCredentials(
+	user: User,
 	email: string,
 	password: string
-): Promise<{ isValid: boolean; user: User }> {
+): Promise<boolean> {
 	try {
-		const user: User = await retrieveUserByEmail(email);
 		if (!user.password_hash) {
-			return {
-				isValid: false,
-				user
-			};
+			return false;
 		}
-		const isValid = await bcrypt.compare(password, user.password_hash);
-		return {
-			isValid,
-			user
-		};
+		return await bcrypt.compare(password, user.password_hash);
 	} catch (error) {
 		throw error;
 	}

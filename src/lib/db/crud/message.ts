@@ -1,9 +1,7 @@
-import { In, IsNull, Not, Repository } from 'typeorm';
-import { AppDataSource } from '$lib/db/database';
-import { Message } from '$lib/db/entities/Message';
 import type { Image } from '$lib/types';
-import { ApiRequest } from '$lib/db/entities/ApiRequest';
-import { User } from '$lib/db/entities/User';
+import prisma from '$lib/prisma';
+import type { Message } from '@prisma/client';
+import { UserNotFoundError } from '$lib/customErrors';
 
 export async function createMessage(
 	prompt: string,
@@ -12,20 +10,28 @@ export async function createMessage(
 	referencedMessageIds?: number[]
 ): Promise<Message> {
 	try {
-		const messageRepository: Repository<Message> = AppDataSource.getRepository(Message);
-
 		let referencedMessages: Message[] = [];
-		if (referencedMessageIds) {
-			referencedMessages = await messageRepository.findBy({ id: In(referencedMessageIds) });
+		if (referencedMessageIds && referencedMessageIds.length > 0) {
+			referencedMessages = await prisma.message.findMany({
+				where: {
+					id: {
+						in: referencedMessageIds
+					}
+				}
+			});
 		}
 
-		const message = new Message();
-		message.prompt = prompt;
-		message.response = response;
-		message.pictures = pictures;
-		message.referencedMessages = referencedMessages;
+		const message = await prisma.message.create({
+			data: {
+				prompt,
+				response,
+				pictures,
+				referencedMessages: {
+					connect: referencedMessages.map((msg) => ({ id: msg.id }))
+				}
+			}
+		});
 
-		await messageRepository.save(message);
 		console.log('Message saved successfully');
 		return message;
 	} catch (error) {
@@ -36,19 +42,20 @@ export async function createMessage(
 
 export async function deleteAllUserMessages(userId: number): Promise<void> {
 	try {
-		const messageRepository = AppDataSource.getRepository(Message);
-		const apiRequestRepository = AppDataSource.getRepository(ApiRequest);
-		const userRepository = AppDataSource.getRepository(User);
-
 		// Find the user and load requests with messages
-		const user = await userRepository.findOne({
+		const user = await prisma.user.findUnique({
 			where: { id: userId },
-			relations: ['requests', 'requests.message']
+			include: {
+				requests: {
+					include: {
+						message: true // Assuming there is a relationship between Request and Message
+					}
+				}
+			}
 		});
 
 		if (!user) {
-			console.log(`User with ID ${userId} not found`);
-			return;
+			throw new UserNotFoundError(userId);
 		}
 
 		// Collect all message IDs
@@ -58,29 +65,39 @@ export async function deleteAllUserMessages(userId: number): Promise<void> {
 
 		if (messageIds.length > 0) {
 			// Start a transaction
-			await AppDataSource.manager.transaction(async (transactionalEntityManager) => {
-				// Remove references in the message_references table
-				await transactionalEntityManager
-					.createQueryBuilder()
-					.relation(Message, 'referencedMessages')
-					.of(messageIds)
-					.remove(messageIds);
+			await prisma.$transaction(async (prismaTransaction) => {
+				// Disconnect references from each message
+				for (const messageId of messageIds) {
+					await prismaTransaction.message.update({
+						where: { id: messageId },
+						data: {
+							referencedMessages: {
+								disconnect: {
+									id: messageId
+								}
+							}
+						}
+					});
+				}
 
 				// Set message to null for all ApiRequests
-				await transactionalEntityManager
-					.createQueryBuilder()
-					.update(ApiRequest)
-					.set({ message: null })
-					.where('user_id = :userId', { userId })
-					.execute();
+				await prismaTransaction.apiRequest.updateMany({
+					where: {
+						user_id: userId
+					},
+					data: {
+						message_id: undefined // Assuming `messageId` is the field to be updated
+					}
+				});
 
 				// Delete all messages
-				await transactionalEntityManager
-					.createQueryBuilder()
-					.delete()
-					.from(Message)
-					.where('id IN (:...ids)', { ids: messageIds })
-					.execute();
+				await prismaTransaction.message.deleteMany({
+					where: {
+						id: {
+							in: messageIds
+						}
+					}
+				});
 			});
 		}
 

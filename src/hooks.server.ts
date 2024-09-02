@@ -7,7 +7,6 @@ const darkModeHandler: Handle = async ({ event, resolve }) => {
 	// Get the color-scheme cookie
 	const colorScheme = event.cookies.get('color-scheme') || 'light';
 
-	// You can add the color scheme to the event.locals if needed
 	event.locals.colorScheme = colorScheme;
 
 	// Continue with the request
@@ -17,4 +16,4 @@ const darkModeHandler: Handle = async ({ event, resolve }) => {
 };
 
 // Export the sequence of handlers
-export const handle = sequence(authHandler, darkModeHandler);
+export const handle = sequence(darkModeHandler, authHandler);

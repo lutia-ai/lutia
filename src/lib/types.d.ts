@@ -1,3 +1,6 @@
+import type { ApiModel } from '@prisma/client';
+import type { DataSource } from 'typeorm';
+
 export type TextComponent = {
 	type: 'text';
 	content: string;
@@ -34,7 +37,7 @@ export type UserChat = {
 export type ChatComponent = LlmChat | UserChat;
 
 export type Model = {
-	name: string;
+	name: ApiModel;
 	param: string;
 	legacy: boolean;
 	input_price: number;
@@ -51,7 +54,7 @@ interface ModelDetails {
 	models: Record<Model>;
 }
 
-export type ModelDictionary = Record<string, ModelDetails>;
+export type ModelDictionary = Record<ApiProvider, ModelDetails>;
 
 export type UserSignupData = {
 	email: string;
@@ -127,13 +130,17 @@ type User = {
 	image?: string;
 };
 
-type UserUpdateFields = Partial<
-	Pick<User, 'email' | 'name' | 'password_hash' | 'oauth' | 'oauth_link_token'>
->;
+type UserUpdateFields = {
+	name?: string;
+	email?: string;
+	password_hash?: string;
+	oauth?: '' | 'google';
+	oauth_link_token?: string;
+};
 
 type UsageObject = {
 	date: string;
-	model: string;
+	model: ApiModel;
 	value: number;
 };
 
@@ -143,6 +150,14 @@ declare global {
 	namespace App {
 		interface Locals {
 			colorScheme: string;
+			db: DataSource;
 		}
 	}
 }
+
+// Define the type for ApiRequest including the message relation
+type ApiRequestWithMessage = Prisma.ApiRequestGetPayload<{
+	include: {
+		message: true;
+	};
+}>;

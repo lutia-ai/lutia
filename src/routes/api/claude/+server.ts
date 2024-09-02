@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { Message, Model, Image, ClaudeImage } from '$lib/types';
 import { calculateClaudeImageCost, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
-import { Message as MessageEntity } from '$lib/db/entities/Message';
+import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
 
 const anthropicSecretKey =

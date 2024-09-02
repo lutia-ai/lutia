@@ -20,9 +20,8 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 ## Create PostgreSQL tables
-
-Go to the create folder and run the following command to create necessary tables
+Runs prisma migrate command to update db based on prisma schema
 
 ```bash
-npx tsx src/lib/db/create/createTable.ts
+npm run prisma:migrate MigrationName
 ```

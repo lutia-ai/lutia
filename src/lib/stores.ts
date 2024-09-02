@@ -1,6 +1,7 @@
 import { writable, type Writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import type { ChatComponent } from '$lib/types';
+import type { ApiProvider } from '@prisma/client';
 
 function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
 	// Create the store with the start value
@@ -25,7 +26,7 @@ function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
 }
 
 // Persistent store for the chosenCompany setting
-export const chosenCompany = createPersistentStore<string>('chosenCompany', 'anthropic');
+export const chosenCompany = createPersistentStore<ApiProvider>('chosenCompany', 'anthropic');
 
 // Persistent store for the dark mode setting
 export const darkMode = createPersistentStore<boolean>('darkMode', false);

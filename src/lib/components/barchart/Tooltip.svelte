@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatModelEnumToReadable } from '$lib/chatHistory';
 	import { roundToFirstTwoNonZeroDecimals } from '$lib/tokenizer';
 
 	export let model: string;
@@ -8,7 +9,7 @@
 </script>
 
 <div class="tooltip" style="left: {x}px; top: {y}px;">
-	<p>Model: {model}</p>
+	<p>Model: {formatModelEnumToReadable(model)}</p>
 	<p>Cost: ${roundToFirstTwoNonZeroDecimals(cost)}</p>
 </div>
 

@@ -44,10 +44,12 @@
 		changeTabWidth,
 		closeAllTabWidths,
 		extractCodeBlock,
+		formatModelEnumToReadable,
 		loadChatHistory,
 		sanitizeLLmContent
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
+	import type { ApiProvider } from '@prisma/client';
 
 	export let data;
 
@@ -68,7 +70,7 @@
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
 
-	let companySelection: string[] = Object.keys(modelDictionary);
+	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
 
 	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
@@ -859,7 +861,7 @@
 										</div>
 										<div class="toolbar-item">
 											<StarsIcon color="var(--text-color-light)" />
-											<p>{chat.by}</p>
+											<p>{formatModelEnumToReadable(chat.by)}</p>
 										</div>
 									</div>
 								{/if}

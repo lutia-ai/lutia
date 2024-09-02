@@ -2,7 +2,7 @@
 	// 	Note: Due to REPL limitations, full responsiveness may not work here. Download the example from here or from the website (https://layercake.graphics/example/ColumnStacked) and run locally to get all features.
 	import { LayerCake, Svg } from 'layercake';
 	import { scaleBand, scaleOrdinal } from 'd3-scale';
-	import { format, precisionFixed } from 'd3-format';
+	import { format } from 'd3-format';
 	import { stackOffsetExpand } from 'd3-shape';
 	import { sum } from 'd3-array';
 

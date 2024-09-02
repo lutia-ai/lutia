@@ -4,25 +4,26 @@ import type {
 	LlmChat,
 	SerializedApiRequest,
 	UserChat,
-	Image
+	Image,
+	ApiRequestWithMessage
 } from '$lib/types';
 import { deserialize } from '$app/forms';
-import type { ApiRequest } from '$lib/db/entities/ApiRequest';
+// import type { ApiRequest } from '$lib/db/entities/ApiRequest';
 import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
 import { chatHistory } from '$lib/stores';
 import type { ActionResult } from '@sveltejs/kit';
 
-export function serializeApiRequest(apiRequest: ApiRequest): SerializedApiRequest {
+export function serializeApiRequest(apiRequest: ApiRequestWithMessage): SerializedApiRequest {
 	return {
 		id: apiRequest.id,
-		apiProvider: apiRequest.apiProvider,
-		apiModel: apiRequest.apiModel,
-		requestTimestamp: apiRequest.requestTimestamp.toISOString(),
-		inputTokens: apiRequest.inputTokens,
-		inputCost: apiRequest.inputCost.toString(),
-		outputTokens: apiRequest.outputTokens,
-		outputCost: apiRequest.outputCost.toString(),
-		totalCost: apiRequest.totalCost.toString(),
+		apiProvider: apiRequest.api_provider,
+		apiModel: apiRequest.api_model,
+		requestTimestamp: apiRequest.request_timestamp.toISOString(),
+		inputTokens: apiRequest.input_tokens,
+		inputCost: apiRequest.input_cost.toString(),
+		outputTokens: apiRequest.output_tokens,
+		outputCost: apiRequest.output_cost.toString(),
+		totalCost: apiRequest.total_cost.toString(),
 		message: apiRequest.message
 			? {
 					id: apiRequest.message.id,
@@ -219,4 +220,14 @@ export function sanitizeLLmContent(content: string) {
 	content = content.replace(/<(style|script|html)>/g, (match, p1) => `\`<${p1}>\``);
 
 	return content;
+}
+
+export function formatModelEnumToReadable(enumValue: string): string {
+	// Replace underscores with spaces
+	let readable = enumValue.replace(/_/g, ' ');
+
+	// Add periods where appropriate (e.g., replace "3 5" with "3.5")
+	readable = readable.replace(/(\d) (\d)/g, '$1.$2');
+
+	return readable;
 }

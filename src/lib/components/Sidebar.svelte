@@ -23,9 +23,10 @@
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
 	import SettingsPopup from '$lib/components/settings/SettingsPopup.svelte';
 	import { modelLogos } from '$lib/modelLogos';
-	import { clearChatHistory } from '$lib/chatHistory';
+	import { clearChatHistory, formatModelEnumToReadable } from '$lib/chatHistory';
+	import { ApiProvider } from '@prisma/client';
 
-	export let companySelection: string[];
+	export let companySelection: ApiProvider[];
 	export let gptModelSelection: Model[];
 	export let chosenModel: Model;
 	export let isSettingsOpen: boolean;
@@ -46,9 +47,9 @@
 	let isRotating: boolean = false;
 
 	// Updates the chosen company and resets the model selection based on the new company.
-	function selectCompany(company: string) {
+	function selectCompany(company: ApiProvider) {
 		chosenCompany.set(company);
-		companySelection = Object.keys(modelDictionary);
+		companySelection = Object.keys(modelDictionary) as ApiProvider[];
 		companySelection = companySelection.filter((c) => c !== company);
 		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
 		chosenModel = gptModelSelection[0];
@@ -134,7 +135,7 @@
 					background: {modelDropdownOpen ? 'var(--bg-color-light)' : ''};
 				"
 			>
-				<p class="chosen-model-p">{chosenModel.name}</p>
+				<p class="chosen-model-p">{formatModelEnumToReadable(chosenModel.name)}</p>
 				<div class="dropdown-icon">
 					<DropdownIcon color="var(--text-color)" />
 				</div>
@@ -166,7 +167,7 @@
 							>
 								<div class="record">
 									<p>
-										{model.name}
+										{formatModelEnumToReadable(model.name)}
 
 										{#if $showPricing}
 											<div class="pricing">

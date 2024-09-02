@@ -1,5 +1,4 @@
 import { error, json } from '@sveltejs/kit';
-import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { retrieveUserRequestsInDateRange } from '$lib/db/crud/apiRequest';
 
 export async function GET({ locals, url }) {

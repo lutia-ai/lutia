@@ -1,7 +1,7 @@
 // Custom error classes
 export class UserNotFoundError extends Error {
-	constructor(email: string) {
-		super(`User with email ${email} not found`);
+	constructor(uniqueIdentifier: string | number) {
+		super(`User: ${uniqueIdentifier} not found`);
 		this.name = 'UserNotFoundError';
 	}
 }

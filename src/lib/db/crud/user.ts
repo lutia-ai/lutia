@@ -1,40 +1,60 @@
 import bcrypt from 'bcrypt';
-import { AppDataSource } from '../database';
-import { Repository } from 'typeorm';
-import { User } from '../entities/User';
+
+// import { User } from '$lib/db/entities/User';
 import { DatabaseError, UnknownError, UserNotFoundError } from '$lib/customErrors';
 import type { UserUpdateFields } from '$lib/types';
+import Stripe from 'stripe';
+import { STRIPE_SECRET_API_KEY } from '$env/static/private';
+import prisma from '$lib/prisma';
+import type { User } from '@prisma/client';
 
-export async function createUser(userData: Partial<User>): Promise<User> {
-	const userRepository: Repository<User> = AppDataSource.getRepository(User);
-	const newUser = new User();
+export async function createUser(
+	email: string,
+	name: string,
+	password?: string,
+	oauth?: string,
+	oauth_link_token?: string,
+	stripe_id?: string
+): Promise<User> {
+	email = handleGmail(email);
 
-	if (!userData.email) {
-		throw new Error('Email is required to create a user');
-	}
-
-	userData.email = handleGmail(userData.email);
-
-	if (!userData.oauth && userData.password_hash) {
+    let password_hash = password;
+	if (!oauth && password) {
 		const saltRounds = 10;
-		userData.password_hash = await bcrypt.hash(userData.password_hash, saltRounds);
+		password_hash = await bcrypt.hash(password, saltRounds);
 	}
 
-	Object.assign(newUser, userData);
-	return await userRepository.save(newUser);
+	try {
+		const stripe = new Stripe(STRIPE_SECRET_API_KEY);
+		const customer = await stripe.customers.create({
+			name: name,
+			email: email
+		});
+
+		stripe_id = customer.id;
+	} catch (error) {
+		console.error('Error creating stripe customer: ', error);
+		throw error;
+	}
+
+	const newUser = await prisma.user.create({
+		data: {
+			email,
+			name,
+			password_hash: password_hash || null,
+			oauth: oauth || null,
+			oauth_link_token: oauth_link_token || null,
+			stripe_id: stripe_id || null
+		}
+	});
+
+	return newUser;
 }
 
 export async function retrieveUserByEmail(email: string): Promise<User> {
-	const userRepository: Repository<User> = AppDataSource.getRepository(User);
-
 	try {
-		if (!email) {
-			throw new Error('Email is required');
-		}
-
 		email = handleGmail(email);
-		const user = await userRepository.findOne({ where: { email } });
-
+		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user) {
 			throw new UserNotFoundError(email);
 		}
@@ -55,20 +75,12 @@ export async function retrieveUserByEmail(email: string): Promise<User> {
 }
 
 export async function updateUser(userId: number, updateFields: UserUpdateFields): Promise<User> {
-	const userRepository = AppDataSource.getRepository(User);
-
 	try {
-		// First, check if the user exists
-		const user = await userRepository.findOne({ where: { id: userId } });
-		if (!user) {
-			throw new Error(`User with ID ${userId} not found`);
-		}
-
-		// Update only the provided fields
-		Object.assign(user, updateFields);
-
-		// Save the updated user
-		const updatedUser = await userRepository.save(user);
+		// Update the user directly using Prisma's update method
+		const updatedUser = await prisma.user.update({
+			where: { id: userId },
+			data: updateFields
+		});
 
 		return updatedUser;
 	} catch (error) {
