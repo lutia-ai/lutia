@@ -7,11 +7,9 @@ import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
 import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
+import { env } from '$env/dynamic/private';
 
-const anthropicSecretKey =
-	process.env.VITE_ANTHROPIC_API_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY;
-
-const client = new Anthropic({ apiKey: anthropicSecretKey });
+const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
 
 export async function POST({ request, locals }) {
 	let session = await locals.auth();

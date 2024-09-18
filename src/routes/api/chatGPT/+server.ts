@@ -5,16 +5,14 @@ import { calculateGptVisionPricing, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
 import {
 	retrieveUsersBalance,
-	updateUserBalance,
 	updateUserBalanceWithDeduction
 } from '$lib/db/crud/balance';
 import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
 import { InsufficientBalanceError } from '$lib/customErrors';
+import { env } from '$env/dynamic/private';
 
-const openAISecretKey = process.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
-
-const openai = new OpenAI({ apiKey: openAISecretKey });
+const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
 
 export async function POST({ request, locals }) {
 	let session = await locals.auth();

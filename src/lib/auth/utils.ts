@@ -2,9 +2,7 @@ import bcryptjs from 'bcryptjs';
 import { SvelteKitAuth } from '@auth/sveltekit';
 import type { SvelteKitAuthConfig } from '@auth/sveltekit';
 import Google from '@auth/core/providers/google';
-import {
-	env
-} from '$env/dynamic/private';
+import { env } from '$env/dynamic/private';
 import Credentials from '@auth/core/providers/credentials';
 import { retrieveUserByEmail, createUser, updateUser } from '$lib/db/crud/user';
 import { UserNotFoundError } from '$lib/customErrors';

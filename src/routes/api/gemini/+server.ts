@@ -6,11 +6,9 @@ import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
 import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
+import { env } from '$env/dynamic/private';
 
-const googleSecretKey =
-	process.env.VITE_GOOGLE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_GEMINI_API_KEY;
-
-const genAI = new GoogleGenerativeAI(googleSecretKey);
+const genAI = new GoogleGenerativeAI(env.VITE_GOOGLE_GEMINI_API_KEY);
 
 export async function POST({ request, locals }) {
 	let session = await locals.auth();

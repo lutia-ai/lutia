@@ -2,9 +2,8 @@ import { error } from '@sveltejs/kit';
 // @ts-ignore
 import LlamaAI from 'llamaai';
 
-// Fetch the API key or other necessary credentials
-const llamaAPISecretKey = process.env.VITE_LLAMA_API_KEY || import.meta.env.VITE_LLAMA_API_KEY;
-const llamaAPI = new LlamaAI(llamaAPISecretKey);
+import { env } from '$env/dynamic/private';
+const llamaAPI = new LlamaAI(env.VITE_LLAMA_API_KEY);
 
 export async function POST({ request, locals }) {
 	let session = await locals.getSession();
