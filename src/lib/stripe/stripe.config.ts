@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
-const stripeSecretKey =
-	process.env.SECRET_STRIPE_API_KEY || import.meta.env.SECRET_STRIPE_API_KEY;
+import { env } from '$env/dynamic/private';
 
-const stripe = new Stripe(stripeSecretKey);
+
+const stripe = new Stripe(env.SECRET_STRIPE_API_KEY);
 export default stripe;

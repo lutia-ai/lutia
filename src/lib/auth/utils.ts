@@ -3,10 +3,8 @@ import { SvelteKitAuth } from '@auth/sveltekit';
 import type { SvelteKitAuthConfig } from '@auth/sveltekit';
 import Google from '@auth/core/providers/google';
 import {
-	SECRET_GOOGLE_CLIENT_ID,
-	SECRET_GOOGLE_CLIENT_SECRET,
-	SECRET_AUTH
-} from '$env/static/private';
+	env
+} from '$env/dynamic/private';
 import Credentials from '@auth/core/providers/credentials';
 import { retrieveUserByEmail, createUser, updateUser } from '$lib/db/crud/user';
 import { UserNotFoundError } from '$lib/customErrors';
@@ -21,8 +19,8 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 	const authOptions: SvelteKitAuthConfig = {
 		providers: [
 			Google({
-				clientId: SECRET_GOOGLE_CLIENT_ID,
-				clientSecret: SECRET_GOOGLE_CLIENT_SECRET,
+				clientId: env.SECRET_GOOGLE_CLIENT_ID,
+				clientSecret: env.SECRET_GOOGLE_CLIENT_SECRET,
 				authorization: {
 					params: {
 						scope: 'openid email profile'
@@ -148,7 +146,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 			signIn: '/auth',
 			error: '/auth'
 		},
-		secret: SECRET_AUTH,
+		secret: env.SECRET_AUTH,
 		trustHost: true
 	};
 	return authOptions;

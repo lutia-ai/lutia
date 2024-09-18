@@ -9,7 +9,7 @@
 		type StripeCardElement
 	} from '@stripe/stripe-js';
 	import type { CardDetails } from '$lib/types';
-	import { PUBLIC_STRIPE_API_KEY } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import Topup from '$lib/components/icons/Topup.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
@@ -125,7 +125,7 @@
 
 	onMount(async () => {
 		await getUsersBillingDetails();
-		stripe = await loadStripe(PUBLIC_STRIPE_API_KEY);
+		stripe = await loadStripe(env.PUBLIC_STRIPE_API_KEY);
 		elements = stripe!.elements();
 		card = elements.create('card', {
 			disableLink: true
