@@ -4,6 +4,8 @@ import type { Message, Model, Image, GeminiImage } from '$lib/types';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
 import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
+import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
+import { InsufficientBalanceError } from '$lib/customErrors';
 
 const googleSecretKey =
 	process.env.VITE_GOOGLE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_GEMINI_API_KEY;
@@ -12,7 +14,7 @@ const genAI = new GoogleGenerativeAI(googleSecretKey);
 
 export async function POST({ request, locals }) {
 	let session = await locals.auth();
-	if (!session) {
+	if (!session || !session.user || !session.user.email) {
 		throw error(401, 'Forbidden');
 	}
 
@@ -46,20 +48,31 @@ export async function POST({ request, locals }) {
 
 		let inputCountResult;
 		const chunks: string[] = [];
+        let inputCost: number = 0;
 
-		let result;
-		let inputCost: number = 0;
-		if (geminiImage) {
-			result = await genAIModel.generateContentStream([JSON.stringify(prompt), geminiImage]);
+        if (geminiImage) {
 			inputCountResult = await genAIModel.countTokens([JSON.stringify(prompt), geminiImage]);
 			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		} else {
 			// @ts-ignore
-			result = await genAIModel.generateContentStream(prompt);
-			// @ts-ignore
 			inputCountResult = await genAIModel.countTokens(prompt);
 			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		}
+
+        let balance = await retrieveUsersBalance(Number(session.user.id));
+        if (balance - inputCost <= 0.1) {
+            throw new InsufficientBalanceError();
+        }
+
+		let result;		
+		if (geminiImage) {
+			result = await genAIModel.generateContentStream([JSON.stringify(prompt), geminiImage]);
+		} else {
+			// @ts-ignore
+			result = await genAIModel.generateContentStream(prompt);
+		}
+        
+        await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -84,8 +97,10 @@ export async function POST({ request, locals }) {
 					// need to add previous message ids
 				);
 
+                await updateUserBalanceWithDeduction(Number(session.user!.id), outputCost);
+
 				await createApiRequestEntry(
-					session.user!.email!,
+					Number(session.user!.id!),
 					'google',
 					model.name,
 					inputCountResult.totalTokens,
@@ -106,6 +121,9 @@ export async function POST({ request, locals }) {
 			}
 		});
 	} catch (err) {
+        if (err instanceof InsufficientBalanceError) {
+            throw error(500, err.message);
+        }
 		console.error('Error:', err);
 		throw error(500, 'An error occurred while processing your request');
 	}

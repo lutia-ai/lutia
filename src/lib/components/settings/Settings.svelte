@@ -1,7 +1,6 @@
 <script lang="ts">
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
-	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import UsageIcon from '$lib/components/icons/UsageIcon.svelte';
 

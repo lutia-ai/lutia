@@ -65,9 +65,7 @@
 			}
 
 			const data = await response.json();
-			console.log(data);
 			usageData = processData(data.apiRequests);
-			console.log(usageData);
 		} catch (err) {
 			console.error('Error retrieving usage details: ', err);
 		}
@@ -86,7 +84,6 @@
 
 		// Initialize the result object with empty arrays for each day
 		const result: Record<string, UsageObject[]> = {};
-		console.log('inputArray: ', inputArray);
 		// Group by apiProvider
 		const groupedByProvider = inputArray.reduce(
 			(acc, curr) => {
@@ -98,8 +95,6 @@
 			},
 			{} as Record<string, PartialApiRequest[]>
 		);
-
-		console.log('grouped by provider: ', groupedByProvider);
 
 		// Process each provider
 		for (const [provider, objects] of Object.entries(groupedByProvider)) {

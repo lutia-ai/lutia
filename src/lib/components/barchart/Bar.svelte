@@ -110,8 +110,6 @@
 			height: $yScale(item.values[0]) - $yScale(item.values[1])
 		};
 	};
-
-	//$: console.log({ chartData })
 </script>
 
 <!-- TODO: Pass in top-level groupKey (or slice off of groupKeys) instead of using year directly -->

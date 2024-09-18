@@ -1,15 +1,10 @@
-import { Between, type DataSource, IsNull, Not, Repository } from 'typeorm';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-// import { User as UserEntity } from '$lib/db/entities/User';
-// import { ApiRequest, ApiProvider, ApiModel } from '$lib/db/entities/ApiRequest';
-// import type { Message } from '../entities/Message';
-import { UserNotFoundError } from '$lib/customErrors';
 import prisma from '$lib/prisma';
-import type { ApiModel, ApiProvider, ApiRequest, Message, Prisma, User } from '@prisma/client';
+import type { ApiModel, ApiProvider, ApiRequest, Message } from '@prisma/client';
 import type { ApiRequestWithMessage } from '$lib/types';
 
 export async function createApiRequestEntry(
-	userEmail: string,
+	userId: number,
 	apiProvider: ApiProvider,
 	apiModel: ApiModel,
 	inputTokens: number,
@@ -18,16 +13,13 @@ export async function createApiRequestEntry(
 	outputCost: number,
 	totalCost: number,
 	message: Message
-): Promise<void> {
+): Promise<ApiRequest> {
 	try {
-		// Find the user for whom we are creating this request
-		const user = await retrieveUserByEmail(userEmail);
-
 		// Create a new ApiRequest entry
-		await prisma.apiRequest.create({
+		const apiRequest = await prisma.apiRequest.create({
 			data: {
 				user: {
-					connect: { id: user.id } // Link the user to the ApiRequest
+					connect: { id: userId } // Link the user to the ApiRequest
 				},
 				api_provider: apiProvider,
 				api_model: apiModel,
@@ -41,7 +33,7 @@ export async function createApiRequestEntry(
 				}
 			}
 		});
-		console.log('ApiRequest saved successfully');
+        return apiRequest;
 	} catch (error) {
 		console.error('Error adding API request entry:', error);
 		throw error;

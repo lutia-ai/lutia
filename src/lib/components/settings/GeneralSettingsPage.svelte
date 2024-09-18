@@ -22,7 +22,7 @@
 	// Toggles dark mode and updates the body class.
 	function toggleDarkMode(darkModeOn: boolean) {
 		darkMode.set(darkModeOn);
-		window.document.body.classList.toggle('dark');
+		// window.document.body.classList.toggle('dark');
 	}
 
 	// Handles the toggle event from the Switch component.

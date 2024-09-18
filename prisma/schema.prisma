@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -43,6 +44,7 @@ model User {
   oauth_link_token String?
   stripe_id        String?
   requests         ApiRequest[]
+  balance          Balance?
 
   @@map("users")
 }
@@ -77,5 +79,11 @@ model ApiRequest {
   @@map("api_requests")
 }
 
+model Balance {
+  id      Int   @id @default(autoincrement())
+  amount  Float @default(0)
+  user    User  @relation(fields: [user_id], references: [id])
+  user_id  Int   @unique
 
-
+  @@map("balances")
+}

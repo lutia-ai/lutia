@@ -5,6 +5,8 @@ import { calculateClaudeImageCost, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
 import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
+import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
+import { InsufficientBalanceError } from '$lib/customErrors';
 
 const anthropicSecretKey =
 	process.env.VITE_ANTHROPIC_API_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY;
@@ -13,7 +15,7 @@ const client = new Anthropic({ apiKey: anthropicSecretKey });
 
 export async function POST({ request, locals }) {
 	let session = await locals.auth();
-	if (!session) {
+	if (!session || !session.user || !session.user.email) {
 		throw error(401, 'Forbidden');
 	}
 
@@ -44,15 +46,30 @@ export async function POST({ request, locals }) {
 			messages[messages.length - 1].content = [textObject, ...claudeImages];
 		}
 
-		let outputTokens: number = 0;
-		const chunks: string[] = [];
+        let imageCost = 0;
+        let imageTokens = 0;
+        for (const image of images) {
+            const result = calculateClaudeImageCost(image.width, image.height, model);
+            imageCost += result.price;
+            imageTokens += result.tokens;
+        }
 
+        const inputCost = inputGPTCount.price + imageCost;
+        let balance = await retrieveUsersBalance(Number(session.user.id));
+        if (balance - inputCost <= 0.1) {
+            throw new InsufficientBalanceError();
+        }
+
+        
 		const stream = await client.messages.stream({
-			// @ts-ignore
+            // @ts-ignore
 			messages: messages,
 			model: model.param,
-			max_tokens: 1024
+            max_tokens: 4096
 		});
+        
+        const chunks: string[] = [];
+        await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -63,7 +80,6 @@ export async function POST({ request, locals }) {
 					) {
 						const content = (chunk as any).delta?.text || '';
 						if (content) {
-							outputTokens++;
 							chunks.push(content);
 							controller.enqueue(new TextEncoder().encode(content));
 						}
@@ -74,15 +90,9 @@ export async function POST({ request, locals }) {
 				controller.close();
 
 				const response = chunks.join('');
-				const outputCost = (outputTokens / 1000000) * model.input_price;
-
-				let imageCost = 0;
-				let imageTokens = 0;
-				for (const image of images) {
-					const result = calculateClaudeImageCost(image.width, image.height, model);
-					imageCost += result.price;
-					imageTokens += result.tokens;
-				}
+                const outputGPTCount = await countTokens(response, model, 'output');
+                
+                await updateUserBalanceWithDeduction(Number(session.user!.id), outputGPTCount.price);
 
 				const message: MessageEntity = await createMessage(
 					plainText,
@@ -92,14 +102,14 @@ export async function POST({ request, locals }) {
 				);
 
 				await createApiRequestEntry(
-					session.user!.email!,
+					Number(session.user!.id!),
 					'anthropic',
 					model.name,
 					inputGPTCount.tokens + imageTokens,
-					inputGPTCount.price + imageCost,
-					outputTokens,
-					outputCost,
-					inputGPTCount.price + imageCost + outputCost,
+					inputCost,
+					outputGPTCount.tokens,
+					outputGPTCount.price,
+					inputCost + outputGPTCount.price,
 					message
 				);
 			}
@@ -113,6 +123,9 @@ export async function POST({ request, locals }) {
 			}
 		});
 	} catch (err) {
+        if (err instanceof InsufficientBalanceError) {
+            throw error(500, err.message);
+        }
 		console.error('Error:', err);
 		throw error(500, 'An error occurred while processing your request');
 	}

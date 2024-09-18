@@ -19,7 +19,6 @@
 	}
 
 	export let data = tempData;
-	console.log(data);
 	export let keyColors: string[];
 	export let layout = 'stacked'; // stacked, grouped, percent, or separated
 	let hoveredItem: any;

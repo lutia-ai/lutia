@@ -40,70 +40,54 @@ export async function createMessage(
 	}
 }
 
+
+
 export async function deleteAllUserMessages(userId: number): Promise<void> {
-	try {
-		// Find the user and load requests with messages
-		const user = await prisma.user.findUnique({
-			where: { id: userId },
-			include: {
-				requests: {
-					include: {
-						message: true // Assuming there is a relationship between Request and Message
-					}
-				}
-			}
-		});
+    try {
+        // First, find all ApiRequests associated with the user's messages
+        const apiRequests = await prisma.apiRequest.findMany({
+            where: {
+                user_id: userId,
+            },
+            select: {
+                id: true,
+                message_id: true,
+            },
+        });
 
-		if (!user) {
-			throw new UserNotFoundError(userId);
-		}
+        // Extract message IDs from the ApiRequests
+        const messageIds = apiRequests.map(request => request.message_id).filter(id => id !== null) as number[];
 
-		// Collect all message IDs
-		const messageIds = user.requests
-			.filter((request) => request.message)
-			.map((request) => request.message!.id);
+        // Begin a transaction to ensure data consistency
+        await prisma.$transaction(async (tx) => {
+            // Update ApiRequests to remove the message reference
+            await tx.apiRequest.updateMany({
+                where: {
+                    user_id: userId,
+                    message_id: {
+                        not: null,
+                    },
+                },
+                data: {
+                    message_id: null,
+                },
+            });
 
-		if (messageIds.length > 0) {
-			// Start a transaction
-			await prisma.$transaction(async (prismaTransaction) => {
-				// Disconnect references from each message
-				for (const messageId of messageIds) {
-					await prismaTransaction.message.update({
-						where: { id: messageId },
-						data: {
-							referencedMessages: {
-								disconnect: {
-									id: messageId
-								}
-							}
-						}
-					});
-				}
+            // Delete the messages
+            await tx.message.deleteMany({
+                where: {
+                    id: {
+                        in: messageIds,
+                    },
+                },
+            });
+        });
 
-				// Set message to null for all ApiRequests
-				await prismaTransaction.apiRequest.updateMany({
-					where: {
-						user_id: userId
-					},
-					data: {
-						message_id: undefined // Assuming `messageId` is the field to be updated
-					}
-				});
-
-				// Delete all messages
-				await prismaTransaction.message.deleteMany({
-					where: {
-						id: {
-							in: messageIds
-						}
-					}
-				});
-			});
-		}
-
-		console.log(`Deleted all messages for user with ID ${userId}`);
-	} catch (error) {
-		console.error('Error deleting user messages:', error);
-		throw error;
-	}
+        console.log(`All messages for user ${userId} have been deleted.`);
+    } catch (error) {
+        console.error('Error deleting messages:', error);
+        throw error;
+    } finally {
+        await prisma.$disconnect();
+    }
 }

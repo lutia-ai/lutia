@@ -80,7 +80,7 @@
 		if (mounted) {
 			fullPrompt = sanitizeHtml(prompt);
 			if ($numberPrevMessages > 0) {
-				fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages);
+				fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages, false);
 				if (fullPrompt.length === 1 && fullPrompt[0].content.length === 0) {
 					fullPrompt = prompt;
 				}
@@ -185,6 +185,7 @@
 
 			try {
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
+                console.log("fullPrompt: ", fullPrompt);
 
 				let uri: string;
 
@@ -199,8 +200,6 @@
 						uri = '/api/gemini';
 				}
 
-				console.log(fullPrompt);
-
 				const response = await fetch(uri, {
 					method: 'POST',
 					headers: {
@@ -213,6 +212,16 @@
 						imagesStr: JSON.stringify(imageArray)
 					})
 				});
+
+                if (!response.ok) {
+                    prompt = $chatHistory[$chatHistory.length-2].text;
+                    chatHistory.update(history => history.slice(0,-2));
+                    const errorData = await response.json();
+                    if (errorData.message === 'Insufficient balance') {
+                        errorPopup.showError(errorData.message, "Spending can't go below $0.10", 5000, 'error');
+                    }
+                    throw new Error(errorData.message || 'An error occurred');
+                }
 
 				placeholderVisible = true;
 
@@ -551,7 +560,6 @@
 
 	onMount(() => {
 		const successParam = $page.url.searchParams.get('success');
-		console.log(successParam);
 		if (successParam && errorPopup) {
 			if (successParam === 'AccountLinkSuccess') {
 				const message = 'Linked accounts successfully!';
@@ -1026,12 +1034,12 @@
 	}
 
 	:global(p) {
-		margin: 0 0 20px 0;
+		margin: 0 0 10px 0;
 		padding: 0;
 	}
 
 	:global(ol) {
-		margin: 0 20px 0px 20px;
+		margin: 0 20px 10px 20px;
 		padding: 10px 0 0 0;
 	}
 
@@ -1043,6 +1051,16 @@
 			margin: 0 0 10px 0;
 		}
 	}
+
+    .content-paragraph {
+        :global(code) {
+            background: var(--bg-color-code);
+            color: var(--text-color);
+            padding: 5px 5px;
+            margin: 0 5px;
+            border-radius: 5px;
+        }
+    }
 
 	.main {
 		position: relative;
@@ -1190,7 +1208,6 @@
 
 						.chat-toolbar-container {
 							position: absolute;
-							transform: translateY(-20px);
 							opacity: 0;
 							display: flex;
 							gap: 10px;

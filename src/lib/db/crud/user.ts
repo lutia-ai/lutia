@@ -1,10 +1,7 @@
-import bcrypt from 'bcrypt';
-
-// import { User } from '$lib/db/entities/User';
+import bcryptjs from 'bcryptjs';
 import { DatabaseError, UnknownError, UserNotFoundError } from '$lib/customErrors';
 import type { UserUpdateFields } from '$lib/types';
-import Stripe from 'stripe';
-import { STRIPE_SECRET_API_KEY } from '$env/static/private';
+import stripe from '$lib/stripe/stripe.config';
 import prisma from '$lib/prisma';
 import type { User } from '@prisma/client';
 
@@ -21,11 +18,10 @@ export async function createUser(
     let password_hash = password;
 	if (!oauth && password) {
 		const saltRounds = 10;
-		password_hash = await bcrypt.hash(password, saltRounds);
+		password_hash = await bcryptjs.hash(password, saltRounds);
 	}
 
 	try {
-		const stripe = new Stripe(STRIPE_SECRET_API_KEY);
 		const customer = await stripe.customers.create({
 			name: name,
 			email: email
@@ -44,7 +40,12 @@ export async function createUser(
 			password_hash: password_hash || null,
 			oauth: oauth || null,
 			oauth_link_token: oauth_link_token || null,
-			stripe_id: stripe_id || null
+			stripe_id: stripe_id || null,
+            balance: {
+                create: {
+                    amount: 1
+                }
+            },
 		}
 	});
 
