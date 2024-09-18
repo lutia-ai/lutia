@@ -1,16 +1,14 @@
-# build stage
-FROM node:18-alpine as build
+# Use Node.js as the base image
+FROM node:18
 
+# Set the working directory
 WORKDIR /app
 
-# copy everything
-COPY . .
+# Copy package.json and package-lock.json
+COPY package*.json ./
 
-# install dependencies
-RUN npm ci
-
-# build the SvelteKit app
-RUN npm run build
+# Install dependencies including devDependencies
+RUN npm install
 
 # Copy prisma schema
 COPY prisma ./prisma/
@@ -18,22 +16,14 @@ COPY prisma ./prisma/
 # Generate Prisma Client
 RUN npx prisma generate
 
-# run stage, to separate it from the build stage, to save disk storage
-FROM node:18-alpine
+# Copy the rest of the application code
+COPY . .
 
-WORKDIR /app
+# Build the SvelteKit application
+RUN npm run build
 
-# copy package.json and package-lock.json
-COPY --from=build /app/package.json /app/package-lock.json ./
-
-# install production dependencies
-RUN npm ci --omit=dev
-
-# copy the built app from the build stage
-COPY --from=build /app/build ./build
-
-# expose the app's port
+# Expose the port the app runs on
 EXPOSE 3000
 
-# run the server
-CMD ["node", "./build"]
+# Start the application
+CMD ["node", "build"]
