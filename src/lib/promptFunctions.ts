@@ -15,12 +15,18 @@ export function sanitizeHtml(html: string): string {
 export function generateFullPrompt(
 	prompt: string,
 	currentHistory: { by: string; text: string }[],
-	numberPrevMessages: number
+	numberPrevMessages: number,
+	ignoreLastTwo: boolean = true
 ): Message[] {
 	const fullPrompt: Message[] = [];
 
 	if (numberPrevMessages > 0 && currentHistory.length > 0) {
-		const prevMessages = currentHistory.slice(-(numberPrevMessages + 1) * 2, -2);
+		let prevMessages;
+		if (ignoreLastTwo) {
+			prevMessages = currentHistory.slice(-(numberPrevMessages + 1) * 2, -2);
+		} else {
+			prevMessages = currentHistory.slice(-numberPrevMessages * 2);
+		}
 
 		for (const { by, text } of prevMessages) {
 			fullPrompt.push({

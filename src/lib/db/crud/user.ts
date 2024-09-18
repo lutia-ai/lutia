@@ -15,7 +15,7 @@ export async function createUser(
 ): Promise<User> {
 	email = handleGmail(email);
 
-    let password_hash = password;
+	let password_hash = password;
 	if (!oauth && password) {
 		const saltRounds = 10;
 		password_hash = await bcryptjs.hash(password, saltRounds);
@@ -41,11 +41,11 @@ export async function createUser(
 			oauth: oauth || null,
 			oauth_link_token: oauth_link_token || null,
 			stripe_id: stripe_id || null,
-            balance: {
-                create: {
-                    amount: 1
-                }
-            },
+			balance: {
+				create: {
+					amount: 1
+				}
+			}
 		}
 	});
 

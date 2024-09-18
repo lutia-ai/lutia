@@ -185,7 +185,7 @@
 
 			try {
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
-                console.log("fullPrompt: ", fullPrompt);
+				console.log('fullPrompt: ', fullPrompt);
 
 				let uri: string;
 
@@ -213,15 +213,20 @@
 					})
 				});
 
-                if (!response.ok) {
-                    prompt = $chatHistory[$chatHistory.length-2].text;
-                    chatHistory.update(history => history.slice(0,-2));
-                    const errorData = await response.json();
-                    if (errorData.message === 'Insufficient balance') {
-                        errorPopup.showError(errorData.message, "Spending can't go below $0.10", 5000, 'error');
-                    }
-                    throw new Error(errorData.message || 'An error occurred');
-                }
+				if (!response.ok) {
+					prompt = $chatHistory[$chatHistory.length - 2].text;
+					chatHistory.update((history) => history.slice(0, -2));
+					const errorData = await response.json();
+					if (errorData.message === 'Insufficient balance') {
+						errorPopup.showError(
+							errorData.message,
+							"Spending can't go below $0.10",
+							5000,
+							'error'
+						);
+					}
+					throw new Error(errorData.message || 'An error occurred');
+				}
 
 				placeholderVisible = true;
 
@@ -1052,15 +1057,15 @@
 		}
 	}
 
-    .content-paragraph {
-        :global(code) {
-            background: var(--bg-color-code);
-            color: var(--text-color);
-            padding: 5px 5px;
-            margin: 0 5px;
-            border-radius: 5px;
-        }
-    }
+	.content-paragraph {
+		:global(code) {
+			background: var(--bg-color-code);
+			color: var(--text-color);
+			padding: 5px 5px;
+			margin: 0 5px;
+			border-radius: 5px;
+		}
+	}
 
 	.main {
 		position: relative;

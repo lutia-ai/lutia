@@ -33,7 +33,7 @@ export async function createApiRequestEntry(
 				}
 			}
 		});
-        return apiRequest;
+		return apiRequest;
 	} catch (error) {
 		console.error('Error adding API request entry:', error);
 		throw error;

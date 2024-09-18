@@ -48,9 +48,9 @@ export async function POST({ request, locals }) {
 
 		let inputCountResult;
 		const chunks: string[] = [];
-        let inputCost: number = 0;
+		let inputCost: number = 0;
 
-        if (geminiImage) {
+		if (geminiImage) {
 			inputCountResult = await genAIModel.countTokens([JSON.stringify(prompt), geminiImage]);
 			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		} else {
@@ -59,20 +59,20 @@ export async function POST({ request, locals }) {
 			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		}
 
-        let balance = await retrieveUsersBalance(Number(session.user.id));
-        if (balance - inputCost <= 0.1) {
-            throw new InsufficientBalanceError();
-        }
+		let balance = await retrieveUsersBalance(Number(session.user.id));
+		if (balance - inputCost <= 0.1) {
+			throw new InsufficientBalanceError();
+		}
 
-		let result;		
+		let result;
 		if (geminiImage) {
 			result = await genAIModel.generateContentStream([JSON.stringify(prompt), geminiImage]);
 		} else {
 			// @ts-ignore
 			result = await genAIModel.generateContentStream(prompt);
 		}
-        
-        await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
+
+		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -97,7 +97,7 @@ export async function POST({ request, locals }) {
 					// need to add previous message ids
 				);
 
-                await updateUserBalanceWithDeduction(Number(session.user!.id), outputCost);
+				await updateUserBalanceWithDeduction(Number(session.user!.id), outputCost);
 
 				await createApiRequestEntry(
 					Number(session.user!.id!),
@@ -121,9 +121,9 @@ export async function POST({ request, locals }) {
 			}
 		});
 	} catch (err) {
-        if (err instanceof InsufficientBalanceError) {
-            throw error(500, err.message);
-        }
+		if (err instanceof InsufficientBalanceError) {
+			throw error(500, err.message);
+		}
 		console.error('Error:', err);
 		throw error(500, 'An error occurred while processing your request');
 	}

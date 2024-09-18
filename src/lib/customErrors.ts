@@ -24,8 +24,8 @@ export class UnknownError extends Error {
 }
 
 export class InsufficientBalanceError extends Error {
-    constructor() {
-        super(`Insufficient balance`);
-        this.name = 'InsufficientBalanceError';
-    }
+	constructor() {
+		super(`Insufficient balance`);
+		this.name = 'InsufficientBalanceError';
+	}
 }

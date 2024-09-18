@@ -3,7 +3,11 @@ import OpenAI from 'openai';
 import type { Message, Model, Image, ChatGPTImage } from '$lib/types';
 import { calculateGptVisionPricing, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
-import { retrieveUsersBalance, updateUserBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
+import {
+	retrieveUsersBalance,
+	updateUserBalance,
+	updateUserBalanceWithDeduction
+} from '$lib/db/crud/balance';
 import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
 import { InsufficientBalanceError } from '$lib/customErrors';
@@ -47,19 +51,19 @@ export async function POST({ request, locals }) {
 			messages[messages.length - 1].content = [textObject, ...gptImages];
 		}
 
-        let imageCost = 0;
-        let imageTokens = 0;
-        for (const image of images) {
-            const result = calculateGptVisionPricing(image.width, image.height);
-            imageCost += result.price;
-            imageTokens += result.tokens;
-        }
+		let imageCost = 0;
+		let imageTokens = 0;
+		for (const image of images) {
+			const result = calculateGptVisionPricing(image.width, image.height);
+			imageCost += result.price;
+			imageTokens += result.tokens;
+		}
 
-        const inputCost = inputGPTCount.price + imageCost;
-        let balance = await retrieveUsersBalance(Number(session.user.id));
-        if (balance - inputCost <= 0.1) {
-            throw new InsufficientBalanceError();
-        }
+		const inputCost = inputGPTCount.price + imageCost;
+		let balance = await retrieveUsersBalance(Number(session.user.id));
+		if (balance - inputCost <= 0.1) {
+			throw new InsufficientBalanceError();
+		}
 
 		const stream = await openai.chat.completions.create({
 			model: model.param,
@@ -69,48 +73,51 @@ export async function POST({ request, locals }) {
 		});
 
 		const chunks: string[] = [];
-        await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
+		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
-                try {
-                    for await (const chunk of stream) {
-                        const content = chunk.choices[0]?.delta?.content || '';
-                        if (content) {
-                            chunks.push(content);
-                            controller.enqueue(new TextEncoder().encode(`${content}`));
-                        }
-                    }
-                    controller.close();
-                    
-                    const response = chunks.join('');
-                    const outputGPTCount = await countTokens(response, model, 'output');
-                    
-                    const message: MessageEntity = await createMessage(
-                        plainText,
-                        response,
-                        images
-                        // need to add previous message ids
-                    );
+				try {
+					for await (const chunk of stream) {
+						const content = chunk.choices[0]?.delta?.content || '';
+						if (content) {
+							chunks.push(content);
+							controller.enqueue(new TextEncoder().encode(`${content}`));
+						}
+					}
+					controller.close();
 
-                    await updateUserBalanceWithDeduction(Number(session.user!.id), outputGPTCount.price);
-                    
-                    await createApiRequestEntry(
-                        Number(session.user!.id!),
-                        'openAI',
-                        model.name,
-                        inputGPTCount.tokens + imageTokens,
-                        inputCost,
-                        outputGPTCount.tokens,
-                        outputGPTCount.price,
-                        inputCost + outputGPTCount.price,
-                        message
-                    );
-                } catch (err) {
-                    console.error("Error in stream processing: ", err);
-                }
-            }
-        });
+					const response = chunks.join('');
+					const outputGPTCount = await countTokens(response, model, 'output');
+
+					const message: MessageEntity = await createMessage(
+						plainText,
+						response,
+						images
+						// need to add previous message ids
+					);
+
+					await updateUserBalanceWithDeduction(
+						Number(session.user!.id),
+						outputGPTCount.price
+					);
+
+					await createApiRequestEntry(
+						Number(session.user!.id!),
+						'openAI',
+						model.name,
+						inputGPTCount.tokens + imageTokens,
+						inputCost,
+						outputGPTCount.tokens,
+						outputGPTCount.price,
+						inputCost + outputGPTCount.price,
+						message
+					);
+				} catch (err) {
+					console.error('Error in stream processing: ', err);
+				}
+			}
+		});
 
 		return new Response(readableStream, {
 			headers: {
@@ -120,9 +127,9 @@ export async function POST({ request, locals }) {
 			}
 		});
 	} catch (err) {
-        if (err instanceof InsufficientBalanceError) {
-            throw error(500, err.message);
-        }
+		if (err instanceof InsufficientBalanceError) {
+			throw error(500, err.message);
+		}
 		console.error('Error:', err);
 		throw error(500, 'An error occurred while processing your request');
 	}

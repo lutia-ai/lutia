@@ -46,30 +46,29 @@ export async function POST({ request, locals }) {
 			messages[messages.length - 1].content = [textObject, ...claudeImages];
 		}
 
-        let imageCost = 0;
-        let imageTokens = 0;
-        for (const image of images) {
-            const result = calculateClaudeImageCost(image.width, image.height, model);
-            imageCost += result.price;
-            imageTokens += result.tokens;
-        }
+		let imageCost = 0;
+		let imageTokens = 0;
+		for (const image of images) {
+			const result = calculateClaudeImageCost(image.width, image.height, model);
+			imageCost += result.price;
+			imageTokens += result.tokens;
+		}
 
-        const inputCost = inputGPTCount.price + imageCost;
-        let balance = await retrieveUsersBalance(Number(session.user.id));
-        if (balance - inputCost <= 0.1) {
-            throw new InsufficientBalanceError();
-        }
+		const inputCost = inputGPTCount.price + imageCost;
+		let balance = await retrieveUsersBalance(Number(session.user.id));
+		if (balance - inputCost <= 0.1) {
+			throw new InsufficientBalanceError();
+		}
 
-        
 		const stream = await client.messages.stream({
-            // @ts-ignore
+			// @ts-ignore
 			messages: messages,
 			model: model.param,
-            max_tokens: 4096
+			max_tokens: 4096
 		});
-        
-        const chunks: string[] = [];
-        await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
+
+		const chunks: string[] = [];
+		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -90,9 +89,12 @@ export async function POST({ request, locals }) {
 				controller.close();
 
 				const response = chunks.join('');
-                const outputGPTCount = await countTokens(response, model, 'output');
-                
-                await updateUserBalanceWithDeduction(Number(session.user!.id), outputGPTCount.price);
+				const outputGPTCount = await countTokens(response, model, 'output');
+
+				await updateUserBalanceWithDeduction(
+					Number(session.user!.id),
+					outputGPTCount.price
+				);
 
 				const message: MessageEntity = await createMessage(
 					plainText,
@@ -123,9 +125,9 @@ export async function POST({ request, locals }) {
 			}
 		});
 	} catch (err) {
-        if (err instanceof InsufficientBalanceError) {
-            throw error(500, err.message);
-        }
+		if (err instanceof InsufficientBalanceError) {
+			throw error(500, err.message);
+		}
 		console.error('Error:', err);
 		throw error(500, 'An error occurred while processing your request');
 	}

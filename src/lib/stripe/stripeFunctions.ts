@@ -1,122 +1,123 @@
-import type { CardDetails, ChargeResult } from "$lib/types";
-import stripe from "$lib/stripe/stripe.config";
-import type Stripe from "stripe";
-
+import type { CardDetails, ChargeResult } from '$lib/types';
+import stripe from '$lib/stripe/stripe.config';
+import type Stripe from 'stripe';
 
 export async function getStripeCardDetails(customerId: string): Promise<CardDetails | null> {
-    try {
-        // Retrieve the customer's payment methods
-        const paymentMethods = await stripe.paymentMethods.list({
-            customer: customerId,
-            type: 'card',
-        });
+	try {
+		// Retrieve the customer's payment methods
+		const paymentMethods = await stripe.paymentMethods.list({
+			customer: customerId,
+			type: 'card'
+		});
 
-        // Check if the customer has any saved cards
-        if (paymentMethods.data.length > 0) {
-            const card = paymentMethods.data[0].card;
-            
-            if (card) {
-                return {
-                    brand: card.brand,
-                    last4: card.last4,
-                    expMonth: card.exp_month,
-                    expYear: card.exp_year,
-                };
-            }
-        }
+		// Check if the customer has any saved cards
+		if (paymentMethods.data.length > 0) {
+			const card = paymentMethods.data[0].card;
 
-        // If no saved cards are found, return null
-        return null;
-    } catch (error) {
-        console.error('Error retrieving Stripe card details:', error);
-        throw error;
-    }
+			if (card) {
+				return {
+					brand: card.brand,
+					last4: card.last4,
+					expMonth: card.exp_month,
+					expYear: card.exp_year
+				};
+			}
+		}
+
+		// If no saved cards are found, return null
+		return null;
+	} catch (error) {
+		console.error('Error retrieving Stripe card details:', error);
+		throw error;
+	}
 }
 
-export async function saveUserCardDetails(customerId: string, tokenId: string): Promise<CardDetails> {
-    try {
-        // Attach the payment method to the customer
-        const paymentMethod = await stripe.paymentMethods.create({
-            type: 'card',
-            card: { token: tokenId },
-        });
+export async function saveUserCardDetails(
+	customerId: string,
+	tokenId: string
+): Promise<CardDetails> {
+	try {
+		// Attach the payment method to the customer
+		const paymentMethod = await stripe.paymentMethods.create({
+			type: 'card',
+			card: { token: tokenId }
+		});
 
-        await stripe.paymentMethods.attach(paymentMethod.id, { customer: customerId });
+		await stripe.paymentMethods.attach(paymentMethod.id, { customer: customerId });
 
-        // Set this payment method as the default for the customer
-        await stripe.customers.update(customerId, {
-            invoice_settings: { default_payment_method: paymentMethod.id },
-        });
+		// Set this payment method as the default for the customer
+		await stripe.customers.update(customerId, {
+			invoice_settings: { default_payment_method: paymentMethod.id }
+		});
 
-        // Return the card details
-        if (paymentMethod.card) {
-            return {
-                brand: paymentMethod.card.brand,
-                last4: paymentMethod.card.last4,
-                expMonth: paymentMethod.card.exp_month,
-                expYear: paymentMethod.card.exp_year,
-            };
-        } else {
-            throw new Error('Card details not found in payment method');
-        }
-    } catch (error) {
-        console.error('Error saving Stripe card details:', error);
-        throw error;
-    }
+		// Return the card details
+		if (paymentMethod.card) {
+			return {
+				brand: paymentMethod.card.brand,
+				last4: paymentMethod.card.last4,
+				expMonth: paymentMethod.card.exp_month,
+				expYear: paymentMethod.card.exp_year
+			};
+		} else {
+			throw new Error('Card details not found in payment method');
+		}
+	} catch (error) {
+		console.error('Error saving Stripe card details:', error);
+		throw error;
+	}
 }
-
 
 export async function chargeUserCard(
-    customerId: string,
-    amount: number,
-    currency: string = 'usd',
-    description?: string
+	customerId: string,
+	amount: number,
+	currency: string = 'usd',
+	description?: string
 ): Promise<ChargeResult> {
-    try {
-        // Retrieve the customer's default payment method
-        const customerResponse = await stripe.customers.retrieve(customerId);
+	try {
+		// Retrieve the customer's default payment method
+		const customerResponse = await stripe.customers.retrieve(customerId);
 
-        // Check if the customer is deleted
-        if (customerResponse.deleted) {
-            throw new Error('Customer has been deleted');
-        }
+		// Check if the customer is deleted
+		if (customerResponse.deleted) {
+			throw new Error('Customer has been deleted');
+		}
 
-        // At this point, we know customerResponse is of type Stripe.Customer
-        const customer = customerResponse as Stripe.Customer;
+		// At this point, we know customerResponse is of type Stripe.Customer
+		const customer = customerResponse as Stripe.Customer;
 
-        const defaultPaymentMethodId = customer.invoice_settings.default_payment_method;
+		const defaultPaymentMethodId = customer.invoice_settings.default_payment_method;
 
-        if (!defaultPaymentMethodId) {
-            throw new Error('No default payment method found for the customer');
-        }
+		if (!defaultPaymentMethodId) {
+			throw new Error('No default payment method found for the customer');
+		}
 
-        // Create a PaymentIntent
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount * 100), // Convert to cents
-            currency: currency,
-            customer: customerId,
-            payment_method: defaultPaymentMethodId as string,
-            off_session: true,
-            confirm: true,
-            description: description,
-        });
+		// Create a PaymentIntent
+		const paymentIntent = await stripe.paymentIntents.create({
+			amount: Math.round(amount * 100), // Convert to cents
+			currency: currency,
+			customer: customerId,
+			payment_method: defaultPaymentMethodId as string,
+			off_session: true,
+			confirm: true,
+			description: description
+		});
 
-        if (paymentIntent.status === 'succeeded') {
-            return {
-                success: true,
-                chargeId: paymentIntent.id,
-            };
-        } else {
-            return {
-                success: false,
-                error: `Payment failed with status: ${paymentIntent.status}`,
-            };
-        }
-    } catch (error) {
-        console.error('Error charging user card:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'An unknown error occurred',
-        };
-    }
+		if (paymentIntent.status === 'succeeded') {
+			return {
+				success: true,
+				chargeId: paymentIntent.id
+			};
+		} else {
+			return {
+				success: false,
+				error: `Payment failed with status: ${paymentIntent.status}`
+			};
+		}
+	} catch (error) {
+		console.error('Error charging user card:', error);
+		return {
+			success: false,
+			error: error instanceof Error ? error.message : 'An unknown error occurred'
+		};
+	}
 }

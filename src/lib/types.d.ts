@@ -162,21 +162,20 @@ type ApiRequestWithMessage = Prisma.ApiRequestGetPayload<{
 	};
 }>;
 
-
 export type ElementsContext = {
-    elements: StripeElements
-    stripe: Stripe
-}
+	elements: StripeElements;
+	stripe: Stripe;
+};
 
 export type CardDetails = {
-    brand: string;
-    last4: string;
-    expMonth: number;
-    expYear: number;
-}
+	brand: string;
+	last4: string;
+	expMonth: number;
+	expYear: number;
+};
 
 export type ChargeResult = {
-    success: boolean;
-    chargeId?: string;
-    error?: string;
-}
+	success: boolean;
+	chargeId?: string;
+	error?: string;
+};

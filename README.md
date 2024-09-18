@@ -20,6 +20,7 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 ## Create PostgreSQL tables
+
 Runs prisma migrate command to update db based on prisma schema
 
 ```bash

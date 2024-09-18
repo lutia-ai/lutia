@@ -7,7 +7,11 @@ import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { UserNotFoundError } from '$lib/customErrors';
 import type { User } from '@prisma/client';
 import { retrieveUsersBalance, updateUserBalanceWithIncrement } from '$lib/db/crud/balance';
-import { chargeUserCard, getStripeCardDetails, saveUserCardDetails } from '$lib/stripe/stripeFunctions';
+import {
+	chargeUserCard,
+	getStripeCardDetails,
+	saveUserCardDetails
+} from '$lib/stripe/stripeFunctions';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth();
@@ -65,100 +69,99 @@ export const actions = {
 			oauth: user!.oauth ? user!.oauth : ''
 		};
 	},
-    getUsersBillingDetails: async ({ locals }) => {
-        const session = await locals.auth();
+	getUsersBillingDetails: async ({ locals }) => {
+		const session = await locals.auth();
 
-        if (!session || !session.user) {
+		if (!session || !session.user) {
 			throw redirect(307, '/auth');
 		}
 		const userId = session.user.id;
 
-        let balance;
-        let cardDetails;
-        try {
-            const user = await retrieveUserByEmail(session.user.email!);
-            balance = await retrieveUsersBalance(Number(userId));
-            cardDetails = await getStripeCardDetails(user.stripe_id!);
-        } catch (err) {
-            throw(err);
-        }
-        
-        return {
-            balance,
-            cardDetails
-        }
-    },
-    saveUsersCardDetails: async ({ request, locals }) => {
-        const session = await locals.auth();
+		let balance;
+		let cardDetails;
+		try {
+			const user = await retrieveUserByEmail(session.user.email!);
+			balance = await retrieveUsersBalance(Number(userId));
+			cardDetails = await getStripeCardDetails(user.stripe_id!);
+		} catch (err) {
+			throw err;
+		}
 
-        if (!session || !session.user) {
+		return {
+			balance,
+			cardDetails
+		};
+	},
+	saveUsersCardDetails: async ({ request, locals }) => {
+		const session = await locals.auth();
+
+		if (!session || !session.user) {
 			throw redirect(307, '/auth');
 		}
-		
-        try {
-            const formData = await request.formData();
-            const tokenId = formData.get('token');
 
-            if (typeof tokenId !== 'string') {
-                throw new Error('Invalid token');
-            }
+		try {
+			const formData = await request.formData();
+			const tokenId = formData.get('token');
 
-            const user = await retrieveUserByEmail(session.user.email!);
-            const customerId = user.stripe_id;
+			if (typeof tokenId !== 'string') {
+				throw new Error('Invalid token');
+			}
 
-            if (!customerId) {
-                throw new Error('Stripe customer ID not found');
-            }
+			const user = await retrieveUserByEmail(session.user.email!);
+			const customerId = user.stripe_id;
 
-            const cardDetails = await saveUserCardDetails(customerId, tokenId);
+			if (!customerId) {
+				throw new Error('Stripe customer ID not found');
+			}
 
-            return {
-                cardDetails
-            };
-            
-        } catch (err) {
-            console.error('Error saving card details:', err);
-            return {
-                type: 'failure',
-                data: {
-                    message: err instanceof Error ? err.message : 'An unknown error occurred'
-                }
-            };
-        }
-    },
-    topupBalance: async ({ request, locals }) => {
-        const session = await locals.auth();
+			const cardDetails = await saveUserCardDetails(customerId, tokenId);
 
-        if (!session || !session.user) {
+			return {
+				cardDetails
+			};
+		} catch (err) {
+			console.error('Error saving card details:', err);
+			return {
+				type: 'failure',
+				data: {
+					message: err instanceof Error ? err.message : 'An unknown error occurred'
+				}
+			};
+		}
+	},
+	topupBalance: async ({ request, locals }) => {
+		const session = await locals.auth();
+
+		if (!session || !session.user) {
 			throw redirect(307, '/auth');
 		}
-		
-        try {
-            const formData = await request.formData();
-            const creditAmount = Number(formData.get('creditAmount'));
 
-            const user = await retrieveUserByEmail(session.user.email!);
-            const customerId = user.stripe_id;
+		try {
+			const formData = await request.formData();
+			const creditAmount = Number(formData.get('creditAmount'));
 
-            if (!customerId) {
-                throw new Error('Stripe customer ID not found');
-            }
+			const user = await retrieveUserByEmail(session.user.email!);
+			const customerId = user.stripe_id;
 
-            const chargeResult = await chargeUserCard(customerId, creditAmount);
-            const balance = await updateUserBalanceWithIncrement(user.id, creditAmount);
+			if (!customerId) {
+				throw new Error('Stripe customer ID not found');
+			}
 
-            return {
-                chargeResult,
-                balance
-            };
-        } catch (err) {
-            console.error('Error topping up:', err);
-            return {
-                type: 'failure',
-                data: {
-                    message: err instanceof Error ? err.message : 'An unknown error occurred'
-                }
-            };
-        }
-    }
+			const chargeResult = await chargeUserCard(customerId, creditAmount);
+			const balance = await updateUserBalanceWithIncrement(user.id, creditAmount);
+
+			return {
+				chargeResult,
+				balance
+			};
+		} catch (err) {
+			console.error('Error topping up:', err);
+			return {
+				type: 'failure',
+				data: {
+					message: err instanceof Error ? err.message : 'An unknown error occurred'
+				}
+			};
+		}
+	}
 } satisfies Actions;
