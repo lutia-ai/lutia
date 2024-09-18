@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { retrieveUserByEmail, createUser } from '$lib/db/crud/user';
@@ -45,7 +45,7 @@ export const actions = {
 
 		try {
 			const user = await retrieveUserByEmail(email);
-			const isMatch = await bcrypt.compare(password, user.password_hash!);
+			const isMatch = await bcryptjs.compare(password, user.password_hash!);
 
 			if (!isMatch) {
 				return fail(401, { message: 'Invalid email or password' });

@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import { SvelteKitAuth } from '@auth/sveltekit';
 import type { SvelteKitAuthConfig } from '@auth/sveltekit';
 import Google from '@auth/core/providers/google';
@@ -163,7 +163,7 @@ export async function verifyCredentials(
 		if (!user.password_hash) {
 			return false;
 		}
-		return await bcrypt.compare(password, user.password_hash);
+		return await bcryptjs.compare(password, user.password_hash);
 	} catch (error) {
 		throw error;
 	}
