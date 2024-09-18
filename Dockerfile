@@ -1,28 +1,27 @@
 # Use Node.js as the base image
-FROM node:18
+FROM node:18 as build
 
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
 COPY package*.json ./
-
-# Install dependencies including devDependencies
+COPY package-lock.json ./
 RUN npm install
-
-# Copy prisma schema
-COPY prisma ./prisma/
-
-# Generate Prisma Client
-RUN npx prisma generate
-
-# Copy the rest of the application code
 COPY . .
-
-# Build the SvelteKit application
+RUN npx prisma generate
 RUN npm run build
 
-# Expose the port the app runs on
+FROM node:18-slim
+RUN apt update && apt install libssl-dev dumb-init -y --no-install-recommends
+WORKDIR /app
+COPY --chown=node:node --from=build /usr/src/app/dist ./dist
+COPY --chown=node:node --from=build /usr/src/app/.env .env
+COPY --chown=node:node --from=build /usr/src/app/package.json .
+COPY --chown=node:node --from=build /usr/src/app/package-lock.json .
+RUN npm install --omit=dev
+COPY --chown=node:node --from=build /usr/src/app/node_modules/.prisma/client  ./node_modules/.prisma/client
+
+ENV NODE_ENV production
 EXPOSE 3000
 
 # Start the application
