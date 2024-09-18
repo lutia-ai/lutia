@@ -8,8 +8,6 @@ import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/cr
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 
-const genAI = new GoogleGenerativeAI(env.VITE_GOOGLE_GEMINI_API_KEY);
-
 export async function POST({ request, locals }) {
 	let session = await locals.auth();
 	if (!session || !session.user || !session.user.email) {
@@ -42,6 +40,7 @@ export async function POST({ request, locals }) {
 			};
 		}
 
+        const genAI = new GoogleGenerativeAI(env.VITE_GOOGLE_GEMINI_API_KEY);
 		const genAIModel = genAI.getGenerativeModel({ model: model.param });
 
 		let inputCountResult;

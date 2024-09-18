@@ -12,8 +12,6 @@ import { createMessage } from '$lib/db/crud/message';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 
-const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
-
 export async function POST({ request, locals }) {
 	let session = await locals.auth();
 	if (!session || !session.user || !session.user.email) {
@@ -63,6 +61,7 @@ export async function POST({ request, locals }) {
 			throw new InsufficientBalanceError();
 		}
 
+        const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
 		const stream = await openai.chat.completions.create({
 			model: model.param,
 			// @ts-ignore

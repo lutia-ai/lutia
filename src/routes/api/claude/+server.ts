@@ -9,8 +9,6 @@ import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/cr
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 
-const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
-
 export async function POST({ request, locals }) {
 	let session = await locals.auth();
 	if (!session || !session.user || !session.user.email) {
@@ -58,6 +56,7 @@ export async function POST({ request, locals }) {
 			throw new InsufficientBalanceError();
 		}
 
+        const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
 		const stream = await client.messages.stream({
 			// @ts-ignore
 			messages: messages,
