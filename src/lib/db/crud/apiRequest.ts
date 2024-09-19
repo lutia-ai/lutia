@@ -1,5 +1,4 @@
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-// import prisma from '$lib/prisma';
 import type { ApiModel, ApiProvider, ApiRequest, Message, PrismaClient } from '@prisma/client';
 import type { ApiRequestWithMessage } from '$lib/types';
 

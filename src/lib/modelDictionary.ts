@@ -1,5 +1,5 @@
 import type { ModelDictionary } from '$lib/types';
-import { ApiModel, ApiProvider } from '@prisma/client';
+// import { ApiModel, ApiProvider } from '@prisma/client';
 
 export const modelDictionary: ModelDictionary = {
 	[ApiProvider.openAI]: {

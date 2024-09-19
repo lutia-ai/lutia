@@ -24,7 +24,7 @@
 	import SettingsPopup from '$lib/components/settings/SettingsPopup.svelte';
 	import { modelLogos } from '$lib/modelLogos';
 	import { clearChatHistory, formatModelEnumToReadable } from '$lib/chatHistory';
-	import { ApiProvider } from '@prisma/client';
+	// import { ApiProvider } from '@prisma/client';
 
 	export let companySelection: ApiProvider[];
 	export let gptModelSelection: Model[];

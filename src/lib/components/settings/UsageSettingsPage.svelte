@@ -6,7 +6,7 @@
 	import { modelLogos } from '$lib/modelLogos';
 	import PieChart from '$lib/components/barchart/PieChart.svelte';
 	import { capitalizeFirstLetter } from '$lib/components/barchart/utils';
-	import { ApiModel, type ApiProvider } from '@prisma/client';
+	// import { ApiModel, type ApiProvider } from '@prisma/client';
 
 	let mounted = false;
 
