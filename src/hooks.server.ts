@@ -2,7 +2,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import type { Handle } from '@sveltejs/kit';
 import { handle as authHandler } from '$lib/auth/utils';
 import { PrismaClient } from '@prisma/client';
-import { env } from '$env/dynamic/private';
+// import { env } from '$env/dynamic/private';
 
 // Create a new handler for dark mode
 const darkModeHandler: Handle = async ({ event, resolve }) => {
@@ -22,7 +22,7 @@ const prismaHandler: Handle = async ({ event, resolve }) => {
 	const prisma = new PrismaClient({
 		datasources: {
 			db: {
-				url: env.DATABASE_URL
+				url: process.env.DATABASE_URL || import.meta.env.DATABASE_URL
 			}
 		}
 	});
