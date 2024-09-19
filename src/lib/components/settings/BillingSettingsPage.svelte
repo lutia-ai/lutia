@@ -60,7 +60,7 @@
 			}
 
 			const formData = new FormData();
-			formData.append('creditAmount', addCreditAmount.toString());
+			formData.append('creditAmount', (addCreditAmount * 1.2).toString());
 
 			const response = await fetch('?/topupBalance', {
 				method: 'POST',
@@ -71,6 +71,7 @@
 			if (result.type === 'success' && result.data) {
 				errorPopup.showError('Top-up successful!', null, 5000, 'success');
 				userBalance = result.data.balance;
+				addCreditOpen = false;
 			} else if (result.type === 'failure' && result.data) {
 			}
 		} catch (error) {
@@ -279,7 +280,7 @@
 		</form>
 	</div>
 </div>
-
+<!-- svelte-ignore css-unused-selector -->
 <style lang="scss">
 	.billing-body {
 		padding: 20px 0 20px 35px;
@@ -539,7 +540,7 @@
 				border-radius: 4px;
 				margin: 20px 0;
 			}
-
+            
 			#card-element {
 				padding: 10px;
 			}
