@@ -1,4 +1,4 @@
-import type { ApiModel } from '@prisma/client';
+import type { ApiModel, Prisma } from '@prisma/client';
 import type { DataSource } from 'typeorm';
 
 export type TextComponent = {
@@ -151,6 +151,7 @@ declare global {
 		interface Locals {
 			colorScheme: string;
 			db: DataSource;
+			prisma: PrismaClient;
 		}
 	}
 }

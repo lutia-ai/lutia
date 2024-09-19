@@ -16,6 +16,7 @@ export async function GET({ locals, url }) {
 
 	try {
 		const apiRequests = await retrieveUserRequestsInDateRange(
+			locals.prisma,
 			Number(session.user.id!),
 			new Date(startDate),
 			new Date(endDate)

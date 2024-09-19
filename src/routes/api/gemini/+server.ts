@@ -40,7 +40,7 @@ export async function POST({ request, locals }) {
 			};
 		}
 
-        const genAI = new GoogleGenerativeAI(env.VITE_GOOGLE_GEMINI_API_KEY);
+		const genAI = new GoogleGenerativeAI(env.VITE_GOOGLE_GEMINI_API_KEY);
 		const genAIModel = genAI.getGenerativeModel({ model: model.param });
 
 		let inputCountResult;
@@ -56,7 +56,7 @@ export async function POST({ request, locals }) {
 			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		}
 
-		let balance = await retrieveUsersBalance(Number(session.user.id));
+		let balance = await retrieveUsersBalance(locals.prisma, Number(session.user.id));
 		if (balance - inputCost <= 0.1) {
 			throw new InsufficientBalanceError();
 		}
@@ -69,7 +69,7 @@ export async function POST({ request, locals }) {
 			result = await genAIModel.generateContentStream(prompt);
 		}
 
-		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
+		await updateUserBalanceWithDeduction(locals.prisma, Number(session.user.id), inputCost);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -88,15 +88,21 @@ export async function POST({ request, locals }) {
 				const outputCost = (outputCountResult.totalTokens / 1000000) * model.output_price;
 
 				const message: MessageEntity = await createMessage(
+					locals.prisma,
 					plainText,
 					response,
 					images
 					// need to add previous message ids
 				);
 
-				await updateUserBalanceWithDeduction(Number(session.user!.id), outputCost);
+				await updateUserBalanceWithDeduction(
+					locals.prisma,
+					Number(session.user!.id),
+					outputCost
+				);
 
 				await createApiRequestEntry(
+					locals.prisma,
 					Number(session.user!.id!),
 					'google',
 					model.name,

@@ -2,10 +2,11 @@ import bcryptjs from 'bcryptjs';
 import { DatabaseError, UnknownError, UserNotFoundError } from '$lib/customErrors';
 import type { UserUpdateFields } from '$lib/types';
 import stripe from '$lib/stripe/stripe.config';
-import prisma from '$lib/prisma';
-import type { User } from '@prisma/client';
+// import prisma from '$lib/prisma';
+import type { PrismaClient, User } from '@prisma/client';
 
 export async function createUser(
+	prisma: PrismaClient,
 	email: string,
 	name: string,
 	password?: string,
@@ -52,7 +53,7 @@ export async function createUser(
 	return newUser;
 }
 
-export async function retrieveUserByEmail(email: string): Promise<User> {
+export async function retrieveUserByEmail(prisma: PrismaClient, email: string): Promise<User> {
 	try {
 		email = handleGmail(email);
 		const user = await prisma.user.findUnique({ where: { email } });
@@ -75,7 +76,11 @@ export async function retrieveUserByEmail(email: string): Promise<User> {
 	}
 }
 
-export async function updateUser(userId: number, updateFields: UserUpdateFields): Promise<User> {
+export async function updateUser(
+	prisma: PrismaClient,
+	userId: number,
+	updateFields: UserUpdateFields
+): Promise<User> {
 	try {
 		// Update the user directly using Prisma's update method
 		const updatedUser = await prisma.user.update({

@@ -1,9 +1,10 @@
 import type { Image } from '$lib/types';
-import prisma from '$lib/prisma';
-import type { Message } from '@prisma/client';
+// import prisma from '$lib/prisma';
+import type { Message, PrismaClient } from '@prisma/client';
 import { UserNotFoundError } from '$lib/customErrors';
 
 export async function createMessage(
+	prisma: PrismaClient,
 	prompt: string,
 	response: string,
 	pictures: Image[],
@@ -40,7 +41,7 @@ export async function createMessage(
 	}
 }
 
-export async function deleteAllUserMessages(userId: number): Promise<void> {
+export async function deleteAllUserMessages(prisma: PrismaClient, userId: number): Promise<void> {
 	try {
 		// First, find all ApiRequests associated with the user's messages
 		const apiRequests = await prisma.apiRequest.findMany({

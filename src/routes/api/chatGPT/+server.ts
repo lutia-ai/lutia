@@ -3,10 +3,7 @@ import OpenAI from 'openai';
 import type { Message, Model, Image, ChatGPTImage } from '$lib/types';
 import { calculateGptVisionPricing, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
-import {
-	retrieveUsersBalance,
-	updateUserBalanceWithDeduction
-} from '$lib/db/crud/balance';
+import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
 import { InsufficientBalanceError } from '$lib/customErrors';
@@ -56,12 +53,12 @@ export async function POST({ request, locals }) {
 		}
 
 		const inputCost = inputGPTCount.price + imageCost;
-		let balance = await retrieveUsersBalance(Number(session.user.id));
+		let balance = await retrieveUsersBalance(locals.prisma, Number(session.user.id));
 		if (balance - inputCost <= 0.1) {
 			throw new InsufficientBalanceError();
 		}
 
-        const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
+		const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
 		const stream = await openai.chat.completions.create({
 			model: model.param,
 			// @ts-ignore
@@ -70,7 +67,7 @@ export async function POST({ request, locals }) {
 		});
 
 		const chunks: string[] = [];
-		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
+		await updateUserBalanceWithDeduction(locals.prisma, Number(session.user.id), inputCost);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -88,6 +85,7 @@ export async function POST({ request, locals }) {
 					const outputGPTCount = await countTokens(response, model, 'output');
 
 					const message: MessageEntity = await createMessage(
+						locals.prisma,
 						plainText,
 						response,
 						images
@@ -95,11 +93,13 @@ export async function POST({ request, locals }) {
 					);
 
 					await updateUserBalanceWithDeduction(
+						locals.prisma,
 						Number(session.user!.id),
 						outputGPTCount.price
 					);
 
 					await createApiRequestEntry(
+						locals.prisma,
 						Number(session.user!.id!),
 						'openAI',
 						model.name,

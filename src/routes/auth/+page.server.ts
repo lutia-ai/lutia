@@ -5,7 +5,7 @@ import { retrieveUserByEmail, createUser } from '$lib/db/crud/user';
 import { UserNotFoundError } from '$lib/customErrors';
 
 export const actions = {
-	checkEmailExists: async ({ request }) => {
+	checkEmailExists: async ({ request, locals }) => {
 		const data = await request.formData();
 		const email = data.get('email');
 
@@ -14,7 +14,7 @@ export const actions = {
 		}
 
 		try {
-			const user = await retrieveUserByEmail(email);
+			const user = await retrieveUserByEmail(locals.prisma, email);
 			return {
 				exists: !!user,
 				isGoogleUser: user?.oauth === 'google'
@@ -30,7 +30,7 @@ export const actions = {
 			return fail(500, { message: 'Internal server error' });
 		}
 	},
-	logIn: async ({ request }) => {
+	logIn: async ({ request, locals }) => {
 		const data = await request.formData();
 		const email = data.get('email');
 		const password = data.get('password');
@@ -44,7 +44,7 @@ export const actions = {
 		}
 
 		try {
-			const user = await retrieveUserByEmail(email);
+			const user = await retrieveUserByEmail(locals.prisma, email);
 			const isMatch = await bcryptjs.compare(password, user.password_hash!);
 
 			if (!isMatch) {
@@ -62,7 +62,7 @@ export const actions = {
 			return fail(500, { message: 'Internal server error' });
 		}
 	},
-	register: async ({ request }) => {
+	register: async ({ request, locals }) => {
 		const data = await request.formData();
 		const email = data.get('email');
 		const name = data.get('name');
@@ -99,7 +99,7 @@ export const actions = {
 
 		try {
 			try {
-				const user = await retrieveUserByEmail(email);
+				const user = await retrieveUserByEmail(locals.prisma, email);
 				if (user.oauth === 'google') {
 					return fail(401, {
 						message:
@@ -112,7 +112,7 @@ export const actions = {
 				}
 			} catch (err) {
 				if (err instanceof UserNotFoundError) {
-					await createUser(email, name, password);
+					await createUser(locals.prisma, email, name, password);
 					return {
 						success: true
 					};
