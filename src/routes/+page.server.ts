@@ -5,7 +5,7 @@ import { serializeApiRequest } from '$lib/chatHistory';
 import { deleteAllUserMessages } from '$lib/db/crud/message';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { UserNotFoundError } from '$lib/customErrors';
-import type { User } from '@prisma/client';
+// import type { User } from '@prisma/client';
 import { retrieveUsersBalance, updateUserBalanceWithIncrement } from '$lib/db/crud/balance';
 import {
 	chargeUserCard,
