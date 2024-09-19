@@ -280,6 +280,7 @@
 		</form>
 	</div>
 </div>
+
 <!-- svelte-ignore css-unused-selector -->
 <style lang="scss">
 	.billing-body {
@@ -540,7 +541,7 @@
 				border-radius: 4px;
 				margin: 20px 0;
 			}
-            
+
 			#card-element {
 				padding: 10px;
 			}

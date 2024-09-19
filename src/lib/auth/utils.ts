@@ -80,16 +80,11 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 								throw new Error('WrongAccountLinking');
 							}
 
-							// New user, create account
-							const userData = {
-								email: user.email!,
-								name: user.name!,
-								oauth: 'google'
-							};
 							existingUser = await createUser(
 								event.locals.prisma,
 								user.email!,
 								user.name!,
+								undefined,
 								'google'
 							);
 							user.id = existingUser!.id.toString();
