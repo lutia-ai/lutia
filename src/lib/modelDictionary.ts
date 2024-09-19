@@ -1,11 +1,10 @@
 import type { ModelDictionary } from '$lib/types';
-// import { ApiModel, ApiProvider } from '@prisma/client';
 
 export const modelDictionary: ModelDictionary = {
-	[ApiProvider.openAI]: {
+	openAI: {
 		models: {
 			gpt4o: {
-				name: ApiModel.GPT_4o,
+				name: 'GPT_4o',
 				param: 'gpt-4o-2024-08-06',
 				legacy: false,
 				input_price: 2.5,
@@ -16,7 +15,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 5
 			},
 			gpt4mini: {
-				name: ApiModel.GPT_4o_mini,
+				name: 'GPT_4o_mini',
 				param: 'gpt-4o-mini',
 				legacy: false,
 				input_price: 0.15,
@@ -27,7 +26,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 5
 			},
 			gpt4turbo: {
-				name: ApiModel.GPT_4_Turbo,
+				name: 'GPT_4_Turbo',
 				param: 'gpt-4-turbo',
 				legacy: true,
 				input_price: 10,
@@ -38,7 +37,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 5
 			},
 			gpt4: {
-				name: ApiModel.GPT_4,
+				name: 'GPT_4',
 				param: 'gpt-4',
 				legacy: true,
 				input_price: 30,
@@ -48,7 +47,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: false
 			},
 			gpt35turbo: {
-				name: ApiModel.GPT_3_5_Turbo,
+				name: 'GPT_3_5_Turbo',
 				param: 'gpt-3.5-turbo-0125',
 				legacy: true,
 				input_price: 0.5,
@@ -59,10 +58,10 @@ export const modelDictionary: ModelDictionary = {
 			}
 		}
 	},
-	[ApiProvider.anthropic]: {
+	anthropic: {
 		models: {
 			claude35Sonnet: {
-				name: ApiModel.Claude_3_5_Sonnet,
+				name: 'Claude_3_5_Sonnet',
 				param: 'claude-3-5-sonnet-20240620',
 				legacy: false,
 				input_price: 3,
@@ -73,7 +72,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 5
 			},
 			claude3Opus: {
-				name: ApiModel.Claude_3_Opus,
+				name: 'Claude_3_Opus',
 				param: 'claude-3-opus-20240229',
 				legacy: false,
 				input_price: 15,
@@ -84,7 +83,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 5
 			},
 			claude3Sonnet: {
-				name: ApiModel.Claude_3_Sonnet,
+				name: 'Claude_3_Sonnet',
 				param: 'claude-3-sonnet-20240229',
 				legacy: true,
 				input_price: 3,
@@ -95,7 +94,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 5
 			},
 			claude3Haiku: {
-				name: ApiModel.Claude_3_Haiku,
+				name: 'Claude_3_Haiku',
 				param: 'claude-3-haiku-20240307',
 				legacy: false,
 				input_price: 0.25,
@@ -107,10 +106,10 @@ export const modelDictionary: ModelDictionary = {
 			}
 		}
 	},
-	[ApiProvider.google]: {
+	google: {
 		models: {
 			gemini15Pro: {
-				name: ApiModel.Gemini_1_5_Pro,
+				name: 'Gemini_1_5_Pro',
 				param: 'gemini-1.5-pro',
 				legacy: false,
 				input_price: 3.5,
@@ -123,7 +122,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 1
 			},
 			gemini15Flash: {
-				name: ApiModel.Gemini_1_5_Flash,
+				name: 'Gemini_1_5_Flash',
 				param: 'gemini-1.5-flash',
 				legacy: false,
 				input_price: 0.35,
@@ -136,7 +135,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 1
 			},
 			gemini1Pro: {
-				name: ApiModel.Gemini_1_0_Pro,
+				name: 'Gemini_1_0_Pro',
 				param: 'gemini-1.0-pro',
 				legacy: true,
 				input_price: 0.5,

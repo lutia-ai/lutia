@@ -21,10 +21,9 @@
 	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
-	import SettingsPopup from '$lib/components/settings/SettingsPopup.svelte';
 	import { modelLogos } from '$lib/modelLogos';
 	import { clearChatHistory, formatModelEnumToReadable } from '$lib/chatHistory';
-	// import { ApiProvider } from '@prisma/client';
+	import type { ApiProvider } from '@prisma/client';
 
 	export let companySelection: ApiProvider[];
 	export let gptModelSelection: Model[];

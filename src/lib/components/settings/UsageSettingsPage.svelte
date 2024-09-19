@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import StackedBarChart from '$lib/components/barchart/StackedBarChart.svelte';
-	import { modelDictionary } from '$lib/modelDictionary';
 	import type { UsageObject, Company } from '$lib/types';
 	import { modelLogos } from '$lib/modelLogos';
 	import PieChart from '$lib/components/barchart/PieChart.svelte';
 	import { capitalizeFirstLetter } from '$lib/components/barchart/utils';
-	// import { ApiModel, type ApiProvider } from '@prisma/client';
+	import type { ApiModel, ApiProvider } from '@prisma/client';
 
 	let mounted = false;
 
@@ -112,7 +111,7 @@
 			for (const obj of objects) {
 				const day = new Date(obj.request_timestamp).getDate().toString();
 				const modelString = obj.api_model;
-				const model = ApiModel[modelString]; // Convert string to enum value
+				const model = modelString; // Convert string to enum value
 				const value = parseFloat(obj.total_cost);
 
 				const modelMap = dayModelMap.get(day)!;

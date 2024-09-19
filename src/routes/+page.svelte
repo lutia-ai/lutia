@@ -49,7 +49,7 @@
 		sanitizeLLmContent
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
-	// import type { ApiProvider } from '@prisma/client';
+	import type { ApiProvider } from '@prisma/client';
 
 	export let data;
 
