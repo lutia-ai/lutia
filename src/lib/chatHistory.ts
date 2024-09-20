@@ -8,7 +8,6 @@ import type {
 	ApiRequestWithMessage
 } from '$lib/types';
 import { deserialize } from '$app/forms';
-// import type { ApiRequest } from '$lib/db/entities/ApiRequest';
 import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
 import { chatHistory } from '$lib/stores';
 import type { ActionResult } from '@sveltejs/kit';
@@ -29,7 +28,9 @@ export function serializeApiRequest(apiRequest: ApiRequestWithMessage): Serializ
 					id: apiRequest.message.id,
 					prompt: apiRequest.message.prompt,
 					response: apiRequest.message.response,
-					pictures: apiRequest.message.pictures ? apiRequest.message.pictures : []
+					pictures: Array.isArray(apiRequest.message.pictures)
+						? (apiRequest.message.pictures as Image[])
+						: []
 					// Add other necessary fields from the Message entity
 				}
 			: null
@@ -230,4 +231,21 @@ export function formatModelEnumToReadable(enumValue: string): string {
 	readable = readable.replace(/(\d) (\d)/g, '$1.$2');
 
 	return readable;
+}
+
+export function findLastNewlineIndex(text: string): number {
+	let index = text.length - 1;
+
+	// Skip trailing spaces
+	while (index >= 0 && text[index] === ' ') {
+		index--;
+	}
+
+	// Find the last non-newline character
+	while (index >= 0 && text[index] === 'n') {
+		index--;
+	}
+
+	// Return the index right after the last newline
+	return index + 1;
 }

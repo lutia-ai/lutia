@@ -44,6 +44,7 @@
 		changeTabWidth,
 		closeAllTabWidths,
 		extractCodeBlock,
+		findLastNewlineIndex,
 		formatModelEnumToReadable,
 		loadChatHistory,
 		sanitizeLLmContent
@@ -243,6 +244,7 @@
 				let language = '';
 				let responseComponents = [];
 				let prevText = '';
+				let spaceCount = 0;
 
 				while (true) {
 					const { value, done } = await reader.read();
@@ -258,7 +260,7 @@
 					}
 
 					for (let index = 0; index < newTextArray.length; index++) {
-						const text = newTextArray[index];
+						let text = newTextArray[index];
 						const lastComponent = responseComponents[responseComponents.length - 1];
 
 						// if current word is last in the array and contains a ` then add it to prevText
@@ -282,6 +284,7 @@
 						// if current word is start of code block
 						else if (text.includes('```') && !isInCodeBlock) {
 							isInCodeBlock = true;
+
 							// extract any text before codeBlock
 							if (lastComponent && lastComponent.type === 'text') {
 								lastComponent.content += text.split('```')[0];
@@ -292,6 +295,22 @@
 								});
 							}
 
+							if (newTextArray[index + 1] && newTextArray[index + 1].includes('\n')) {
+								// Get the part of the string after '\n'
+								let afterNewline = newTextArray[index + 1].split('\n')[1];
+
+								// Count leading spaces
+								let spaceCounter = 0;
+								for (let i = 0; i < afterNewline.length; i++) {
+									if (afterNewline[i] === ' ') {
+										spaceCounter++;
+									} else {
+										break;
+									}
+								}
+								spaceCount = spaceCounter;
+							}
+
 							// extract any code after ```
 							codeBlockContent = extractCodeBlock(text);
 							const langMatch = text.match(/```(\w+)/);
@@ -300,7 +319,7 @@
 								responseComponents.push({
 									type: 'code',
 									language,
-									code: codeBlockContent.trimStart(),
+									code: codeBlockContent,
 									copied: false,
 									tabWidthOpen: false,
 									tabWidth: null
@@ -311,6 +330,13 @@
 						// if current word is end of code block
 						else if (text.includes('```') && isInCodeBlock) {
 							isInCodeBlock = false;
+							if (text.includes('\n')) {
+								// This handles the removal of whitespace when whole code block is indented
+								const lastNewlineIndex = findLastNewlineIndex(text);
+								text =
+									text.slice(0, lastNewlineIndex) +
+									text.slice(lastNewlineIndex + spaceCount);
+							}
 
 							// add any remaining code before end of codeBlock
 							if (lastComponent && lastComponent.type === 'code') {
@@ -319,8 +345,8 @@
 
 								// Add any remaining code before the end of the code block
 								codeComponent.code += additionalCode;
-								codeComponent.tabWidth = calculateTabWidth(codeComponent.code);
 								codeComponent.code = codeComponent.code.trim();
+								codeComponent.tabWidth = calculateTabWidth(codeComponent.code);
 							} else {
 								responseComponents.push({
 									type: 'code',
@@ -338,7 +364,15 @@
 									content: newText.split('```')[1]
 								});
 							}
+							spaceCount = 0;
 						} else if (isInCodeBlock) {
+							if (text.includes('\n')) {
+								// This handles the removal of whitespace when whole code block is indented
+								const lastNewlineIndex = findLastNewlineIndex(text);
+								text =
+									text.slice(0, lastNewlineIndex) +
+									text.slice(lastNewlineIndex + spaceCount);
+							}
 							if (lastComponent && lastComponent.type === 'code') {
 								const codeComponent = lastComponent as CodeComponent;
 								lastComponent.code = codeComponent.code + text;

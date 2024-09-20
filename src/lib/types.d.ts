@@ -111,8 +111,8 @@ type SerializedMessage = {
 
 type SerializedApiRequest = {
 	id: number;
-	apiProvider: typeof ApiProvider;
-	apiModel: typeof ApiModel;
+	apiProvider: string;
+	apiModel: string;
 	requestTimestamp: string;
 	inputTokens: number;
 	inputCost: string;
