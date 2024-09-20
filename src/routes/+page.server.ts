@@ -147,7 +147,7 @@ export const actions = {
 				throw new Error('Stripe customer ID not found');
 			}
 
-			const chargeResult = await chargeUserCard(customerId, creditAmount);
+			const chargeResult = await chargeUserCard(customerId, (creditAmount*1.2)); // add tax to creditAmount
 			const balance = await updateUserBalanceWithIncrement(
 				locals.prisma,
 				user.id,

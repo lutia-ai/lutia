@@ -60,7 +60,7 @@
 			}
 
 			const formData = new FormData();
-			formData.append('creditAmount', (addCreditAmount * 1.2).toString());
+			formData.append('creditAmount', addCreditAmount.toString());
 
 			const response = await fetch('?/topupBalance', {
 				method: 'POST',
