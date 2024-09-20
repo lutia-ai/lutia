@@ -67,6 +67,32 @@ export async function saveUserCardDetails(
 	}
 }
 
+export async function deleteUserCardDetails(customerId: string): Promise<void> {
+	try {
+		// Retrieve all payment methods for the customer
+		const paymentMethods = await stripe.paymentMethods.list({
+			customer: customerId,
+			type: 'card'
+		});
+
+		if (paymentMethods.data.length === 0) {
+			console.log(`No payment methods found for customer ${customerId}.`);
+			return;
+		}
+
+		// Since they're guaranteed to have only one, we can take the first one
+		const paymentMethodId = paymentMethods.data[0].id;
+
+		// Detach the payment method
+		await stripe.paymentMethods.detach(paymentMethodId);
+
+		console.log(`Payment method ${paymentMethodId} detached from customer ${customerId}.`);
+	} catch (error) {
+		console.error('Error detaching Stripe payment method:', error);
+		throw error;
+	}
+}
+
 export async function chargeUserCard(
 	customerId: string,
 	amount: number,

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { darkMode } from '$lib/stores.ts';
 	import { deserialize } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
 	import {
@@ -15,19 +16,22 @@
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
 	import Update from '$lib/components/icons/Update.svelte';
 	import CreditCard from '$lib/components/icons/CreditCard.svelte';
+	import BinIcon from '$lib/components/icons/BinIcon.svelte';
+	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 
 	let loading = true;
 	let errorPopup: ErrorPopup;
 	let userBalance: number = 0;
 	let addCreditAmount: number;
 	let addCreditOpen: boolean = false;
-	let cardDetails: CardDetails;
+	let cardDetails: CardDetails | undefined;
 	let stripe: Stripe | null = null;
 	let elements: StripeElements | null = null;
 	let card: StripeCardElement | null = null;
 	let error: string | null = null;
 	let success: boolean = false;
 	let showCardInput: boolean = false;
+	let showDeleteCardDetailsCheck: boolean = false;
 
 	async function getUsersBillingDetails() {
 		try {
@@ -73,6 +77,27 @@
 				userBalance = result.data.balance;
 				addCreditOpen = false;
 			} else if (result.type === 'failure' && result.data) {
+				errorPopup.showError(result.data.message, null, 5000);
+			}
+		} catch (error) {
+			console.error('Error clearing chat history:', error);
+		}
+	}
+
+	async function handleDeleteCardDetails() {
+		try {
+			const formData = new FormData();
+			const response = await fetch('?/deleteCardDetails', {
+				method: 'POST',
+				body: formData
+			});
+			const result: ActionResult = deserialize(await response.text());
+
+			if (result.type === 'success') {
+				cardDetails = undefined;
+				showDeleteCardDetailsCheck = false;
+			} else if (result.type === 'failure' && result.data) {
+				errorPopup.showError(result.data.message, null, 5000);
 			}
 		} catch (error) {
 			console.error('Error clearing chat history:', error);
@@ -129,7 +154,27 @@
 		stripe = await loadStripe(env.PUBLIC_STRIPE_API_KEY);
 		elements = stripe!.elements();
 		card = elements.create('card', {
-			disableLink: true
+			disableLink: true,
+			style: {
+				base: {
+					iconColor: $darkMode ? '#fff' : 'black',
+					color: $darkMode ? '#fff' : 'black',
+					fontWeight: '500',
+					fontFamily: 'Roboto, Open Sans, Segoe UI, sans-serif',
+					fontSize: '18px',
+					fontSmoothing: 'antialiased',
+					':-webkit-autofill': {
+						color: '#fce883'
+					},
+					'::placeholder': {
+						color: $darkMode ? '#fff' : 'black'
+					}
+				},
+				invalid: {
+					iconColor: '#FFC7EE',
+					color: '#FFC7EE'
+				}
+			}
 		});
 		card.mount('#card-element');
 	});
@@ -211,73 +256,119 @@
 
 	<div class="card-body">
 		<h1>Card details</h1>
-		{#if !showCardInput}
-			<div class="card-info {loading ? 'shimmerBG' : 'container-bg'}">
-				{#if cardDetails && !showCardInput}
-					<div class="title">
+		<div class="card-info {loading ? 'shimmerBG' : 'container-bg'}">
+			{#if cardDetails && !showCardInput}
+				<div class="title">
+					<div class="icon">
+						<CreditCard color="var(--text-color-light)" />
+					</div>
+					<p class="card-number">{formatCardDetails(cardDetails)}</p>
+				</div>
+				<div class="sub">
+					<p class="card-expiry">
+						Expires: {formatExpiryDate(cardDetails.expMonth, cardDetails.expYear)}
+					</p>
+					<div
+						class="update"
+						style="margin-left: auto;"
+						role="button"
+						tabindex="0"
+						on:click={() => (showCardInput = true)}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								showCardInput = true;
+							}
+						}}
+					>
 						<div class="icon">
-							<CreditCard color="var(--text-color-light)" />
+							<Update color="var(--text-color-light)" />
 						</div>
-						<p class="card-number">{formatCardDetails(cardDetails)}</p>
+						<p>Update</p>
 					</div>
-					<div class="sub">
-						<p class="card-expiry">
-							Expires: {formatExpiryDate(cardDetails.expMonth, cardDetails.expYear)}
-						</p>
-						<div
-							class="update"
-							role="button"
-							tabindex="0"
-							on:click={() => (showCardInput = true)}
-							on:keydown|stopPropagation={(e) => {
-								if (e.key === 'Enter') {
-									showCardInput = true;
-								}
-							}}
-						>
-							<div class="icon">
-								<Update color="var(--text-color-light)" />
-							</div>
-							<p>Update</p>
+					<div
+						class="remove"
+						role="button"
+						tabindex="0"
+						on:click={() => (showDeleteCardDetailsCheck = true)}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								showDeleteCardDetailsCheck = true;
+							}
+						}}
+					>
+						<div class="icon">
+							<BinIcon color="var(--text-color-light)" />
 						</div>
+						<p>Remove</p>
 					</div>
-				{/if}
-			</div>
-		{/if}
-		{#if !cardDetails && !loading}
-			<div
-				role="button"
-				tabindex="0"
-				on:click={() => (showCardInput = true)}
-				on:keydown|stopPropagation={(e) => {
-					if (e.key === 'Enter') {
-						showCardInput = true;
-					}
-				}}
+				</div>
+			{/if}
+			<form
+				style="display: {showCardInput ? 'block' : 'none'};"
+				on:submit|preventDefault={saveUsersCardDetails}
 			>
-				<p class="add-card">Add card</p>
-			</div>
-		{/if}
-		<form
-			style="opacity: {showCardInput ? 1 : 0};"
-			on:submit|preventDefault={saveUsersCardDetails}
-		>
-			<div class="card-container">
-				<div id="card-element"></div>
-			</div>
-			{#if error}
-				<p class="error">{error}</p>
-			{/if}
-			{#if success}
-				<p class="success">Card saved successfully!</p>
-			{/if}
-			<button type="submit">Save Card</button>
-			{#if cardDetails}
+				<div class="card-container">
+					<div id="card-element"></div>
+				</div>
+				{#if error}
+					<p class="error">{error}</p>
+				{/if}
+				<button type="submit">Save Card</button>
 				<button class="cancel" on:click|preventDefault={() => (showCardInput = false)}>
 					Cancel
 				</button>
+			</form>
+			{#if !cardDetails && !loading && !showCardInput}
+				<div
+					role="button"
+					tabindex="0"
+					on:click={() => (showCardInput = true)}
+					on:keydown|stopPropagation={(e) => {
+						if (e.key === 'Enter') {
+							showCardInput = true;
+						}
+					}}
+				>
+					<p class="add-card">Add card</p>
+				</div>
 			{/if}
-		</form>
+		</div>
+		{#if showDeleteCardDetailsCheck}
+			<div class="delete banner">
+				<div class="text">
+					<h1>Are you sure?</h1>
+					<p>This will permanently delete your card details.</p>
+				</div>
+				<div class="buttons">
+					<div
+						class="icon"
+						role="button"
+						tabindex="0"
+						on:click={() => handleDeleteCardDetails()}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								handleDeleteCardDetails();
+							}
+						}}
+					>
+						<TickIcon color="rgb(250, 250, 250)" />
+					</div>
+					<div
+						class="icon"
+						role="button"
+						tabindex="0"
+						on:click={() => (showDeleteCardDetailsCheck = false)}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								showDeleteCardDetailsCheck = false;
+							}
+						}}
+					>
+						<CrossIcon color="rgb(250, 250, 250)" />
+					</div>
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -498,13 +589,14 @@
 						margin: auto 0;
 					}
 
-					.update {
-						margin-left: auto;
+					.update,
+					.remove {
 						cursor: pointer;
 						display: flex;
 						gap: 5px;
 						padding: 5px;
 						border-radius: 5px;
+						margin-left: 10px;
 
 						.icon {
 							width: 20px;
@@ -530,16 +622,65 @@
 			}
 
 			.add-card {
-				color: rgb(0, 85, 255);
+				color: var(--text-color-light);
 				cursor: pointer;
-				margin: 10px 0;
+				margin: auto 0;
+				text-align: center;
+				vertical-align: auto;
+				font-size: 20px;
+				font-weight: 600;
+				width: 100%;
+				height: 100%;
+				border-radius: 4px;
+				padding: 25px 0;
+
+				&:hover {
+					background: var(--bg-color-light);
+				}
 			}
 
 			.card-container {
-				background: var(--bg-color-light-opacity-alt);
-				padding: 20px;
+				background: var(--bg-color);
+				padding: 10px;
 				border-radius: 4px;
-				margin: 20px 0;
+				margin: 10px 0;
+			}
+
+			.delete {
+				background: rgb(240, 0, 0);
+
+				h1 {
+					color: white;
+					font-size: 22px;
+					font-weight: 600;
+				}
+
+				p {
+					font-weight: 300;
+				}
+			}
+
+			.banner {
+				display: flex;
+				border-radius: 4px;
+				padding: 10px;
+
+				.buttons {
+					display: flex;
+					margin: auto 0 auto auto;
+					gap: 10px;
+
+					.icon {
+						width: 30px;
+						height: 30px;
+						border-radius: 4px;
+						cursor: pointer;
+
+						&:hover {
+							outline: 1px solid white;
+						}
+					}
+				}
 			}
 
 			#card-element {

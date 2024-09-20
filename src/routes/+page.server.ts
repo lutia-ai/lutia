@@ -9,6 +9,7 @@ import type { User } from '@prisma/client';
 import { retrieveUsersBalance, updateUserBalanceWithIncrement } from '$lib/db/crud/balance';
 import {
 	chargeUserCard,
+	deleteUserCardDetails,
 	getStripeCardDetails,
 	saveUserCardDetails
 } from '$lib/stripe/stripeFunctions';
@@ -129,6 +130,34 @@ export const actions = {
 			};
 		}
 	},
+	deleteCardDetails: async ({ locals }) => {
+		const session = await locals.auth();
+
+		if (!session || !session.user) {
+			throw redirect(307, '/auth');
+		}
+
+		try {
+			const user = await retrieveUserByEmail(locals.prisma, session.user.email!);
+			const customerId = user.stripe_id;
+
+			if (!customerId) {
+				throw new Error('Stripe customer ID not found');
+			}
+
+			await deleteUserCardDetails(customerId);
+
+			return;
+		} catch (err) {
+			console.error('Error saving card details:', err);
+			return {
+				type: 'failure',
+				data: {
+					message: err instanceof Error ? err.message : 'An unknown error occurred'
+				}
+			};
+		}
+	},
 	topupBalance: async ({ request, locals }) => {
 		const session = await locals.auth();
 
@@ -147,7 +176,7 @@ export const actions = {
 				throw new Error('Stripe customer ID not found');
 			}
 
-			const chargeResult = await chargeUserCard(customerId, (creditAmount*1.2)); // add tax to creditAmount
+			const chargeResult = await chargeUserCard(customerId, creditAmount * 1.2); // add tax to creditAmount
 			const balance = await updateUserBalanceWithIncrement(
 				locals.prisma,
 				user.id,
