@@ -18,6 +18,7 @@
 	import CreditCard from '$lib/components/icons/CreditCard.svelte';
 	import BinIcon from '$lib/components/icons/BinIcon.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
+	import LoadingSpinner from '$lib/components/icons/LoadingSpinner.svelte';
 
 	let loading = true;
 	let errorPopup: ErrorPopup;
@@ -32,6 +33,9 @@
 	let success: boolean = false;
 	let showCardInput: boolean = false;
 	let showDeleteCardDetailsCheck: boolean = false;
+	let deleteCardLoading: boolean = false;
+	let uploadCardLoading: boolean = false;
+	let topupLoading: boolean = false;
 
 	async function getUsersBillingDetails() {
 		try {
@@ -57,6 +61,7 @@
 
 	async function handleTopupSubmit() {
 		try {
+			topupLoading = true;
 			if (addCreditAmount < 5 || addCreditAmount > 100) {
 				let error = 'You can only topup between $5 and $100';
 				errorPopup.showError(error, null, 5000);
@@ -76,16 +81,20 @@
 				errorPopup.showError('Top-up successful!', null, 5000, 'success');
 				userBalance = result.data.balance;
 				addCreditOpen = false;
+				addCreditAmount = 0;
 			} else if (result.type === 'failure' && result.data) {
 				errorPopup.showError(result.data.message, null, 5000);
 			}
 		} catch (error) {
 			console.error('Error clearing chat history:', error);
+		} finally {
+			topupLoading = false;
 		}
 	}
 
 	async function handleDeleteCardDetails() {
 		try {
+			deleteCardLoading = true;
 			const formData = new FormData();
 			const response = await fetch('?/deleteCardDetails', {
 				method: 'POST',
@@ -101,11 +110,14 @@
 			}
 		} catch (error) {
 			console.error('Error clearing chat history:', error);
+		} finally {
+			deleteCardLoading = false;
 		}
 	}
 
 	async function saveUsersCardDetails() {
 		try {
+			uploadCardLoading = true;
 			if (!stripe || !elements || !card) {
 				return;
 			}
@@ -136,6 +148,8 @@
 			}
 		} catch (error) {
 			console.error('Error clearing chat history:', error);
+		} finally {
+			uploadCardLoading = false;
 		}
 	}
 
@@ -247,9 +261,20 @@
 				>
 					<CrossIcon color="red" />
 				</button>
-				<button type="submit" class="purchase" on:click|preventDefault={handleTopupSubmit}>
-					Purchase
-				</button>
+
+				{#if topupLoading}
+					<div class="icon">
+						<LoadingSpinner color="rgb(105,105,255)" />
+					</div>
+				{:else}
+					<button
+						type="submit"
+						class="purchase"
+						on:click|preventDefault={handleTopupSubmit}
+					>
+						Purchase
+					</button>
+				{/if}
 			</div>
 		</form>
 	{/if}
@@ -313,10 +338,17 @@
 				{#if error}
 					<p class="error">{error}</p>
 				{/if}
-				<button type="submit">Save Card</button>
-				<button class="cancel" on:click|preventDefault={() => (showCardInput = false)}>
-					Cancel
-				</button>
+				<div class="buttons">
+					<button type="submit">Save Card</button>
+					<button class="cancel" on:click|preventDefault={() => (showCardInput = false)}>
+						Cancel
+					</button>
+					{#if uploadCardLoading}
+						<div class="icon">
+							<LoadingSpinner color="rgb(105,105,255)" />
+						</div>
+					{/if}
+				</div>
 			</form>
 			{#if !cardDetails && !loading && !showCardInput}
 				<div
@@ -340,32 +372,38 @@
 					<p>This will permanently delete your card details.</p>
 				</div>
 				<div class="buttons">
-					<div
-						class="icon"
-						role="button"
-						tabindex="0"
-						on:click={() => handleDeleteCardDetails()}
-						on:keydown|stopPropagation={(e) => {
-							if (e.key === 'Enter') {
-								handleDeleteCardDetails();
-							}
-						}}
-					>
-						<TickIcon color="rgb(250, 250, 250)" />
-					</div>
-					<div
-						class="icon"
-						role="button"
-						tabindex="0"
-						on:click={() => (showDeleteCardDetailsCheck = false)}
-						on:keydown|stopPropagation={(e) => {
-							if (e.key === 'Enter') {
-								showDeleteCardDetailsCheck = false;
-							}
-						}}
-					>
-						<CrossIcon color="rgb(250, 250, 250)" />
-					</div>
+					{#if !deleteCardLoading}
+						<div
+							class="icon"
+							role="button"
+							tabindex="0"
+							on:click={() => handleDeleteCardDetails()}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									handleDeleteCardDetails();
+								}
+							}}
+						>
+							<TickIcon color="rgb(250, 250, 250)" />
+						</div>
+						<div
+							class="icon"
+							role="button"
+							tabindex="0"
+							on:click={() => (showDeleteCardDetailsCheck = false)}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									showDeleteCardDetailsCheck = false;
+								}
+							}}
+						>
+							<CrossIcon color="rgb(250, 250, 250)" />
+						</div>
+					{:else}
+						<div class="icon" style="margin: auto 0;">
+							<LoadingSpinner color="rgb(250,250,250)" />
+						</div>
+					{/if}
 				</div>
 			</div>
 		{/if}
@@ -514,6 +552,7 @@
 			.buttons-container {
 				display: flex;
 				flex-direction: column;
+				min-width: 125px;
 
 				.close-container {
 					margin-left: auto;
@@ -540,6 +579,12 @@
 					font-size: 16px;
 					border: none;
 					cursor: pointer;
+				}
+
+				.icon {
+					width: 35px;
+					height: 35px;
+					margin: auto 0 0 auto;
 				}
 			}
 		}
@@ -646,6 +691,18 @@
 				margin: 10px 0;
 			}
 
+			.buttons {
+				display: flex;
+				gap: 5px;
+				width: 100%;
+
+				.icon {
+					margin: auto 0 auto auto;
+					width: 38px;
+					height: 38px;
+				}
+			}
+
 			.delete {
 				background: rgb(240, 0, 0);
 
@@ -653,24 +710,28 @@
 					color: white;
 					font-size: 22px;
 					font-weight: 600;
+					margin-bottom: 5px;
 				}
 
 				p {
 					font-weight: 300;
+					color: white;
 				}
 			}
 
 			.banner {
 				display: flex;
 				border-radius: 4px;
-				padding: 10px;
+				padding: 10px 20px;
 
 				.buttons {
 					display: flex;
 					margin: auto 0 auto auto;
 					gap: 10px;
+					width: max-content;
 
 					.icon {
+						margin: 0;
 						width: 30px;
 						height: 30px;
 						border-radius: 4px;
