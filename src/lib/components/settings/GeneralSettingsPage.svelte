@@ -132,7 +132,8 @@
 		<div class="icon-container">
 			<ContextWindowIcon color="var(--text-color-light)" />
 		</div>
-		<p>Adjust context window manually</p>
+		<p style="font-weight: 600;">Shortcut:</p>
+		<p style="font-weight: 600;">CTRL + [0-9]</p>
 	</div>
 	<div class="slider-container">
 		<p>0</p>
@@ -255,6 +256,10 @@
 
 		&:hover {
 			background: inherit !important;
+		}
+
+		p {
+			flex: none;
 		}
 	}
 

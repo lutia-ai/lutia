@@ -47,6 +47,7 @@
 		extractCodeBlock,
 		findLastNewlineIndex,
 		formatModelEnumToReadable,
+		handleKeyboardShortcut,
 		loadChatHistory,
 		sanitizeLLmContent
 	} from '$lib/chatHistory.js';
@@ -652,6 +653,7 @@
 	on:scroll={() => {
 		handleScroll();
 	}}
+	on:keydown={handleKeyboardShortcut}
 />
 
 <ErrorPopup bind:this={errorPopup} />
@@ -1073,7 +1075,8 @@
 				</span>
 				{#if $inputPricing}
 					<div class="input-token-container">
-						<p>Input tokens: {input_tokens}</p>
+						<p>Previous messages: {$numberPrevMessages}</p>
+						<p class="middle">Input tokens: {input_tokens}</p>
 						<p class="right">
 							Input cost: ${roundToFirstTwoNonZeroDecimals(input_price)}
 						</p>
@@ -1672,6 +1675,10 @@
 						color: var(--text-color-light);
 						margin: 0;
 						font-size: 12px;
+					}
+
+					.middle {
+						text-align: center;
 					}
 
 					.right {

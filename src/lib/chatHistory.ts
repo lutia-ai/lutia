@@ -9,7 +9,7 @@ import type {
 } from '$lib/types';
 import { deserialize } from '$app/forms';
 import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
-import { chatHistory } from '$lib/stores';
+import { chatHistory, numberPrevMessages } from '$lib/stores';
 import type { ActionResult } from '@sveltejs/kit';
 
 export function serializeApiRequest(apiRequest: ApiRequestWithMessage): SerializedApiRequest {
@@ -275,4 +275,21 @@ export function countLeadingWhitespaces(text: string): number {
 	const leadingWhitespaces = lastNonEmptyLine.match(/^\s*/)?.[0].length || 0;
 
 	return leadingWhitespaces;
+}
+
+export function handleKeyboardShortcut(event: KeyboardEvent) {
+	// Check if Ctrl key is pressed
+	if (event.ctrlKey) {
+		// Get the pressed number key (0-9)
+		const num = parseInt(event.key);
+
+		// Check if the pressed key is a number between 0 and 9
+		if (!isNaN(num) && num >= 0 && num <= 9) {
+			// Update numberPrevMessages
+			numberPrevMessages.set(num);
+
+			// Prevent default behavior (e.g., browser shortcuts)
+			event.preventDefault();
+		}
+	}
 }

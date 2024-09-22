@@ -265,7 +265,7 @@
 					contextOpen = !contextOpen;
 					settingsOpen = false;
 				}}
-				on:keydown|stopPropagation={(e) => {
+				on:keydown={(e) => {
 					if (e.key === 'Enter') {
 						contextOpen = !contextOpen;
 						settingsOpen = false;
@@ -285,7 +285,7 @@
 					role="button"
 					tabindex="0"
 					on:click|stopPropagation
-					on:keydown|stopPropagation
+					on:keydown
 				>
 					<div class="open-container">
 						<p>Previous messages included</p>
@@ -314,7 +314,7 @@
 						signIn('google');
 					}
 				}}
-				on:keydown|stopPropagation={(e) => {
+				on:keydown={(e) => {
 					if (e.key === 'Enter') {
 						isSettingsOpen = !true;
 						contextOpen = false;
