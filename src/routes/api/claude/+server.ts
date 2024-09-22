@@ -82,6 +82,7 @@ export async function POST({ request, locals }) {
 					} else if (chunk.type === 'message_stop') {
 						break;
 					}
+					console.log('stream still going...');
 				}
 				controller.close();
 

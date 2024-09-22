@@ -119,7 +119,7 @@
 			{#if data.length === 1 && data[0].company === 'No data'}
 				$0.00
 			{:else}
-				${roundToFirstTwoNonZeroDecimals(data.reduce((sum, item) => sum + item.value, 0))}
+				${data.reduce((sum, item) => sum + item.value, 0).toFixed(2)}
 			{/if}
 		</span>
 	</div>

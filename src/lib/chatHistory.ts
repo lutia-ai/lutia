@@ -78,11 +78,15 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 
 function parseMessageContent(content: string): Component[] {
 	const components: Component[] = [];
-	const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+	const codeBlockRegex = /([ \t]*)```(\w+)?\n([\s\S]*?)```/g; // Match leading whitespaces before ```
 	let lastIndex = 0;
 	let match;
 
 	while ((match = codeBlockRegex.exec(content)) !== null) {
+		const leadingWhitespace = match[1] || ''; // Capture leading whitespaces before the code block
+		const whitespaceLength = leadingWhitespace.length;
+
+		// If there's text before the code block, capture it as a 'text' component
 		if (match.index > lastIndex) {
 			components.push({
 				type: 'text',
@@ -90,18 +94,28 @@ function parseMessageContent(content: string): Component[] {
 			});
 		}
 
+		// Normalize the code inside the block by removing leading whitespaces from each line
+		const normalizedCode = match[3]
+			.split('\n')
+			.map((line) =>
+				line.startsWith(leadingWhitespace) ? line.slice(whitespaceLength) : line
+			) // Remove leading whitespaces
+			.join('\n');
+
+		// Push the code block as a 'code' component
 		components.push({
 			type: 'code',
-			language: match[1] || 'plaintext',
-			code: match[2],
+			language: match[2] || 'plaintext',
+			code: normalizedCode,
 			copied: false,
-			tabWidth: calculateTabWidth(match[2]),
+			tabWidth: calculateTabWidth(normalizedCode),
 			tabWidthOpen: false
 		});
 
 		lastIndex = match.index + match[0].length;
 	}
 
+	// If there's remaining content after the last code block, capture it as 'text'
 	if (lastIndex < content.length) {
 		components.push({
 			type: 'text',
@@ -248,4 +262,17 @@ export function findLastNewlineIndex(text: string): number {
 
 	// Return the index right after the last newline
 	return index + 1;
+}
+
+export function countLeadingWhitespaces(text: string): number {
+	// Split the text into an array of lines
+	const lines = text.split('\n');
+
+	// Get the last non-empty line (remove any empty or whitespace-only lines)
+	const lastNonEmptyLine = lines.reverse().find((line) => line.trim() !== '') || '';
+
+	// Count leading whitespaces in the last non-empty line
+	const leadingWhitespaces = lastNonEmptyLine.match(/^\s*/)?.[0].length || 0;
+
+	return leadingWhitespaces;
 }

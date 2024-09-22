@@ -43,6 +43,7 @@
 		calculateTabWidth,
 		changeTabWidth,
 		closeAllTabWidths,
+		countLeadingWhitespaces,
 		extractCodeBlock,
 		findLastNewlineIndex,
 		formatModelEnumToReadable,
@@ -245,7 +246,15 @@
 				let responseComponents = [];
 				let prevText = '';
 				let spaceCount = 0;
+				let whitespacesLeft = 0;
+				let clearedNewLineSpacing = false;
+				let codeBlockIsIndented = false;
 
+				/**
+				 * Not every \n will have all whitespaces after it
+				 * For some reason chatgpt might put '/n  ' and then ' '
+				 * So need to count the number of whitespaces have been removed up until spaceCount
+				 */
 				while (true) {
 					const { value, done } = await reader.read();
 					if (done && !prevText) break;
@@ -284,6 +293,7 @@
 						// if current word is start of code block
 						else if (text.includes('```') && !isInCodeBlock) {
 							isInCodeBlock = true;
+							clearedNewLineSpacing = false;
 
 							// extract any text before codeBlock
 							if (lastComponent && lastComponent.type === 'text') {
@@ -295,21 +305,9 @@
 								});
 							}
 
-							if (newTextArray[index + 1] && newTextArray[index + 1].includes('\n')) {
-								// Get the part of the string after '\n'
-								let afterNewline = newTextArray[index + 1].split('\n')[1];
-
-								// Count leading spaces
-								let spaceCounter = 0;
-								for (let i = 0; i < afterNewline.length; i++) {
-									if (afterNewline[i] === ' ') {
-										spaceCounter++;
-									} else {
-										break;
-									}
-								}
-								spaceCount = spaceCounter;
-							}
+							spaceCount = countLeadingWhitespaces(responseText);
+							whitespacesLeft = spaceCount;
+							codeBlockIsIndented = spaceCount > 0 ? true : false;
 
 							// extract any code after ```
 							codeBlockContent = extractCodeBlock(text);
@@ -330,14 +328,6 @@
 						// if current word is end of code block
 						else if (text.includes('```') && isInCodeBlock) {
 							isInCodeBlock = false;
-							if (text.includes('\n')) {
-								// This handles the removal of whitespace when whole code block is indented
-								const lastNewlineIndex = findLastNewlineIndex(text);
-								text =
-									text.slice(0, lastNewlineIndex) +
-									text.slice(lastNewlineIndex + spaceCount);
-							}
-
 							// add any remaining code before end of codeBlock
 							if (lastComponent && lastComponent.type === 'code') {
 								const codeComponent = lastComponent as CodeComponent;
@@ -365,14 +355,51 @@
 								});
 							}
 							spaceCount = 0;
+							clearedNewLineSpacing = true;
 						} else if (isInCodeBlock) {
-							if (text.includes('\n')) {
-								// This handles the removal of whitespace when whole code block is indented
-								const lastNewlineIndex = findLastNewlineIndex(text);
-								text =
-									text.slice(0, lastNewlineIndex) +
-									text.slice(lastNewlineIndex + spaceCount);
+							// deindents the codeblock
+							if (codeBlockIsIndented) {
+								if (text.includes('\n')) {
+									clearedNewLineSpacing = false;
+									const lastNewlineIndex = findLastNewlineIndex(text);
+									const newText =
+										text.slice(0, lastNewlineIndex) +
+										text.slice(lastNewlineIndex + spaceCount);
+									if (newText !== text) {
+										// then we know that whitespace has been removed
+										whitespacesLeft = spaceCount + newText.length - text.length;
+										clearedNewLineSpacing =
+											whitespacesLeft === 0 ? true : false;
+									} else {
+										whitespacesLeft = spaceCount;
+									}
+									text = newText;
+								}
+
+								// clear extra whitespace from indent
+								if (
+									!clearedNewLineSpacing &&
+									text.includes(' ') &&
+									whitespacesLeft > 0
+								) {
+									// Count how many leading whitespaces the text actually has
+									let leadingWhitespaceCount = 0;
+									while (
+										text[leadingWhitespaceCount] === ' ' &&
+										leadingWhitespaceCount < whitespacesLeft
+									) {
+										leadingWhitespaceCount++;
+									}
+
+									// Remove only the leading whitespaces that we can, based on the smaller value
+									text = text.slice(leadingWhitespaceCount);
+
+									// Update whitespacesLeft to account for the removed whitespaces
+									whitespacesLeft -= leadingWhitespaceCount;
+									clearedNewLineSpacing = whitespacesLeft === 0 ? true : false;
+								}
 							}
+
 							if (lastComponent && lastComponent.type === 'code') {
 								const codeComponent = lastComponent as CodeComponent;
 								lastComponent.code = codeComponent.code + text;
