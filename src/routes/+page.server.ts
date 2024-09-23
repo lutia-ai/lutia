@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(307, '/auth');
 	}
 
-	const apiRequests = await retrieveApiRequestsWithMessage(locals.prisma, session.user!.email);
+	const apiRequests = await retrieveApiRequestsWithMessage(session.user!.email);
 
 	const serializedApiRequests = apiRequests.map(serializeApiRequest);
 
@@ -42,7 +42,7 @@ export const actions = {
 		}
 		const userId = session.user.id;
 
-		await deleteAllUserMessages(locals.prisma, parseInt(userId!, 10));
+		await deleteAllUserMessages(parseInt(userId!, 10));
 
 		return { success: true };
 	},
@@ -57,7 +57,7 @@ export const actions = {
 
 		let user: User;
 		try {
-			user = await retrieveUserByEmail(locals.prisma, userEmail!);
+			user = await retrieveUserByEmail(userEmail!);
 		} catch (error) {
 			if (error instanceof UserNotFoundError) {
 				throw error;
@@ -81,8 +81,8 @@ export const actions = {
 		let balance;
 		let cardDetails;
 		try {
-			const user = await retrieveUserByEmail(locals.prisma, session.user.email!);
-			balance = await retrieveUsersBalance(locals.prisma, Number(userId));
+			const user = await retrieveUserByEmail(session.user.email!);
+			balance = await retrieveUsersBalance(Number(userId));
 			cardDetails = await getStripeCardDetails(user.stripe_id!);
 		} catch (err) {
 			throw err;
@@ -108,7 +108,7 @@ export const actions = {
 				throw new Error('Invalid token');
 			}
 
-			const user = await retrieveUserByEmail(locals.prisma, session.user.email!);
+			const user = await retrieveUserByEmail(session.user.email!);
 			const customerId = user.stripe_id;
 
 			if (!customerId) {
@@ -138,7 +138,7 @@ export const actions = {
 		}
 
 		try {
-			const user = await retrieveUserByEmail(locals.prisma, session.user.email!);
+			const user = await retrieveUserByEmail(session.user.email!);
 			const customerId = user.stripe_id;
 
 			if (!customerId) {
@@ -169,7 +169,7 @@ export const actions = {
 			const formData = await request.formData();
 			const creditAmount = Number(formData.get('creditAmount'));
 
-			const user = await retrieveUserByEmail(locals.prisma, session.user.email!);
+			const user = await retrieveUserByEmail(session.user.email!);
 			const customerId = user.stripe_id;
 
 			if (!customerId) {
@@ -177,11 +177,7 @@ export const actions = {
 			}
 
 			const chargeResult = await chargeUserCard(customerId, creditAmount * 1.2); // add tax to creditAmount
-			const balance = await updateUserBalanceWithIncrement(
-				locals.prisma,
-				user.id,
-				creditAmount
-			);
+			const balance = await updateUserBalanceWithIncrement(user.id, creditAmount);
 
 			return {
 				chargeResult,

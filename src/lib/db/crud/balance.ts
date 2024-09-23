@@ -1,8 +1,8 @@
 import { UserNotFoundError } from '$lib/customErrors';
 import type { PrismaClient } from '@prisma/client';
-// import prisma from '$lib/prisma';
+import prisma from '$lib/prisma';
 
-export async function retrieveUsersBalance(prisma: PrismaClient, userId: number): Promise<number> {
+export async function retrieveUsersBalance(userId: number): Promise<number> {
 	try {
 		const balance = await prisma.balance.findUnique({
 			where: { user_id: userId }
@@ -19,11 +19,7 @@ export async function retrieveUsersBalance(prisma: PrismaClient, userId: number)
 	}
 }
 
-export async function updateUserBalance(
-	prisma: PrismaClient,
-	userId: number,
-	newBalance: number
-): Promise<number> {
+export async function updateUserBalance(userId: number, newBalance: number): Promise<number> {
 	try {
 		const updatedBalance = await prisma.balance.update({
 			where: { user_id: userId },
@@ -46,7 +42,6 @@ export async function updateUserBalance(
 }
 
 export async function updateUserBalanceWithDeduction(
-	prisma: PrismaClient,
 	userId: number,
 	deductionAmount: number
 ): Promise<number> {
@@ -72,7 +67,6 @@ export async function updateUserBalanceWithDeduction(
 }
 
 export async function updateUserBalanceWithIncrement(
-	prisma: PrismaClient,
 	userId: number,
 	incrementAmount: number
 ): Promise<number> {

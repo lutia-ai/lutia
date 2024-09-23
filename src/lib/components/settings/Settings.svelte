@@ -75,7 +75,7 @@
 						tabindex="0"
 						role="button"
 						on:click={() => (selectedTab = tab)}
-						on:keydown|stopPropagation={(e) => {
+						on:keydown={(e) => {
 							if (e.key === 'Enter') {
 								selectedTab = tab;
 							}

@@ -14,7 +14,7 @@ export const actions = {
 		}
 
 		try {
-			const user = await retrieveUserByEmail(locals.prisma, email);
+			const user = await retrieveUserByEmail(email);
 			return {
 				exists: !!user,
 				isGoogleUser: user?.oauth === 'google'
@@ -44,7 +44,7 @@ export const actions = {
 		}
 
 		try {
-			const user = await retrieveUserByEmail(locals.prisma, email);
+			const user = await retrieveUserByEmail(email);
 			const isMatch = await bcryptjs.compare(password, user.password_hash!);
 
 			if (!isMatch) {
@@ -99,7 +99,7 @@ export const actions = {
 
 		try {
 			try {
-				const user = await retrieveUserByEmail(locals.prisma, email);
+				const user = await retrieveUserByEmail(email);
 				if (user.oauth === 'google') {
 					return fail(401, {
 						message:
@@ -112,7 +112,7 @@ export const actions = {
 				}
 			} catch (err) {
 				if (err instanceof UserNotFoundError) {
-					await createUser(locals.prisma, email, name, password);
+					await createUser(email, name, password);
 					return {
 						success: true
 					};

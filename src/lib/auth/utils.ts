@@ -32,10 +32,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 						typeof credentials.password === 'string'
 					) {
 						try {
-							const user: User = await retrieveUserByEmail(
-								event.locals.prisma,
-								credentials.email
-							);
+							const user: User = await retrieveUserByEmail(credentials.email);
 							const isValid = await verifyCredentials(
 								user,
 								credentials.email,
@@ -70,10 +67,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 						requestBody = undefined;
 
 						try {
-							existingUser = await retrieveUserByEmail(
-								event.locals.prisma,
-								user.email!
-							);
+							existingUser = await retrieveUserByEmail(user.email!);
 						} catch (UserNotFoundError) {
 							if (linkingToken) {
 								// a new user can't link accounts
@@ -97,7 +91,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 									// Verify the linking token
 									if (existingUser.oauth_link_token === linkingToken) {
 										// Update the existing user to link with Google and clear the linking token
-										await updateUser(event.locals.prisma, existingUser.id, {
+										await updateUser(existingUser.id, {
 											oauth: 'google',
 											oauth_link_token: undefined
 										});

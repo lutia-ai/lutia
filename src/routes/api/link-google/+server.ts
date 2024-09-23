@@ -12,7 +12,7 @@ export async function GET({ locals }) {
 
 	let user: UserEntity;
 	try {
-		user = await retrieveUserByEmail(locals.prisma, session.user.email!);
+		user = await retrieveUserByEmail(session.user.email!);
 	} catch (error) {
 		if (error instanceof UserNotFoundError) {
 			throw error;
@@ -25,7 +25,7 @@ export async function GET({ locals }) {
 
 	// Generate a linking token and store it (e.g., in Redis or a database)
 	const linkingToken = generateLinkingToken();
-	await updateUser(locals.prisma, user!.id, { oauth_link_token: linkingToken });
+	await updateUser(user!.id, { oauth_link_token: linkingToken });
 	return json({ linkingToken });
 }
 

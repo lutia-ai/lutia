@@ -1,9 +1,9 @@
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import type { ApiModel, ApiProvider, ApiRequest, Message, PrismaClient } from '@prisma/client';
 import type { ApiRequestWithMessage } from '$lib/types';
+import prisma from '$lib/prisma';
 
 export async function createApiRequestEntry(
-	prisma: PrismaClient,
 	userId: number,
 	apiProvider: ApiProvider,
 	apiModel: ApiModel,
@@ -40,14 +40,11 @@ export async function createApiRequestEntry(
 	}
 }
 
-export async function retrieveApiRequests(
-	prisma: PrismaClient,
-	userEmail: string
-): Promise<ApiRequest[]> {
+export async function retrieveApiRequests(userEmail: string): Promise<ApiRequest[]> {
 	try {
 		// Find the ApiRequests associated with a specific user email
 		// Assuming you have a method to retrieve user by email
-		const user = await retrieveUserByEmail(prisma, userEmail);
+		const user = await retrieveUserByEmail(userEmail);
 
 		const apiRequests = await prisma.apiRequest.findMany({
 			where: {
@@ -66,11 +63,10 @@ export async function retrieveApiRequests(
 }
 
 export async function retrieveApiRequestsWithMessage(
-	prisma: PrismaClient,
 	userEmail: string
 ): Promise<ApiRequestWithMessage[]> {
 	try {
-		const user = await retrieveUserByEmail(prisma, userEmail);
+		const user = await retrieveUserByEmail(userEmail);
 
 		const apiRequests = await prisma.apiRequest.findMany({
 			where: {
@@ -95,7 +91,6 @@ export async function retrieveApiRequestsWithMessage(
 }
 
 export async function retrieveUserRequestsInDateRange(
-	prisma: PrismaClient,
 	userId: number,
 	startDate: Date,
 	endDate: Date

@@ -150,8 +150,6 @@ declare global {
 	namespace App {
 		interface Locals {
 			colorScheme: string;
-			db: DataSource;
-			prisma: PrismaClient;
 		}
 	}
 }

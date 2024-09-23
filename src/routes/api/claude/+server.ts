@@ -51,7 +51,7 @@ export async function POST({ request, locals }) {
 		}
 
 		const inputCost = inputGPTCount.price + imageCost;
-		let balance = await retrieveUsersBalance(locals.prisma, Number(session.user.id));
+		let balance = await retrieveUsersBalance(Number(session.user.id));
 		if (balance - inputCost <= 0.1) {
 			throw new InsufficientBalanceError();
 		}
@@ -65,7 +65,7 @@ export async function POST({ request, locals }) {
 		});
 
 		const chunks: string[] = [];
-		await updateUserBalanceWithDeduction(locals.prisma, Number(session.user.id), inputCost);
+		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -90,13 +90,11 @@ export async function POST({ request, locals }) {
 				const outputGPTCount = await countTokens(response, model, 'output');
 
 				await updateUserBalanceWithDeduction(
-					locals.prisma,
 					Number(session.user!.id),
 					outputGPTCount.price
 				);
 
 				const message: MessageEntity = await createMessage(
-					locals.prisma,
 					plainText,
 					response,
 					images
@@ -104,7 +102,6 @@ export async function POST({ request, locals }) {
 				);
 
 				await createApiRequestEntry(
-					locals.prisma,
 					Number(session.user!.id!),
 					'anthropic',
 					model.name,

@@ -3,6 +3,28 @@ import type { ModelDictionary } from '$lib/types';
 export const modelDictionary: ModelDictionary = {
 	openAI: {
 		models: {
+			// o1preview: {
+			//     name: 'GPT_o1',
+			// 	param: 'o1-preview',
+			// 	legacy: false,
+			// 	input_price: 15,
+			// 	output_price: 60,
+			// 	context_window: 128000,
+			// 	hub: 'Xenova/gpt-4o',
+			// 	handlesImages: true,
+			// 	maxImages: 5
+			// },
+			// o1mini: {
+			//     name: 'GPT_o1_mini',
+			// 	param: 'o1-mini',
+			// 	legacy: false,
+			// 	input_price: 3,
+			// 	output_price: 12,
+			// 	context_window: 128000,
+			// 	hub: 'Xenova/gpt-4o',
+			// 	handlesImages: true,
+			// 	maxImages: 5
+			// },
 			gpt4o: {
 				name: 'GPT_4o',
 				param: 'gpt-4o-2024-08-06',
