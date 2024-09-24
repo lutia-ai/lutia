@@ -75,7 +75,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 							}
 
 							existingUser = await createUser(
-								event.locals.prisma,
 								user.email!,
 								user.name!,
 								undefined,
