@@ -30,8 +30,6 @@ export async function POST({ request, locals }) {
 
 		const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
 
-		const inputGPTCount = await countTokens(messages, model, 'input');
-
 		if (model.generatesImages) {
 			const response = await openai.images.generate({
 				model: model.param,
@@ -77,6 +75,8 @@ export async function POST({ request, locals }) {
 				}
 			});
 		}
+
+		const inputGPTCount = await countTokens(messages, model, 'input');
 
 		if (images.length > 0) {
 			const textObject = {
