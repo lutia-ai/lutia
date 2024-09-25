@@ -9,6 +9,7 @@
 		showLegacyModels,
 		chosenCompany
 	} from '$lib/stores.ts';
+	import type { ApiProvider } from '@prisma/client';
 	import type { Model } from '$lib/types';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 
@@ -18,12 +19,14 @@
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
-	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
+	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
 	import { modelLogos } from '$lib/modelLogos';
 	import { clearChatHistory, formatModelEnumToReadable } from '$lib/chatHistory';
-	import type { ApiProvider } from '@prisma/client';
+	import ImageIcon from './icons/ImageIcon.svelte';
+	import TextChangeCaseIcon from './icons/TextChangeCaseIcon.svelte';
+	import LightningIcon from './icons/LightningIcon.svelte';
 
 	export let companySelection: ApiProvider[];
 	export let gptModelSelection: Model[];
@@ -165,16 +168,28 @@
 								}}
 							>
 								<div class="record">
+									{#if model.generatesImages}
+										<div class="image">
+											<ImageIcon color="var(--text-color)" />
+										</div>
+									{:else}
+										<div class="image">
+											<LightningIcon color="var(--text-color)" />
+										</div>
+									{/if}
+
 									<p>
 										{formatModelEnumToReadable(model.name)}
-
 										{#if $showPricing}
 											<div class="pricing">
 												<span>
-													Input: ${model.input_price} / 1M
+													Input: ${model.input_price}
+													{model.input_price > 0 ? '/ 1M' : ''}
 												</span>
 												<span>
-													Output: ${model.output_price} / 1M
+													Output: ${model.output_price} / {model.generatesImages
+														? 'Image'
+														: '1M'}
 												</span>
 											</div>
 										{/if}
@@ -186,7 +201,7 @@
 									{/if}
 									{#if model.handlesImages}
 										<div class="image">
-											<ImageIcon color="var(--text-color" />
+											<AttachmentIcon color="var(--text-color" />
 										</div>
 									{/if}
 									<div
@@ -515,7 +530,6 @@
 							.image {
 								width: 20px;
 								height: 20px;
-								margin-left: auto;
 							}
 
 							.selected-container {

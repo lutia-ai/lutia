@@ -11,7 +11,10 @@
 		UserChat,
 		CodeComponent,
 		ChatComponent,
-		ModelDictionary
+		ModelDictionary,
+		PromptHelpers,
+		PromptHelper,
+		Component
 	} from '$lib/types';
 	import { isCodeComponent, isLlmChatComponent, isUserChatComponent } from '$lib/typeGuards';
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
@@ -25,6 +28,7 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import Settings from '$lib/components/settings/Settings.svelte';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
+	import logo from '$lib/images/logos/logo3.png';
 
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import StarsIcon from '$lib/components/icons/StarsIcon.svelte';
@@ -53,6 +57,7 @@
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
 	import type { ApiProvider } from '@prisma/client';
+	import { promptHelpers } from '$lib/promptHelpers.js';
 
 	export let data;
 
@@ -72,6 +77,7 @@
 	let isDragging: boolean = false;
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
+	const randomPrompts = getRandomPrompts(promptHelpers);
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -79,6 +85,7 @@
 	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
 	let chosenModel = gptModelSelection[0];
 
+	// Generates the fullPrompt and counts input tokens when the prompt changes
 	$: if (prompt || prompt === '' || $numberPrevMessages || imagePreview) {
 		if (mounted) {
 			fullPrompt = sanitizeHtml(prompt);
@@ -92,7 +99,28 @@
 		}
 	}
 
+	function getRandomPrompts(promptHelpers: PromptHelpers): {
+		createImage: PromptHelper;
+		compose: PromptHelper;
+		question: PromptHelper;
+	} {
+		const getRandomItem = <T,>(array: T[]): T => {
+			return array[Math.floor(Math.random() * array.length)];
+		};
+
+		return {
+			createImage: getRandomItem(promptHelpers.createImage),
+			compose: getRandomItem(promptHelpers.compose),
+			question: getRandomItem(promptHelpers.question)
+		};
+	}
+
 	async function handleCountTokens(fullPrompt: Message[] | string, chosenModel: Model) {
+		if (chosenModel.generatesImages) {
+			input_tokens = 0;
+			input_price = 0;
+			return;
+		}
 		const result = await countTokens(fullPrompt, chosenModel);
 		let imageCost = 0;
 		let imageTokens = 0;
@@ -106,6 +134,8 @@
 			imageCost += result.price;
 			imageTokens += result.tokens;
 		}
+		console.log();
+		console.log('result.price: ', result.price);
 		input_tokens = result.tokens + imageTokens;
 		input_price = result.price + imageCost;
 	}
@@ -153,6 +183,21 @@
 				}
 			}
 		});
+	}
+
+	// Updates the chosen company and resets the model selection based on the new company.
+	function selectCompany(company: ApiProvider) {
+		chosenCompany.set(company);
+		companySelection = Object.keys(modelDictionary) as ApiProvider[];
+		companySelection = companySelection.filter((c) => c !== company);
+		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
+		chosenModel = gptModelSelection[0];
+	}
+
+	// Updates the chosen model and resets the model selection list.
+	function selectModel(model: Model) {
+		chosenModel = model;
+		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
 	}
 
 	async function submitPrompt(): Promise<void> {
@@ -237,6 +282,35 @@
 					throw new Error('Response body is null');
 				}
 
+				if (chosenModel.generatesImages) {
+					const data = await response.json();
+					const base64ImageData = data.image;
+					console.log(base64ImageData);
+					// Update only the AI's response in chat history
+					chatHistory.update((history) =>
+						history.map((msg, index) =>
+							index === history.length - 1
+								? {
+										...msg,
+										text: '[AI Generated image]',
+										components: [
+											{
+												type: 'image',
+												data: 'data:image/png;base64,' + base64ImageData,
+												media_type: 'image/png',
+												width: 1024,
+												height: 1024,
+												ai: true
+											}
+										],
+										loading: false
+									}
+								: msg
+						)
+					);
+					return;
+				}
+
 				const reader = response.body.getReader();
 				const decoder = new TextDecoder();
 				let responseText = '';
@@ -244,18 +318,13 @@
 				let isInCodeBlock = false;
 				let codeBlockContent = '';
 				let language = '';
-				let responseComponents = [];
+				let responseComponents: Component[] = [];
 				let prevText = '';
 				let spaceCount = 0;
 				let whitespacesLeft = 0;
 				let clearedNewLineSpacing = false;
 				let codeBlockIsIndented = false;
 
-				/**
-				 * Not every \n will have all whitespaces after it
-				 * For some reason chatgpt might put '/n  ' and then ' '
-				 * So need to count the number of whitespaces have been removed up until spaceCount
-				 */
 				while (true) {
 					const { value, done } = await reader.read();
 					if (done && !prevText) break;
@@ -321,7 +390,7 @@
 									code: codeBlockContent,
 									copied: false,
 									tabWidthOpen: false,
-									tabWidth: null
+									tabWidth: 0
 								});
 							}
 						}
@@ -432,12 +501,24 @@
 				const lastItem = $chatHistory[$chatHistory.length - 1];
 				const outputPriceResult = await countTokens(lastItem.text, chosenModel, 'output');
 				const inputPriceResult = await countTokens(fullPrompt, chosenModel, 'input');
+				let imageCost = 0;
+				let imageTokens = 0;
+				for (const image of imageArray) {
+					let result;
+					if ($chosenCompany === 'openAI') {
+						result = calculateGptVisionPricing(image.width, image.height);
+					} else {
+						result = calculateClaudeImageCost(image.width, image.height, chosenModel);
+					}
+					imageCost += result.price;
+					imageTokens += result.tokens;
+				}
 				chatHistory.update((history) => {
 					return history.map((item, index) => {
 						if (index === history.length - 1) {
 							return {
 								...item,
-								input_cost: inputPriceResult.price,
+								input_cost: inputPriceResult.price + imageCost,
 								output_cost: outputPriceResult.price,
 								loading: false
 							};
@@ -598,6 +679,7 @@
 						const img = new Image();
 						img.onload = () => {
 							newPreviews.push({
+								type: 'image',
 								data: e.target!.result as string,
 								media_type: file.type,
 								width: img.width,
@@ -671,6 +753,80 @@
 			isDragging = true;
 		}}
 	>
+		{#if $chatHistory.length === 0}
+			<div class="empty-content-options">
+				<div class="logo-container">
+					<img src={logo} alt="logo" />
+					<h1>Lutia</h1>
+				</div>
+				<div class="options-container">
+					<div
+						class="option"
+						role="button"
+						tabindex="0"
+						on:click={() => {
+							selectCompany('openAI');
+							selectModel(modelDictionary.openAI.models.dalle3);
+							prompt = randomPrompts.createImage.prompt;
+							submitPrompt();
+						}}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								selectCompany('openAI');
+								selectModel(modelDictionary.openAI.models.dalle3);
+								prompt = randomPrompts.createImage.prompt;
+								submitPrompt();
+							}
+						}}
+					>
+						<div class="icon" style="background-color: rgba(227,193,15,1);">
+							<svelte:component this={randomPrompts.createImage.icon} color="white" />
+						</div>
+						<p>{randomPrompts.createImage.prompt}</p>
+					</div>
+					<div
+						class="option"
+						role="button"
+						tabindex="0"
+						on:click={() => {
+							prompt = randomPrompts.compose.prompt;
+							submitPrompt();
+						}}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								prompt = randomPrompts.compose.prompt;
+								submitPrompt();
+							}
+						}}
+					>
+						<div class="icon" style="background-color: #dc0480;">
+							<svelte:component this={randomPrompts.compose.icon} color="white" />
+						</div>
+						<p>{randomPrompts.compose.prompt}</p>
+					</div>
+					<div
+						class="option"
+						role="button"
+						tabindex="0"
+						on:click={() => {
+							prompt = randomPrompts.question.prompt;
+							submitPrompt();
+						}}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								prompt = randomPrompts.question.prompt;
+								submitPrompt();
+							}
+						}}
+					>
+						<div class="icon" style="background-color: #16a1fb;">
+							<svelte:component this={randomPrompts.question.icon} color="white" />
+						</div>
+						<p>{randomPrompts.question.prompt}</p>
+					</div>
+				</div>
+			</div>
+		{/if}
 		<div class="chat-history" style="padding-bottom: {100 + promptBarHeight * 0.3}px;">
 			{#each $chatHistory as chat, chatIndex}
 				{#if isUserChatComponent(chat) && chat.by === 'user'}
@@ -860,6 +1016,10 @@
 													/>
 												</HighlightAuto>
 											</div>
+										</div>
+									{:else if component.type === 'image'}
+										<div class="image-container">
+											<img src={component.data} alt="AI generated" />
 										</div>
 									{/if}
 								{/each}
@@ -1075,7 +1235,7 @@
 				</span>
 				{#if $inputPricing}
 					<div class="input-token-container">
-						<p>Previous messages: {$numberPrevMessages}</p>
+						<p>Context window: {$numberPrevMessages}</p>
 						<p class="middle">Input tokens: {input_tokens}</p>
 						<p class="right">
 							Input cost: ${roundToFirstTwoNonZeroDecimals(input_price)}
@@ -1150,6 +1310,70 @@
 			flex-direction: column;
 			box-sizing: border-box;
 			padding-left: 60px;
+
+			.empty-content-options {
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				height: 50%;
+				transform: translate(-50%, 20%);
+				height: 100%;
+				display: flex;
+				width: max-content;
+				flex-direction: column;
+				gap: 80px;
+
+				.logo-container {
+					margin: 0 auto;
+					display: flex;
+
+					img {
+						width: 100px;
+						height: 100px;
+					}
+
+					h1 {
+						margin: auto 0;
+						font-size: 40px;
+						font-weight: 500;
+					}
+				}
+
+				.options-container {
+					display: flex;
+					gap: 20px;
+
+					.option {
+						display: flex;
+						flex-direction: column;
+						margin: auto 0;
+						border: 2px solid var(--bg-color-light);
+						padding: 15px;
+						width: 190px;
+						height: 140px;
+						border-radius: 15px;
+						cursor: pointer;
+						transition: all 0.1s ease;
+
+						.icon {
+							width: 35px;
+							height: 35px;
+							padding: 6px;
+							box-sizing: border-box;
+							border-radius: 50%;
+						}
+
+						p {
+							margin-top: auto;
+							color: var(--text-color-light);
+						}
+
+						&:hover {
+							border-color: var(--text-color-light);
+						}
+					}
+				}
+			}
 
 			.chat-history {
 				position: relative;
@@ -1281,6 +1505,7 @@
 							display: flex;
 							gap: 10px;
 							transition: all 0.3s ease-in-out;
+							transform: translateY(10px);
 							padding: 5px;
 							box-sizing: border-box;
 							border-radius: 10px;
@@ -1355,6 +1580,19 @@
 								}
 							}
 						}
+
+						.image-container {
+							position: relative;
+							width: 100%;
+							height: 100%;
+							border-radius: 5px;
+							overflow: hidden;
+
+							img {
+								width: 100%;
+								height: 100%;
+							}
+						}
 					}
 				}
 			}
@@ -1367,6 +1605,22 @@
 				transform: translateY(4px);
 				border-radius: 50%;
 				display: flex;
+				animation: pulse-shrink 1s infinite;
+			}
+
+			@keyframes pulse-shrink {
+				0% {
+					background-color: var(--text-color); /* Original color at start */
+					transform: translateY(4px) scale(1);
+				}
+				50% {
+					background-color: var(--text-color-light); /* Slightly lighter color */
+					transform: translateY(4px) scale(0.9); /* Slightly smaller */
+				}
+				100% {
+					background-color: var(--text-color); /* Back to original color */
+					transform: translateY(4px) scale(1); /* Back to original size */
+				}
 			}
 
 			.code-container {
