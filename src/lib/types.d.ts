@@ -11,11 +11,11 @@ export type CodeComponent = {
 	language: string;
 	code: string;
 	copied: boolean;
-	tabWidth: number;
-	tabWidthOpen: boolean;
+	tabWidth?: number;
+	tabWidthOpen?: boolean;
 };
 
-export type Component = CodeComponent | TextComponent;
+export type Component = CodeComponent | TextComponent | Image;
 
 export type LlmChat = {
 	by: string;
@@ -46,6 +46,7 @@ export type Model = {
 	hub: string;
 	handlesImages: boolean;
 	maxImages: number;
+	generatesImages: boolean;
 };
 
 export type ModelLogos = Record<string, { logo: any }>;
@@ -73,10 +74,12 @@ export type Message = {
 };
 
 export type Image = {
+	type: 'image';
 	data: string;
 	media_type: string;
 	width: number;
 	height: number;
+	ai?: boolean;
 };
 
 export type ChatGPTImage = {
@@ -177,4 +180,15 @@ export type ChargeResult = {
 	success: boolean;
 	chargeId?: string;
 	error?: string;
+};
+
+export type PromptHelper = {
+	prompt: string;
+	icon: IconType;
+};
+
+export type PromptHelpers = {
+	createImage: PromptHelper[];
+	compose: PromptHelper[];
+	question: PromptHelper[];
 };

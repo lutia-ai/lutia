@@ -28,7 +28,53 @@ export async function POST({ request, locals }) {
 
 		let gptImages: ChatGPTImage[] = [];
 
-		const inputGPTCount = await countTokens(messages, model, 'input');
+		const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
+
+		if (model.generatesImages) {
+			const response = await openai.images.generate({
+				model: model.param,
+				prompt: plainText,
+				n: 1,
+				size: '1024x1024',
+				response_format: 'b64_json'
+			});
+
+			const base64Data = response.data[0].b64_json;
+
+			const message: MessageEntity = await createMessage(plainText, 'AI generated image', [
+				{
+					type: 'image',
+					data: 'data:image/png;base64,' + base64Data,
+					media_type: 'image/png',
+					width: 1024,
+					height: 1024,
+					ai: true
+				}
+			]);
+
+			await updateUserBalanceWithDeduction(Number(session.user!.id), 0.04);
+
+			await createApiRequestEntry(
+				Number(session.user!.id!),
+				'openAI',
+				model.name,
+				0,
+				0,
+				0,
+				0.04,
+				0.04,
+				message
+			);
+
+			// Include the base64 data in the response to the frontend
+			return new Response(JSON.stringify({ image: base64Data }), {
+				headers: {
+					'Content-Type': 'application/json',
+					'Cache-Control': 'no-cache',
+					Connection: 'keep-alive'
+				}
+			});
+		}
 
 		if (images.length > 0) {
 			const textObject = {
@@ -52,13 +98,13 @@ export async function POST({ request, locals }) {
 			imageTokens += result.tokens;
 		}
 
+		const inputGPTCount = await countTokens(messages, model, 'input');
 		const inputCost = inputGPTCount.price + imageCost;
 		let balance = await retrieveUsersBalance(Number(session.user.id));
 		if (balance - inputCost <= 0.1) {
 			throw new InsufficientBalanceError();
 		}
 
-		const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
 		const stream = await openai.chat.completions.create({
 			model: model.param,
 			// @ts-ignore
@@ -68,6 +114,7 @@ export async function POST({ request, locals }) {
 
 		const chunks: string[] = [];
 		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
+		let error: any;
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -80,35 +127,45 @@ export async function POST({ request, locals }) {
 						}
 					}
 					controller.close();
-
-					const response = chunks.join('');
-					const outputGPTCount = await countTokens(response, model, 'output');
-
-					const message: MessageEntity = await createMessage(
-						plainText,
-						response,
-						images
-						// need to add previous message ids
-					);
-
-					await updateUserBalanceWithDeduction(
-						Number(session.user!.id),
-						outputGPTCount.price
-					);
-
-					await createApiRequestEntry(
-						Number(session.user!.id!),
-						'openAI',
-						model.name,
-						inputGPTCount.tokens + imageTokens,
-						inputCost,
-						outputGPTCount.tokens,
-						outputGPTCount.price,
-						inputCost + outputGPTCount.price,
-						message
-					);
 				} catch (err) {
 					console.error('Error in stream processing: ', err);
+					error = err;
+				} finally {
+					if (chunks.length > 0) {
+						const response = chunks.join('');
+						const outputGPTCount = await countTokens(response, model, 'output');
+
+						const message: MessageEntity = await createMessage(
+							plainText,
+							response,
+							images
+							// need to add previous message ids
+						);
+
+						await updateUserBalanceWithDeduction(
+							Number(session.user!.id),
+							outputGPTCount.price
+						);
+
+						await createApiRequestEntry(
+							Number(session.user!.id!),
+							'openAI',
+							model.name,
+							inputGPTCount.tokens + imageTokens,
+							inputCost,
+							outputGPTCount.tokens,
+							outputGPTCount.price,
+							inputCost + outputGPTCount.price,
+							message
+						);
+					}
+					if (error) {
+						const errorMessage = JSON.stringify({
+							error: error.error.error.message || 'An unknown error occurred'
+						});
+						controller.enqueue(new TextEncoder().encode(errorMessage));
+					}
+					controller.close();
 				}
 			}
 		});

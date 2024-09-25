@@ -34,7 +34,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 128000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 5
+				maxImages: 5,
+				generatesImages: false
 			},
 			gpt4mini: {
 				name: 'GPT_4o_mini',
@@ -45,7 +46,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 128000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 5
+				maxImages: 5,
+				generatesImages: false
 			},
 			gpt4turbo: {
 				name: 'GPT_4_Turbo',
@@ -56,7 +58,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 128000,
 				hub: 'Xenova/gpt-4',
 				handlesImages: true,
-				maxImages: 5
+				maxImages: 5,
+				generatesImages: false
 			},
 			gpt4: {
 				name: 'GPT_4',
@@ -66,7 +69,8 @@ export const modelDictionary: ModelDictionary = {
 				output_price: 60,
 				context_window: 8000,
 				hub: 'Xenova/gpt-4',
-				handlesImages: false
+				handlesImages: false,
+				generatesImages: false
 			},
 			gpt35turbo: {
 				name: 'GPT_3_5_Turbo',
@@ -76,7 +80,19 @@ export const modelDictionary: ModelDictionary = {
 				output_price: 1.5,
 				context_window: 16385,
 				hub: 'Xenova/gpt-3.5-turbo',
-				handlesImages: false
+				handlesImages: false,
+				generatesImages: false
+			},
+			dalle3: {
+				name: 'DALL_E',
+				param: 'dall-e-3',
+				legacy: false,
+				input_price: 0,
+				output_price: 0.04,
+				context_window: 4032,
+				hub: '',
+				handlesImages: false,
+				generatesImages: true
 			}
 		}
 	},
@@ -91,7 +107,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 200000,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
-				maxImages: 5
+				maxImages: 5,
+				generatesImages: false
 			},
 			claude3Opus: {
 				name: 'Claude_3_Opus',
@@ -102,7 +119,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 200000,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
-				maxImages: 5
+				maxImages: 5,
+				generatesImages: false
 			},
 			claude3Sonnet: {
 				name: 'Claude_3_Sonnet',
@@ -113,7 +131,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 200000,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
-				maxImages: 5
+				maxImages: 5,
+				generatesImages: false
 			},
 			claude3Haiku: {
 				name: 'Claude_3_Haiku',
@@ -124,7 +143,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 200000,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
-				maxImages: 5
+				maxImages: 5,
+				generatesImages: false
 			}
 		}
 	},
@@ -141,7 +161,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 2000000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 1
+				maxImages: 1,
+				generatesImages: false
 			},
 			gemini15Flash: {
 				name: 'Gemini_1_5_Flash',
@@ -154,7 +175,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 1000000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 1
+				maxImages: 1,
+				generatesImages: false
 			},
 			gemini1Pro: {
 				name: 'Gemini_1_0_Pro',
@@ -165,7 +187,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 1000000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
-				maxImages: 1
+				maxImages: 1,
+				generatesImages: false
 			}
 		}
 	}

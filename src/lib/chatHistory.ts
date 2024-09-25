@@ -57,7 +57,12 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 			price_open: false,
 			loading: false,
 			copied: false,
-			components: components
+			components:
+				apiRequest.message?.pictures &&
+				apiRequest.message?.pictures.length > 0 &&
+				apiRequest.message?.pictures[0].ai
+					? [apiRequest.message?.pictures[0]]
+					: components
 		};
 
 		return llmChat;
@@ -67,7 +72,12 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 		(apiRequest): UserChat => ({
 			by: 'user',
 			text: apiRequest.message?.prompt || 'No prompt available',
-			image: apiRequest.message?.pictures ? apiRequest.message.pictures : []
+			image:
+				apiRequest.message?.pictures &&
+				apiRequest.message?.pictures.length > 0 &&
+				!apiRequest.message?.pictures[0].ai
+					? apiRequest.message.pictures
+					: []
 		})
 	);
 

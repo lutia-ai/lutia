@@ -70,43 +70,59 @@ export async function POST({ request, locals }) {
 		}
 
 		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
+		let error: any;
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
-				for await (const chunk of result.stream) {
-					const content = (chunk as any).candidates[0].content.parts[0].text;
-					if (content) {
-						// Append each chunk to the array
-						chunks.push(content);
-						controller.enqueue(new TextEncoder().encode(content));
+				try {
+					for await (const chunk of result.stream) {
+						const content = (chunk as any).candidates[0].content.parts[0].text;
+						if (content) {
+							// Append each chunk to the array
+							chunks.push(content);
+							controller.enqueue(new TextEncoder().encode(content));
+						}
 					}
+					controller.close();
+				} catch (err) {
+					console.error('Error in stream processing: ', err);
+					error = err;
+				} finally {
+					if (chunks.length > 0) {
+						const response = chunks.join('');
+						const outputCountResult = await genAIModel.countTokens(response);
+						const outputCost =
+							(outputCountResult.totalTokens / 1000000) * model.output_price;
+
+						const message: MessageEntity = await createMessage(
+							plainText,
+							response,
+							images
+							// need to add previous message ids
+						);
+
+						await updateUserBalanceWithDeduction(Number(session.user!.id), outputCost);
+
+						await createApiRequestEntry(
+							Number(session.user!.id!),
+							'google',
+							model.name,
+							inputCountResult.totalTokens,
+							inputCost,
+							outputCountResult.totalTokens,
+							outputCost,
+							inputCost + outputCost,
+							message
+						);
+					}
+					if (error) {
+						const errorMessage = JSON.stringify({
+							error: error.error.error.message || 'An unknown error occurred'
+						});
+						controller.enqueue(new TextEncoder().encode(errorMessage));
+					}
+					controller.close();
 				}
-				controller.close();
-
-				const response = chunks.join('');
-				const outputCountResult = await genAIModel.countTokens(response);
-				const outputCost = (outputCountResult.totalTokens / 1000000) * model.output_price;
-
-				const message: MessageEntity = await createMessage(
-					plainText,
-					response,
-					images
-					// need to add previous message ids
-				);
-
-				await updateUserBalanceWithDeduction(Number(session.user!.id), outputCost);
-
-				await createApiRequestEntry(
-					Number(session.user!.id!),
-					'google',
-					model.name,
-					inputCountResult.totalTokens,
-					inputCost,
-					outputCountResult.totalTokens,
-					outputCost,
-					inputCost + outputCost,
-					message
-				);
 			}
 		});
 

@@ -1,7 +1,5 @@
 import type { Image } from '$lib/types';
-// import prisma from '$lib/prisma';
-import type { Message, PrismaClient } from '@prisma/client';
-import { UserNotFoundError } from '$lib/customErrors';
+import type { Message } from '@prisma/client';
 import prisma from '$lib/prisma';
 
 export async function createMessage(
