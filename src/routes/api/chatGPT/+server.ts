@@ -30,6 +30,8 @@ export async function POST({ request, locals }) {
 
 		const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
 
+		const inputGPTCount = await countTokens(messages, model, 'input');
+
 		if (model.generatesImages) {
 			const response = await openai.images.generate({
 				model: model.param,
@@ -41,7 +43,7 @@ export async function POST({ request, locals }) {
 
 			const base64Data = response.data[0].b64_json;
 
-			const message: MessageEntity = await createMessage(plainText, 'AI generated image', [
+			const message: MessageEntity = await createMessage(plainText, '[AI generated image]', [
 				{
 					type: 'image',
 					data: 'data:image/png;base64,' + base64Data,
@@ -98,7 +100,6 @@ export async function POST({ request, locals }) {
 			imageTokens += result.tokens;
 		}
 
-		const inputGPTCount = await countTokens(messages, model, 'input');
 		const inputCost = inputGPTCount.price + imageCost;
 		let balance = await retrieveUsersBalance(Number(session.user.id));
 		if (balance - inputCost <= 0.1) {

@@ -3,7 +3,6 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { Message, Model, Image, ClaudeImage } from '$lib/types';
 import { calculateClaudeImageCost, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
-import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
 import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
@@ -19,9 +18,13 @@ export async function POST({ request, locals }) {
 		const { plainTextPrompt, promptStr, modelStr, imagesStr } = await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
+
 		const model: Model = JSON.parse(modelStr);
-		const messages: Message[] = JSON.parse(promptStr);
+
+		let messages: Message[] = JSON.parse(promptStr);
+
 		const images: Image[] = JSON.parse(imagesStr);
+
 		let claudeImages: ClaudeImage[] = [];
 
 		const inputGPTCount = await countTokens(messages, model, 'input');
@@ -52,6 +55,7 @@ export async function POST({ request, locals }) {
 
 		const inputCost = inputGPTCount.price + imageCost;
 		let balance = await retrieveUsersBalance(Number(session.user.id));
+
 		if (balance - inputCost <= 0.1) {
 			throw new InsufficientBalanceError();
 		}
@@ -66,52 +70,60 @@ export async function POST({ request, locals }) {
 
 		const chunks: string[] = [];
 		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
+		let error: any;
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
-				for await (const chunk of stream) {
-					if (
-						chunk.type === 'content_block_start' ||
-						chunk.type === 'content_block_delta'
-					) {
-						const content = (chunk as any).delta?.text || '';
-						if (content) {
-							chunks.push(content);
-							controller.enqueue(new TextEncoder().encode(content));
+				try {
+					for await (const chunk of stream) {
+						if (
+							chunk.type === 'content_block_start' ||
+							chunk.type === 'content_block_delta'
+						) {
+							const content = (chunk as any).delta?.text || '';
+							if (content) {
+								chunks.push(content);
+								controller.enqueue(new TextEncoder().encode(content));
+							}
+						} else if (chunk.type === 'message_stop') {
+							break;
 						}
-					} else if (chunk.type === 'message_stop') {
-						break;
 					}
-					console.log('stream still going...');
+					controller.close();
+				} catch (err) {
+					error = err;
+				} finally {
+					if (chunks.length > 0) {
+						const partialResponse = chunks.join('');
+						const outputGPTCount = await countTokens(partialResponse, model, 'output');
+
+						await updateUserBalanceWithDeduction(
+							Number(session.user!.id),
+							outputGPTCount.price
+						);
+
+						const message = await createMessage(plainText, partialResponse, images);
+
+						await createApiRequestEntry(
+							Number(session.user!.id),
+							'anthropic',
+							model.name,
+							inputGPTCount.tokens + imageTokens,
+							inputCost,
+							outputGPTCount.tokens,
+							outputGPTCount.price,
+							inputCost + outputGPTCount.price,
+							message
+						);
+					}
+					if (error) {
+						const errorMessage = JSON.stringify({
+							error: error.error.error.message || 'An unknown error occurred'
+						});
+						controller.enqueue(new TextEncoder().encode(errorMessage));
+					}
+					controller.close();
 				}
-				controller.close();
-
-				const response = chunks.join('');
-				const outputGPTCount = await countTokens(response, model, 'output');
-
-				await updateUserBalanceWithDeduction(
-					Number(session.user!.id),
-					outputGPTCount.price
-				);
-
-				const message: MessageEntity = await createMessage(
-					plainText,
-					response,
-					images
-					// need to add previous message ids
-				);
-
-				await createApiRequestEntry(
-					Number(session.user!.id!),
-					'anthropic',
-					model.name,
-					inputGPTCount.tokens + imageTokens,
-					inputCost,
-					outputGPTCount.tokens,
-					outputGPTCount.price,
-					inputCost + outputGPTCount.price,
-					message
-				);
 			}
 		});
 
