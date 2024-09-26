@@ -1399,7 +1399,7 @@
 				width: 100%;
 				height: fit-content;
 				padding: 0 50px;
-				margin: 150px auto 0px auto;
+				margin: 100px auto 0px auto;
 				display: flex;
 				flex-direction: column;
 				box-sizing: border-box;
