@@ -1304,6 +1304,7 @@
 		.body {
 			position: relative;
 			width: 100%;
+			height: 100%;
 			background: var(--bg-color);
 			z-index: 1000;
 			display: flex;
@@ -1316,8 +1317,7 @@
 				left: 50%;
 				top: 50%;
 				height: 50%;
-				transform: translate(-50%, 20%);
-				height: 100%;
+				transform: translate(calc(-50% + 30px), -45%);
 				display: flex;
 				width: max-content;
 				flex-direction: column;
@@ -1341,6 +1341,7 @@
 
 				.options-container {
 					display: flex;
+					flex-wrap: wrap;
 					gap: 20px;
 
 					.option {
@@ -1956,9 +1957,21 @@
 		}
 	}
 
-	@media (max-width: 710px) {
+	@media (max-width: 810px) {
 		.user-chat {
 			max-width: 100% !important;
+		}
+
+		.empty-content-options {
+			transform: translate(-50%, -45%) !important;
+
+			.options-container {
+				display: none !important;
+			}
+		}
+
+		.input-token-container {
+			padding: 10px 18px !important;
 		}
 	}
 </style>
