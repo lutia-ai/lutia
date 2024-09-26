@@ -1322,7 +1322,7 @@
 				width: max-content;
 				flex-direction: column;
 				gap: 80px;
-                z-index: 10;
+				z-index: 10;
 
 				.logo-container {
 					margin: 0 auto;
@@ -1350,6 +1350,7 @@
 						flex-direction: column;
 						margin: auto 0;
 						border: 2px solid var(--bg-color-light);
+						box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
 						padding: 15px;
 						width: 190px;
 						height: 140px;
