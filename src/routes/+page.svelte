@@ -789,11 +789,19 @@
 						role="button"
 						tabindex="0"
 						on:click={() => {
+							if (chosenModel.generatesImages) {
+								selectCompany('anthropic');
+								selectModel(modelDictionary.anthropic.models.claude35Sonnet);
+							}
 							prompt = randomPrompts.compose.prompt;
 							submitPrompt();
 						}}
 						on:keydown={(e) => {
 							if (e.key === 'Enter') {
+								if (chosenModel.generatesImages) {
+									selectCompany('anthropic');
+									selectModel(modelDictionary.anthropic.models.claude35Sonnet);
+								}
 								prompt = randomPrompts.compose.prompt;
 								submitPrompt();
 							}
@@ -809,11 +817,19 @@
 						role="button"
 						tabindex="0"
 						on:click={() => {
+							if (chosenModel.generatesImages) {
+								selectCompany('anthropic');
+								selectModel(modelDictionary.anthropic.models.claude35Sonnet);
+							}
 							prompt = randomPrompts.question.prompt;
 							submitPrompt();
 						}}
 						on:keydown={(e) => {
 							if (e.key === 'Enter') {
+								if (chosenModel.generatesImages) {
+									selectCompany('anthropic');
+									selectModel(modelDictionary.anthropic.models.claude35Sonnet);
+								}
 								prompt = randomPrompts.question.prompt;
 								submitPrompt();
 							}
@@ -827,7 +843,7 @@
 				</div>
 			</div>
 		{/if}
-		<div class="chat-history" style="padding-bottom: {100 + promptBarHeight * 0.3}px;">
+		<div class="chat-history" style="padding-bottom: {380 + promptBarHeight * 0.3}px;">
 			{#each $chatHistory as chat, chatIndex}
 				{#if isUserChatComponent(chat) && chat.by === 'user'}
 					<div class="user-chat-wrapper">
@@ -1381,9 +1397,9 @@
 			.chat-history {
 				position: relative;
 				width: 100%;
-				height: 100%;
+				height: fit-content;
 				padding: 0 50px;
-				margin: 50px auto 240px auto;
+				margin: 150px auto 0px auto;
 				display: flex;
 				flex-direction: column;
 				box-sizing: border-box;
