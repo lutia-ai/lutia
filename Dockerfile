@@ -14,7 +14,7 @@ RUN npm run build
 FROM node:18-slim
 RUN apt update && apt install libssl-dev dumb-init -y --no-install-recommends
 WORKDIR /app
-COPY --chown=node:node --from=build /usr/src/app/build ./dist
+COPY --chown=node:node --from=build /usr/src/build ./dist
 COPY --chown=node:node --from=build /usr/src/app/.env .env
 COPY --chown=node:node --from=build /usr/src/app/package.json .
 COPY --chown=node:node --from=build /usr/src/app/package-lock.json .
