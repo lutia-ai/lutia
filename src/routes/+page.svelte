@@ -1322,6 +1322,7 @@
 				width: max-content;
 				flex-direction: column;
 				gap: 80px;
+                z-index: 10;
 
 				.logo-container {
 					margin: 0 auto;
