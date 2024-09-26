@@ -69,7 +69,6 @@ export async function POST({ request, locals }) {
 		});
 
 		const chunks: string[] = [];
-		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
 		let error: any;
 
 		const readableStream = new ReadableStream({
@@ -99,7 +98,7 @@ export async function POST({ request, locals }) {
 
 						await updateUserBalanceWithDeduction(
 							Number(session.user!.id),
-							outputGPTCount.price
+							outputGPTCount.price + inputCost
 						);
 
 						const message = await createMessage(plainText, partialResponse, images);

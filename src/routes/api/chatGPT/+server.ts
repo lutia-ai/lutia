@@ -114,7 +114,6 @@ export async function POST({ request, locals }) {
 		});
 
 		const chunks: string[] = [];
-		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
 		let error: any;
 
 		const readableStream = new ReadableStream({
@@ -131,6 +130,7 @@ export async function POST({ request, locals }) {
 				} catch (err) {
 					console.error('Error in stream processing: ', err);
 					error = err;
+					// controller.enqueue(new TextEncoder().encode(errorMessage)); // see if this works
 				} finally {
 					if (chunks.length > 0) {
 						const response = chunks.join('');
@@ -145,7 +145,7 @@ export async function POST({ request, locals }) {
 
 						await updateUserBalanceWithDeduction(
 							Number(session.user!.id),
-							outputGPTCount.price
+							outputGPTCount.price + inputCost
 						);
 
 						await createApiRequestEntry(

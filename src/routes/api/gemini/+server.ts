@@ -69,7 +69,6 @@ export async function POST({ request, locals }) {
 			result = await genAIModel.generateContentStream(prompt);
 		}
 
-		await updateUserBalanceWithDeduction(Number(session.user.id), inputCost);
 		let error: any;
 
 		const readableStream = new ReadableStream({
@@ -101,7 +100,10 @@ export async function POST({ request, locals }) {
 							// need to add previous message ids
 						);
 
-						await updateUserBalanceWithDeduction(Number(session.user!.id), outputCost);
+						await updateUserBalanceWithDeduction(
+							Number(session.user!.id),
+							outputCost + inputCost
+						);
 
 						await createApiRequestEntry(
 							Number(session.user!.id!),
