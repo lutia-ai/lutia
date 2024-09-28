@@ -1,34 +1,30 @@
-# Build stage
-FROM node:18 as build
+FROM node:18-alpine AS dependencies
 
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 
-COPY package*.json ./
-COPY package-lock.json ./
-RUN npm install
+FROM node:18-alpine AS build
 
+WORKDIR /app
+COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
+
 RUN npx prisma generate
 RUN npm run build
 
-# Production stage
-FROM node:18-slim
-
-RUN apt update && apt install libssl-dev dumb-init -y --no-install-recommends
+FROM node:18-alpine AS deploy
 
 WORKDIR /app
 
-COPY --chown=node:node --from=build /app/build ./build
-COPY --chown=node:node --from=build /app/.env ./.env
-COPY --chown=node:node --from=build /app/package.json ./
-COPY --chown=node:node --from=build /app/package-lock.json ./
-RUN npm install --omit=dev
-COPY --chown=node:node --from=build /app/node_modules/.prisma/client  ./node_modules/.prisma/client
-
 ENV NODE_ENV production
+
+COPY --from=build /app/build ./build
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
+
 EXPOSE 3000
 
-USER node
+ENV PORT 3000
 
-# Start the application
 CMD ["node", "build"]
