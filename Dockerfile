@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18 as build
+FROM node:18-alpine as build
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Production stage
-FROM node:18-slim
+FROM node:18-alpine as deploy
 
 RUN apt update && apt install libssl-dev dumb-init -y --no-install-recommends
 
