@@ -87,8 +87,7 @@
 	}
 
 	/* Scrollbar track */
-	::-webkit-scrollbar,
-	::-webkit-scrollbar:horizontal {
+	::-webkit-scrollbar {
 		width: 10px;
 	}
 
