@@ -1516,6 +1516,23 @@
 							line-height: 30px;
 							width: max-content;
 							max-width: 100%;
+							overflow-x: auto;
+							overflow-y: hidden;
+
+							&::-webkit-scrollbar {
+								height: 10px;
+							}
+
+							/* Scrollbar handle */
+							&::-webkit-scrollbar-thumb {
+								background-color: #888;
+								border-radius: 6px;
+							}
+
+							/* Scrollbar track background */
+							&::-webkit-scrollbar-track {
+								background-color: var(--bg-color-light);
+							}
 						}
 
 						.chat-toolbar-container {
