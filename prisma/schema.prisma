@@ -32,15 +32,19 @@ enum ApiModel {
 }
 
 model User {
-  id               Int         @id @default(autoincrement())
-  email            String      @unique
-  name             String
-  password_hash    String?
-  oauth            String?
-  oauth_link_token String?
-  stripe_id        String?
-  requests         ApiRequest[]
-  balance          Balance?
+  id                    Int         @id @default(autoincrement())
+  email                 String      @unique
+  name                  String
+  password_hash         String?
+  oauth                 String?
+  oauth_link_token      String?
+  reset_password_token  String?
+  reset_expiration      DateTime?
+  stripe_id             String?
+  email_verified        Boolean?    @default(false)
+  email_code            Int?
+  requests              ApiRequest[]
+  balance               Balance?
 
   @@map("users")
 }

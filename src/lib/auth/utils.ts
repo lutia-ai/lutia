@@ -1,5 +1,5 @@
 import bcryptjs from 'bcryptjs';
-import { SvelteKitAuth } from '@auth/sveltekit';
+import { CredentialsSignin, SvelteKitAuth } from '@auth/sveltekit';
 import type { SvelteKitAuthConfig } from '@auth/sveltekit';
 import Google from '@auth/core/providers/google';
 import { env } from '$env/dynamic/private';
@@ -7,6 +7,8 @@ import Credentials from '@auth/core/providers/credentials';
 import { retrieveUserByEmail, createUser, updateUser } from '$lib/db/crud/user';
 import { UserNotFoundError } from '$lib/customErrors';
 import type { User } from '@prisma/client';
+import crypto from 'crypto';
+import { sendEmail, verifyEmailBody } from '$lib/email';
 
 let requestBody: any;
 
@@ -32,25 +34,35 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 						typeof credentials.password === 'string'
 					) {
 						try {
-							const user: User = await retrieveUserByEmail(credentials.email);
+							let user: User = await retrieveUserByEmail(credentials.email);
 							const isValid = await verifyCredentials(
 								user,
 								credentials.email,
 								credentials.password
 							);
 							if (isValid) {
-								if (user) {
-									return {
-										id: user.id.toString(),
-										email: user.email,
-										name: user.name
-									};
+								if (!user.email_verified) {
+									const emailToken = generateRandomSixDigitNumber();
+									user = await updateUser(user.id, { email_code: emailToken });
+									await sendEmail(
+										'verify-email@lutia.ai',
+										user.email,
+										'Verify your email',
+										verifyEmailBody(emailToken)
+									);
 								}
+
+								return {
+									id: user.id.toString(),
+									email: user.email,
+									name: user.name
+								};
 							}
 						} catch (error) {
 							if (error instanceof UserNotFoundError) {
 								return null;
 							}
+							throw error;
 						}
 					}
 					return null;
@@ -78,7 +90,10 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 								user.email!,
 								user.name!,
 								undefined,
-								'google'
+								'google',
+								undefined,
+								undefined,
+								true
 							);
 							user.id = existingUser!.id.toString();
 							return true;
@@ -162,4 +177,20 @@ export async function verifyCredentials(
 	} catch (error) {
 		throw error;
 	}
+}
+
+export function generateLinkingToken(): string {
+	// Generate 32 bytes of random data
+	const randomBytes = crypto.randomBytes(32);
+
+	// Convert the random bytes to a hexadecimal string
+	const token = randomBytes.toString('hex');
+
+	return token;
+}
+
+export function generateRandomSixDigitNumber(): number {
+	const min = 100000; // The smallest 6-digit number
+	const max = 999999; // The largest 6-digit number
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }

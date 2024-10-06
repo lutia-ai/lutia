@@ -76,7 +76,7 @@ export async function deleteUserCardDetails(customerId: string): Promise<void> {
 		});
 
 		if (paymentMethods.data.length === 0) {
-			console.log(`No payment methods found for customer ${customerId}.`);
+			console.error(`No payment methods found for customer ${customerId}.`);
 			return;
 		}
 

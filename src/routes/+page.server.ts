@@ -21,7 +21,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(307, '/auth');
 	}
 
-	const apiRequests = await retrieveApiRequestsWithMessage(session.user!.email);
+	const user = await retrieveUserByEmail(session.user.email);
+
+	if (!user.email_verified) {
+		throw redirect(307, `/auth?error=CredentialsSignin&code=unverified_${session.user.email}`);
+	}
+
+	const apiRequests = await retrieveApiRequestsWithMessage(session.user.email);
 
 	const serializedApiRequests = apiRequests.map(serializeApiRequest);
 

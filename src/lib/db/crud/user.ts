@@ -4,6 +4,8 @@ import type { UserUpdateFields } from '$lib/types';
 import stripe from '$lib/stripe/stripe.config';
 import type { User } from '@prisma/client';
 import prisma from '$lib/prisma';
+import { generateRandomSixDigitNumber } from '$lib/auth/utils';
+import { sendEmail, verifyEmailBody } from '$lib/email';
 
 export async function createUser(
 	email: string,
@@ -11,7 +13,8 @@ export async function createUser(
 	password?: string,
 	oauth?: string,
 	oauth_link_token?: string,
-	stripe_id?: string
+	stripe_id?: string,
+	email_verified: boolean = false
 ): Promise<User> {
 	email = handleGmail(email);
 
@@ -33,6 +36,8 @@ export async function createUser(
 		throw error;
 	}
 
+	const emailToken = generateRandomSixDigitNumber();
+
 	const newUser = await prisma.user.create({
 		data: {
 			email,
@@ -41,6 +46,8 @@ export async function createUser(
 			oauth: oauth || null,
 			oauth_link_token: oauth_link_token || null,
 			stripe_id: stripe_id || null,
+			email_code: emailToken,
+			email_verified: email_verified,
 			balance: {
 				create: {
 					amount: 1
@@ -48,6 +55,13 @@ export async function createUser(
 			}
 		}
 	});
+
+	await sendEmail(
+		'verify-email@lutia.ai',
+		email,
+		'Verify your email',
+		verifyEmailBody(emailToken)
+	);
 
 	return newUser;
 }
@@ -66,6 +80,32 @@ export async function retrieveUserByEmail(email: string): Promise<User> {
 			// Rethrow UserNotFoundError to be handled by the caller
 			throw error;
 		} else if (error instanceof Error) {
+			console.error(`Error retrieving user by email: ${error.message}`);
+			throw new DatabaseError('Failed to retrieve user', error);
+		} else {
+			console.error('An unknown error occurred while retrieving user by email');
+			throw new UnknownError('An unknown error occurred');
+		}
+	}
+}
+
+export async function retrieveUserByPasswordResetToken(token: string): Promise<User> {
+	try {
+		const user = await prisma.user.findFirst({
+			where: {
+				reset_password_token: token,
+				reset_expiration: {
+					gt: new Date()
+				}
+			}
+		});
+		if (!user) {
+			throw Error('Invalid or expired reset password token');
+		}
+
+		return user;
+	} catch (error: unknown) {
+		if (error instanceof Error) {
 			console.error(`Error retrieving user by email: ${error.message}`);
 			throw new DatabaseError('Failed to retrieve user', error);
 		} else {
@@ -106,4 +146,33 @@ function handleGmail(email: string): string {
 	}
 
 	return email;
+}
+
+export async function verifyUserEmailToken(
+	user: User,
+	email: string,
+	emailToken: string
+): Promise<boolean> {
+	try {
+		// Check if the user's email_code matches the provided emailToken
+		if (user.email_code === parseInt(emailToken)) {
+			// If it matches, update the user's email_verified status to true
+			await prisma.user.update({
+				where: {
+					id: user.id
+				},
+				data: {
+					email_verified: true,
+					email_code: null
+				}
+			});
+
+			return true;
+		} else {
+			return false;
+		}
+	} catch (error) {
+		console.error('Error verifying user email token:', error);
+		return false;
+	}
 }

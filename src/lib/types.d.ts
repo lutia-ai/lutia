@@ -131,6 +131,7 @@ type User = {
 	email: string;
 	oauth?: 'google' | '';
 	image?: string;
+	email_verfieid?: string;
 };
 
 type UserUpdateFields = {
@@ -139,6 +140,10 @@ type UserUpdateFields = {
 	password_hash?: string;
 	oauth?: '' | 'google';
 	oauth_link_token?: string;
+	reset_password_token?: string;
+	reset_expiration?: Date;
+	email_verified?: boolean;
+	email_code?: number;
 };
 
 type UsageObject = {

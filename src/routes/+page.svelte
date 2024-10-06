@@ -134,8 +134,6 @@
 			imageCost += result.price;
 			imageTokens += result.tokens;
 		}
-		console.log();
-		console.log('result.price: ', result.price);
 		input_tokens = result.tokens + imageTokens;
 		input_price = result.price + imageCost;
 	}
@@ -285,7 +283,6 @@
 				if (chosenModel.generatesImages) {
 					const data = await response.json();
 					const base64ImageData = data.image;
-					console.log(base64ImageData);
 					// Update only the AI's response in chat history
 					chatHistory.update((history) =>
 						history.map((msg, index) =>
