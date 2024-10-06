@@ -1,18 +1,17 @@
 import { env } from '$env/dynamic/private';
 import Mailjet from 'node-mailjet';
 
-
 export async function sendEmail(
-    from: string,
+	from: string,
 	to: string,
 	subject: string,
 	body: string
 ): Promise<void> {
-    const mailjet = new Mailjet({
-        apiKey: env.MAILJET_API_KEY,
-        apiSecret: env.MAILJET_SECRET_KEY
-    });
-    
+	const mailjet = new Mailjet({
+		apiKey: env.MAILJET_API_KEY,
+		apiSecret: env.MAILJET_SECRET_KEY
+	});
+
 	const request = mailjet.post('send', { version: 'v3.1' }).request({
 		Messages: [
 			{

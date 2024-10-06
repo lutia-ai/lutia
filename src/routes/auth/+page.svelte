@@ -104,12 +104,11 @@
 		const result: ActionResult = deserialize(await response.text());
 
 		if (result.type === 'success' && result.data) {
-			// signIn('credentials', {
-			// 	email: formData.email,
-			// 	password: formData.password,
-			// 	callbackUrl: '/'
-			// });
-			showVerifyEmail = true;
+			signIn('credentials', {
+				email: formData.email,
+				password: formData.password,
+				callbackUrl: '/'
+			});
 		} else if (result.type === 'failure' && result.data) {
 			errorPopup.showError(result.data.message);
 		}
