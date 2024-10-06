@@ -104,9 +104,10 @@
 		const result: ActionResult = deserialize(await response.text());
 
 		if (result.type === 'success' && result.data) {
+			const formDataTemp = new FormData(formData);
 			signIn('credentials', {
-				email: formData.email,
-				password: formData.password,
+				email: formDataTemp.get('email') as string,
+				password: formDataTemp.get('password') as string,
 				callbackUrl: '/'
 			});
 		} else if (result.type === 'failure' && result.data) {
