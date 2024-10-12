@@ -169,6 +169,13 @@ type ApiRequestWithMessage = Prisma.ApiRequestGetPayload<{
 	};
 }>;
 
+// Define the type for User including the user_settings relation
+type UserWithSettings = Prisma.UserGetPayload<{
+	include: {
+		user_settings: true;
+	};
+}>;
+
 export type ElementsContext = {
 	elements: StripeElements;
 	stripe: Stripe;

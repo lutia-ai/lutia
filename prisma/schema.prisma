@@ -47,8 +47,21 @@ model User {
   email_code            Int?
   requests              ApiRequest[]
   balance               Balance?
+  user_settings         UserSettings?
 
   @@map("users")
+}
+
+model UserSettings {
+    id                          Int         @id @default(autoincrement())
+    user_id                     Int         @unique
+    user                        User        @relation(fields: [user_id], references: [id])
+    company_menu_open           Boolean     @default(true)
+    prompt_pricing_visible      Boolean     @default(true)
+    show_context_window_button  Boolean     @default(true)
+    context_window              Int         @default(0)
+
+    @@map("user_settings")
 }
 
 model Message {

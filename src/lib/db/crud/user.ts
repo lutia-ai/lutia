@@ -1,11 +1,12 @@
 import bcryptjs from 'bcryptjs';
 import { DatabaseError, UnknownError, UserNotFoundError } from '$lib/customErrors';
-import type { UserUpdateFields } from '$lib/types';
+import type { UserUpdateFields, UserWithSettings } from '$lib/types';
 import stripe from '$lib/stripe/stripe.config';
 import type { User } from '@prisma/client';
 import prisma from '$lib/prisma';
 import { generateRandomSixDigitNumber } from '$lib/auth/utils';
 import { sendEmail, verifyEmailBody } from '$lib/email';
+import { createUserSettings } from '$lib/db/crud/userSettings';
 
 export async function createUser(
 	email: string,
@@ -52,6 +53,12 @@ export async function createUser(
 				create: {
 					amount: 1
 				}
+			},
+			user_settings: {
+				create: {
+					company_menu_open: true,
+					prompt_pricing_visible: true
+				}
 			}
 		}
 	});
@@ -69,9 +76,46 @@ export async function createUser(
 export async function retrieveUserByEmail(email: string): Promise<User> {
 	try {
 		email = handleGmail(email);
-		const user = await prisma.user.findUnique({ where: { email } });
+		// Retrieve user with optional settings
+		const user = await prisma.user.findUnique({
+			where: { email }
+		});
+
 		if (!user) {
 			throw new UserNotFoundError(email);
+		}
+
+		return user;
+	} catch (error: unknown) {
+		if (error instanceof UserNotFoundError) {
+			// Rethrow UserNotFoundError to be handled by the caller
+			throw error;
+		} else if (error instanceof Error) {
+			console.error(`Error retrieving user by email: ${error.message}`);
+			throw new DatabaseError('Failed to retrieve user', error);
+		} else {
+			console.error('An unknown error occurred while retrieving user by email');
+			throw new UnknownError('An unknown error occurred');
+		}
+	}
+}
+
+export async function retrieveUserWithSettingsByEmail(email: string): Promise<UserWithSettings> {
+	try {
+		email = handleGmail(email);
+		// Retrieve user with optional settings
+		const user = await prisma.user.findUnique({
+			where: { email },
+			include: { user_settings: true }
+		});
+
+		if (!user) {
+			throw new UserNotFoundError(email);
+		}
+
+		if (!user.user_settings) {
+			const userSettings = await createUserSettings(user.id);
+			return { ...user, user_settings: userSettings };
 		}
 
 		return user;

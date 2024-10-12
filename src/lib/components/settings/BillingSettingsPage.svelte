@@ -9,7 +9,7 @@
 		type StripeElements,
 		type StripeCardElement
 	} from '@stripe/stripe-js';
-	import type { CardDetails } from '$lib/types';
+	import type { CardDetails, UserWithSettings } from '$lib/types';
 	import { env } from '$env/dynamic/public';
 	import Topup from '$lib/components/icons/Topup.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
@@ -19,6 +19,8 @@
 	import BinIcon from '$lib/components/icons/BinIcon.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import LoadingSpinner from '$lib/components/icons/LoadingSpinner.svelte';
+
+	export let user: UserWithSettings;
 
 	let loading = true;
 	let errorPopup: ErrorPopup;
@@ -30,7 +32,6 @@
 	let elements: StripeElements | null = null;
 	let card: StripeCardElement | null = null;
 	let error: string | null = null;
-	let success: boolean = false;
 	let showCardInput: boolean = false;
 	let showDeleteCardDetailsCheck: boolean = false;
 	let deleteCardLoading: boolean = false;
@@ -53,7 +54,7 @@
 				console.error('Failed to fetch account details');
 			}
 		} catch (error) {
-			console.error('Error clearing chat history:', error);
+			console.error('Error getting users billing details:', error);
 		} finally {
 			loading = false;
 		}
@@ -86,7 +87,7 @@
 				errorPopup.showError(result.data.message, null, 5000);
 			}
 		} catch (error) {
-			console.error('Error clearing chat history:', error);
+			console.error('Error topping up:', error);
 		} finally {
 			topupLoading = false;
 		}
@@ -109,7 +110,7 @@
 				errorPopup.showError(result.data.message, null, 5000);
 			}
 		} catch (error) {
-			console.error('Error clearing chat history:', error);
+			console.error('Error deleting card details:', error);
 		} finally {
 			deleteCardLoading = false;
 		}
@@ -139,7 +140,6 @@
 			const result: ActionResult = deserialize(await response.text());
 
 			if (result.type === 'success' && result.data) {
-				success = true;
 				error = null;
 				cardDetails = result.data.cardDetails;
 				showCardInput = false;
@@ -147,7 +147,7 @@
 				error = result.data.message || 'Failed to save card';
 			}
 		} catch (error) {
-			console.error('Error clearing chat history:', error);
+			console.error('Error saving card details:', error);
 		} finally {
 			uploadCardLoading = false;
 		}
@@ -414,6 +414,13 @@
 <style lang="scss">
 	.billing-body {
 		padding: 20px 0 20px 35px;
+		position: relative;
+		width: 100%;
+		height: 100%;
+		overflow-y: scroll !important;
+		// padding: 0 20px;
+		// padding-bottom: 40px;
+		box-sizing: border-box;
 
 		h1,
 		p {
@@ -842,5 +849,21 @@
 		100% {
 			background-position: 1200px 0;
 		}
+	}
+
+	/* Scrollbar track */
+	::-webkit-scrollbar {
+		width: 10px;
+	}
+
+	/* Scrollbar handle */
+	::-webkit-scrollbar-thumb {
+		background-color: #888;
+		border-radius: 6px;
+	}
+
+	/* Scrollbar track background */
+	::-webkit-scrollbar-track {
+		background-color: var(--bg-color-light);
 	}
 </style>

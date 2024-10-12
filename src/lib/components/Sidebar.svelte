@@ -10,34 +10,38 @@
 		chosenCompany
 	} from '$lib/stores.ts';
 	import type { ApiProvider } from '@prisma/client';
-	import type { Model } from '$lib/types';
+	import type { Model, UserWithSettings } from '$lib/types';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 
 	import Slider from '$lib/components/Slider.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
-	import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
 	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
 	import { modelLogos } from '$lib/modelLogos';
-	import { clearChatHistory, formatModelEnumToReadable } from '$lib/chatHistory';
+	import {
+		clearChatHistory,
+		formatModelEnumToReadable,
+		saveUserSettings
+	} from '$lib/chatHistory';
 	import ImageIcon from './icons/ImageIcon.svelte';
-	import TextChangeCaseIcon from './icons/TextChangeCaseIcon.svelte';
 	import LightningIcon from './icons/LightningIcon.svelte';
 
 	export let companySelection: ApiProvider[];
 	export let gptModelSelection: Model[];
 	export let chosenModel: Model;
 	export let isSettingsOpen: boolean;
+	export let user: UserWithSettings; // controls if the menu is always open
+	export let userImage;
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
 
 	// Controls the visibility of the company dropdown.
-	let companyDropdownOpen: boolean = false;
+	let companyDropdownOpen: boolean = user.user_settings?.company_menu_open ?? true;
 
 	// Controls the visibility of the settings panel.
 	let settingsOpen: boolean = false;
@@ -45,8 +49,22 @@
 	// Controls the visibility of the context window.
 	let contextOpen: boolean = false;
 
+	// Controls if the context window sidebar button shows.
+	let showContextWindowButton: boolean = user.user_settings?.show_context_window_button ?? true;
+
 	// Indicates whether an animation is currently rotating.
 	let isRotating: boolean = false;
+
+	// handles if the company menu should be always open or open on hover
+	$: if (user.user_settings || !user.user_settings) {
+		companyDropdownOpen = user.user_settings?.company_menu_open ?? true;
+		showContextWindowButton = user.user_settings?.show_context_window_button ?? true;
+	}
+
+	// handles the save user settings from the slider change
+	function handleSaveSettings() {
+		saveUserSettings(user.user_settings!);
+	}
 
 	// Updates the chosen company and resets the model selection based on the new company.
 	function selectCompany(company: ApiProvider) {
@@ -67,7 +85,6 @@
 <svelte:window
 	on:click={() => {
 		modelDropdownOpen = false;
-		companyDropdownOpen = false;
 		settingsOpen = false;
 		contextOpen = false;
 	}}
@@ -79,8 +96,16 @@
 			class="company-container"
 			role="button"
 			tabindex="0"
+			on:click={() => (companyDropdownOpen = true)}
+			on:keydown={(e) => {
+				if (e.key === 'Enter') companyDropdownOpen = true;
+			}}
 			on:mouseenter={() => (companyDropdownOpen = true)}
-			on:mouseleave={() => (companyDropdownOpen = false)}
+			on:mouseleave={() => {
+				if (!user.user_settings?.company_menu_open) {
+					companyDropdownOpen = false;
+				}
+			}}
 		>
 			<div class="choose-company-container">
 				<div
@@ -103,12 +128,16 @@
 							tabindex="0"
 							on:click|stopPropagation={() => {
 								selectCompany(company);
-								companyDropdownOpen = false;
+								if (!user.user_settings?.company_menu_open) {
+									companyDropdownOpen = false;
+								}
 							}}
 							on:keydown|stopPropagation={(e) => {
 								if (e.key === 'Enter') {
 									selectCompany(company);
-									companyDropdownOpen = false;
+									if (!user.user_settings?.company_menu_open) {
+										companyDropdownOpen = false;
+									}
 								}
 							}}
 							in:fly={{ y: -50, duration: 600, delay: index * 75 }}
@@ -271,51 +300,58 @@
 				<p class="tag">Clear chat</p>
 			</div>
 		</div>
-		<div class="settings-wrapper">
-			<div
-				class="settings-icon"
-				role="button"
-				tabindex="0"
-				on:click|stopPropagation={() => {
-					contextOpen = !contextOpen;
-					settingsOpen = false;
-				}}
-				on:keydown={(e) => {
-					if (e.key === 'Enter') {
-						contextOpen = !contextOpen;
-						settingsOpen = false;
-					}
-				}}
-				style="
-					pointer-events: {contextOpen ? 'none' : ''};
-					cursor: {contextOpen ? 'default' : ''} !important;
-				"
-			>
-				<ContextWindowIcon color="var(--text-color-light)" />
-				<p class="tag">Context window</p>
-			</div>
-			{#if contextOpen}
+		{#if showContextWindowButton}
+			<div class="settings-wrapper">
 				<div
-					class="settings-open-container"
+					class="settings-icon"
 					role="button"
 					tabindex="0"
-					on:click|stopPropagation
-					on:keydown
+					on:click|stopPropagation={() => {
+						contextOpen = !contextOpen;
+						settingsOpen = false;
+					}}
+					on:keydown={(e) => {
+						if (e.key === 'Enter') {
+							contextOpen = !contextOpen;
+							settingsOpen = false;
+						}
+					}}
+					style="
+                        pointer-events: {contextOpen ? 'none' : ''};
+                        cursor: {contextOpen ? 'default' : ''} !important;
+                    "
 				>
-					<div class="open-container">
-						<p>Previous messages included</p>
-						<div class="slider-container">
-							<p>0</p>
-							<Slider
-								value={$numberPrevMessages}
-								on:change={(e) => numberPrevMessages.set(e.detail.value)}
-							/>
-							<p>max</p>
+					<ContextWindowIcon color="var(--text-color-light)" />
+					<p class="tag">Context window</p>
+				</div>
+				{#if contextOpen}
+					<div
+						class="settings-open-container"
+						role="button"
+						tabindex="0"
+						on:click|stopPropagation
+						on:keydown
+					>
+						<div class="open-container">
+							<p>Previous messages included</p>
+							<div class="slider-container">
+								<p>0</p>
+								<Slider
+									value={$numberPrevMessages}
+									on:change={(e) => {
+										if (e.detail.value !== $numberPrevMessages) {
+											numberPrevMessages.set(e.detail.value);
+											handleSaveSettings();
+										}
+									}}
+								/>
+								<p>max</p>
+							</div>
 						</div>
 					</div>
-				</div>
-			{/if}
-		</div>
+				{/if}
+			</div>
+		{/if}
 		<div class="settings-wrapper">
 			<div
 				class="settings-icon"
@@ -340,22 +376,14 @@
 					cursor: {settingsOpen ? 'default' : ''} !important;
                 "
 			>
-				{#if $page.data.user}
-					{#if $page.data.user.image}
-						<img
-							class="user-profile-img"
-							src={$page.data.user.image}
-							alt="User profile"
-						/>
-					{:else}
-						<div class="user-profile-noimg">
-							<h1>
-								{$page.data.user.name[0]}
-							</h1>
-						</div>
-					{/if}
+				{#if userImage}
+					<img class="user-profile-img" src={userImage} alt="User profile" />
 				{:else}
-					<SettingsIcon color="var(--text-color-light)" />
+					<div class="user-profile-noimg">
+						<h1>
+							{user.name[0]}
+						</h1>
+					</div>
 				{/if}
 				<p class="tag">Settings</p>
 			</div>
@@ -417,6 +445,7 @@
 					margin: auto 0;
 					text-align: center;
 					color: var(--text-color);
+					user-select: none;
 				}
 
 				.chosen-model-p {

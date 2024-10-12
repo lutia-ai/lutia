@@ -7,51 +7,45 @@
 	import GeneralSettingsPage from '$lib/components/settings/GeneralSettingsPage.svelte';
 	import BillingSettingsPage from '$lib/components/settings/BillingSettingsPage.svelte';
 	import UsageSettingsPage from '$lib/components/settings/UsageSettingsPage.svelte';
+	import type { ComponentType } from 'svelte';
+	import type { UserWithSettings } from '$lib/types';
 
 	export let isOpen: boolean;
+	export let user: UserWithSettings;
 
-	const settingsTabs = [
+	interface TabProps {
+		user?: UserWithSettings;
+	}
+
+	interface SettingsTab {
+		name: string;
+		icon: ComponentType;
+		window: ComponentType;
+		props: TabProps;
+	}
+
+	const settingsTabs: SettingsTab[] = [
 		{
 			name: 'General',
 			icon: SettingsIcon,
-			window: GeneralSettingsPage
+			window: GeneralSettingsPage,
+			props: { user }
 		},
 		{
 			name: 'Billing',
 			icon: DollarIcon,
-			window: BillingSettingsPage
+			window: BillingSettingsPage,
+			props: { user }
 		},
 		{
 			name: 'Usage',
 			icon: UsageIcon,
-			window: UsageSettingsPage
+			window: UsageSettingsPage,
+			props: { user }
 		}
 	];
 
 	let selectedTab = settingsTabs[0];
-
-	// @ts-ignore
-	const wheel = (node: HTMLElement, options) => {
-		let { scrollable } = options;
-
-		// @ts-ignore
-		const handler = (e) => {
-			if (!scrollable) e.preventDefault();
-		};
-
-		node.addEventListener('wheel', handler, { passive: false });
-
-		return {
-			// @ts-ignore
-			update(options) {
-				scrollable = options.scrollable;
-			},
-			destroy() {
-				// @ts-ignore
-				node.removeEventListener('wheel', handler, { passive: false });
-			}
-		};
-	};
 </script>
 
 <!-- <svelte:window use:wheel={{ isOpen }} /> -->
@@ -69,9 +63,11 @@
 				{#each settingsTabs as tab}
 					<div
 						class="sidebar-option"
-						style="background: {selectedTab.name === tab.name
+						style="
+                            background: {selectedTab.name === tab.name
 							? 'var(--bg-color-light-opacity-alt)'
-							: ''};"
+							: ''};
+                        "
 						tabindex="0"
 						role="button"
 						on:click={() => (selectedTab = tab)}
@@ -89,7 +85,7 @@
 				{/each}
 			</div>
 			<div class="settings-page">
-				<svelte:component this={selectedTab.window} />
+				<svelte:component this={selectedTab.window} bind:user />
 			</div>
 		</div>
 	</div>
@@ -103,6 +99,8 @@
 		width: 100%;
 		height: 100%;
 		display: flex;
+		padding: 6% 0;
+		box-sizing: border-box;
 		z-index: 100000;
 		background-color: rgba(0, 0, 0, 0.5);
 		overflow: hidden;
@@ -112,8 +110,8 @@
 			background: var(--bg-color-light-alt-opp);
 			max-width: 1200px;
 			width: 80%;
-			min-width: 800px;
-			height: 850px;
+			min-width: 700px;
+			height: 100%;
 			margin: auto;
 			border-radius: 10px;
 			padding: 40px;
@@ -152,9 +150,9 @@
 			.settings-body {
 				position: relative;
 				display: flex;
-				height: 100%;
+				height: 96%;
 				width: 100%;
-				flex: 12;
+				// flex: 12;
 
 				.settings-sidebar {
 					border-right: 1px solid var(--text-color-light-opacity);
@@ -197,8 +195,9 @@
 
 				.settings-page {
 					width: 100%;
-					height: 680px;
+					height: 100%;
 					padding: 10px;
+					box-sizing: border-box;
 					flex: 4;
 				}
 			}

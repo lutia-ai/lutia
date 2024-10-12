@@ -63,14 +63,12 @@ export async function retrieveApiRequests(userEmail: string): Promise<ApiRequest
 }
 
 export async function retrieveApiRequestsWithMessage(
-	userEmail: string
+	userId: number
 ): Promise<ApiRequestWithMessage[]> {
 	try {
-		const user = await retrieveUserByEmail(userEmail);
-
 		const apiRequests = await prisma.apiRequest.findMany({
 			where: {
-				user_id: user.id, // Filter by user ID
+				user_id: userId, // Filter by user ID
 				message: {
 					// Ensure that the message relation exists (is not null)
 					NOT: {

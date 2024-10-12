@@ -3,7 +3,7 @@
 	import { HighlightAuto, LineNumbers } from 'svelte-highlight';
 	import { marked } from 'marked';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
-	import { chatHistory, numberPrevMessages, inputPricing, chosenCompany } from '$lib/stores.ts';
+	import { chatHistory, numberPrevMessages, chosenCompany } from '$lib/stores.ts';
 	import type {
 		Message,
 		Image,
@@ -58,6 +58,7 @@
 	import { page } from '$app/stores';
 	import type { ApiProvider } from '@prisma/client';
 	import { promptHelpers } from '$lib/promptHelpers.js';
+	import MetaIcon from '$lib/components/icons/MetaIcon.svelte';
 
 	export let data;
 
@@ -234,13 +235,15 @@
 				console.log('fullPrompt: ', fullPrompt);
 
 				let uri: string;
-
 				switch ($chosenCompany) {
 					case 'anthropic':
 						uri = '/api/claude';
 						break;
 					case 'openAI':
 						uri = '/api/chatGPT';
+						break;
+					case 'meta':
+						uri = '/api/llama';
 						break;
 					default:
 						uri = '/api/gemini';
@@ -597,6 +600,10 @@
 		return isModelByCompany('google', modelName);
 	}
 
+	function isModelMeta(modelName: string): boolean {
+		return isModelByCompany('meta', modelName);
+	}
+
 	let isScrollingProgrammatically = false;
 	let lastScrollPos = 0;
 
@@ -732,15 +739,22 @@
 	on:scroll={() => {
 		handleScroll();
 	}}
-	on:keydown={handleKeyboardShortcut}
+	on:keydown={(e) => handleKeyboardShortcut(e, data.user.user_settings)}
 />
 
 <ErrorPopup bind:this={errorPopup} />
 
 <div class="main" class:settings-open={isSettingsOpen}>
-	<Sidebar {companySelection} {gptModelSelection} bind:chosenModel bind:isSettingsOpen />
+	<Sidebar
+		{companySelection}
+		{gptModelSelection}
+		bind:chosenModel
+		bind:isSettingsOpen
+		user={data.user}
+		userImage={data.userImage}
+	/>
 	{#if isSettingsOpen}
-		<Settings bind:isOpen={isSettingsOpen} />
+		<Settings bind:isOpen={isSettingsOpen} bind:user={data.user} />
 	{/if}
 	<div
 		class="body"
@@ -883,6 +897,12 @@
 									class="llm-icon-container {chat.loading ? 'rotateLoading' : ''}"
 								>
 									<GeminiIcon />
+								</div>
+							{:else if isModelMeta(chat.by)}
+								<div
+									class="llm-icon-container {chat.loading ? 'rotateLoading' : ''}"
+								>
+									<MetaIcon />
 								</div>
 							{/if}
 						{/if}
@@ -1125,7 +1145,9 @@
 			<div
 				class="prompt-bar"
 				style="
-                    margin: {$inputPricing ? '' : 'auto auto 20px auto'};
+                    margin: {data.user.user_settings?.prompt_pricing_visible
+					? ''
+					: 'auto auto 20px auto'};
                 "
 			>
 				{#if (imagePreview.length > 0 || isDragging) && chosenModel.handlesImages}
@@ -1246,7 +1268,7 @@
 				>
 					Enter a prompt here
 				</span>
-				{#if $inputPricing}
+				{#if data.user.user_settings?.prompt_pricing_visible}
 					<div class="input-token-container">
 						<p>Context window: {$numberPrevMessages}</p>
 						<p class="middle">Input tokens: {input_tokens}</p>

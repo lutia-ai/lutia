@@ -1,11 +1,9 @@
-import { fail, redirect, type Actions, type RequestEvent } from '@sveltejs/kit';
+import { redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { retrieveApiRequestsWithMessage } from '$lib/db/crud/apiRequest';
 import { serializeApiRequest } from '$lib/chatHistory';
 import { deleteAllUserMessages } from '$lib/db/crud/message';
-import { retrieveUserByEmail } from '$lib/db/crud/user';
-import { UserNotFoundError } from '$lib/customErrors';
-import type { User } from '@prisma/client';
+import { retrieveUserByEmail, retrieveUserWithSettingsByEmail } from '$lib/db/crud/user';
 import { retrieveUsersBalance, updateUserBalanceWithIncrement } from '$lib/db/crud/balance';
 import {
 	chargeUserCard,
@@ -13,6 +11,8 @@ import {
 	getStripeCardDetails,
 	saveUserCardDetails
 } from '$lib/stripe/stripeFunctions';
+import { updateUserSettings } from '$lib/db/crud/userSettings';
+import type { UserSettings } from '@prisma/client';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth();
@@ -21,19 +21,23 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(307, '/auth');
 	}
 
-	const user = await retrieveUserByEmail(session.user.email);
+	const user = await retrieveUserWithSettingsByEmail(session.user.email).catch((error) => {
+		console.error('Error retrieving user:', error);
+		throw redirect(307, '/auth?error=UserRetrievalError');
+	});
 
 	if (!user.email_verified) {
 		throw redirect(307, `/auth?error=CredentialsSignin&code=unverified_${session.user.email}`);
 	}
 
-	const apiRequests = await retrieveApiRequestsWithMessage(session.user.email);
+	const apiRequests = await retrieveApiRequestsWithMessage(Number(session.user.id));
 
 	const serializedApiRequests = apiRequests.map(serializeApiRequest);
 
 	// User is authenticated, continue with the load function
 	return {
-		user: session.user,
+		user,
+		userImage: session.user.image,
 		apiRequests: serializedApiRequests
 	};
 };
@@ -51,30 +55,6 @@ export const actions = {
 		await deleteAllUserMessages(parseInt(userId!, 10));
 
 		return { success: true };
-	},
-	getAccountDetails: async ({ locals }) => {
-		// Access the auth object from locals
-		const session = await locals.auth();
-
-		if (!session || !session.user) {
-			throw redirect(307, '/auth');
-		}
-		const userEmail = session.user.email;
-
-		let user: User;
-		try {
-			user = await retrieveUserByEmail(userEmail!);
-		} catch (error) {
-			if (error instanceof UserNotFoundError) {
-				throw error;
-			}
-		}
-
-		return {
-			name: user!.name,
-			email: user!.email,
-			oauth: user!.oauth ? user!.oauth : ''
-		};
 	},
 	getUsersBillingDetails: async ({ locals }) => {
 		const session = await locals.auth();
@@ -191,6 +171,43 @@ export const actions = {
 			};
 		} catch (err) {
 			console.error('Error topping up:', err);
+			return {
+				type: 'failure',
+				data: {
+					message: err instanceof Error ? err.message : 'An unknown error occurred'
+				}
+			};
+		}
+	},
+	saveUserSettings: async ({ request, locals }) => {
+		const session = await locals.auth();
+
+		if (!session || !session.user) {
+			throw redirect(307, '/auth');
+		}
+
+		try {
+			const formData = await request.formData();
+			const user_settings_str = formData.get('user_settings');
+
+			if (typeof user_settings_str !== 'string') {
+				throw new Error('Invalid user_settings');
+			}
+
+			const user_settings: Partial<UserSettings> = JSON.parse(user_settings_str);
+			const updatedSettings = await updateUserSettings(
+				Number(session.user.id),
+				user_settings
+			);
+
+			console.log('saved user settings: ', user_settings);
+			console.log('saved user settings: ', updatedSettings);
+
+			return {
+				updatedSettings
+			};
+		} catch (err) {
+			console.error('Error saving user settings:', err);
 			return {
 				type: 'failure',
 				data: {

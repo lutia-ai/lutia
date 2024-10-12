@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import StackedBarChart from '$lib/components/barchart/StackedBarChart.svelte';
-	import type { UsageObject, Company } from '$lib/types';
+	import type { UsageObject, Company, UserWithSettings } from '$lib/types';
 	import { modelLogos } from '$lib/modelLogos';
 	import PieChart from '$lib/components/barchart/PieChart.svelte';
 	import { capitalizeFirstLetter } from '$lib/components/barchart/utils';
 	import type { ApiModel, ApiProvider } from '@prisma/client';
+
+	export let user: UserWithSettings;
 
 	let mounted = false;
 
@@ -274,6 +276,7 @@
 		overflow-y: scroll !important;
 		padding: 0 20px;
 		padding-bottom: 40px;
+		box-sizing: border-box;
 
 		.usage-top-panel {
 			display: flex;

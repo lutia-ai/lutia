@@ -11,6 +11,8 @@ import { deserialize } from '$app/forms';
 import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
 import { chatHistory, numberPrevMessages } from '$lib/stores';
 import type { ActionResult } from '@sveltejs/kit';
+import type { UserSettings } from '@prisma/client';
+import { get } from 'svelte/store';
 
 export function serializeApiRequest(apiRequest: ApiRequestWithMessage): SerializedApiRequest {
 	return {
@@ -287,19 +289,43 @@ export function countLeadingWhitespaces(text: string): number {
 	return leadingWhitespaces;
 }
 
-export function handleKeyboardShortcut(event: KeyboardEvent) {
+export function handleKeyboardShortcut(
+	event: KeyboardEvent,
+	userSettings: Partial<UserSettings> | null
+) {
 	// Check if Ctrl key is pressed
 	if (event.ctrlKey) {
 		// Get the pressed number key (0-9)
 		const num = parseInt(event.key);
 
 		// Check if the pressed key is a number between 0 and 9
-		if (!isNaN(num) && num >= 0 && num <= 9) {
+		if (!isNaN(num) && num >= 0 && num <= 9 && get(numberPrevMessages) !== num) {
 			// Update numberPrevMessages
 			numberPrevMessages.set(num);
+			saveUserSettings(userSettings ?? {});
 
 			// Prevent default behavior (e.g., browser shortcuts)
 			event.preventDefault();
 		}
+	}
+}
+
+export async function saveUserSettings(userSettings: Partial<UserSettings>) {
+	try {
+		const body = new FormData();
+		body.append('user_settings', JSON.stringify(userSettings));
+
+		const response = await fetch('?/saveUserSettings', {
+			method: 'POST',
+			body
+		});
+		const result: ActionResult = deserialize(await response.text());
+
+		if (result.type === 'success' && result.data) {
+		} else if (result.type === 'failure' && result.data) {
+			console.error('Failed to save user settings');
+		}
+	} catch (error) {
+		console.error('Failed to save user settings');
 	}
 }

@@ -31,9 +31,6 @@ export const chosenCompany = createPersistentStore<ApiProvider>('chosenCompany',
 // Persistent store for the dark mode setting
 export const darkMode = createPersistentStore<boolean>('darkMode', false);
 
-// Persistent store for showing the input pricing
-export const inputPricing = createPersistentStore<boolean>('inputPricing', false);
-
 // store for the chat history
 export const chatHistory = writable<ChatComponent[]>([]);
 
