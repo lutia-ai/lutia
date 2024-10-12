@@ -13,6 +13,7 @@ enum ApiProvider {
   openAI
   anthropic
   google
+  meta
 }
 
 enum ApiModel {
@@ -29,6 +30,7 @@ enum ApiModel {
   Gemini_1_5_Pro
   Gemini_1_5_Flash
   Gemini_1_0_Pro
+  Llama_3_2_90b_Vision
 }
 
 model User {

@@ -13,7 +13,8 @@ export const modelLogos: ModelLogos = {
 	},
 	google: {
 		logo: GoogleIcon
+	},
+	meta: {
+		logo: MetaIcon
 	}
-	// meta: {
-	// 	logo: MetaIcon,
 };

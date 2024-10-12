@@ -192,4 +192,38 @@ export const modelDictionary: ModelDictionary = {
 			}
 		}
 	}
+	// meta: {
+	//     models: {
+	//         llama32: {
+	//             name: "Llama_3_2_90b_Vision",
+	//             param: "llama3.2-90b-vision",
+	//             legacy: false,
+	// 			input_price: 2.8,
+	// 			output_price: 2.8,
+	//             context_window: 128000,
+	//             hub: "unsloth/Llama-3.2-1B",
+	//             handlesImages: true,
+	// 			maxImages: 1,
+	// 			generatesImages: false
+	//         },
+	//         // llama31: {
+	//         //     name: "Llama_3_1",
+	//         //     param: "llama-3.1",
+	//         //     legacy: true,
+	// 		// 	input_price: 4,
+	// 		// 	output_price: 9,
+	//         //     context_window: 128000,
+	//         //     hub: "Xenova/Meta-Llama-3.1-Tokenizer",
+	//         // },
+	//         // llama2: {
+	//         //     name: "Llama_2",
+	//         //     param: "llama-2",
+	//         //     legacy: true,
+	// 		// 	input_price: 0.5,
+	// 		// 	output_price: 1.5,
+	//         //     context_window: 4096,
+	//         //     hub: "Xenova/llama2-tokenizer",
+	//         // },
+	//     }
+	// }
 };
