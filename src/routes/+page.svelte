@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, type ComponentType } from 'svelte';
 	import { HighlightAuto, LineNumbers } from 'svelte-highlight';
 	import { marked } from 'marked';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
@@ -26,7 +26,6 @@
 		roundToFirstTwoNonZeroDecimals
 	} from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
-	import Settings from '$lib/components/settings/Settings.svelte';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
 	import logo from '$lib/images/logos/logo3.png';
 
@@ -35,6 +34,7 @@
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
+    import MetaIcon from '$lib/components/icons/MetaIcon.svelte';
 	import CopyIcon from '$lib/components/icons/CopyIcon.svelte';
 	import CopyIconFilled from '$lib/components/icons/CopyIconFilled.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
@@ -51,14 +51,17 @@
 		extractCodeBlock,
 		findLastNewlineIndex,
 		formatModelEnumToReadable,
+		getRandomPrompts,
 		handleKeyboardShortcut,
 		loadChatHistory,
-		sanitizeLLmContent
+		parseMessageContent,
+        // parseMessageContent2,
+		// parseMessageContent3,
+		sanitizeLLmContent,
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
 	import type { ApiProvider } from '@prisma/client';
 	import { promptHelpers } from '$lib/promptHelpers.js';
-	import MetaIcon from '$lib/components/icons/MetaIcon.svelte';
 
 	export let data;
 
@@ -79,6 +82,7 @@
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
 	const randomPrompts = getRandomPrompts(promptHelpers);
+    let SettingsComponent: ComponentType;
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -100,21 +104,14 @@
 		}
 	}
 
-	function getRandomPrompts(promptHelpers: PromptHelpers): {
-		createImage: PromptHelper;
-		compose: PromptHelper;
-		question: PromptHelper;
-	} {
-		const getRandomItem = <T,>(array: T[]): T => {
-			return array[Math.floor(Math.random() * array.length)];
-		};
+    $: if (isSettingsOpen) {
+        loadSettings();
+    };
 
-		return {
-			createImage: getRandomItem(promptHelpers.createImage),
-			compose: getRandomItem(promptHelpers.compose),
-			question: getRandomItem(promptHelpers.question)
-		};
-	}
+    async function loadSettings() {
+        const module = await import('$lib/components/settings/Settings.svelte');
+        SettingsComponent = module.default;
+    }
 
 	async function handleCountTokens(fullPrompt: Message[] | string, chosenModel: Model) {
 		if (chosenModel.generatesImages) {
@@ -230,6 +227,8 @@
 				}
 			]);
 
+            const currentChatIndex = $chatHistory.length - 1;
+
 			try {
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
 				console.log('fullPrompt: ', fullPrompt);
@@ -289,7 +288,7 @@
 					// Update only the AI's response in chat history
 					chatHistory.update((history) =>
 						history.map((msg, index) =>
-							index === history.length - 1
+							index === currentChatIndex
 								? {
 										...msg,
 										text: '[AI Generated image]',
@@ -314,191 +313,28 @@
 				const reader = response.body.getReader();
 				const decoder = new TextDecoder();
 				let responseText = '';
-
-				let isInCodeBlock = false;
-				let codeBlockContent = '';
-				let language = '';
 				let responseComponents: Component[] = [];
-				let prevText = '';
-				let spaceCount = 0;
-				let whitespacesLeft = 0;
-				let clearedNewLineSpacing = false;
-				let codeBlockIsIndented = false;
 
 				while (true) {
 					const { value, done } = await reader.read();
-					if (done && !prevText) break;
+					if (done) break;
 
 					let newText = done ? '' : decoder.decode(value);
 					responseText += newText;
-					// split the string but keep the spaces
-					let newTextArray = newText.split(/(\s+)/);
 
-					if (prevText) {
-						newTextArray[0] = prevText + newTextArray[0];
-					}
-
-					for (let index = 0; index < newTextArray.length; index++) {
-						let text = newTextArray[index];
-						const lastComponent = responseComponents[responseComponents.length - 1];
-
-						// if current word is last in the array and contains a ` then add it to prevText
-						if (index === newTextArray.length - 1 && text.includes('`') && !done) {
-							prevText = text;
-							continue;
-						}
-
-						// if current word is just text then add it as text
-						else if (!text.includes('```') && !isInCodeBlock) {
-							if (lastComponent && lastComponent.type === 'text') {
-								lastComponent.content += text;
-							} else {
-								responseComponents.push({
-									type: 'text',
-									content: text
-								});
-							}
-						}
-
-						// if current word is start of code block
-						else if (text.includes('```') && !isInCodeBlock) {
-							isInCodeBlock = true;
-							clearedNewLineSpacing = false;
-
-							// extract any text before codeBlock
-							if (lastComponent && lastComponent.type === 'text') {
-								lastComponent.content += text.split('```')[0];
-							} else {
-								responseComponents.push({
-									type: 'text',
-									content: text.split('```')[0]
-								});
-							}
-
-							spaceCount = countLeadingWhitespaces(responseText);
-							whitespacesLeft = spaceCount;
-							codeBlockIsIndented = spaceCount > 0 ? true : false;
-
-							// extract any code after ```
-							codeBlockContent = extractCodeBlock(text);
-							const langMatch = text.match(/```(\w+)/);
-							language = langMatch ? langMatch[1] : '';
-							if (codeBlockContent) {
-								responseComponents.push({
-									type: 'code',
-									language,
-									code: codeBlockContent,
-									copied: false,
-									tabWidthOpen: false,
-									tabWidth: 0
-								});
-							}
-						}
-
-						// if current word is end of code block
-						else if (text.includes('```') && isInCodeBlock) {
-							isInCodeBlock = false;
-							// add any remaining code before end of codeBlock
-							if (lastComponent && lastComponent.type === 'code') {
-								const codeComponent = lastComponent as CodeComponent;
-								const additionalCode = text.split('```')[0].trimEnd();
-
-								// Add any remaining code before the end of the code block
-								codeComponent.code += additionalCode;
-								codeComponent.code = codeComponent.code.trim();
-								codeComponent.tabWidth = calculateTabWidth(codeComponent.code);
-							} else {
-								responseComponents.push({
-									type: 'code',
-									language: '',
-									code: text.split('```')[0].trimEnd(),
-									copied: false,
-									tabWidthOpen: false,
-									tabWidth: calculateTabWidth(text.split('```')[0])
-								});
-							}
-
-							if (text.split('```')[1]) {
-								responseComponents.push({
-									type: 'text',
-									content: newText.split('```')[1]
-								});
-							}
-							spaceCount = 0;
-							clearedNewLineSpacing = true;
-						} else if (isInCodeBlock) {
-							// deindents the codeblock
-							if (codeBlockIsIndented) {
-								if (text.includes('\n')) {
-									clearedNewLineSpacing = false;
-									const lastNewlineIndex = findLastNewlineIndex(text);
-									const newText =
-										text.slice(0, lastNewlineIndex) +
-										text.slice(lastNewlineIndex + spaceCount);
-									if (newText !== text) {
-										// then we know that whitespace has been removed
-										whitespacesLeft = spaceCount + newText.length - text.length;
-										clearedNewLineSpacing =
-											whitespacesLeft === 0 ? true : false;
-									} else {
-										whitespacesLeft = spaceCount;
-									}
-									text = newText;
-								}
-
-								// clear extra whitespace from indent
-								if (
-									!clearedNewLineSpacing &&
-									text.includes(' ') &&
-									whitespacesLeft > 0
-								) {
-									// Count how many leading whitespaces the text actually has
-									let leadingWhitespaceCount = 0;
-									while (
-										text[leadingWhitespaceCount] === ' ' &&
-										leadingWhitespaceCount < whitespacesLeft
-									) {
-										leadingWhitespaceCount++;
-									}
-
-									// Remove only the leading whitespaces that we can, based on the smaller value
-									text = text.slice(leadingWhitespaceCount);
-
-									// Update whitespacesLeft to account for the removed whitespaces
-									whitespacesLeft -= leadingWhitespaceCount;
-									clearedNewLineSpacing = whitespacesLeft === 0 ? true : false;
-								}
-							}
-
-							if (lastComponent && lastComponent.type === 'code') {
-								const codeComponent = lastComponent as CodeComponent;
-								lastComponent.code = codeComponent.code + text;
-							} else {
-								responseComponents.push({
-									type: 'code',
-									language,
-									code: text,
-									copied: false
-								});
-							}
-						}
-
-						// Update only the AI's response in chat history
-						chatHistory.update((history) =>
-							history.map((msg, index) =>
-								index === history.length - 1
-									? { ...msg, text: responseText, components: responseComponents }
-									: msg
-							)
-						);
-
-						if (isScrollingProgrammatically) scrollToBottom();
-
-						prevText = '';
-					}
+                    responseComponents = parseMessageContent(responseText);
+                    // Update only the AI's response in chat history
+                    chatHistory.update((history) =>
+                        history.map((msg, index) =>
+                            index === currentChatIndex
+                                ? { ...msg, text: responseText, components: responseComponents }
+                                : msg
+                        )
+                    );
+                    if (isScrollingProgrammatically) scrollToBottom();
 				}
 
-				const lastItem = $chatHistory[$chatHistory.length - 1];
+				const lastItem = $chatHistory[currentChatIndex];
 				const outputPriceResult = await countTokens(lastItem.text, chosenModel, 'output');
 				const inputPriceResult = await countTokens(fullPrompt, chosenModel, 'input');
 				let imageCost = 0;
@@ -515,7 +351,7 @@
 				}
 				chatHistory.update((history) => {
 					return history.map((item, index) => {
-						if (index === history.length - 1) {
+						if (index === currentChatIndex) {
 							return {
 								...item,
 								input_cost: inputPriceResult.price + imageCost,
@@ -527,7 +363,7 @@
 					});
 				});
 				promptBarHeight = promptBar.offsetHeight;
-				console.log($chatHistory[$chatHistory.length - 1]);
+				console.log($chatHistory[currentChatIndex]);
 			} catch (error) {
 				if (error instanceof Error) {
 					console.error('Error:', error.message);
@@ -537,7 +373,7 @@
 				// Set loading to false in case of error
 				chatHistory.update((history) => {
 					return history.map((item, index) => {
-						if (index === history.length - 1) {
+						if (index === currentChatIndex) {
 							return {
 								...item,
 								loading: false
@@ -711,7 +547,7 @@
 		}
 	}
 
-	onMount(() => {
+	onMount( async () => {
 		const successParam = $page.url.searchParams.get('success');
 		if (successParam && errorPopup) {
 			if (successParam === 'AccountLinkSuccess') {
@@ -754,7 +590,7 @@
 		userImage={data.userImage}
 	/>
 	{#if isSettingsOpen}
-		<Settings bind:isOpen={isSettingsOpen} bind:user={data.user} />
+        <svelte:component this={SettingsComponent} bind:isOpen={isSettingsOpen} bind:user={data.user} />
 	{/if}
 	<div
 		class="body"
@@ -1043,7 +879,7 @@
 														{highlighted}
 														--line-number-color="rgba(255, 255, 255, 0.3)"
 														--border-color="rgba(255, 255, 255, 0.1)"
-														--padding-left="2em"
+														--padding-left="1em"
 														--padding-right="1em"
 														style="max-width: 100%;"
 													/>
@@ -1704,6 +1540,7 @@
 								width: 15px;
 								height: 15px;
 								transform: translateY(1px);
+                                margin: auto 0;
 							}
 
 							.tab-width-open-container {
@@ -1750,6 +1587,7 @@
 							.copy-icon-container {
 								height: 15px;
 								width: 15px;
+                                margin: auto 0;
 							}
 
 							p {

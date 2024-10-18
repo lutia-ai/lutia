@@ -31,7 +31,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	const apiRequests = await retrieveApiRequestsWithMessage(Number(session.user.id));
-
 	const serializedApiRequests = apiRequests.map(serializeApiRequest);
 
 	// User is authenticated, continue with the load function

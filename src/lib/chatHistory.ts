@@ -5,7 +5,9 @@ import type {
 	SerializedApiRequest,
 	UserChat,
 	Image,
-	ApiRequestWithMessage
+	ApiRequestWithMessage,
+    PromptHelpers,
+    PromptHelper
 } from '$lib/types';
 import { deserialize } from '$app/forms';
 import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
@@ -88,55 +90,99 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 	return chatComponents;
 }
 
-function parseMessageContent(content: string): Component[] {
-	const components: Component[] = [];
-	const codeBlockRegex = /([ \t]*)```(\w+)?\n([\s\S]*?)```/g; // Match leading whitespaces before ```
-	let lastIndex = 0;
-	let match;
+export function parseMessageContent(content: string): Component[] {
+    const components: Component[] = [];
+    const lines = content.split('\n');
+    let currentTextContent: string[] = [];
+    let currentCodeBlock: string[] = [];
+    let inCodeBlock = false;
+    let currentLanguage = '';
+    let leadingWhitespace = '';
 
-	while ((match = codeBlockRegex.exec(content)) !== null) {
-		const leadingWhitespace = match[1] || ''; // Capture leading whitespaces before the code block
-		const whitespaceLength = leadingWhitespace.length;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const codeBlockMatch = line.match(/^([ \t]*)```(\w+)?$/);
 
-		// If there's text before the code block, capture it as a 'text' component
-		if (match.index > lastIndex) {
-			components.push({
-				type: 'text',
-				content: content.slice(lastIndex, match.index)
-			});
-		}
+        if (codeBlockMatch) {
+            if (!inCodeBlock) {
+                // Start of code block
+                if (currentTextContent.length > 0) {
+                    // Push accumulated text content
+                    components.push({
+                        type: 'text',
+                        content: currentTextContent.join('\n')
+                    });
+                    currentTextContent = [];
+                }
+                
+                inCodeBlock = true;
+                leadingWhitespace = codeBlockMatch[1] || '';
+                currentLanguage = codeBlockMatch[2] || 'plaintext';
+                
+            } else {
+                // End of code block
+                inCodeBlock = false;
+                const normalizedCode = currentCodeBlock
+                    .map(line => 
+                        line.startsWith(leadingWhitespace) 
+                            ? line.slice(leadingWhitespace.length)
+                            : line
+                    )
+                    .join('\n');
 
-		// Normalize the code inside the block by removing leading whitespaces from each line
-		const normalizedCode = match[3]
-			.split('\n')
-			.map((line) =>
-				line.startsWith(leadingWhitespace) ? line.slice(whitespaceLength) : line
-			) // Remove leading whitespaces
-			.join('\n');
+                components.push({
+                    type: 'code',
+                    language: currentLanguage,
+                    code: normalizedCode,
+                    copied: false,
+                    tabWidth: calculateTabWidth(normalizedCode),
+                    tabWidthOpen: false
+                });
+                currentCodeBlock = [];
+            }
+        } else {
+            // Regular line
+            if (inCodeBlock) {
+                currentCodeBlock.push(line);
+            } else {
+                currentTextContent.push(line);
+            }
+        }
+    }
 
-		// Push the code block as a 'code' component
-		components.push({
-			type: 'code',
-			language: match[2] || 'plaintext',
-			code: normalizedCode,
-			copied: false,
-			tabWidth: calculateTabWidth(normalizedCode),
-			tabWidthOpen: false
-		});
+    // Handle any remaining content
+    if (currentTextContent.length > 0) {
+        components.push({
+            type: 'text',
+            content: currentTextContent.join('\n')
+        });
+    }
 
-		lastIndex = match.index + match[0].length;
-	}
+    // Handle unclosed code block
+    if (inCodeBlock && currentCodeBlock.length > 0) {
+        const normalizedCode = currentCodeBlock
+            .map(line => 
+                line.startsWith(leadingWhitespace) 
+                    ? line.slice(leadingWhitespace.length)
+                    : line
+            )
+            .join('\n');
 
-	// If there's remaining content after the last code block, capture it as 'text'
-	if (lastIndex < content.length) {
-		components.push({
-			type: 'text',
-			content: content.slice(lastIndex)
-		});
-	}
+        components.push({
+            type: 'code',
+            language: currentLanguage,
+            code: normalizedCode,
+            copied: false,
+            tabWidth: calculateTabWidth(normalizedCode),
+            tabWidthOpen: false
+        });
+    }
 
-	return components;
+    return components;
 }
+
+
+
 
 export function extractCodeBlock(inputString: string): string {
 	const match = inputString.match(/```[a-zA-Z]+\n([\s\S]*)/);
@@ -328,4 +374,21 @@ export async function saveUserSettings(userSettings: Partial<UserSettings>) {
 	} catch (error) {
 		console.error('Failed to save user settings');
 	}
+}
+
+
+export function getRandomPrompts(promptHelpers: PromptHelpers): {
+    createImage: PromptHelper;
+    compose: PromptHelper;
+    question: PromptHelper;
+} {
+    const getRandomItem = <T,>(array: T[]): T => {
+        return array[Math.floor(Math.random() * array.length)];
+    };
+
+    return {
+        createImage: getRandomItem(promptHelpers.createImage),
+        compose: getRandomItem(promptHelpers.compose),
+        question: getRandomItem(promptHelpers.question)
+    };
 }

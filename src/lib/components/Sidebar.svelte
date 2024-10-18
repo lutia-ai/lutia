@@ -367,7 +367,7 @@
 				}}
 				on:keydown={(e) => {
 					if (e.key === 'Enter') {
-						isSettingsOpen = !true;
+						isSettingsOpen = true;
 						contextOpen = false;
 					}
 				}}

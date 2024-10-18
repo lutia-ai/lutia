@@ -30,6 +30,7 @@
 		"globals": "^15.0.0",
 		"prettier": "^3.1.1",
 		"prettier-plugin-svelte": "^3.1.2",
+		"rollup-plugin-visualizer": "^5.12.0",
 		"sass": "^1.77.6",
 		"stripe": "^16.10.0",
 		"svelte": "^4.2.7",
