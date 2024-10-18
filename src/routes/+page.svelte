@@ -34,7 +34,7 @@
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
-    import MetaIcon from '$lib/components/icons/MetaIcon.svelte';
+	import MetaIcon from '$lib/components/icons/MetaIcon.svelte';
 	import CopyIcon from '$lib/components/icons/CopyIcon.svelte';
 	import CopyIconFilled from '$lib/components/icons/CopyIconFilled.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
@@ -44,20 +44,14 @@
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
 	import {
-		calculateTabWidth,
 		changeTabWidth,
 		closeAllTabWidths,
-		countLeadingWhitespaces,
-		extractCodeBlock,
-		findLastNewlineIndex,
 		formatModelEnumToReadable,
 		getRandomPrompts,
 		handleKeyboardShortcut,
 		loadChatHistory,
 		parseMessageContent,
-        // parseMessageContent2,
-		// parseMessageContent3,
-		sanitizeLLmContent,
+		sanitizeLLmContent
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
 	import type { ApiProvider } from '@prisma/client';
@@ -82,7 +76,7 @@
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
 	const randomPrompts = getRandomPrompts(promptHelpers);
-    let SettingsComponent: ComponentType;
+	let SettingsComponent: ComponentType;
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -104,14 +98,14 @@
 		}
 	}
 
-    $: if (isSettingsOpen) {
-        loadSettings();
-    };
+	$: if (isSettingsOpen) {
+		loadSettings();
+	}
 
-    async function loadSettings() {
-        const module = await import('$lib/components/settings/Settings.svelte');
-        SettingsComponent = module.default;
-    }
+	async function loadSettings() {
+		const module = await import('$lib/components/settings/Settings.svelte');
+		SettingsComponent = module.default;
+	}
 
 	async function handleCountTokens(fullPrompt: Message[] | string, chosenModel: Model) {
 		if (chosenModel.generatesImages) {
@@ -227,7 +221,7 @@
 				}
 			]);
 
-            const currentChatIndex = $chatHistory.length - 1;
+			const currentChatIndex = $chatHistory.length - 1;
 
 			try {
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
@@ -322,16 +316,16 @@
 					let newText = done ? '' : decoder.decode(value);
 					responseText += newText;
 
-                    responseComponents = parseMessageContent(responseText);
-                    // Update only the AI's response in chat history
-                    chatHistory.update((history) =>
-                        history.map((msg, index) =>
-                            index === currentChatIndex
-                                ? { ...msg, text: responseText, components: responseComponents }
-                                : msg
-                        )
-                    );
-                    if (isScrollingProgrammatically) scrollToBottom();
+					responseComponents = parseMessageContent(responseText);
+					// Update only the AI's response in chat history
+					chatHistory.update((history) =>
+						history.map((msg, index) =>
+							index === currentChatIndex
+								? { ...msg, text: responseText, components: responseComponents }
+								: msg
+						)
+					);
+					if (isScrollingProgrammatically) scrollToBottom();
 				}
 
 				const lastItem = $chatHistory[currentChatIndex];
@@ -547,7 +541,7 @@
 		}
 	}
 
-	onMount( async () => {
+	onMount(async () => {
 		const successParam = $page.url.searchParams.get('success');
 		if (successParam && errorPopup) {
 			if (successParam === 'AccountLinkSuccess') {
@@ -590,7 +584,11 @@
 		userImage={data.userImage}
 	/>
 	{#if isSettingsOpen}
-        <svelte:component this={SettingsComponent} bind:isOpen={isSettingsOpen} bind:user={data.user} />
+		<svelte:component
+			this={SettingsComponent}
+			bind:isOpen={isSettingsOpen}
+			bind:user={data.user}
+		/>
 	{/if}
 	<div
 		class="body"
@@ -1540,7 +1538,7 @@
 								width: 15px;
 								height: 15px;
 								transform: translateY(1px);
-                                margin: auto 0;
+								margin: auto 0;
 							}
 
 							.tab-width-open-container {
@@ -1587,7 +1585,7 @@
 							.copy-icon-container {
 								height: 15px;
 								width: 15px;
-                                margin: auto 0;
+								margin: auto 0;
 							}
 
 							p {

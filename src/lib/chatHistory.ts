@@ -6,8 +6,8 @@ import type {
 	UserChat,
 	Image,
 	ApiRequestWithMessage,
-    PromptHelpers,
-    PromptHelper
+	PromptHelpers,
+	PromptHelper
 } from '$lib/types';
 import { deserialize } from '$app/forms';
 import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
@@ -91,105 +91,91 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 }
 
 export function parseMessageContent(content: string): Component[] {
-    const components: Component[] = [];
-    const lines = content.split('\n');
-    let currentTextContent: string[] = [];
-    let currentCodeBlock: string[] = [];
-    let inCodeBlock = false;
-    let currentLanguage = '';
-    let leadingWhitespace = '';
+	const components: Component[] = [];
+	const lines = content.split('\n');
+	let currentTextContent: string[] = [];
+	let currentCodeBlock: string[] = [];
+	let inCodeBlock = false;
+	let currentLanguage = '';
+	let leadingWhitespace = '';
 
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const codeBlockMatch = line.match(/^([ \t]*)```(\w+)?$/);
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+		const codeBlockMatch = line.match(/^([ \t]*)```(\w+)?$/);
 
-        if (codeBlockMatch) {
-            if (!inCodeBlock) {
-                // Start of code block
-                if (currentTextContent.length > 0) {
-                    // Push accumulated text content
-                    components.push({
-                        type: 'text',
-                        content: currentTextContent.join('\n')
-                    });
-                    currentTextContent = [];
-                }
-                
-                inCodeBlock = true;
-                leadingWhitespace = codeBlockMatch[1] || '';
-                currentLanguage = codeBlockMatch[2] || 'plaintext';
-                
-            } else {
-                // End of code block
-                inCodeBlock = false;
-                const normalizedCode = currentCodeBlock
-                    .map(line => 
-                        line.startsWith(leadingWhitespace) 
-                            ? line.slice(leadingWhitespace.length)
-                            : line
-                    )
-                    .join('\n');
+		if (codeBlockMatch) {
+			if (!inCodeBlock) {
+				// Start of code block
+				if (currentTextContent.length > 0) {
+					// Push accumulated text content
+					components.push({
+						type: 'text',
+						content: currentTextContent.join('\n')
+					});
+					currentTextContent = [];
+				}
 
-                components.push({
-                    type: 'code',
-                    language: currentLanguage,
-                    code: normalizedCode,
-                    copied: false,
-                    tabWidth: calculateTabWidth(normalizedCode),
-                    tabWidthOpen: false
-                });
-                currentCodeBlock = [];
-            }
-        } else {
-            // Regular line
-            if (inCodeBlock) {
-                currentCodeBlock.push(line);
-            } else {
-                currentTextContent.push(line);
-            }
-        }
-    }
+				inCodeBlock = true;
+				leadingWhitespace = codeBlockMatch[1] || '';
+				currentLanguage = codeBlockMatch[2] || 'plaintext';
+			} else {
+				// End of code block
+				inCodeBlock = false;
+				const normalizedCode = currentCodeBlock
+					.map((line) =>
+						line.startsWith(leadingWhitespace)
+							? line.slice(leadingWhitespace.length)
+							: line
+					)
+					.join('\n');
 
-    // Handle any remaining content
-    if (currentTextContent.length > 0) {
-        components.push({
-            type: 'text',
-            content: currentTextContent.join('\n')
-        });
-    }
-
-    // Handle unclosed code block
-    if (inCodeBlock && currentCodeBlock.length > 0) {
-        const normalizedCode = currentCodeBlock
-            .map(line => 
-                line.startsWith(leadingWhitespace) 
-                    ? line.slice(leadingWhitespace.length)
-                    : line
-            )
-            .join('\n');
-
-        components.push({
-            type: 'code',
-            language: currentLanguage,
-            code: normalizedCode,
-            copied: false,
-            tabWidth: calculateTabWidth(normalizedCode),
-            tabWidthOpen: false
-        });
-    }
-
-    return components;
-}
-
-
-
-
-export function extractCodeBlock(inputString: string): string {
-	const match = inputString.match(/```[a-zA-Z]+\n([\s\S]*)/);
-	if (!match) {
-		return '';
+				components.push({
+					type: 'code',
+					language: currentLanguage,
+					code: normalizedCode,
+					copied: false,
+					tabWidth: calculateTabWidth(normalizedCode),
+					tabWidthOpen: false
+				});
+				currentCodeBlock = [];
+			}
+		} else {
+			// Regular line
+			if (inCodeBlock) {
+				currentCodeBlock.push(line);
+			} else {
+				currentTextContent.push(line);
+			}
+		}
 	}
-	return match[1];
+
+	// Handle any remaining content
+	if (currentTextContent.length > 0) {
+		components.push({
+			type: 'text',
+			content: currentTextContent.join('\n')
+		});
+	}
+
+	// Handle unclosed code block
+	if (inCodeBlock && currentCodeBlock.length > 0) {
+		const normalizedCode = currentCodeBlock
+			.map((line) =>
+				line.startsWith(leadingWhitespace) ? line.slice(leadingWhitespace.length) : line
+			)
+			.join('\n');
+
+		components.push({
+			type: 'code',
+			language: currentLanguage,
+			code: normalizedCode,
+			copied: false,
+			tabWidth: calculateTabWidth(normalizedCode),
+			tabWidthOpen: false
+		});
+	}
+
+	return components;
 }
 
 export function calculateTabWidth(code: string): number {
@@ -305,36 +291,6 @@ export function formatModelEnumToReadable(enumValue: string): string {
 	return readable;
 }
 
-export function findLastNewlineIndex(text: string): number {
-	let index = text.length - 1;
-
-	// Skip trailing spaces
-	while (index >= 0 && text[index] === ' ') {
-		index--;
-	}
-
-	// Find the last non-newline character
-	while (index >= 0 && text[index] === 'n') {
-		index--;
-	}
-
-	// Return the index right after the last newline
-	return index + 1;
-}
-
-export function countLeadingWhitespaces(text: string): number {
-	// Split the text into an array of lines
-	const lines = text.split('\n');
-
-	// Get the last non-empty line (remove any empty or whitespace-only lines)
-	const lastNonEmptyLine = lines.reverse().find((line) => line.trim() !== '') || '';
-
-	// Count leading whitespaces in the last non-empty line
-	const leadingWhitespaces = lastNonEmptyLine.match(/^\s*/)?.[0].length || 0;
-
-	return leadingWhitespaces;
-}
-
 export function handleKeyboardShortcut(
 	event: KeyboardEvent,
 	userSettings: Partial<UserSettings> | null
@@ -376,19 +332,18 @@ export async function saveUserSettings(userSettings: Partial<UserSettings>) {
 	}
 }
 
-
 export function getRandomPrompts(promptHelpers: PromptHelpers): {
-    createImage: PromptHelper;
-    compose: PromptHelper;
-    question: PromptHelper;
+	createImage: PromptHelper;
+	compose: PromptHelper;
+	question: PromptHelper;
 } {
-    const getRandomItem = <T,>(array: T[]): T => {
-        return array[Math.floor(Math.random() * array.length)];
-    };
+	const getRandomItem = <T>(array: T[]): T => {
+		return array[Math.floor(Math.random() * array.length)];
+	};
 
-    return {
-        createImage: getRandomItem(promptHelpers.createImage),
-        compose: getRandomItem(promptHelpers.compose),
-        question: getRandomItem(promptHelpers.question)
-    };
+	return {
+		createImage: getRandomItem(promptHelpers.createImage),
+		compose: getRandomItem(promptHelpers.compose),
+		question: getRandomItem(promptHelpers.question)
+	};
 }
