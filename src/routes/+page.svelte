@@ -9,11 +9,8 @@
 		Image,
 		Model,
 		UserChat,
-		CodeComponent,
 		ChatComponent,
 		ModelDictionary,
-		PromptHelpers,
-		PromptHelper,
 		Component
 	} from '$lib/types';
 	import { isCodeComponent, isLlmChatComponent, isUserChatComponent } from '$lib/typeGuards';
@@ -28,7 +25,6 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
 	import logo from '$lib/images/logos/logo3.png';
-
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import StarsIcon from '$lib/components/icons/StarsIcon.svelte';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';

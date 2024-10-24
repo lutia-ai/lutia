@@ -100,7 +100,7 @@ export const modelDictionary: ModelDictionary = {
 		models: {
 			claude35Sonnet: {
 				name: 'Claude_3_5_Sonnet',
-				param: 'claude-3-5-sonnet-20240620',
+				param: 'claude-3-5-sonnet-20241022',
 				legacy: false,
 				input_price: 3,
 				output_price: 15,
