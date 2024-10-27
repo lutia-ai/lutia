@@ -30,14 +30,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(307, `/auth?error=CredentialsSignin&code=unverified_${session.user.email}`);
 	}
 
-	const apiRequests = await retrieveApiRequestsWithMessage(Number(session.user.id));
-	const serializedApiRequests = apiRequests.map(serializeApiRequest);
-
 	// User is authenticated, continue with the load function
 	return {
 		user,
 		userImage: session.user.image,
-		apiRequests: serializedApiRequests
+		apiRequests: retrieveApiRequestsWithMessage(Number(session.user.id), true)
 	};
 };
 

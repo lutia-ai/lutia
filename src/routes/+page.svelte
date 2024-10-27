@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, type ComponentType } from 'svelte';
+	import { onMount, tick, type ComponentType } from 'svelte';
 	import { HighlightAuto, LineNumbers } from 'svelte-highlight';
 	import { marked } from 'marked';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
@@ -11,7 +11,8 @@
 		UserChat,
 		ChatComponent,
 		ModelDictionary,
-		Component
+		Component,
+		SerializedApiRequest
 	} from '$lib/types';
 	import { isCodeComponent, isLlmChatComponent, isUserChatComponent } from '$lib/typeGuards';
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
@@ -52,10 +53,10 @@
 	import { page } from '$app/stores';
 	import type { ApiProvider } from '@prisma/client';
 	import { promptHelpers } from '$lib/promptHelpers.js';
+	import type { PageData } from './$types';
+	import { fade } from 'svelte/transition';
 
-	export let data;
-
-	chatHistory.set(loadChatHistory(data.apiRequests));
+	export let data: PageData;
 
 	let errorPopup: ErrorPopup;
 	let prompt: string;
@@ -545,12 +546,20 @@
 				errorPopup.showError(message, null, 5000, 'success');
 			}
 		}
-		mounted = true;
-		scrollToBottom();
+		const apiRequests = (await data.apiRequests) as SerializedApiRequest[];
+		chatHistory.set(loadChatHistory(apiRequests));
 		if (promptBar) {
 			// Get the height of the prompt bar
 			promptBarHeight = promptBar.offsetHeight;
 		}
+		// Wait for DOM update after setting chat history
+		await tick();
+
+		// Add a small delay to ensure content is fully rendered
+		setTimeout(() => {
+			scrollToBottom();
+		}, 100);
+		mounted = true;
 	});
 </script>
 
@@ -571,21 +580,30 @@
 <ErrorPopup bind:this={errorPopup} />
 
 <div class="main" class:settings-open={isSettingsOpen}>
-	<Sidebar
-		{companySelection}
-		{gptModelSelection}
-		bind:chosenModel
-		bind:isSettingsOpen
-		user={data.user}
-		userImage={data.userImage}
-	/>
-	{#if isSettingsOpen}
-		<svelte:component
-			this={SettingsComponent}
-			bind:isOpen={isSettingsOpen}
-			bind:user={data.user}
-		/>
-	{/if}
+	{#await data.apiRequests}
+		<div />
+	{:then}
+		{#if mounted}
+			<div transition:fade={{ duration: 300, delay: 0 }}>
+				<Sidebar
+					{companySelection}
+					{gptModelSelection}
+					bind:chosenModel
+					bind:isSettingsOpen
+					user={data.user}
+					userImage={data.userImage}
+				/>
+				{#if isSettingsOpen}
+					<svelte:component
+						this={SettingsComponent}
+						bind:isOpen={isSettingsOpen}
+						bind:user={data.user}
+					/>
+				{/if}
+			</div>
+		{/if}
+	{/await}
+
 	<div
 		class="body"
 		role="region"
@@ -594,382 +612,343 @@
 			isDragging = true;
 		}}
 	>
-		{#if $chatHistory.length === 0}
-			<div class="empty-content-options">
-				<div class="logo-container">
-					<img src={logo} alt="logo" />
-					<h1>Lutia</h1>
+		{#await data.apiRequests}
+			{#if !mounted}
+				<div class="loading-container" transition:fade={{ duration: 300 }}>
+					<div class="loader"></div>
 				</div>
-				<div class="options-container">
-					<div
-						class="option"
-						role="button"
-						tabindex="0"
-						on:click={() => {
-							selectCompany('openAI');
-							selectModel(modelDictionary.openAI.models.dalle3);
-							prompt = randomPrompts.createImage.prompt;
-							submitPrompt();
-						}}
-						on:keydown={(e) => {
-							if (e.key === 'Enter') {
-								selectCompany('openAI');
-								selectModel(modelDictionary.openAI.models.dalle3);
-								prompt = randomPrompts.createImage.prompt;
-								submitPrompt();
-							}
-						}}
-					>
-						<div class="icon" style="background-color: rgba(227,193,15,1);">
-							<svelte:component this={randomPrompts.createImage.icon} color="white" />
-						</div>
-						<p>{randomPrompts.createImage.prompt}</p>
-					</div>
-					<div
-						class="option"
-						role="button"
-						tabindex="0"
-						on:click={() => {
-							if (chosenModel.generatesImages) {
-								selectCompany('anthropic');
-								selectModel(modelDictionary.anthropic.models.claude35Sonnet);
-							}
-							prompt = randomPrompts.compose.prompt;
-							submitPrompt();
-						}}
-						on:keydown={(e) => {
-							if (e.key === 'Enter') {
-								if (chosenModel.generatesImages) {
-									selectCompany('anthropic');
-									selectModel(modelDictionary.anthropic.models.claude35Sonnet);
-								}
-								prompt = randomPrompts.compose.prompt;
-								submitPrompt();
-							}
-						}}
-					>
-						<div class="icon" style="background-color: #dc0480;">
-							<svelte:component this={randomPrompts.compose.icon} color="white" />
-						</div>
-						<p>{randomPrompts.compose.prompt}</p>
-					</div>
-					<div
-						class="option"
-						role="button"
-						tabindex="0"
-						on:click={() => {
-							if (chosenModel.generatesImages) {
-								selectCompany('anthropic');
-								selectModel(modelDictionary.anthropic.models.claude35Sonnet);
-							}
-							prompt = randomPrompts.question.prompt;
-							submitPrompt();
-						}}
-						on:keydown={(e) => {
-							if (e.key === 'Enter') {
-								if (chosenModel.generatesImages) {
-									selectCompany('anthropic');
-									selectModel(modelDictionary.anthropic.models.claude35Sonnet);
-								}
-								prompt = randomPrompts.question.prompt;
-								submitPrompt();
-							}
-						}}
-					>
-						<div class="icon" style="background-color: #16a1fb;">
-							<svelte:component this={randomPrompts.question.icon} color="white" />
-						</div>
-						<p>{randomPrompts.question.prompt}</p>
-					</div>
-				</div>
-			</div>
-		{/if}
-		<div class="chat-history" style="padding-bottom: {380 + promptBarHeight * 0.3}px;">
-			{#each $chatHistory as chat, chatIndex}
-				{#if isUserChatComponent(chat) && chat.by === 'user'}
-					<div class="user-chat-wrapper">
-						{#if chat.image}
-							<div class="user-images">
-								{#each chat.image as image}
-									<div class="user-image-container">
-										<img src={image.data} alt="user file" />
-									</div>
-								{/each}
-							</div>
-						{/if}
-						<div class="user-chat">
-							<p>
-								{@html chat.text}
-							</p>
-						</div>
-					</div>
-				{:else}
-					<div class="llm-container">
-						{#if isLlmChatComponent(chat)}
-							{#if isModelAnthropic(chat.by)}
-								<div
-									class="llm-icon-container {chat.loading ? 'rotateLoading' : ''}"
-								>
-									<img src={ClaudeIcon} alt="Claude's icon" />
-								</div>
-							{:else if isModelOpenAI(chat.by)}
-								<div
-									class="gpt-icon-container {chat.loading ? 'rotateLoading' : ''}"
-								>
-									<ChatGPTIcon
-										color="var(--text-color)"
-										width="22px"
-										height="22px"
-									/>
-								</div>
-							{:else if isModelGoogle(chat.by)}
-								<div
-									class="llm-icon-container {chat.loading ? 'rotateLoading' : ''}"
-								>
-									<GeminiIcon />
-								</div>
-							{:else if isModelMeta(chat.by)}
-								<div
-									class="llm-icon-container {chat.loading ? 'rotateLoading' : ''}"
-								>
-									<MetaIcon />
-								</div>
-							{/if}
-						{/if}
-						<div class="llm-chat">
-							{#if isLlmChatComponent(chat)}
-								{#each chat.components || [] as component, componentIndex}
-									{#if component.type === 'text'}
-										<p class="content-paragraph">
-											{@html marked(
-												component.content
-													? sanitizeLLmContent(component.content.trim())
-													: ''
-											)}
-										</p>
-									{:else if component.type === 'code'}
-										<div class="code-container">
-											<div class="code-header">
-												<p>{component.language}</p>
-
-												<div class="right-side-container">
-													{#if component.tabWidth}
-														<div
-															class="tab-width-container"
-															role="button"
-															tabindex="0"
-															on:click|stopPropagation={() =>
-																(component.tabWidthOpen = true)}
-															on:keydown|stopPropagation={(e) => {
-																if (e.key === 'Enter') {
-																	component.tabWidthOpen = true;
-																}
-															}}
-														>
-															<div class="dropdown-icon">
-																<DropdownIcon
-																	color="rgba(255,255,255,0.65)"
-																/>
-															</div>
-															<p>
-																Tab width: {component.tabWidth}
-															</p>
-															{#if component.tabWidthOpen}
-																<div
-																	class="tab-width-open-container"
-																>
-																	{#each [2, 4, 6, 8] as tabWidth}
-																		<div
-																			role="button"
-																			tabindex="0"
-																			on:click|stopPropagation={() => {
-																				component.code =
-																					changeTabWidth(
-																						component.code,
-																						tabWidth
-																					);
-																				component.tabWidth =
-																					tabWidth;
-																				component.tabWidthOpen = false;
-																			}}
-																			on:keydown|stopPropagation={(
-																				e
-																			) => {
-																				if (
-																					e.key ===
-																					'Enter'
-																				) {
-																					component.code =
-																						changeTabWidth(
-																							component.code,
-																							tabWidth
-																						);
-																					component.tabWidth =
-																						tabWidth;
-																				}
-																			}}
-																		>
-																			<p>
-																				Tab width: {tabWidth}
-																			</p>
-																		</div>
-																	{/each}
-																</div>
-															{/if}
-														</div>
-													{/if}
-													<div
-														class="copy-code-container"
-														role="button"
-														tabindex="0"
-														on:click={() => {
-															copyToClipboard(
-																component.code ? component.code : ''
-															);
-															updateChatHistoryToCopiedState(
-																chatIndex,
-																componentIndex
-															);
-														}}
-														on:keydown|stopPropagation={(e) => {
-															if (e.key === 'Enter') {
-																copyToClipboard(
-																	component.code
-																		? component.code
-																		: ''
-																);
-																updateChatHistoryToCopiedState(
-																	chatIndex,
-																	componentIndex
-																);
-															}
-														}}
-													>
-														{#if component.copied}
-															<div class="tick-container">
-																<TickIcon
-																	color="rgba(255,255,255,0.65)"
-																/>
-															</div>
-														{:else}
-															<div class="copy-icon-container">
-																<CopyIcon
-																	color="rgba(255,255,255,0.65)"
-																/>
-															</div>
-														{/if}
-														<p>
-															{component.copied ? 'copied' : 'copy'}
-														</p>
-													</div>
-												</div>
-											</div>
-											<div class="code-content">
-												<HighlightAuto
-													code={component.code.trim()}
-													let:highlighted
-												>
-													<LineNumbers
-														{highlighted}
-														--line-number-color="rgba(255, 255, 255, 0.3)"
-														--border-color="rgba(255, 255, 255, 0.1)"
-														--padding-left="1em"
-														--padding-right="1em"
-														style="max-width: 100%;"
-													/>
-												</HighlightAuto>
-											</div>
-										</div>
-									{:else if component.type === 'image'}
-										<div class="image-container">
-											<img src={component.data} alt="AI generated" />
-										</div>
-									{/if}
-								{/each}
-								{#if chat.loading}
-									<span class="gpt-loading-dot" />
-								{/if}
-								{#if !chat.loading}
-									<div
-										class="chat-toolbar-container"
-										style="opacity: {chat.price_open ? '1' : ''};"
-									>
-										<div
-											class="toolbar-item"
-											role="button"
-											tabindex="0"
-											on:click={() => {
-												copyToClipboard(chat.text);
-												updateChatHistoryToCopiedState(chatIndex, 0);
-											}}
-											on:keydown|stopPropagation={(e) => {
-												if (e.key === 'Enter') {
-													copyToClipboard(chat.text);
-													updateChatHistoryToCopiedState(chatIndex, 0);
-												}
-											}}
-										>
-											{#if chat.copied}
-												<TickIcon color="var(--text-color-light)" />
-											{:else}
-												<CopyIconFilled color="var(--text-color-light)" />
-											{/if}
-											<p>{chat.copied ? 'copied' : 'copy'}</p>
-										</div>
-										<div
-											class="toolbar-item"
-											role="button"
-											tabindex="0"
-											on:click|stopPropagation={() => {
-												chat.price_open = true;
-											}}
-											on:keydown|stopPropagation={(e) => {
-												chat.price_open = true;
-											}}
-										>
-											<DollarIcon color="var(--text-color-light)" />
-											<p>Price</p>
-											{#if chat.price_open}
-												<div class="price-open-container">
-													<div class="price-record">
-														<p>Input:</p>
-														<span
-															>${roundToFirstTwoNonZeroDecimals(
-																chat.input_cost
-															)}</span
-														>
-													</div>
-													<div class="price-record">
-														<p>Output:</p>
-														<span
-															>${roundToFirstTwoNonZeroDecimals(
-																chat.output_cost
-															)}</span
-														>
-													</div>
-													<div class="price-record">
-														<p>Total:</p>
-														<span
-															>${roundToFirstTwoNonZeroDecimals(
-																chat.input_cost + chat.output_cost
-															)}</span
-														>
-													</div>
-												</div>
-											{/if}
-										</div>
-										<div class="toolbar-item">
-											<StarsIcon color="var(--text-color-light)" />
-											<p>{formatModelEnumToReadable(chat.by)}</p>
-										</div>
-									</div>
-								{/if}
-							{/if}
+			{/if}
+		{:then}
+			{#if mounted}
+				{#if $chatHistory.length === 0}
+					<div class="empty-content-options">
+						<div class="logo-container">
+							<img src={logo} alt="logo" />
+							<h1>Lutia</h1>
 						</div>
 					</div>
 				{/if}
-			{/each}
-		</div>
+				<div
+					transition:fade={{ duration: 300, delay: 300 }}
+					class="chat-history"
+					style="padding-bottom: {380 + promptBarHeight * 0.3}px;"
+				>
+					{#each $chatHistory as chat, chatIndex}
+						{#if isUserChatComponent(chat) && chat.by === 'user'}
+							<div class="user-chat-wrapper">
+								{#if chat.image}
+									<div class="user-images">
+										{#each chat.image as image}
+											<div class="user-image-container">
+												<img src={image.data} alt="user file" />
+											</div>
+										{/each}
+									</div>
+								{/if}
+								<div class="user-chat">
+									<p>
+										{@html chat.text}
+									</p>
+								</div>
+							</div>
+						{:else}
+							<div class="llm-container">
+								{#if isLlmChatComponent(chat)}
+									{#if isModelAnthropic(chat.by)}
+										<div
+											class="llm-icon-container {chat.loading
+												? 'rotateLoading'
+												: ''}"
+										>
+											<img src={ClaudeIcon} alt="Claude's icon" />
+										</div>
+									{:else if isModelOpenAI(chat.by)}
+										<div
+											class="gpt-icon-container {chat.loading
+												? 'rotateLoading'
+												: ''}"
+										>
+											<ChatGPTIcon
+												color="var(--text-color)"
+												width="22px"
+												height="22px"
+											/>
+										</div>
+									{:else if isModelGoogle(chat.by)}
+										<div
+											class="llm-icon-container {chat.loading
+												? 'rotateLoading'
+												: ''}"
+										>
+											<GeminiIcon />
+										</div>
+									{:else if isModelMeta(chat.by)}
+										<div
+											class="llm-icon-container {chat.loading
+												? 'rotateLoading'
+												: ''}"
+										>
+											<MetaIcon />
+										</div>
+									{/if}
+								{/if}
+								<div class="llm-chat">
+									{#if isLlmChatComponent(chat)}
+										{#each chat.components || [] as component, componentIndex}
+											{#if component.type === 'text'}
+												<p class="content-paragraph">
+													{@html marked(
+														component.content
+															? sanitizeLLmContent(
+																	component.content.trim()
+																)
+															: ''
+													)}
+												</p>
+											{:else if component.type === 'code'}
+												<div class="code-container">
+													<div class="code-header">
+														<p>{component.language}</p>
+
+														<div class="right-side-container">
+															{#if component.tabWidth}
+																<div
+																	class="tab-width-container"
+																	role="button"
+																	tabindex="0"
+																	on:click|stopPropagation={() =>
+																		(component.tabWidthOpen = true)}
+																	on:keydown|stopPropagation={(
+																		e
+																	) => {
+																		if (e.key === 'Enter') {
+																			component.tabWidthOpen = true;
+																		}
+																	}}
+																>
+																	<div class="dropdown-icon">
+																		<DropdownIcon
+																			color="rgba(255,255,255,0.65)"
+																		/>
+																	</div>
+																	<p>
+																		Tab width: {component.tabWidth}
+																	</p>
+																	{#if component.tabWidthOpen}
+																		<div
+																			class="tab-width-open-container"
+																		>
+																			{#each [2, 4, 6, 8] as tabWidth}
+																				<div
+																					role="button"
+																					tabindex="0"
+																					on:click|stopPropagation={() => {
+																						component.code =
+																							changeTabWidth(
+																								component.code,
+																								tabWidth
+																							);
+																						component.tabWidth =
+																							tabWidth;
+																						component.tabWidthOpen = false;
+																					}}
+																					on:keydown|stopPropagation={(
+																						e
+																					) => {
+																						if (
+																							e.key ===
+																							'Enter'
+																						) {
+																							component.code =
+																								changeTabWidth(
+																									component.code,
+																									tabWidth
+																								);
+																							component.tabWidth =
+																								tabWidth;
+																						}
+																					}}
+																				>
+																					<p>
+																						Tab width: {tabWidth}
+																					</p>
+																				</div>
+																			{/each}
+																		</div>
+																	{/if}
+																</div>
+															{/if}
+															<div
+																class="copy-code-container"
+																role="button"
+																tabindex="0"
+																on:click={() => {
+																	copyToClipboard(
+																		component.code
+																			? component.code
+																			: ''
+																	);
+																	updateChatHistoryToCopiedState(
+																		chatIndex,
+																		componentIndex
+																	);
+																}}
+																on:keydown|stopPropagation={(e) => {
+																	if (e.key === 'Enter') {
+																		copyToClipboard(
+																			component.code
+																				? component.code
+																				: ''
+																		);
+																		updateChatHistoryToCopiedState(
+																			chatIndex,
+																			componentIndex
+																		);
+																	}
+																}}
+															>
+																{#if component.copied}
+																	<div class="tick-container">
+																		<TickIcon
+																			color="rgba(255,255,255,0.65)"
+																		/>
+																	</div>
+																{:else}
+																	<div
+																		class="copy-icon-container"
+																	>
+																		<CopyIcon
+																			color="rgba(255,255,255,0.65)"
+																		/>
+																	</div>
+																{/if}
+																<p>
+																	{component.copied
+																		? 'copied'
+																		: 'copy'}
+																</p>
+															</div>
+														</div>
+													</div>
+													<div class="code-content">
+														<HighlightAuto
+															code={component.code.trim()}
+															let:highlighted
+														>
+															<LineNumbers
+																{highlighted}
+																--line-number-color="rgba(255, 255, 255, 0.3)"
+																--border-color="rgba(255, 255, 255, 0.1)"
+																--padding-left="1em"
+																--padding-right="1em"
+																style="max-width: 100%;"
+															/>
+														</HighlightAuto>
+													</div>
+												</div>
+											{:else if component.type === 'image'}
+												<div class="image-container">
+													<img src={component.data} alt="AI generated" />
+												</div>
+											{/if}
+										{/each}
+										{#if chat.loading}
+											<span class="gpt-loading-dot" />
+										{/if}
+										{#if !chat.loading}
+											<div
+												class="chat-toolbar-container"
+												style="opacity: {chat.price_open ? '1' : ''};"
+											>
+												<div
+													class="toolbar-item"
+													role="button"
+													tabindex="0"
+													on:click={() => {
+														copyToClipboard(chat.text);
+														updateChatHistoryToCopiedState(
+															chatIndex,
+															0
+														);
+													}}
+													on:keydown|stopPropagation={(e) => {
+														if (e.key === 'Enter') {
+															copyToClipboard(chat.text);
+															updateChatHistoryToCopiedState(
+																chatIndex,
+																0
+															);
+														}
+													}}
+												>
+													{#if chat.copied}
+														<TickIcon color="var(--text-color-light)" />
+													{:else}
+														<CopyIconFilled
+															color="var(--text-color-light)"
+														/>
+													{/if}
+													<p>{chat.copied ? 'copied' : 'copy'}</p>
+												</div>
+												<div
+													class="toolbar-item"
+													role="button"
+													tabindex="0"
+													on:click|stopPropagation={() => {
+														chat.price_open = true;
+													}}
+													on:keydown|stopPropagation={(e) => {
+														chat.price_open = true;
+													}}
+												>
+													<DollarIcon color="var(--text-color-light)" />
+													<p>Price</p>
+													{#if chat.price_open}
+														<div class="price-open-container">
+															<div class="price-record">
+																<p>Input:</p>
+																<span
+																	>${roundToFirstTwoNonZeroDecimals(
+																		chat.input_cost
+																	)}</span
+																>
+															</div>
+															<div class="price-record">
+																<p>Output:</p>
+																<span
+																	>${roundToFirstTwoNonZeroDecimals(
+																		chat.output_cost
+																	)}</span
+																>
+															</div>
+															<div class="price-record">
+																<p>Total:</p>
+																<span
+																	>${roundToFirstTwoNonZeroDecimals(
+																		chat.input_cost +
+																			chat.output_cost
+																	)}</span
+																>
+															</div>
+														</div>
+													{/if}
+												</div>
+												<div class="toolbar-item">
+													<StarsIcon color="var(--text-color-light)" />
+													<p>{formatModelEnumToReadable(chat.by)}</p>
+												</div>
+											</div>
+										{/if}
+									{/if}
+								</div>
+							</div>
+						{/if}
+					{/each}
+				</div>
+			{/if}
+		{:catch error}
+			<p>error loading: {error.message}</p>
+		{/await}
 
 		<div class="prompt-bar-wrapper">
 			<div
@@ -1176,6 +1155,51 @@
 			flex-direction: column;
 			box-sizing: border-box;
 			padding-left: 60px;
+
+			.loading-container {
+				margin: auto;
+				max-width: 350px;
+				max-height: 350px;
+				width: 4vw;
+				height: 4vw;
+				border-radius: 100%;
+				background: linear-gradient(
+					165deg,
+					rgba(255, 255, 255, 1) 0%,
+					rgb(220, 220, 220) 40%,
+					rgb(170, 170, 170) 98%,
+					rgb(10, 10, 10) 100%
+				);
+				position: relative;
+			}
+
+			.loader:before {
+				position: absolute;
+				content: '';
+				width: 100%;
+				height: 100%;
+				border-radius: 100%;
+				border-bottom: 0 solid #ffffff05;
+
+				box-shadow:
+					0 -10px 20px 20px #ffffff40 inset,
+					0 -5px 15px 10px #ffffff50 inset,
+					0 -2px 5px #ffffff80 inset,
+					0 -3px 2px #ffffffbb inset,
+					0 2px 0px #ffffff,
+					0 2px 3px #ffffff,
+					0 5px 5px #ffffff90,
+					0 10px 15px #ffffff60,
+					0 10px 20px 20px #ffffff40;
+				filter: blur(3px);
+				animation: 2s rotate linear infinite;
+			}
+
+			@keyframes rotate {
+				100% {
+					transform: rotate(360deg);
+				}
+			}
 
 			.empty-content-options {
 				position: absolute;

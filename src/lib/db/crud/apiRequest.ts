@@ -1,7 +1,8 @@
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import type { ApiModel, ApiProvider, ApiRequest, Message, PrismaClient } from '@prisma/client';
-import type { ApiRequestWithMessage } from '$lib/types';
+import type { ApiRequestWithMessage, SerializedApiRequest } from '$lib/types';
 import prisma from '$lib/prisma';
+import { serializeApiRequest } from '$lib/chatHistory';
 
 export async function createApiRequestEntry(
 	userId: number,
@@ -63,8 +64,9 @@ export async function retrieveApiRequests(userEmail: string): Promise<ApiRequest
 }
 
 export async function retrieveApiRequestsWithMessage(
-	userId: number
-): Promise<ApiRequestWithMessage[]> {
+	userId: number,
+	serialize: boolean = false
+): Promise<ApiRequestWithMessage[] | SerializedApiRequest[]> {
 	try {
 		const apiRequests = await prisma.apiRequest.findMany({
 			where: {
@@ -81,7 +83,7 @@ export async function retrieveApiRequestsWithMessage(
 			}
 		});
 
-		return apiRequests;
+		return serialize ? apiRequests.map(serializeApiRequest) : apiRequests;
 	} catch (error) {
 		console.error('Error retrieving API requests for user:', error);
 		throw error;
