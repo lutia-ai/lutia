@@ -631,8 +631,7 @@
 			display: flex;
 			flex-direction: column;
 			gap: 15px;
-			margin: auto 0 48px 0;
-			// padding-left: 10px;
+			margin: auto 0 54px 0;
 			overflow: visible;
 
 			.settings-wrapper {

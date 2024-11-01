@@ -1219,20 +1219,6 @@
 			}
 		}
 
-		.blur-background {
-			position: fixed;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			display: flex;
-			padding: 6% 0;
-			box-sizing: border-box;
-			z-index: 10000;
-			background-color: rgba(0, 0, 0, 0.5);
-			overflow: hidden;
-		}
-
 		.body {
 			position: relative;
 			width: 100%;
@@ -1962,6 +1948,10 @@
 		.main {
 			.body {
 				padding-left: 0;
+
+                .empty-content-options {
+                    transform: translate(calc(-50%), -45%);
+                }
 
 				.chat-history {
 					padding: 0 35px 300px 35px;
