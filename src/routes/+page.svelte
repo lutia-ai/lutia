@@ -24,6 +24,7 @@
 		roundToFirstTwoNonZeroDecimals
 	} from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
+	import MobileSidebar from '$lib/components/MobileSidebar.svelte';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
 	import logo from '$lib/images/logos/logo3.png';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
@@ -40,11 +41,11 @@
 	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
+	import BurgerIcon from '$lib/components/icons/BurgerIcon.svelte';
 	import {
 		changeTabWidth,
 		closeAllTabWidths,
 		formatModelEnumToReadable,
-		getRandomPrompts,
 		handleKeyboardShortcut,
 		loadChatHistory,
 		parseMessageContent,
@@ -52,9 +53,9 @@
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
 	import type { ApiProvider } from '@prisma/client';
-	import { promptHelpers } from '$lib/promptHelpers.js';
 	import type { PageData } from './$types';
-	import { fade } from 'svelte/transition';
+	import { fade, fly, slide } from 'svelte/transition';
+	import { browser } from '$app/environment';
 
 	export let data: PageData;
 
@@ -72,8 +73,10 @@
 	let isDragging: boolean = false;
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
-	const randomPrompts = getRandomPrompts(promptHelpers);
 	let SettingsComponent: ComponentType;
+	let windowWidth = browser ? window.innerWidth : 0;
+	let isLargeScreen = windowWidth > 810;
+	let mobileSidebarOpen = false;
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -98,6 +101,11 @@
 	$: if (isSettingsOpen) {
 		loadSettings();
 	}
+
+	const handleResize = () => {
+		windowWidth = window.innerWidth;
+		isLargeScreen = windowWidth > 810;
+	};
 
 	async function loadSettings() {
 		const module = await import('$lib/components/settings/Settings.svelte');
@@ -555,6 +563,8 @@
 		// Wait for DOM update after setting chat history
 		await tick();
 
+		window.addEventListener('resize', handleResize);
+
 		// Add a small delay to ensure content is fully rendered
 		setTimeout(() => {
 			scrollToBottom();
@@ -585,13 +595,47 @@
 	{:then}
 		{#if mounted}
 			<div transition:fade={{ duration: 300, delay: 0 }}>
-				<Sidebar
+				{#if isLargeScreen}
+					<Sidebar
+						{companySelection}
+						{gptModelSelection}
+						bind:chosenModel
+						bind:isSettingsOpen
+						user={data.user}
+						userImage={data.userImage}
+					/>
+				{:else if !mobileSidebarOpen}
+					<div class="floating-sidebar">
+						<div
+							class="burger-icon"
+							transition:fly={{
+								delay: 150,
+								duration: 300,
+								x: -250 // 'x' or 'y'
+							}}
+							role="button"
+							tabindex="0"
+							on:click|stopPropagation={() => {
+								mobileSidebarOpen = true;
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									mobileSidebarOpen = true;
+								}
+							}}
+						>
+							<BurgerIcon color="var(--text-color)" strokeWidth="1" />
+						</div>
+					</div>
+				{/if}
+				<MobileSidebar
 					{companySelection}
 					{gptModelSelection}
 					bind:chosenModel
 					bind:isSettingsOpen
 					user={data.user}
 					userImage={data.userImage}
+					bind:mobileSidebarOpen
 				/>
 				{#if isSettingsOpen}
 					<svelte:component
@@ -631,7 +675,9 @@
 				<div
 					transition:fade={{ duration: 300, delay: 300 }}
 					class="chat-history"
-					style="padding-bottom: {380 + promptBarHeight * 0.3}px;"
+					style="
+                        padding-bottom: {380 + promptBarHeight * 0.3}px;
+                    "
 				>
 					{#each $chatHistory as chat, chatIndex}
 						{#if isUserChatComponent(chat) && chat.by === 'user'}
@@ -950,7 +996,13 @@
 			<p>error loading: {error.message}</p>
 		{/await}
 
-		<div class="prompt-bar-wrapper">
+		<div
+			class="prompt-bar-wrapper"
+			style="
+                transform: {mobileSidebarOpen ? 'translateX(calc(-50% + 20px))' : ''};
+                padding: {mobileSidebarOpen ? '0 30px 0 50px' : ''};
+            "
+		>
 			<div
 				class="prompt-bar"
 				style="
@@ -1143,7 +1195,42 @@
 		height: 100%;
 		min-width: 450px;
 		font-family: 'Albert Sans', sans-serif;
-		// overflow-x: hidden;
+
+		.floating-sidebar {
+			position: fixed;
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			z-index: 10001;
+			width: 65px;
+			padding-top: 5px;
+			z-index: 10000;
+
+			.burger-icon {
+				margin: 0 auto;
+				padding: 0 11px;
+				background: var(--bg-color);
+				border-radius: 25%;
+				cursor: pointer;
+				width: 53px;
+				height: 53px;
+				box-sizing: border-box;
+			}
+		}
+
+		.blur-background {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			display: flex;
+			padding: 6% 0;
+			box-sizing: border-box;
+			z-index: 10000;
+			background-color: rgba(0, 0, 0, 0.5);
+			overflow: hidden;
+		}
 
 		.body {
 			position: relative;
@@ -1162,6 +1249,8 @@
 				max-height: 350px;
 				width: 4vw;
 				height: 4vw;
+				min-width: 50px;
+				min-height: 50px;
 				border-radius: 100%;
 				background: linear-gradient(
 					165deg,
@@ -1373,7 +1462,7 @@
 					.llm-chat {
 						position: relative;
 						width: calc(100% - 50px);
-						padding: 3px;
+						padding: 3px 0px;
 						box-sizing: border-box;
 
 						&:hover {
@@ -1655,6 +1744,7 @@
 					border-radius: 30px;
 					display: flex;
 					gap: 5px;
+					transition: margin 0.3s ease;
 
 					.image-viewer {
 						position: absolute;
@@ -1868,20 +1958,76 @@
 	}
 
 	@media (max-width: 810px) {
-		.user-chat {
-			max-width: 100% !important;
-		}
+		.main {
+			.body {
+				padding-left: 0;
 
-		.empty-content-options {
-			transform: translate(-50%, -45%) !important;
+				.chat-history {
+					padding: 0 35px 300px 35px;
+					transition: all 0.3s ease-in-out;
 
-			.options-container {
-				display: none !important;
+					.user-chat-wrapper {
+						.user-chat {
+							max-width: 100%;
+						}
+					}
+
+					.llm-container {
+						// flex-direction: column;
+						gap: 10px;
+
+						.llm-icon-container {
+							img {
+								width: 100%;
+							}
+						}
+
+						.llm-chat {
+							flex: 10;
+						}
+
+						.gpt-icon-container {
+							position: relative;
+							width: 20px;
+							height: 20px;
+							display: flex;
+							border-radius: 50%;
+							padding: 2px;
+							padding-top: 6px;
+							border: none;
+						}
+
+						.llm-icon-container {
+							width: 24px;
+							height: 24px;
+							flex: none;
+							padding-top: 5px;
+						}
+
+						.chat-toolbar-container {
+							transform: translateY(-5px);
+						}
+					}
+				}
+
+				.prompt-bar-wrapper {
+					transform: translateX(-50%);
+					padding: 0 10px;
+					transition: all 0.6s ease-in-out;
+				}
 			}
-		}
 
-		.input-token-container {
-			padding: 10px 18px !important;
+			.empty-content-options {
+				transform: translate(-50%, -45%);
+
+				.options-container {
+					display: none;
+				}
+			}
+
+			.input-token-container {
+				padding: 10px 15px !important;
+			}
 		}
 	}
 </style>

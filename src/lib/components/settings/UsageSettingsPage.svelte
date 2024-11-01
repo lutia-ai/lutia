@@ -202,10 +202,12 @@
 		{#each Object.entries(usageData) as [company, data]}
 			{@const currentLayout = isValidCompany(company) ? companyVars[company].layout : ''}
 			<div class="title">
-				<div class="company-logo-container">
-					<svelte:component this={modelLogos[company].logo} />
+				<div class="title-container">
+					<div class="company-logo-container">
+						<svelte:component this={modelLogos[company].logo} />
+					</div>
+					<h1>{capitalizeFirstLetter(company)}</h1>
 				</div>
-				<h1>{capitalizeFirstLetter(company)}</h1>
 				<div class="layout-options-container">
 					<div
 						class="option"
@@ -321,8 +323,14 @@
 
 		.title {
 			display: flex;
+			flex-direction: column;
 			gap: 10px;
 			margin: 20px 0;
+
+			.title-container {
+				display: flex;
+				gap: 10px;
+			}
 
 			.company-logo-container {
 				width: 60px;
@@ -379,5 +387,99 @@
 	/* Scrollbar track background */
 	::-webkit-scrollbar-track {
 		background-color: var(--bg-color-light);
+	}
+
+	@media (max-width: 810px) {
+		.usage-body {
+			height: 92%;
+			padding: 30px 0;
+
+			.usage-top-panel {
+				display: flex;
+				gap: 20px;
+				flex-direction: column;
+				margin-bottom: 50px;
+				width: 100%;
+
+				.month-selector {
+					display: flex;
+					gap: 30px;
+					color: var(--bg-color);
+					padding: 10px;
+					border-radius: 10px;
+					height: max-content;
+					border: 1px solid var(--text-color);
+					width: 220px;
+					background: var(--text-color);
+
+					button {
+						background: none;
+						border: none;
+						color: var(--bg-color);
+						font-size: 15px;
+						cursor: pointer;
+					}
+
+					span {
+						flex: 1;
+						font-size: 15px;
+						margin: auto;
+						text-align: center;
+					}
+				}
+
+				.doughnut-container {
+					width: 300px;
+					height: 300px;
+					margin: auto;
+				}
+			}
+
+			.title {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+				margin: 20px 0;
+
+				.company-logo-container {
+					width: 60px;
+					height: 60px !important;
+					margin: auto 0;
+					border-radius: 50%;
+					padding: 5px;
+					box-sizing: border-box;
+					transition: all 0.3s ease;
+				}
+
+				h1 {
+					font-size: 22px;
+					margin: auto 0;
+				}
+
+				.layout-options-container {
+					margin: auto auto auto 0;
+					display: flex;
+					border: 1px solid var(--text-color-light);
+					border-radius: 8px;
+					overflow: hidden;
+
+					.option {
+						display: flex;
+						padding: 6px 14px;
+						cursor: pointer;
+
+						&:hover {
+							background: var(--bg-color-light-opacity-alt);
+						}
+
+						p {
+							font-size: 15px;
+							color: var(--text-color);
+							margin: auto 0;
+						}
+					}
+				}
+			}
+		}
 	}
 </style>

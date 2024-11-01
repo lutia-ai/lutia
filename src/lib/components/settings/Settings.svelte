@@ -203,4 +203,39 @@
 			}
 		}
 	}
+
+	@media (max-width: 810px) {
+		.settings-container {
+			padding: 3% 0;
+
+			.settings-panel {
+				min-width: 420px;
+				padding: 40px 10px;
+
+				.settings-body {
+					flex-direction: column;
+
+					.settings-sidebar {
+						height: 60px;
+						flex: none;
+						display: flex;
+						border-radius: 0;
+						border: none;
+
+						.sidebar-option {
+							border-radius: 5px;
+
+							&:first-child {
+								border-top-left-radius: 5px;
+							}
+						}
+					}
+
+					.settings-page {
+						padding: 0px;
+					}
+				}
+			}
+		}
+	}
 </style>

@@ -866,4 +866,11 @@
 	::-webkit-scrollbar-track {
 		background-color: var(--bg-color-light);
 	}
+
+	@media (max-width: 810px) {
+		.billing-body {
+			height: 92%;
+			padding: 10px 0;
+		}
+	}
 </style>

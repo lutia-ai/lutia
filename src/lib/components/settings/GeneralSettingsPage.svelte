@@ -360,4 +360,12 @@
 	::-webkit-scrollbar-track {
 		background-color: var(--bg-color-light);
 	}
+
+	@media (max-width: 810px) {
+		.general-settings-body {
+			height: 92%;
+			padding: 0 0;
+			padding-bottom: 40px;
+		}
+	}
 </style>
