@@ -363,9 +363,9 @@
 
 	@media (max-width: 810px) {
 		.general-settings-body {
-			height: 92%;
+			height: calc(100% - 65px);
 			padding: 0 0;
-			padding-bottom: 40px;
+			padding-bottom: 80px;
 		}
 	}
 </style>

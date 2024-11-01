@@ -887,7 +887,8 @@
 																--border-color="rgba(255, 255, 255, 0.1)"
 																--padding-left="1em"
 																--padding-right="1em"
-																style="max-width: 100%;"
+																--
+																style="max-width: 100%; font-size: 13px; line-height: 19px;"
 															/>
 														</HighlightAuto>
 													</div>

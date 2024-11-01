@@ -869,7 +869,7 @@
 
 	@media (max-width: 810px) {
 		.billing-body {
-			height: 92%;
+			height: calc(100% - 65px);
 			padding: 10px 0;
 		}
 	}
