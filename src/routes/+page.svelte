@@ -1165,13 +1165,16 @@
 	}
 
 	:global(ol) {
-		margin: 0 20px 10px 20px;
-		padding: 10px 0 0 0;
+		margin: 0 20px 10px 10px;
+		padding: 10px 0 0 30px;
+        list-style-position: outside;
 	}
 
 	:global(li) {
 		margin: 0 0 10px 0;
 		padding: 0;
+        display: list-item;
+        // display: block;
 
 		:global(p) {
 			margin: 0 0 10px 0;
@@ -1465,8 +1468,8 @@
 							line-height: 30px;
 							width: max-content;
 							max-width: 100%;
-							overflow-x: auto;
 							overflow-y: hidden;
+							overflow-x: visible !important;
 
 							&::-webkit-scrollbar {
 								height: 10px;
