@@ -421,7 +421,6 @@
 		z-index: 10001;
 		padding: 10px 0px;
 		width: 65px;
-		background: var(--bg-color);
 
 		.company-and-llm-container {
 			position: relative;
@@ -434,6 +433,8 @@
 				// cursor: pointer;
 				z-index: 10;
 				width: 100%;
+				background: var(--bg-color);
+				border-radius: 0 10px 10px 0;
 
 				.company-logo-button {
 					width: 60px;
@@ -633,6 +634,8 @@
 			gap: 15px;
 			margin: auto 0 54px 0;
 			overflow: visible;
+			background: var(--bg-color);
+			border-radius: 10px;
 
 			.settings-wrapper {
 				position: relative;

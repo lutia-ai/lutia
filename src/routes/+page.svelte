@@ -1167,14 +1167,14 @@
 	:global(ol) {
 		margin: 0 20px 10px 10px;
 		padding: 10px 0 0 30px;
-        list-style-position: outside;
+		list-style-position: outside;
 	}
 
 	:global(li) {
 		margin: 0 0 10px 0;
 		padding: 0;
-        display: list-item;
-        // display: block;
+		display: list-item;
+		// display: block;
 
 		:global(p) {
 			margin: 0 0 10px 0;
@@ -1952,15 +1952,16 @@
 			.body {
 				padding-left: 0;
 
-                .empty-content-options {
-                    transform: translate(calc(-50%), -45%);
-                }
+				.empty-content-options {
+					transform: translate(calc(-50%), -45%);
+				}
 
 				.chat-history {
 					padding: 0 35px 300px 35px;
 					transition: all 0.3s ease-in-out;
 
 					.user-chat-wrapper {
+						margin-top: 20px !important;
 						.user-chat {
 							max-width: 100%;
 						}
