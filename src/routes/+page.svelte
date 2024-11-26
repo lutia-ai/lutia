@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { fade } from 'svelte/transition';
 	import { HighlightAuto, LineNumbers } from 'svelte-highlight';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
 	import ChatGpt from '$lib/components/icons/chatGPT.svelte';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
-	import gptImage from '$lib/images/gptImage.png';
-	import gptImage2 from '$lib/images/gptImage2.png';
+	import gptImage from '$lib/images/gptimage.png';
+	import gptImage2 from '$lib/images/gptimage2.png';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import CopyIcon from '$lib/components/icons/CopyIcon.svelte';
 	import { marked } from 'marked';
