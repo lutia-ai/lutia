@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { darkMode } from '$lib/stores.ts';
 	import { onMount } from 'svelte';
+	import '@fontsource-variable/raleway';
 
 	export let data: { colorScheme: string };
 

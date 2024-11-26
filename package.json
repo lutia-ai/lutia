@@ -46,6 +46,7 @@
 		"@anthropic-ai/sdk": "^0.24.3",
 		"@auth/core": "^0.34.2",
 		"@auth/sveltekit": "^1.4.2",
+		"@fontsource-variable/raleway": "^5.1.0",
 		"@google-cloud/vertexai": "^1.4.0",
 		"@google/generative-ai": "^0.16.0",
 		"@prisma/client": "^5.19.0",

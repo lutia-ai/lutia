@@ -20,6 +20,7 @@
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import LoadingSpinner from '$lib/components/icons/LoadingSpinner.svelte';
 
+	// this doesn't get used but is still passed as a prop from Settings.svelte
 	export let user: UserWithSettings;
 
 	let loading = true;
