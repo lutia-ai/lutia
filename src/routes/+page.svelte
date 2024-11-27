@@ -13,6 +13,19 @@
 	import { marked } from 'marked';
 	import { sanitizeLLmContent } from '$lib/chatHistory';
 	import { spring } from 'svelte/motion';
+	import viewport from '$lib/userViewportAction';
+	import DemoVideo from '$lib/videos/lutia-screenrecording.mp4';
+	// import ScreenshotTipTapNotes from '$lib/images/screenshotTipTapNotes.png';
+
+	let videoElement: HTMLVideoElement;
+
+	function playVideo(videoElement: HTMLVideoElement) {
+		videoElement.play();
+	}
+
+	function pauseVideo(videoElement: HTMLVideoElement) {
+		videoElement.pause();
+	}
 
 	let canFade = false;
 
@@ -98,10 +111,10 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 	let displayCode1 = '';
 	let displayCode2 = '';
 
-	const image1Timeout = 900;
-	const image2Timeout = 1800;
-	const text1Timeout = 2000;
-	const text2Timeout = 5000;
+	const image1Timeout = 300;
+	const image2Timeout = 1000;
+	const text1Timeout = 1800;
+	const text2Timeout = 4800;
 	const code1Timeout = 4000;
 	const code2Timeout = 2800;
 
@@ -156,6 +169,11 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		damping: 0.9
 	});
 
+	const explainSectionOpacity = spring(0, {
+		stiffness: 0.1,
+		damping: 0.9
+	});
+
 	function chunkText(text: string, chunkSize: number = 10): string[] {
 		const chunks: string[] = [];
 		for (let i = 0; i < text.length; i += chunkSize) {
@@ -181,6 +199,8 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		displayText1Opacity.set(opacity === 1 ? 1 : 0);
 		displayText2Position.set(opacity === 1 ? 0 : 350);
 		displayText2Opacity.set(opacity === 1 ? 1 : 0);
+
+		explainSectionOpacity.set($displayImage2Opacity === 0 ? 1 : 0);
 	}
 
 	onMount(() => {
@@ -189,6 +209,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		}, image1Timeout);
 		setTimeout(() => {
 			displayImage2Opacity.set(1);
+			canFade = true;
 		}, image2Timeout);
 		setTimeout(() => {
 			displayText1Opacity.set(1);
@@ -198,9 +219,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		}, code1Timeout);
 		setTimeout(() => {
 			displayText2Opacity.set(1);
-			setTimeout(() => {
-				canFade = true;
-			}, 500);
 		}, text2Timeout);
 		setTimeout(() => {
 			displayCode2Opacity.set(1);
@@ -281,7 +299,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		if (canFade) handleScroll(event);
 	}}
 >
-	<!-- <div class="main-landing-page"> -->
 	<div class="landing-page">
 		<div class="landing-container">
 			<div
@@ -451,49 +468,107 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 			<h3 class="sub-title">
 				Access a host of AI models without the costly monthly subscriptions.
 			</h3>
-			<button on:click={() => goto('chat')} class="cta-button animated-background"
-				>Get Started</button
-			>
+			<button class="cta-button animated-background" on:click={() => goto('chat')}>
+				Get Started
+			</button>
 		</div>
 	</div>
-	<!-- </div> -->
 
-	<div class="chat-container">
-		<!-- <h1>Why have one when you could have them all...</h1>
-        <div class="question-container">
-            <p>Why would you want to ask questions to multiple LLMs?</p>
-        </div>
-        <div class="llm-container">
-            <div class="llm-icon-container">
-                <GeminiIcon />
-            </div>
-            <div class="llm-chat">
-                <p class="content-paragraph">Asking multiple LLMs the same question is a great way to get a more comprehensive and accurate answer. Different models are trained on different data, and they may have different strengths and weaknesses. By comparing the responses from multiple models, you can get a better sense of the overall consensus and identify potential biases or inaccuracies.</p>
-            </div>
-        </div>
-        <div class="question-container">
-            <p>If I don't have to pay an expensive monthly subscription, how does pricing work?</p>
-        </div>
-        <div class="llm-container">
-            <div class="gpt-icon-container">
-                <ChatGpt color="black" />
-            </div>
-            <div class="llm-chat">
-                <p class="content-paragraph">Asking multiple LLMs the same question is a great way to get a more comprehensive and accurate answer. Different models are trained on different data, and they may have different strengths and weaknesses. By comparing the responses from multiple models, you can get a better sense of the overall consensus and identify potential biases or inaccuracies.</p>
-            </div>
-        </div>
-        <div class="question-container">
-            <p>If I don't have to pay an expensive monthly subscription, how does pricing work?</p>
-        </div>
-        <div class="llm-container">
-            <div class="llm-icon-container">
-                <img src={ClaudeIcon} alt="Claude's icon" />
-            </div>
-            <div class="llm-chat">
-                <p class="content-paragraph">Asking multiple LLMs the same question is a great way to get a more comprehensive and accurate answer. Different models are trained on different data, and they may have different strengths and weaknesses. By comparing the responses from multiple models, you can get a better sense of the overall consensus and identify potential biases or inaccuracies.</p>
-            </div>
-        </div> -->
+	<div class="explain-section" style="opacity: {$explainSectionOpacity};">
+		<h1 class="animated-text">
+			Access leading AI models, all from the same intuitive interface
+		</h1>
+		<video
+			width="100%"
+			height="100%"
+			loop
+			controls
+			aria-label="Demo video"
+			bind:this={videoElement}
+			use:viewport
+			on:enterViewport={() => playVideo(videoElement)}
+			on:exitViewport={() => pauseVideo(videoElement)}
+			muted={true}
+		>
+			<source src={DemoVideo} type="video/mp4" />
+			<track kind="captions" src="" srclang="en" label="English" />
+		</video>
+
+		<h1 class="animated-text" style="margin-top: 300px; margin-bottom: 0px;">
+			Only pay for what you use
+		</h1>
+		<p class="pay-paragraph">
+			Pay-as-you-go and enjoy premium AI models without the high subscription costs. Most
+			active users spend less than $3 monthly.
+		</p>
+		<div class="payment-explain-container">
+			<div class="question-container">
+				<p>How much does each message to an LLM cost?</p>
+			</div>
+			<div class="llm-container">
+				<div class="gpt-icon-container">
+					<ChatGpt color="var(--text-color)" />
+				</div>
+				<div class="llm-chat">
+					<p class="content-paragraph">
+						The cost of sending a message to a Large Language Model (LLM) like those
+						provided by OpenAI, Google, or others, varies based on a few key factors: <br
+						/><br />
+
+						<li>
+							<strong>Provider Pricing:</strong> Different companies have different pricing
+							models.
+						</li>
+						<br />
+						<li>
+							<strong>Token Usage:</strong> Models measure input (what you send) and output
+							(what the model returns) in units called tokens.
+						</li>
+						<br />
+
+						In general, these costs add up to fractions of a cent per token, for example
+						the cost of this request is shown below.
+					</p>
+					<div class="price-open-container animated-background">
+						<div class="price-record">
+							<p>Input:</p>
+							<span>$0.00005</span>
+						</div>
+						<div class="price-record">
+							<p>Output:</p>
+							<span>$0.00179</span>
+						</div>
+						<div class="price-record">
+							<p>Total:</p>
+							<span>$0.00184</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="what-waiting-container">
+			<h1 class="animated-text" style="margin: 0 auto 0 auto; font-weight: 400;">
+				What are you waiting for?
+			</h1>
+			<p class="pay-paragraph" style="margin: 0 auto;">
+				Create an account now and receive $1 in free credit
+			</p>
+			<button
+				class="cta-button animated-background"
+				style="width: max-content; margin: 0 auto;"
+				on:click={() => goto('chat')}
+			>
+				Get Started
+			</button>
+		</div>
 	</div>
+
+	<footer>
+		<a href="/auth">Login</a>
+		<a href="/auth">Register</a>
+		<a href="/privacy-policy">Privacy policy</a>
+	</footer>
 </div>
 
 <style lang="scss">
@@ -571,167 +646,328 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 				font-style: normal;
 				z-index: 10;
 			}
+		}
+	}
 
-			.cta-button {
-				background-color: #1d60c2;
-				color: #fff;
-				padding: 1rem 2rem;
-				border: none;
-				border-radius: 5px;
-				text-decoration: none;
-				font-size: 1rem;
-				transition: background-color 0.3s;
-				cursor: pointer;
-				margin-top: 40px;
-				z-index: 10;
-				transition: outline 0.3s ease-in-out;
+	.cta-button {
+		background-color: #1d60c2;
+		color: #fff;
+		padding: 1rem 2rem;
+		border: none;
+		border-radius: 5px;
+		text-decoration: none;
+		font-size: 1rem;
+		transition: background-color 0.3s;
+		cursor: pointer;
+		margin-top: 40px;
+		z-index: 10;
+		transition: outline 0.3s ease-in-out;
 
-				&:hover {
-					outline: 7px solid var(--bg-color-light);
+		&:hover {
+			outline: 7px solid var(--bg-color-light);
+		}
+	}
+
+	.question-container {
+		position: relative;
+		max-width: 400px;
+		border-radius: 20px;
+		background: var(--bg-color-light);
+		padding: 10px 20px;
+		// width: max-content;
+		flex-shrink: 1;
+		box-sizing: border-box;
+		word-break: break-word;
+		overflow-wrap: break-word;
+		margin: 50px 0;
+		margin-left: auto;
+
+		p {
+			padding: 0;
+			margin: 0;
+			font-weight: 300;
+			line-height: 30px;
+			font-family: 'Albert Sans', sans-serif;
+		}
+	}
+
+	.llm-container {
+		position: relative;
+		display: flex;
+		gap: 20px;
+		width: 100%;
+		box-sizing: border-box;
+		max-width: 850px;
+		margin-left: auto;
+		margin-right: auto;
+		font-family: 'Albert Sans', sans-serif;
+		transition: opacity 0.6s ease;
+
+		.gpt-icon-container {
+			position: relative;
+			width: 24px;
+			height: 24px;
+			display: flex;
+			border-radius: 50%;
+			padding: 2px;
+			padding-top: 0px;
+			margin-top: 6px;
+			border: none;
+			// border: 1px solid var(--text-color-light-opacity);
+		}
+
+		.llm-icon-container {
+			position: relative;
+			display: flex;
+			width: 28px;
+			height: 28px;
+			padding-top: 4px;
+			flex: 1;
+		}
+
+		.llm-chat {
+			position: relative;
+			width: calc(100% - 50px);
+			padding: 3px 0px;
+			box-sizing: border-box;
+
+			.content-paragraph {
+				display: flex;
+				flex-direction: column;
+				font-weight: 300;
+				line-height: 30px;
+				// width: max-content;
+				max-width: 100%;
+				overflow-y: hidden;
+				overflow-x: visible !important;
+				color: var(--text-color);
+				margin: 0;
+				font-family: 'Albert Sans', sans-serif;
+
+				li {
+					font-family: 'Albert Sans', sans-serif !important;
+					font-weight: 200 !important;
+					line-height: 30px;
+				}
+
+				p {
+					font-family: 'Albert Sans', sans-serif;
+					font-weight: 300;
+					line-height: 30px;
 				}
 			}
+		}
 
-			.llm-container {
-				position: relative;
+		.image-container {
+			position: relative;
+			border-radius: 5px;
+			overflow: hidden;
+
+			img {
+				border-radius: 10px;
+			}
+		}
+
+		.code-container {
+			padding-bottom: 10px;
+			border-radius: 10px;
+			margin: 0 0;
+			width: 818px;
+
+			.code-header {
 				display: flex;
-				gap: 20px;
-				width: 100%;
-				box-sizing: border-box;
-				max-width: 850px;
-				margin-left: auto;
-				margin-right: auto;
-				font-family: 'Albert Sans', sans-serif;
-				transition: opacity 0.6s ease;
+				padding: 10px 20px;
+				background: rgba(46, 56, 66, 255);
+				border-top-left-radius: 10px;
+				border-top-right-radius: 10px;
 
-				.gpt-icon-container {
-					position: relative;
-					width: 24px;
-					height: 24px;
+				.right-side-container {
 					display: flex;
-					border-radius: 50%;
-					padding: 2px;
-					padding-top: 0px;
-					margin-top: 6px;
-					border: none;
-					// border: 1px solid var(--text-color-light-opacity);
-				}
+					margin-left: auto;
 
-				.llm-icon-container {
-					position: relative;
-					display: flex;
-					width: 28px;
-					height: 28px;
-					padding-top: 4px;
-					flex: 1;
-				}
-
-				.llm-chat {
-					position: relative;
-					width: calc(100% - 50px);
-					padding: 3px 0px;
-					box-sizing: border-box;
-
-					.content-paragraph {
+					.tab-width-container {
+						position: relative;
 						display: flex;
-						flex-direction: column;
-						font-weight: 300;
-						line-height: 30px;
-						// width: max-content;
-						max-width: 100%;
-						overflow-y: hidden;
-						overflow-x: visible !important;
-						color: var(--text-color);
-						margin: 0;
+						gap: 5px;
+						cursor: pointer;
+
+						.dropdown-icon {
+							width: 15px;
+							height: 15px;
+							transform: translateY(1px);
+							margin: auto 0;
+						}
 					}
-				}
 
-				.image-container {
-					position: relative;
-					border-radius: 5px;
-					overflow: hidden;
-
-					img {
-						border-radius: 10px;
-					}
-				}
-
-				.code-container {
-					padding-bottom: 10px;
-					border-radius: 10px;
-					margin: 0 0;
-					width: 818px;
-
-					.code-header {
+					.copy-code-container {
 						display: flex;
-						padding: 10px 20px;
-						background: rgba(46, 56, 66, 255);
-						border-top-left-radius: 10px;
-						border-top-right-radius: 10px;
+						margin-left: 30px;
+						gap: 5px;
+						cursor: pointer;
 
-						.right-side-container {
-							display: flex;
-							margin-left: auto;
-
-							.tab-width-container {
-								position: relative;
-								display: flex;
-								gap: 5px;
-								cursor: pointer;
-
-								.dropdown-icon {
-									width: 15px;
-									height: 15px;
-									transform: translateY(1px);
-									margin: auto 0;
-								}
-							}
-
-							.copy-code-container {
-								display: flex;
-								margin-left: 30px;
-								gap: 5px;
-								cursor: pointer;
-
-								.copy-icon-container {
-									height: 15px;
-									width: 15px;
-									margin: auto 0;
-								}
-
-								p {
-									margin: auto 0;
-								}
-							}
+						.copy-icon-container {
+							height: 15px;
+							width: 15px;
+							margin: auto 0;
 						}
 
 						p {
 							margin: auto 0;
-							line-height: 15px !important;
-							color: rgba(255, 255, 255, 0.65);
-							font-weight: 300;
-							font-size: 12px;
 						}
 					}
+				}
 
-					.code-content {
-						overflow: hidden;
-						border-bottom-left-radius: 10px;
-						border-bottom-right-radius: 10px;
-					}
+				p {
+					margin: auto 0;
+					line-height: 15px !important;
+					color: rgba(255, 255, 255, 0.65);
+					font-weight: 300;
+					font-size: 12px;
+				}
+			}
+
+			.code-content {
+				overflow: hidden;
+				border-bottom-left-radius: 10px;
+				border-bottom-right-radius: 10px;
+			}
+		}
+	}
+
+	.explain-section {
+		display: flex;
+		flex-direction: column;
+		max-width: 1000px;
+		margin: 100px auto;
+		padding: 0 40px;
+		transition: opacity 1s ease;
+		perspective: 1000px;
+
+		h1 {
+			max-width: 700px;
+			font-size: 40px;
+			font-weight: 200;
+			font-family: 'Raleway Variable', sans-serif;
+		}
+
+		video {
+			border-radius: 10px;
+		}
+
+		.pay-paragraph {
+			font-family: 'Raleway Variable', sans-serif;
+			font-size: 22px;
+			font-weight: 800;
+			margin-top: 20px;
+		}
+
+		.payment-explain-container {
+			padding: 0 15px;
+			transform: perspective(1000px) rotateY(0deg);
+		}
+
+		.price-open-container {
+			position: absolute;
+			display: flex;
+			gap: 15px;
+			flex-direction: column;
+			top: calc(100% + 50px);
+			left: -10px;
+			padding: 10px;
+			border-radius: 10px;
+			border: 1px solid var(--text-color-light-opacity);
+			width: max-content;
+			background: linear-gradient(270deg, #e91e63, #1d60c2, #9c27b0, #e91e63);
+			background-size: 400%; /* To ensure smooth animation */
+			animation: gradient-animation 25s ease infinite; /* Animation */
+
+			&::before {
+				content: '';
+				position: absolute;
+				top: -10px; /* Position above container */
+				left: calc(50% - 10px); /* Center the arrow */
+				width: 20px; /* Width of the arrow */
+				height: 10px; /* Height of the arrow */
+				background: inherit; /* Inherit the gradient */
+				clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+				/* Creates a triangle shape */
+			}
+
+			.price-record {
+				position: relative;
+				display: flex;
+				gap: 5px;
+
+				p {
+					position: relative;
+					margin: 0;
+					transition: none;
+					opacity: 1;
+					font-size: 14px;
+					width: 50px;
+					padding: 0;
+					left: 0;
+					top: 0;
+					transform: translateX(0);
+				}
+
+				span {
+					position: relative;
+					margin: 0;
+					width: max-content;
 				}
 			}
 		}
 	}
 
-	.chat-container {
+	.what-waiting-container {
 		display: flex;
 		flex-direction: column;
 		gap: 50px;
 		background: var(--text-color);
+		padding: 50px;
+		border-radius: 20px;
+		margin-top: 420px;
+
+		h1,
+		p {
+			text-align: center;
+		}
+
+		p {
+			color: var(--bg-color-light-alt);
+		}
+
+		.cta-button {
+			&:hover {
+				outline: 7px solid var(--text-color-light);
+			}
+		}
+	}
+
+	footer {
+		display: flex;
+		gap: 50px;
 		border-radius: 20px;
 		padding: 50px 20px;
 		box-sizing: border-box;
-		margin-top: 1000px;
+		margin-top: 200px;
+		max-width: 1000px;
+		margin: 0 auto;
+
+		a {
+			flex: 1;
+			text-align: center;
+			font-size: 18px;
+			font-weight: 300;
+			font-family: 'Raleway Variable', sans-serif;
+			color: var(--text-color);
+			text-decoration: none;
+
+			&:hover {
+				text-decoration: underline;
+			}
+		}
 	}
 
 	.animated-text {
