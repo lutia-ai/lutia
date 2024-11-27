@@ -699,7 +699,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		box-sizing: border-box;
 		max-width: 850px;
 		margin-left: auto;
-		margin-right: auto;
+		// margin-right: auto;
 		font-family: 'Albert Sans', sans-serif;
 		transition: opacity 0.6s ease;
 
@@ -736,7 +736,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 				flex-direction: column;
 				font-weight: 300;
 				line-height: 30px;
-				// width: max-content;
 				max-width: 100%;
 				overflow-y: hidden;
 				overflow-x: visible !important;
