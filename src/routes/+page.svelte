@@ -909,14 +909,14 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 					left: 0;
 					top: 0;
 					transform: translateX(0);
-					color: var(--bg-color);
+					color: white;
 				}
 
 				span {
 					position: relative;
 					margin: 0;
 					width: max-content;
-					color: var(--bg-color);
+					color: white;
 				}
 			}
 		}
