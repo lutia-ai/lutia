@@ -514,7 +514,8 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 						The cost of sending a message to a Large Language Model (LLM) like those
 						provided by OpenAI, Google, or others, varies based on a few key factors: <br
 						/><br />
-
+					</p>
+					<ol>
 						<li>
 							<strong>Provider Pricing:</strong> Different companies have different pricing
 							models.
@@ -524,8 +525,8 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 							<strong>Token Usage:</strong> Models measure input (what you send) and output
 							(what the model returns) in units called tokens.
 						</li>
-						<br />
-
+					</ol>
+					<p class="content-paragraph">
 						In general, these costs add up to fractions of a cent per token, for example
 						the cost of this request is shown below.
 					</p>
@@ -674,7 +675,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		border-radius: 20px;
 		background: var(--bg-color-light);
 		padding: 10px 20px;
-		// width: max-content;
 		flex-shrink: 1;
 		box-sizing: border-box;
 		word-break: break-word;
@@ -699,7 +699,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		box-sizing: border-box;
 		max-width: 850px;
 		margin-left: auto;
-		// margin-right: auto;
 		font-family: 'Albert Sans', sans-serif;
 		transition: opacity 0.6s ease;
 
@@ -743,16 +742,18 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 				margin: 0;
 				font-family: 'Albert Sans', sans-serif;
 
-				li {
-					font-family: 'Albert Sans', sans-serif !important;
-					font-weight: 200 !important;
-					line-height: 30px;
-				}
-
 				p {
 					font-family: 'Albert Sans', sans-serif;
 					font-weight: 300;
 					line-height: 30px;
+				}
+			}
+
+			ol {
+				li {
+					font-family: 'Albert Sans', sans-serif !important;
+					font-weight: 200 !important;
+					line-height: 30px !important;
 				}
 			}
 		}
@@ -908,12 +909,14 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 					left: 0;
 					top: 0;
 					transform: translateX(0);
+					color: var(--bg-color);
 				}
 
 				span {
 					position: relative;
 					margin: 0;
 					width: max-content;
+					color: var(--bg-color);
 				}
 			}
 		}
