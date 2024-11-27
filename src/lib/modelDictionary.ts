@@ -100,7 +100,7 @@ export const modelDictionary: ModelDictionary = {
 		models: {
 			claude35Sonnet: {
 				name: 'Claude_3_5_Sonnet',
-				param: 'claude-3-5-sonnet-20241022',
+				param: 'claude-3-5-sonnet-latest',
 				legacy: false,
 				input_price: 3,
 				output_price: 15,
@@ -108,6 +108,18 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
+				generatesImages: false
+			},
+			claude35Haiku: {
+				name: 'Claude_3_5_Haiku',
+				param: 'claude-3-5-haiku-latest',
+				legacy: false,
+				input_price: 1,
+				output_price: 5,
+				context_window: 200000,
+				hub: 'Xenova/claude-tokenizer',
+				handlesImages: false,
+				maxImages: 0,
 				generatesImages: false
 			},
 			claude3Opus: {
@@ -137,7 +149,7 @@ export const modelDictionary: ModelDictionary = {
 			claude3Haiku: {
 				name: 'Claude_3_Haiku',
 				param: 'claude-3-haiku-20240307',
-				legacy: false,
+				legacy: true,
 				input_price: 0.25,
 				output_price: 1.25,
 				context_window: 200000,
