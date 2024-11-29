@@ -14,6 +14,7 @@ enum ApiProvider {
   anthropic
   google
   meta
+  xAI
 }
 
 enum ApiModel {
@@ -24,6 +25,7 @@ enum ApiModel {
   GPT_3_5_Turbo
   DALL_E
   Claude_3_5_Sonnet
+  Claude_3_5_Haiku
   Claude_3_Opus
   Claude_3_Sonnet
   Claude_3_Haiku
@@ -31,6 +33,7 @@ enum ApiModel {
   Gemini_1_5_Flash
   Gemini_1_0_Pro
   Llama_3_2_90b_Vision
+  Grok_beta
 }
 
 model User {

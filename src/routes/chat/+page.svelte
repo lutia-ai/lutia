@@ -21,6 +21,7 @@
 		calculateClaudeImageCost,
 		calculateGptVisionPricing,
 		countTokens,
+		countTokensNoTimeout,
 		roundToFirstTwoNonZeroDecimals
 	} from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
@@ -55,6 +56,8 @@
 	import type { ApiProvider } from '@prisma/client';
 	import { fade, fly } from 'svelte/transition';
 	import { browser } from '$app/environment';
+	import Xai from '$lib/components/icons/XAI.svelte';
+	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
 
 	export let data;
 
@@ -121,14 +124,14 @@
 		let imageCost = 0;
 		let imageTokens = 0;
 		for (const image of imagePreview) {
-			let result;
+			let imgResult;
 			if ($chosenCompany === 'openAI') {
-				result = calculateGptVisionPricing(image.width, image.height);
+				imgResult = calculateGptVisionPricing(image.width, image.height);
 			} else {
-				result = calculateClaudeImageCost(image.width, image.height, chosenModel);
+				imgResult = calculateClaudeImageCost(image.width, image.height, chosenModel);
 			}
-			imageCost += result.price;
-			imageTokens += result.tokens;
+			imageCost += imgResult.price;
+			imageTokens += imgResult.tokens;
 		}
 		input_tokens = result.tokens + imageTokens;
 		input_price = result.price + imageCost;
@@ -242,6 +245,9 @@
 					case 'meta':
 						uri = '/api/llama';
 						break;
+					case 'xAI':
+						uri = '/api/xAI';
+						break;
 					default:
 						uri = '/api/gemini';
 				}
@@ -331,10 +337,17 @@
 					);
 					if (isScrollingProgrammatically) scrollToBottom();
 				}
-
 				const lastItem = $chatHistory[currentChatIndex];
-				const outputPriceResult = await countTokens(lastItem.text, chosenModel, 'output');
-				const inputPriceResult = await countTokens(fullPrompt, chosenModel, 'input');
+				const outputPriceResult = await countTokensNoTimeout(
+					lastItem.text,
+					chosenModel,
+					'output'
+				);
+				const inputPriceResult = await countTokensNoTimeout(
+					fullPrompt,
+					chosenModel,
+					'input'
+				);
 				let imageCost = 0;
 				let imageTokens = 0;
 				for (const image of imageArray) {
@@ -436,6 +449,10 @@
 
 	function isModelMeta(modelName: string): boolean {
 		return isModelByCompany('meta', modelName);
+	}
+
+	function isModelXAI(modelName: string): boolean {
+		return isModelByCompany('xAI', modelName);
 	}
 
 	let isScrollingProgrammatically = false;
@@ -726,6 +743,10 @@
 												: ''}"
 										>
 											<GeminiIcon />
+										</div>
+									{:else if isModelXAI(chat.by)}
+										<div class="llm-icon-container">
+											<GrokIcon color="var(--text-color)" />
 										</div>
 									{:else if isModelMeta(chat.by)}
 										<div
@@ -1132,9 +1153,13 @@
 				{#if data.user.user_settings?.prompt_pricing_visible}
 					<div class="input-token-container">
 						<p>Context window: {$numberPrevMessages}</p>
-						<p class="middle">Input tokens: {input_tokens}</p>
+						<p class="middle">
+							Input tokens: {input_tokens === -1 ? '?' : input_tokens}
+						</p>
 						<p class="right">
-							Input cost: ${roundToFirstTwoNonZeroDecimals(input_price)}
+							Input cost: {input_price === -1
+								? '?'
+								: '$' + roundToFirstTwoNonZeroDecimals(input_price)}
 						</p>
 					</div>
 				{/if}

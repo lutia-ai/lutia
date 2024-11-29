@@ -30,7 +30,7 @@
 		display: flex;
 		width: 100%;
 		height: 100%;
-		background: rgb(69, 67, 67);
+		background: var(--text-color);
 		border-radius: 50%;
 		padding: 10px;
 		box-sizing: border-box;

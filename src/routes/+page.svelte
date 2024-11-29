@@ -15,6 +15,7 @@
 	import { spring } from 'svelte/motion';
 	import viewport from '$lib/userViewportAction';
 	import DemoVideo from '$lib/videos/lutia-screenrecording.mp4';
+	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
 	// import ScreenshotTipTapNotes from '$lib/images/screenshotTipTapNotes.png';
 
 	let videoElement: HTMLVideoElement;
@@ -281,6 +282,10 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 
 <svelte:head>
 	{@html synthMidnightTerminalDark}
+	<meta
+		name="description"
+		content="A generative AI toolkit. Access a host of AI models without the costly monthly subscriptions."
+	/>
 </svelte:head>
 
 <header>
@@ -376,8 +381,8 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
                             opacity: {$displayCode1Opacity};
                         "
 			>
-				<div class="gpt-icon-container">
-					<ChatGpt color="var(--text-color)" />
+				<div class="llm-icon-container">
+					<GrokIcon color="var(--text-color)" />
 				</div>
 				<div class="llm-chat">
 					<div class="code-container">
@@ -528,7 +533,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 					</ol>
 					<p class="content-paragraph">
 						In general, these costs add up to fractions of a cent per token, for example
-						the cost of this request is shown below.
+						the cost of this GPT-4o request is shown below.
 					</p>
 					<div class="price-open-container animated-background">
 						<div class="price-record">

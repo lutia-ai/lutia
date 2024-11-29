@@ -203,6 +203,22 @@ export const modelDictionary: ModelDictionary = {
 				generatesImages: false
 			}
 		}
+	},
+	xAI: {
+		models: {
+			grokBeta: {
+				name: 'Grok_beta',
+				param: 'grok-beta',
+				legacy: false,
+				input_price: 5,
+				output_price: 15,
+				context_window: 131072,
+				hub: undefined,
+				handlesImages: false,
+				maxImages: 0,
+				generatesImages: false
+			}
+		}
 	}
 	// meta: {
 	//     models: {

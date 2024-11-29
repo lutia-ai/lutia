@@ -19,6 +19,10 @@ export const countTokens = async (
 			clearTimeout(timer);
 		}
 
+		if (!model.hub) {
+			return resolve({ tokens: -1, price: -1 });
+		}
+
 		if (prompt === '') {
 			return resolve({ tokens: 0, price: 0 });
 		}
@@ -43,6 +47,41 @@ export const countTokens = async (
 			resolve({ tokens, price }); // Resolve the promise with the token count
 		}, 500); // Timeout set to 500ms
 	});
+};
+
+export const countTokensNoTimeout = async (
+	prompt: Message[] | string,
+	model: Model,
+	io: string = 'input'
+): Promise<{ tokens: number; price: number }> => {
+	if (!model.hub) {
+		return { tokens: -1, price: -1 };
+	}
+	// Early return if the prompt is empty
+	if (prompt === '') {
+		return { tokens: 0, price: 0 };
+	}
+
+	// Only reinitialize the tokenizer if the model hub changes
+	if (!tokenizer || (tokenizer as any).hub !== model.hub) {
+		env.allowLocalModels = false;
+		tokenizer = await AutoTokenizer.from_pretrained(model.hub);
+		(tokenizer as any).hub = model.hub; // Store the hub
+	}
+
+	// Encode the prompt and calculate the number of tokens
+	const encoding = tokenizer.encode(JSON.stringify(prompt));
+	let tokens = encoding.length;
+
+	// Adjust token count for Gemini models
+	if (isGemini(model.param)) {
+		tokens = Math.round(tokens * 1.12);
+	}
+
+	// Calculate price
+	const price = (tokens / 1000000) * (io === 'input' ? model.input_price : model.output_price);
+
+	return { tokens, price };
 };
 
 export function calculateGptVisionPricing(

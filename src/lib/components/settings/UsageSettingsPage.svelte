@@ -39,6 +39,10 @@
 		google: {
 			colors: ['rgba(234,68,53,255)', '#fbbd04', '#34a854', '#4285f5', 'var(--color-text)'],
 			layout: 'stacked'
+		},
+		xAI: {
+			colors: ['var(--text-color)'],
+			layout: 'stacked'
 		}
 	};
 
