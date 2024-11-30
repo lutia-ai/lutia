@@ -53,7 +53,15 @@
 	async function getMonthlyUsage(startDate: Date, endDate: Date): Promise<void> {
 		try {
 			const formatDate = (date: Date) => {
-				return date.toLocaleDateString('en-CA'); // 'en-CA' uses YYYY-MM-DD format
+				return date.toLocaleString('en-CA', {
+					year: 'numeric',
+					month: '2-digit',
+					day: '2-digit',
+					hour: '2-digit',
+					minute: '2-digit',
+					second: '2-digit',
+					hour12: false // Use 24-hour format
+				});
 			};
 
 			const params = new URLSearchParams({
@@ -156,7 +164,14 @@
 
 	function getCurrentMonthDates(): { startDate: Date; endDate: Date } {
 		const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-		const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+		const endDate = new Date(
+			new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).setHours(
+				23,
+				59,
+				59,
+				999
+			)
+		);
 		return { startDate, endDate };
 	}
 
