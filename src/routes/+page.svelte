@@ -24,6 +24,8 @@
 	let videoSwitch = 1;
 	let demoVideo = DemoVideo1;
 
+	let getStartedHovering = false;
+
 	$: if (videoSwitch) {
 		switch (videoSwitch) {
 			case 1:
@@ -628,15 +630,32 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 				What are you waiting for?
 			</h1>
 			<p class="pay-paragraph" style="margin: 0 auto;">
-				Create an account now and receive $1 in free credit
+				<span class="animated-background">Create</span> an account
+				<span class="animated-background">now</span>
+				and <span class="animated-background">receive</span> $1 in
+				<span class="animated-background">free credit</span>.
 			</p>
-			<button
-				class="cta-button animated-background"
+			<div class="filling-border animated-background">
+				<a
+					class="filling-button"
+					on:mouseenter={() => (getStartedHovering = true)}
+					on:mouseleave={() => (getStartedHovering = false)}
+					style="
+                    width: max-content; 
+                    margin: 0 auto;
+                    "
+					href="/chat"
+				>
+					Get started
+				</a>
+			</div>
+			<!-- <button
+				class="cta-button"
 				style="width: max-content; margin: 0 auto;"
 				on:click={() => goto('chat')}
 			>
 				Get Started
-			</button>
+			</button> -->
 		</div>
 	</div>
 
@@ -727,6 +746,10 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 </div>
 
 <style lang="scss">
+	$bgColor: lightgrey;
+	$textHoverColor: white;
+	$debug: false;
+
 	header {
 		position: fixed;
 		display: flex;
@@ -974,7 +997,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 
 		.demo-videos-container {
 			display: flex;
-			gap: 15px;
+			gap: 25px;
 
 			.video-switches {
 				flex: 3;
@@ -1019,7 +1042,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 
 						p {
 							font-size: 18px;
-							font-weight: 200;
+							font-weight: 300;
 							font-family: 'Raleway Variable', sans-serif;
 							margin: 0;
 						}
@@ -1038,9 +1061,15 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 
 		.pay-paragraph {
 			font-family: 'Raleway Variable', sans-serif;
-			font-size: 22px;
+			font-size: 30px;
 			font-weight: 800;
-			margin-top: 20px;
+			line-height: 70px;
+
+			span {
+				padding: 4px 6px;
+				border-radius: 5px;
+				color: white;
+			}
 		}
 	}
 
@@ -1048,23 +1077,120 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		display: flex;
 		flex-direction: column;
 		gap: 50px;
-		background: var(--text-color);
+		// background: var(--bg-color-light);
 		padding: 50px;
 		border-radius: 20px;
 		margin-top: 420px;
+		margin-bottom: 200px;
 
 		h1,
 		p {
 			text-align: center;
 		}
 
+		h1 {
+			font-size: 70px;
+			font-weight: 600 !important;
+		}
+
 		p {
-			color: var(--bg-color-light-alt);
+			color: var(--text-color);
+			// max-width: 350px;
 		}
 
 		.cta-button {
+			font-size: 30px;
 			&:hover {
 				outline: 7px solid var(--text-color-light);
+			}
+		}
+		.filling-border {
+			margin: auto;
+			width: max-content;
+			border-radius: calc(0.75em + 0.5em + 0.15em);
+			transition: scale 0.5s;
+
+			&:hover {
+				transform: scale(0.98);
+				box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+			}
+		}
+
+		.filling-button {
+			display: inline-block;
+			position: relative;
+			z-index: 1;
+			overflow: if($debug, unset, hidden);
+			margin: auto;
+			text-decoration: none;
+			font-family: sans-serif;
+			font-weight: 600;
+			font-size: 2em;
+			padding: 0.75em 1em;
+			border-radius: inherit;
+			border: 2px solid var(--bg-color);
+			// Animate the text color
+			animation: text-color-animation 14s linear infinite;
+
+			&:before,
+			&:after {
+				content: '';
+				position: absolute;
+				top: -1.5em;
+				z-index: -1;
+				width: 200%;
+				aspect-ratio: 1;
+				border: if($debug, inherit, none);
+				border-radius: 40%;
+				background: linear-gradient(270deg, #1d60c2, #e91e63, #9c27b0, #1d60c2);
+				animation: wave-animation 14s linear infinite;
+			}
+
+			&:before {
+				left: -80%;
+				animation-delay: -2s;
+			}
+
+			&:after {
+				right: -80%;
+				animation-delay: -4s;
+			}
+
+			&:hover,
+			&:focus {
+				animation-duration: 14s; // Optional: speed up on hover
+
+				&:before,
+				&:after {
+					animation-duration: 14s; // Optional: speed up on hover
+				}
+			}
+		}
+
+		@keyframes wave-animation {
+			0% {
+				transform: translate3d(0, 5em, 0) rotate(-340deg);
+			}
+			50% {
+				transform: translate3d(0, 0, 0) rotate(0deg);
+			}
+			100% {
+				transform: translate3d(0, 5em, 0) rotate(-340deg);
+			}
+		}
+
+		@keyframes text-color-animation {
+			0% {
+				color: $textHoverColor;
+			}
+			40% {
+				color: $textHoverColor;
+			}
+			70% {
+				color: $bgColor;
+			}
+			100% {
+				color: $textHoverColor;
 			}
 		}
 	}
@@ -1114,7 +1240,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 			.accordian {
 				cursor: pointer !important;
 				padding: 25px 0;
-				border-top: 2px solid var(--bg-color-light-alt);
+				border-top: 2px solid var(--bg-color-dark);
 
 				.question {
 					display: flex;
@@ -1192,8 +1318,17 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		}
 
 		.what-waiting-container {
-			padding: 40px 30px;
+			padding: 40px 10px;
 			margin-top: 220px;
+			gap: 30px;
+
+			h1 {
+				font-size: 50px;
+			}
+
+			p {
+				padding: 0 10px;
+			}
 		}
 
 		footer {
