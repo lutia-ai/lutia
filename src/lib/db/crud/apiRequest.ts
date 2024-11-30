@@ -119,6 +119,8 @@ export async function retrieveUserRequestsInDateRange(
 			}
 		});
 
+        console.log(apiRequests);
+
 		return apiRequests;
 	} catch (error) {
 		console.error('Error retrieving API requests for user:', error);
