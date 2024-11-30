@@ -552,7 +552,10 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 					<div class="switch-content">
 						<h2><span class="animated-text">Pay-as-you-go</span> pricing</h2>
 						{#if videoSwitch === 2}
-							<p>Pay only for what you use meaning you will never overspend.</p>
+							<p>
+								Pay only for what you use meaning you will always get your moneys
+								worth.
+							</p>
 						{/if}
 					</div>
 				</div>
@@ -1164,6 +1167,47 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		}
 		100% {
 			background-position: 0% 50%;
+		}
+	}
+
+	@media (max-width: 610px) {
+		.llm-container {
+			.llm-chat {
+				display: none;
+			}
+		}
+
+		.explain-section {
+			.demo-videos-container {
+				flex-direction: column;
+
+				.video-switches {
+					order: 2;
+				}
+
+				.video-container {
+					order: 1;
+				}
+			}
+		}
+
+		.what-waiting-container {
+			padding: 40px 30px;
+			margin-top: 220px;
+		}
+
+		footer {
+			flex-direction: column;
+
+			.left {
+				width: 100%;
+				margin-left: 0;
+			}
+
+			.right {
+				width: 100%;
+				margin: 0 auto;
+			}
 		}
 	}
 </style>
