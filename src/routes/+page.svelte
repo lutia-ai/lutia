@@ -14,11 +14,40 @@
 	import { sanitizeLLmContent } from '$lib/chatHistory';
 	import { spring } from 'svelte/motion';
 	import viewport from '$lib/userViewportAction';
-	import DemoVideo from '$lib/videos/lutia-screenrecording.mp4';
+	import DemoVideo1 from '$lib/videos/video1.mp4';
+	import DemoVideo2 from '$lib/videos/video2.mp4';
+	import DemoVideo3 from '$lib/videos/video3.mp4';
+	import DemoVideo4 from '$lib/videos/video4.mp4';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
-	// import ScreenshotTipTapNotes from '$lib/images/screenshotTipTapNotes.png';
 
 	let videoElement: HTMLVideoElement;
+	let videoSwitch = 1;
+	let demoVideo = DemoVideo1;
+
+	$: if (videoSwitch) {
+		switch (videoSwitch) {
+			case 1:
+				demoVideo = DemoVideo1;
+				break;
+			case 2:
+				demoVideo = DemoVideo2;
+				break;
+			case 3:
+				demoVideo = DemoVideo3;
+				break;
+			case 4:
+				demoVideo = DemoVideo4;
+				break;
+		}
+		if (videoElement) {
+			videoElement.load(); // Load the new source
+			videoElement.play(); // Play the video
+		}
+	}
+
+	let accordian1Open = false;
+	let accordian2Open = false;
+	let accordian3Open = false;
 
 	function playVideo(videoElement: HTMLVideoElement) {
 		videoElement.play();
@@ -480,76 +509,114 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 	</div>
 
 	<div class="explain-section" style="opacity: {$explainSectionOpacity};">
-		<h1 class="animated-text">
-			Access leading AI models, all from the same intuitive interface
+		<h1>
+			Making AI <span class="animated-text">accessible</span> to
+			<span class="animated-text">everyone.</span>
 		</h1>
-		<video
-			width="100%"
-			height="100%"
-			loop
-			controls
-			aria-label="Demo video"
-			bind:this={videoElement}
-			use:viewport
-			on:enterViewport={() => playVideo(videoElement)}
-			on:exitViewport={() => pauseVideo(videoElement)}
-			muted={true}
-		>
-			<source src={DemoVideo} type="video/mp4" />
-			<track kind="captions" src="" srclang="en" label="English" />
-		</video>
-
-		<h1 class="animated-text" style="margin-top: 300px; margin-bottom: 0px;">
-			Only pay for what you use
-		</h1>
-		<p class="pay-paragraph">
-			Pay-as-you-go and enjoy premium AI models without the high subscription costs. Most
-			active users spend less than $3 monthly.
-		</p>
-		<div class="payment-explain-container">
-			<div class="question-container">
-				<p>How much does each message to an LLM cost?</p>
-			</div>
-			<div class="llm-container">
-				<div class="gpt-icon-container">
-					<ChatGpt color="var(--text-color)" />
-				</div>
-				<div class="llm-chat">
-					<p class="content-paragraph">
-						The cost of sending a message to a Large Language Model (LLM) like those
-						provided by OpenAI, Google, or others, varies based on a few key factors: <br
-						/><br />
-					</p>
-					<ol>
-						<li>
-							<strong>Provider Pricing:</strong> Different companies have different pricing
-							models.
-						</li>
-						<br />
-						<li>
-							<strong>Token Usage:</strong> Models measure input (what you send) and output
-							(what the model returns) in units called tokens.
-						</li>
-					</ol>
-					<p class="content-paragraph">
-						In general, these costs add up to fractions of a cent per token, for example
-						the cost of this GPT-4o request is shown below.
-					</p>
-					<div class="price-open-container animated-background">
-						<div class="price-record">
-							<p>Input:</p>
-							<span>$0.00005</span>
-						</div>
-						<div class="price-record">
-							<p>Output:</p>
-							<span>$0.00179</span>
-						</div>
-						<div class="price-record">
-							<p>Total:</p>
-							<span>$0.00184</span>
-						</div>
+		<div class="demo-videos-container">
+			<div class="video-switches">
+				<div
+					class="switch"
+					role="button"
+					tabindex="0"
+					on:click={() => (videoSwitch = 1)}
+					on:keydown={(e) => {
+						if (e.key === 'Enter') {
+							videoSwitch = 1;
+						}
+					}}
+				>
+					<div class="switch-border {videoSwitch === 1 ? 'active' : ''}" />
+					<div class="switch-content">
+						<h2><span class="animated-text">Harness</span> leading AI models</h2>
+						{#if videoSwitch === 1}
+							<p>
+								Access a host of the most powerful LLMs all from the same chat
+								window.
+							</p>
+						{/if}
 					</div>
 				</div>
+				<div
+					class="switch"
+					role="button"
+					tabindex="0"
+					on:click={() => (videoSwitch = 2)}
+					on:keydown={(e) => {
+						if (e.key === 'Enter') {
+							videoSwitch = 2;
+						}
+					}}
+				>
+					<div class="switch-border {videoSwitch === 2 ? 'active' : ''}" />
+					<div class="switch-content">
+						<h2><span class="animated-text">Pay-as-you-go</span> pricing</h2>
+						{#if videoSwitch === 2}
+							<p>Pay only for what you use meaning you will never overspend.</p>
+						{/if}
+					</div>
+				</div>
+				<div
+					class="switch"
+					role="button"
+					tabindex="0"
+					on:click={() => (videoSwitch = 3)}
+					on:keydown={(e) => {
+						if (e.key === 'Enter') {
+							videoSwitch = 3;
+						}
+					}}
+				>
+					<div class="switch-border {videoSwitch === 3 ? 'active' : ''}" />
+					<div class="switch-content">
+						<h2>A <span class="animated-text">customisable</span> context window</h2>
+						{#if videoSwitch === 3}
+							<p>
+								Have control over how many of your previous messages get sent with
+								your prompt.
+							</p>
+						{/if}
+					</div>
+				</div>
+				<div
+					class="switch"
+					role="button"
+					tabindex="0"
+					on:click={() => (videoSwitch = 4)}
+					on:keydown={(e) => {
+						if (e.key === 'Enter') {
+							videoSwitch = 4;
+						}
+					}}
+				>
+					<div class="switch-border {videoSwitch === 4 ? 'active' : ''}" />
+					<div class="switch-content">
+						<h2>Track <span class="animated-text">usage</span> across models</h2>
+						{#if videoSwitch === 4}
+							<p>
+								Gain valuable insight into which models you use most and how much
+								they cost.
+							</p>
+						{/if}
+					</div>
+				</div>
+			</div>
+			<div class="video-container">
+				<video
+					width="100%"
+					loop
+					controls
+					playsinline
+					aria-label="Demo video"
+					bind:this={videoElement}
+					use:viewport
+					on:enterViewport={() => playVideo(videoElement)}
+					on:exitViewport={() => pauseVideo(videoElement)}
+					muted={true}
+				>
+					<source src={demoVideo} type="video/mp4" />
+					<track kind="captions" src="" srclang="en" label="English" />
+				</video>
 			</div>
 		</div>
 
@@ -571,9 +638,88 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 	</div>
 
 	<footer>
-		<a href="/auth">Login</a>
-		<a href="/auth">Register</a>
-		<a href="/privacy-policy">Privacy policy</a>
+		<div class="left">
+			<h2>FAQ</h2>
+			<h1>Frequently Asked Questions</h1>
+		</div>
+		<div class="right">
+			<div
+				class="accordian"
+				role="button"
+				tabindex="0"
+				on:click={() => (accordian1Open = !accordian1Open)}
+				on:keydown={(e) => {
+					if (e.key === 'Enter') {
+						accordian1Open = !accordian1Open;
+					}
+				}}
+			>
+				<div class="question">
+					<h3>Is my data safe?</h3>
+					<div class="plus">
+						<h3>{accordian1Open ? '-' : '+'}</h3>
+					</div>
+				</div>
+				<p style="display: {accordian1Open ? 'block' : 'none'}">
+					Yes! We take security <b>very seriously</b>.<br /><br />
+
+					Lutia will <b>never</b> use any of your data or share it with third parties
+					without your explicit consent.<br /><br />
+
+					Our platform is designed to ensure that your data remains confidential and
+					secure. Lutia does not use your personal data to train any machine learning
+					models, and no user data is ever sent to external APIs. <br /><br />
+
+					<b>Note: </b>For your own protection, we advise against entering any sensitive
+					or valuable information into prompts. Your privacy and trust are our top
+					priorities.
+				</p>
+			</div>
+			<div
+				class="accordian"
+				role="button"
+				tabindex="0"
+				on:click={() => (accordian2Open = !accordian2Open)}
+				on:keydown={(e) => {
+					if (e.key === 'Enter') {
+						accordian2Open = !accordian2Open;
+					}
+				}}
+			>
+				<div class="question">
+					<h3>I have another question</h3>
+					<div class="plus">
+						<h3>{accordian2Open ? '-' : '+'}</h3>
+					</div>
+				</div>
+				<p style="display: {accordian2Open ? 'block' : 'none'}">
+					Shoot me an email at joe@lutia.ai
+				</p>
+			</div>
+			<div
+				class="accordian"
+				role="button"
+				tabindex="0"
+				on:click={() => (accordian3Open = !accordian3Open)}
+				on:keydown={(e) => {
+					if (e.key === 'Enter') {
+						accordian3Open = !accordian3Open;
+					}
+				}}
+			>
+				<div class="question">
+					<h3>What is your Privacy Policy?</h3>
+					<div class="plus">
+						<h3>{accordian3Open ? '-' : '+'}</h3>
+					</div>
+				</div>
+				<p style="display: {accordian3Open ? 'block' : 'none'}">
+					Our Privacy Policy is available <a href="/privacy-policy" target="_blank"
+						>here</a
+					>
+				</p>
+			</div>
+		</div>
 	</footer>
 </div>
 
@@ -674,28 +820,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		}
 	}
 
-	.question-container {
-		position: relative;
-		max-width: 400px;
-		border-radius: 20px;
-		background: var(--bg-color-light);
-		padding: 10px 20px;
-		flex-shrink: 1;
-		box-sizing: border-box;
-		word-break: break-word;
-		overflow-wrap: break-word;
-		margin: 50px 0;
-		margin-left: auto;
-
-		p {
-			padding: 0;
-			margin: 0;
-			font-weight: 300;
-			line-height: 30px;
-			font-family: 'Albert Sans', sans-serif;
-		}
-	}
-
 	.llm-container {
 		position: relative;
 		display: flex;
@@ -717,7 +841,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 			padding-top: 0px;
 			margin-top: 6px;
 			border: none;
-			// border: 1px solid var(--text-color-light-opacity);
 		}
 
 		.llm-icon-container {
@@ -751,14 +874,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 					font-family: 'Albert Sans', sans-serif;
 					font-weight: 300;
 					line-height: 30px;
-				}
-			}
-
-			ol {
-				li {
-					font-family: 'Albert Sans', sans-serif !important;
-					font-weight: 200 !important;
-					line-height: 30px !important;
 				}
 			}
 		}
@@ -849,10 +964,69 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		perspective: 1000px;
 
 		h1 {
-			max-width: 700px;
-			font-size: 40px;
-			font-weight: 200;
+			font-size: 60px;
+			font-weight: 800;
 			font-family: 'Raleway Variable', sans-serif;
+		}
+
+		.demo-videos-container {
+			display: flex;
+			gap: 15px;
+
+			.video-switches {
+				flex: 3;
+				display: flex;
+				flex-direction: column;
+				gap: 35px;
+
+				.switch {
+					cursor: pointer;
+					display: flex;
+					gap: 15px;
+
+					.switch-border {
+						width: 2px;
+						background: var(--text-color-light-opacity);
+					}
+
+					.active {
+						background: linear-gradient(
+							270deg,
+							#1d60c2,
+							#e91e63,
+							#9c27b0,
+							#1d60c2
+						) !important;
+						background-size: 400%; /* To ensure smooth animation */
+						animation: gradient-animation 25s ease infinite; /* Animation */
+					}
+
+					.switch-content {
+						display: flex;
+						flex-direction: column;
+						gap: 20px;
+						padding: 10px 0;
+
+						h2 {
+							font-size: 22px;
+							font-weight: 400;
+							font-family: 'Raleway Variable', sans-serif;
+							margin: 0;
+						}
+
+						p {
+							font-size: 18px;
+							font-weight: 200;
+							font-family: 'Raleway Variable', sans-serif;
+							margin: 0;
+						}
+					}
+				}
+			}
+
+			.video-container {
+				flex: 4;
+			}
 		}
 
 		video {
@@ -864,66 +1038,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 			font-size: 22px;
 			font-weight: 800;
 			margin-top: 20px;
-		}
-
-		.payment-explain-container {
-			padding: 0 15px;
-			transform: perspective(1000px) rotateY(0deg);
-		}
-
-		.price-open-container {
-			position: absolute;
-			display: flex;
-			gap: 15px;
-			flex-direction: column;
-			top: calc(100% + 50px);
-			left: -10px;
-			padding: 10px;
-			border-radius: 10px;
-			border: 1px solid var(--text-color-light-opacity);
-			width: max-content;
-			background: linear-gradient(270deg, #e91e63, #1d60c2, #9c27b0, #e91e63);
-			background-size: 400%; /* To ensure smooth animation */
-			animation: gradient-animation 25s ease infinite; /* Animation */
-
-			&::before {
-				content: '';
-				position: absolute;
-				top: -10px; /* Position above container */
-				left: calc(50% - 10px); /* Center the arrow */
-				width: 20px; /* Width of the arrow */
-				height: 10px; /* Height of the arrow */
-				background: inherit; /* Inherit the gradient */
-				clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-				/* Creates a triangle shape */
-			}
-
-			.price-record {
-				position: relative;
-				display: flex;
-				gap: 5px;
-
-				p {
-					position: relative;
-					margin: 0;
-					transition: none;
-					opacity: 1;
-					font-size: 14px;
-					width: 50px;
-					padding: 0;
-					left: 0;
-					top: 0;
-					transform: translateX(0);
-					color: white;
-				}
-
-				span {
-					position: relative;
-					margin: 0;
-					width: max-content;
-					color: white;
-				}
-			}
 		}
 	}
 
@@ -955,12 +1069,65 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 	footer {
 		display: flex;
 		gap: 50px;
-		border-radius: 20px;
-		padding: 50px 20px;
+		padding: 100px 50px;
 		box-sizing: border-box;
-		margin-top: 200px;
-		max-width: 1000px;
 		margin: 0 auto;
+		margin-top: 250px;
+		background: var(--bg-color-light);
+
+		h1,
+		h2,
+		h3,
+		p,
+		a {
+			color: var(--text-color);
+			font-family: 'Raleway Variable', sans-serif;
+		}
+
+		p {
+			letter-spacing: 1px;
+			line-height: 20px;
+		}
+
+		h1 {
+			font-size: 28px;
+			font-weight: 800;
+		}
+
+		.left {
+			max-width: 500px;
+			width: 50%;
+			margin-left: auto;
+		}
+
+		.right {
+			display: flex;
+			flex-direction: column;
+			// gap: 15px;
+			width: 50%;
+			max-width: 500px;
+			margin-right: auto;
+
+			.accordian {
+				cursor: pointer !important;
+				padding: 25px 0;
+				border-top: 2px solid var(--bg-color-light-alt);
+
+				.question {
+					display: flex;
+					width: 100%;
+
+					.plus {
+						margin: auto 0 auto auto;
+						font-size: 40px;
+					}
+				}
+
+				h3 {
+					margin: auto 0 !important;
+				}
+			}
+		}
 
 		a {
 			flex: 1;
@@ -968,12 +1135,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 			font-size: 18px;
 			font-weight: 300;
 			font-family: 'Raleway Variable', sans-serif;
-			color: var(--text-color);
-			text-decoration: none;
-
-			&:hover {
-				text-decoration: underline;
-			}
 		}
 	}
 
