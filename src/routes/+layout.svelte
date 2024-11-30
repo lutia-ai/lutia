@@ -3,6 +3,7 @@
 	import { darkMode } from '$lib/stores.ts';
 	import { onMount } from 'svelte';
 	import '@fontsource-variable/raleway';
+	import Analytics from '$lib/components/Analytics.svelte';
 
 	export let data: { colorScheme: string };
 
@@ -43,6 +44,8 @@
 		};
 	});
 </script>
+
+<Analytics />
 
 <body class={darkModeOn ? 'dark' : ''}>
 	<slot />
