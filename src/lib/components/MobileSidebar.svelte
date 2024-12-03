@@ -223,11 +223,15 @@
 											{#if $showPricing}
 												<div class="pricing">
 													<span>
-														Input: ${model.input_price}
+														Input: ${Number(
+															model.input_price.toFixed(3)
+														)}
 														{model.input_price > 0 ? '/ 1M' : ''}
 													</span>
 													<span>
-														Output: ${model.output_price} / {model.generatesImages
+														Output: ${Number(
+															model.output_price.toFixed(3)
+														)} / {model.generatesImages
 															? 'Image'
 															: '1M'}
 													</span>
@@ -557,6 +561,7 @@
 								.pricing {
 									display: flex;
 									gap: 10px;
+									width: max-content;
 
 									span {
 										text-align: left;
