@@ -105,9 +105,9 @@ export async function POST({ request, locals }) {
 
 		// const inputCost = inputGPTCount.price + imageCost;
 		let balance = await retrieveUsersBalance(Number(session.user.id));
-		// if (balance - inputCost <= 0.1) {
-		// 	throw new InsufficientBalanceError();
-		// }
+		if (balance <= 0.1) {
+			throw new InsufficientBalanceError();
+		}
 
 		const stream = await openai.chat.completions.create({
 			model: model.param,
