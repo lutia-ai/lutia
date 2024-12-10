@@ -1,4 +1,4 @@
-import { redirect, type Actions } from '@sveltejs/kit';
+import { fail, redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from '../$types';
 import { retrieveApiRequestsWithMessage } from '$lib/db/crud/apiRequest';
 import { deleteAllUserMessages } from '$lib/db/crud/message';
@@ -141,7 +141,6 @@ export const actions = {
 	},
 	topupBalance: async ({ request, locals }) => {
 		const session = await locals.auth();
-
 		if (!session || !session.user) {
 			throw redirect(307, '/auth');
 		}
@@ -149,7 +148,6 @@ export const actions = {
 		try {
 			const formData = await request.formData();
 			const creditAmount = Number(formData.get('creditAmount'));
-
 			const user = await retrieveUserByEmail(session.user.email!);
 			const customerId = user.stripe_id;
 
@@ -157,21 +155,19 @@ export const actions = {
 				throw new Error('Stripe customer ID not found');
 			}
 
-			const chargeResult = await chargeUserCard(customerId, creditAmount * 1.2); // add tax to creditAmount
+			await chargeUserCard(customerId, creditAmount * 1.2); // add tax to creditAmount
 			const balance = await updateUserBalanceWithIncrement(user.id, creditAmount);
+			console.log(balance);
 
 			return {
-				chargeResult,
-				balance
+				type: 'success',
+				balance,
+				message: 'Payment successful'
 			};
 		} catch (err) {
-			console.error('Error topping up:', err);
-			return {
-				type: 'failure',
-				data: {
-					message: err instanceof Error ? err.message : 'An unknown error occurred'
-				}
-			};
+			return fail(400, {
+				message: err instanceof Error ? err.message : 'An unknown error occurred'
+			});
 		}
 	},
 	saveUserSettings: async ({ request, locals }) => {

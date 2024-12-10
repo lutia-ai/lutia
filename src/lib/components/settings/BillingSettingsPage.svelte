@@ -82,6 +82,7 @@
 			if (result.type === 'success' && result.data) {
 				errorPopup.showError('Top-up successful!', null, 5000, 'success');
 				userBalance = result.data.balance;
+				console.log(result.data.balance);
 				addCreditOpen = false;
 				addCreditAmount = 0;
 			} else if (result.type === 'failure' && result.data) {

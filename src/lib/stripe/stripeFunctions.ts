@@ -99,51 +99,37 @@ export async function chargeUserCard(
 	currency: string = 'usd',
 	description?: string
 ): Promise<ChargeResult> {
-	try {
-		// Retrieve the customer's default payment method
-		const customerResponse = await stripe.customers.retrieve(customerId);
+	// Retrieve the customer's default payment method
+	const customerResponse = await stripe.customers.retrieve(customerId);
 
-		// Check if the customer is deleted
-		if (customerResponse.deleted) {
-			throw new Error('Customer has been deleted');
-		}
-
-		// At this point, we know customerResponse is of type Stripe.Customer
-		const customer = customerResponse as Stripe.Customer;
-
-		const defaultPaymentMethodId = customer.invoice_settings.default_payment_method;
-
-		if (!defaultPaymentMethodId) {
-			throw new Error('No default payment method found for the customer');
-		}
-
-		// Create a PaymentIntent
-		const paymentIntent = await stripe.paymentIntents.create({
-			amount: Math.round(amount * 100), // Convert to cents
-			currency: currency,
-			customer: customerId,
-			payment_method: defaultPaymentMethodId as string,
-			off_session: true,
-			confirm: true,
-			description: description
-		});
-
-		if (paymentIntent.status === 'succeeded') {
-			return {
-				success: true,
-				chargeId: paymentIntent.id
-			};
-		} else {
-			return {
-				success: false,
-				error: `Payment failed with status: ${paymentIntent.status}`
-			};
-		}
-	} catch (error) {
-		console.error('Error charging user card:', error);
-		return {
-			success: false,
-			error: error instanceof Error ? error.message : 'An unknown error occurred'
-		};
+	if (customerResponse.deleted) {
+		throw new Error('Customer has been deleted');
 	}
+
+	const customer = customerResponse as Stripe.Customer;
+	const defaultPaymentMethodId = customer.invoice_settings.default_payment_method;
+
+	if (!defaultPaymentMethodId) {
+		throw new Error('No default payment method found for the customer');
+	}
+
+	// Create a PaymentIntent
+	const paymentIntent = await stripe.paymentIntents.create({
+		amount: Math.round(amount * 100), // Convert to cents
+		currency: currency,
+		customer: customerId,
+		payment_method: defaultPaymentMethodId as string,
+		off_session: true,
+		confirm: true,
+		description: description
+	});
+
+	if (paymentIntent.status !== 'succeeded') {
+		throw new Error(`Payment failed with status: ${paymentIntent.status}`);
+	}
+
+	return {
+		success: true,
+		chargeId: paymentIntent.id
+	};
 }
