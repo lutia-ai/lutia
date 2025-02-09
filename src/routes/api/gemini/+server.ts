@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { Message, Model, Image, GeminiImage } from '$lib/types';
+import type { Message, Model, Image, GeminiImage } from '$lib/types.d';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
 import type { Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';

@@ -162,6 +162,30 @@ export const modelDictionary: ModelDictionary = {
 	},
 	google: {
 		models: {
+            gemini20Flash: {
+				name: 'Gemini_2_0_Flash',
+				param: 'gemini-2.0-flash',
+				legacy: false,
+				input_price: 0.1 * 1.1,
+				output_price: 0.4 * 1.1,
+				context_window: 2000000,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false
+			},
+            gemini20FlashLite: {
+				name: 'Gemini_2_0_Flash_Lite',
+				param: 'gemini-2.0-flash-lite-preview-02-05',
+				legacy: false,
+				input_price: 0.075 * 1.1,
+				output_price: 0.3 * 1.1,
+				context_window: 2000000,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false
+			},
 			gemini15Pro: {
 				name: 'Gemini_1_5_Pro',
 				param: 'gemini-1.5-pro',
@@ -173,7 +197,7 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 2000000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 1,
+				maxImages: 5,
 				generatesImages: false
 			},
 			gemini15Flash: {
@@ -187,7 +211,7 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 1000000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 1,
+				maxImages: 5,
 				generatesImages: false
 			},
 			gemini1Pro: {
