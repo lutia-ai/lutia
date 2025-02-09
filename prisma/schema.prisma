@@ -18,6 +18,8 @@ enum ApiProvider {
 }
 
 enum ApiModel {
+  GPT_o1_preview
+  GPT_o1_mini
   GPT_4o
   GPT_4o_mini
   GPT_4_Turbo
