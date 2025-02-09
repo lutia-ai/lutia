@@ -168,10 +168,10 @@ export const modelDictionary: ModelDictionary = {
 				legacy: false,
 				input_price: 0.1 * 1.1,
 				output_price: 0.4 * 1.1,
-				context_window: 2000000,
+				context_window: 1048576,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 5,
+				maxImages: 1,
 				generatesImages: false
 			},
             gemini20FlashLite: {
@@ -180,10 +180,10 @@ export const modelDictionary: ModelDictionary = {
 				legacy: false,
 				input_price: 0.075 * 1.1,
 				output_price: 0.3 * 1.1,
-				context_window: 2000000,
+				context_window: 1048576,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 5,
+				maxImages: 1,
 				generatesImages: false
 			},
 			gemini15Pro: {
@@ -194,10 +194,10 @@ export const modelDictionary: ModelDictionary = {
 				output_price: 10.5 * 1.1,
 				input_price_large: 7, // Price increases for prompts 128k or longer
 				output_price_large: 21, // Price increases for prompts 128k or longer
-				context_window: 2000000,
+				context_window: 2097152,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 5,
+				maxImages: 1,
 				generatesImages: false
 			},
 			gemini15Flash: {
@@ -208,10 +208,10 @@ export const modelDictionary: ModelDictionary = {
 				output_price: 1.05 * 1.1,
 				input_price_large: 0.7, // Price increases for prompts 128k or longer
 				output_price_large: 2.1, // Price increases for prompts 128k or longer
-				context_window: 1000000,
+				context_window: 1048576,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 5,
+				maxImages: 1,
 				generatesImages: false
 			},
 			gemini1Pro: {
