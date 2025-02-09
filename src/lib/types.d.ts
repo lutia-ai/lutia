@@ -204,3 +204,9 @@ export type PromptHelpers = {
 	compose: PromptHelper[];
 	question: PromptHelper[];
 };
+
+export interface GptTokenUsage {
+	prompt_tokens: number;
+	completion_tokens: number;
+	total_tokens: number;
+}

@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import Anthropic from '@anthropic-ai/sdk';
-import type { Message, Model, Image, ClaudeImage } from '$lib/types';
+import type { Message, Model, Image, ClaudeImage, GptTokenUsage } from '$lib/types.d';
 import { calculateClaudeImageCost, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { createMessage } from '$lib/db/crud/message';
@@ -69,12 +69,25 @@ export async function POST({ request, locals }) {
 		});
 
 		const chunks: string[] = [];
+		let finalUsage: GptTokenUsage | null = {
+			prompt_tokens: 0,
+			completion_tokens: 0,
+			total_tokens: 0
+		};
 		let error: any;
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
 				try {
 					for await (const chunk of stream) {
+						if (chunk.type === 'message_start') {
+							finalUsage.prompt_tokens = chunk.message.usage.input_tokens;
+						}
+						if (chunk.type === 'message_delta') {
+							finalUsage.completion_tokens = chunk.usage.output_tokens;
+							finalUsage.total_tokens =
+								finalUsage.prompt_tokens + finalUsage.completion_tokens;
+						}
 						if (
 							chunk.type === 'content_block_start' ||
 							chunk.type === 'content_block_delta'
@@ -93,25 +106,36 @@ export async function POST({ request, locals }) {
 					error = err;
 				} finally {
 					if (chunks.length > 0) {
-						const partialResponse = chunks.join('');
-						const outputGPTCount = await countTokens(partialResponse, model, 'output');
+						const response = chunks.join('');
+						const outputGPTCount = await countTokens(response, model, 'output');
 
-						await updateUserBalanceWithDeduction(
-							Number(session.user!.id),
-							outputGPTCount.price + inputCost
-						);
+						let inputTokens = inputGPTCount.tokens + imageTokens;
+						let outputTokens = outputGPTCount.tokens;
+						let inputPrice = inputCost;
+						let outputPrice = outputGPTCount.price;
 
-						const message = await createMessage(plainText, partialResponse, images);
+						if (finalUsage.total_tokens > 0) {
+							inputTokens = finalUsage.prompt_tokens;
+							outputTokens = finalUsage.completion_tokens;
+							inputPrice = (inputTokens * model.input_price) / 1000000;
+							outputPrice = (outputTokens * model.output_price) / 1000000;
+						}
+
+						const totalCost = inputPrice + outputPrice;
+
+						await updateUserBalanceWithDeduction(Number(session.user!.id), totalCost);
+
+						const message = await createMessage(plainText, response, images);
 
 						await createApiRequestEntry(
 							Number(session.user!.id),
 							'anthropic',
 							model.name,
-							inputGPTCount.tokens + imageTokens,
-							inputCost,
-							outputGPTCount.tokens,
-							outputGPTCount.price,
-							inputCost + outputGPTCount.price,
+							inputTokens,
+							inputPrice,
+							outputTokens,
+							outputPrice,
+							totalCost,
 							message
 						);
 					}

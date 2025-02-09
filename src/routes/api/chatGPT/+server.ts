@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
-import type { Message, Model, Image, ChatGPTImage } from '$lib/types';
+import type { Message, Model, Image, ChatGPTImage, GptTokenUsage } from '$lib/types.d';
 import { calculateGptVisionPricing, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
@@ -110,10 +110,14 @@ export async function POST({ request, locals }) {
 			model: model.param,
 			// @ts-ignore
 			messages: messages,
-			stream: true
+			stream: true,
+			stream_options: {
+				include_usage: true
+			}
 		});
 
 		const chunks: string[] = [];
+		let finalUsage: GptTokenUsage | null = null;
 		let error: any;
 
 		const readableStream = new ReadableStream({
@@ -121,6 +125,9 @@ export async function POST({ request, locals }) {
 				try {
 					for await (const chunk of stream) {
 						const content = chunk.choices[0]?.delta?.content || '';
+						if (chunk.usage) {
+							finalUsage = chunk.usage;
+						}
 						if (content) {
 							chunks.push(content);
 							controller.enqueue(new TextEncoder().encode(`${content}`));
@@ -130,11 +137,25 @@ export async function POST({ request, locals }) {
 				} catch (err) {
 					console.error('Error in stream processing: ', err);
 					error = err;
-					// controller.enqueue(new TextEncoder().encode(errorMessage)); // see if this works
 				} finally {
 					if (chunks.length > 0) {
 						const response = chunks.join('');
 						const outputGPTCount = await countTokens(response, model, 'output');
+
+						let inputTokens = inputGPTCount.tokens + imageTokens;
+						let outputTokens = outputGPTCount.tokens;
+						let inputPrice = inputCost;
+						let outputPrice = outputGPTCount.price;
+
+						if (finalUsage) {
+							inputTokens = finalUsage.prompt_tokens;
+							outputTokens = finalUsage.completion_tokens;
+							// Calculate prices based on actual token usage
+							inputPrice = (inputTokens * model.input_price) / 1000000;
+							outputPrice = (outputTokens * model.output_price) / 1000000;
+						}
+
+						const totalCost = inputPrice + outputPrice;
 
 						const message: MessageEntity = await createMessage(
 							plainText,
@@ -143,20 +164,17 @@ export async function POST({ request, locals }) {
 							// need to add previous message ids
 						);
 
-						await updateUserBalanceWithDeduction(
-							Number(session.user!.id),
-							outputGPTCount.price + inputCost
-						);
+						await updateUserBalanceWithDeduction(Number(session.user!.id), totalCost);
 
 						await createApiRequestEntry(
 							Number(session.user!.id!),
 							'openAI',
 							model.name,
-							inputGPTCount.tokens + imageTokens,
-							inputCost,
-							outputGPTCount.tokens,
-							outputGPTCount.price,
-							inputCost + outputGPTCount.price,
+							inputTokens,
+							inputPrice,
+							outputTokens,
+							outputPrice,
+							totalCost,
 							message
 						);
 					}

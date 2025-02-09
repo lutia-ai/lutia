@@ -138,22 +138,22 @@
 	}
 
 	function handlePaste(event: ClipboardEvent): void {
-        event.preventDefault();
-        if (!event.clipboardData) return;
-        
-        const text = event.clipboardData.getData('text/plain');
-        
-        // Preserve line breaks and handle HTML entities, but keep normal spaces
-        const formattedText = text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\n/g, '<br>')
-            // Only replace multiple consecutive spaces with &nbsp;
-            .replace(/ {2,}/g, match => '&nbsp;'.repeat(match.length));
-            
-        document.execCommand('insertHTML', false, formattedText);
-    }
+		event.preventDefault();
+		if (!event.clipboardData) return;
+
+		const text = event.clipboardData.getData('text/plain');
+
+		// Preserve line breaks and handle HTML entities, but keep normal spaces
+		const formattedText = text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/\n/g, '<br>')
+			// Only replace multiple consecutive spaces with &nbsp;
+			.replace(/ {2,}/g, (match) => '&nbsp;'.repeat(match.length));
+
+		document.execCommand('insertHTML', false, formattedText);
+	}
 
 	function copyToClipboard(text: string): Promise<void> {
 		return new Promise((resolve, reject) => {
