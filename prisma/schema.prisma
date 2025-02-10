@@ -38,6 +38,8 @@ enum ApiModel {
   Gemini_2_0_Flash_Lite
   Llama_3_2_90b_Vision
   Grok_beta
+  Grok_2
+  Grok_2_vision
 }
 
 model User {

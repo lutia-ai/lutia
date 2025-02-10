@@ -203,7 +203,7 @@ export const modelDictionary: ModelDictionary = {
 			gemini15Flash: {
 				name: 'Gemini_1_5_Flash',
 				param: 'gemini-1.5-flash',
-				legacy: false,
+				legacy: true,
 				input_price: 0.35 * 1.1,
 				output_price: 1.05 * 1.1,
 				input_price_large: 0.7, // Price increases for prompts 128k or longer
@@ -230,18 +230,42 @@ export const modelDictionary: ModelDictionary = {
 	},
 	xAI: {
 		models: {
-			grokBeta: {
-				name: 'Grok_beta',
-				param: 'grok-beta',
+            grok2: {
+				name: 'Grok_2',
+				param: 'grok-2-1212',
 				legacy: false,
-				input_price: 5 * 1.1,
-				output_price: 15 * 1.1,
+				input_price: 2 * 1.1,
+				output_price: 10 * 1.1,
 				context_window: 131072,
 				hub: undefined,
 				handlesImages: false,
 				maxImages: 0,
 				generatesImages: false
-			}
+			},
+            grok2Vision: {
+                name: 'Grok_2_vision',
+				param: 'grok-2-vision',
+				legacy: false,
+				input_price: 2 * 1.1,
+				output_price: 10 * 1.1,
+				context_window: 32768,
+				hub: undefined,
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false
+			},
+            grokBeta: {
+                name: 'Grok_beta',
+                param: 'grok-beta',
+                legacy: true,
+                input_price: 5 * 1.1,
+                output_price: 15 * 1.1,
+                context_window: 131072,
+                hub: undefined,
+                handlesImages: false,
+                maxImages: 0,
+                generatesImages: false
+            },
 		}
 	}
 	// meta: {

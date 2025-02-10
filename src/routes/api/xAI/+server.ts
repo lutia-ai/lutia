@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
-import type { Message, Model, Image, ChatGPTImage } from '$lib/types';
+import type { Message, Model, Image, ChatGPTImage } from '$lib/types.d';
 import { calculateGptVisionPricing, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
@@ -26,82 +26,36 @@ export async function POST({ request, locals }) {
 
 		const images: Image[] = JSON.parse(imagesStr);
 
-		// let gptImages: ChatGPTImage[] = [];
+		let gptImages: ChatGPTImage[] = [];
 
 		const openai = new OpenAI({
 			apiKey: env.SECRET_XAI_API_KEY,
 			baseURL: 'https://api.x.ai/v1'
 		});
 
-		// if (model.generatesImages) {
-		// 	const response = await openai.images.generate({
-		// 		model: model.param,
-		// 		prompt: plainText,
-		// 		n: 1,
-		// 		size: '1024x1024',
-		// 		response_format: 'b64_json'
-		// 	});
+		const inputGPTCount = await countTokens(messages, model, 'input');
 
-		// 	const base64Data = response.data[0].b64_json;
-
-		// 	const message: MessageEntity = await createMessage(plainText, '[AI generated image]', [
-		// 		{
-		// 			type: 'image',
-		// 			data: 'data:image/png;base64,' + base64Data,
-		// 			media_type: 'image/png',
-		// 			width: 1024,
-		// 			height: 1024,
-		// 			ai: true
-		// 		}
-		// 	]);
-
-		// 	await updateUserBalanceWithDeduction(Number(session.user!.id), 0.04);
-
-		// 	await createApiRequestEntry(
-		// 		Number(session.user!.id!),
-		// 		'openAI',
-		// 		model.name,
-		// 		0,
-		// 		0,
-		// 		0,
-		// 		0.04,
-		// 		0.04,
-		// 		message
-		// 	);
-
-		// 	// Include the base64 data in the response to the frontend
-		// 	return new Response(JSON.stringify({ image: base64Data }), {
-		// 		headers: {
-		// 			'Content-Type': 'application/json',
-		// 			'Cache-Control': 'no-cache',
-		// 			Connection: 'keep-alive'
-		// 		}
-		// 	});
-		// }
-
-		// const inputGPTCount = await countTokens(messages, model, 'input');
-
-		// if (images.length > 0) {
-		// 	const textObject = {
-		// 		type: 'text',
-		// 		text: messages[messages.length - 1].content
-		// 	};
-		// 	gptImages = images.map((image) => ({
-		// 		type: 'image_url',
-		// 		image_url: {
-		// 			url: image.data
-		// 		}
-		// 	}));
-		// 	messages[messages.length - 1].content = [textObject, ...gptImages];
-		// }
+		if (images.length > 0) {
+			const textObject = {
+				type: 'text',
+				text: messages[messages.length - 1].content
+			};
+			gptImages = images.map((image) => ({
+				type: 'image_url',
+				image_url: {
+					url: image.data
+				}
+			}));
+			messages[messages.length - 1].content = [textObject, ...gptImages];
+		}
 
 		let imageCost = 0;
 		let imageTokens = 0;
-		// for (const image of images) {
-		// 	const result = calculateGptVisionPricing(image.width, image.height);
-		// 	imageCost += result.price;
-		// 	imageTokens += result.tokens;
-		// }
+		for (const image of images) {
+			const result = calculateGptVisionPricing(image.width, image.height);
+			imageCost += result.price;
+			imageTokens += result.tokens;
+		}
 
 		// const inputCost = inputGPTCount.price + imageCost;
 		let balance = await retrieveUsersBalance(Number(session.user.id));
