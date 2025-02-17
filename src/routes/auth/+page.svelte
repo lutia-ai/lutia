@@ -10,7 +10,6 @@
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
 	import EyeIcon from '$lib/components/icons/EyeIcon.svelte';
 	import EyeOffIcon from '$lib/components/icons/EyeOffIcon.svelte';
 
@@ -58,7 +57,7 @@
 	// Function to check if the email exists
 	async function checkEmailExists() {
 		const formDataTemp = new FormData(formData);
-		const email = formDataTemp.get('email') as string;
+		const email = (formDataTemp.get('email') as string).toLowerCase();
 
 		const data = new FormData();
 		data.append('email', email);
@@ -88,7 +87,7 @@
 		const formDataTemp = new FormData(formData);
 
 		await signIn('credentials', {
-			email: formDataTemp.get('email') as string,
+			email: (formDataTemp.get('email') as string).toLowerCase(),
 			password: formDataTemp.get('password') as string,
 			callbackUrl: '/'
 		});
@@ -96,9 +95,12 @@
 
 	// Function to register a new user
 	async function register() {
+		const formDataTemp = new FormData(formData);
+		formDataTemp.set('email', (formDataTemp.get('email') as string).toLowerCase());
+		
 		const response = await fetch(`?/register`, {
 			method: 'POST',
-			body: new FormData(formData)
+			body: formDataTemp
 		});
 
 		const result: ActionResult = deserialize(await response.text());
@@ -155,7 +157,7 @@
 
 	async function handleVerifyEmailToken() {
 		const data = new FormData();
-		data.append('email', verifyEmail);
+		data.append('email', verifyEmail.toLowerCase());
 		data.append('emailToken', emailTokenArray.join(''));
 
 		const response = await fetch(`?/verifyEmailToken`, {

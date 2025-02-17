@@ -75,7 +75,7 @@ export async function createUser(
 
 export async function retrieveUserByEmail(email: string): Promise<User> {
 	try {
-		email = handleGmail(email);
+		email = handleGmail(email.toLowerCase());
 		// Retrieve user with optional settings
 		const user = await prisma.user.findUnique({
 			where: { email }
