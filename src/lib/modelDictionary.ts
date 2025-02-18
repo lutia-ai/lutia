@@ -3,27 +3,49 @@ import type { ModelDictionary } from './types.d';
 export const modelDictionary: ModelDictionary = {
 	openAI: {
 		models: {
-			o1preview: {
-				name: 'GPT_o1_preview',
-				param: 'o1-preview',
-				legacy: false,
-				input_price: 15 * 1.1,
-				output_price: 60 * 1.1,
-				context_window: 128000,
-				hub: 'Xenova/gpt-4o',
-				handlesImages: false,
-				maxImages: 5
-			},
-			o1mini: {
-				name: 'GPT_o1_mini',
-				param: 'o1-mini',
+            o3mini: {
+				name: 'GPT_o3_mini',
+				param: 'o3-mini',
 				legacy: false,
 				input_price: 1.1 * 1.1,
 				output_price: 4.4 * 1.1,
 				context_window: 128000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
+				maxImages: 0
+			},
+            o1: {
+				name: 'GPT_o1',
+				param: 'o1',
+				legacy: false,
+				input_price: 15 * 1.1,
+				output_price: 60 * 1.1,
+				context_window: 128000,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
 				maxImages: 5
+			},
+			o1preview: {
+				name: 'GPT_o1_preview',
+				param: 'o1-preview',
+				legacy: true,
+				input_price: 15 * 1.1,
+				output_price: 60 * 1.1,
+				context_window: 128000,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: false,
+				maxImages: 0
+			},
+			o1mini: {
+				name: 'GPT_o1_mini',
+				param: 'o1-mini',
+				legacy: true,
+				input_price: 1.1 * 1.1,
+				output_price: 4.4 * 1.1,
+				context_window: 128000,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: false,
+				maxImages: 0
 			},
 			gpt4o: {
 				name: 'GPT_4o',
