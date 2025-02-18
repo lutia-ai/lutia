@@ -1175,12 +1175,12 @@
 	}
 
 	:global(h1, h2) {
-		margin: 0 0 20px 0;
+		margin: 32px 0 16px 0;
 		padding: 0;
 	}
 
 	:global(h3, h4) {
-		margin: 0 0 10px 0;
+		margin: 16px 0 8px 0;
 		padding: 0;
 	}
 
@@ -1189,22 +1189,64 @@
 		padding: 0;
 	}
 
+    :global(ul) {
+		margin: 0 0 20px;
+		padding: 0 0 0 26px;
+		list-style-position: outside;
+	}
+
 	:global(ol) {
-		margin: 0 20px 10px 10px;
-		padding: 10px 0 0 30px;
+		margin: 0 0 20px;
+		padding: 0 0 0 26px;
 		list-style-position: outside;
 	}
 
 	:global(li) {
-		margin: 0 0 10px 0;
+		margin: 8px 0;
 		padding: 0;
 		display: list-item;
-		// display: block;
 
 		:global(p) {
 			margin: 0 0 10px 0;
 		}
 	}
+
+    :global(hr) {
+        border: none;
+        height: 1px;
+        background-color: #e5e5e5;  /* or any light gray color */
+        margin: 48px 0;  /* Adjust spacing above and below */
+    }
+
+    :global(table) {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        overflow: hidden;
+    }
+
+    :global(thead) {
+        background-color: var(--bg-color-light);
+    }
+
+    :global(th), :global(td) {
+        border: 1px solid #ddd;
+        padding: 10px;
+    }
+
+    /* Main period rows */
+    :global(tr:not([class^="sub-"]) td:first-child) {
+        font-weight: bold;
+    }
+
+    /* Sub-period rows (those with dashes) */
+    :global(tr[class^="sub-"]) :global(td:first-child) {
+        padding-left: 30px;
+        color: #333;
+    }
 
 	.content-paragraph {
 		:global(code) {
@@ -1694,6 +1736,10 @@
 					overflow: hidden;
 					border-bottom-left-radius: 10px;
 					border-bottom-right-radius: 10px;
+
+                    :global(table) {
+                        overflow: visible;  /* This will apply only to tables within .code-content */
+                    }
 				}
 			}
 
