@@ -4,7 +4,7 @@ import type { Message, Model, Image, ChatGPTImage, GptTokenUsage } from '$lib/ty
 import { calculateGptVisionPricing, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
-import type { Message as MessageEntity } from '@prisma/client';
+import { ApiModel, type Message as MessageEntity } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
@@ -90,6 +90,19 @@ export async function POST({ request, locals }) {
 				}
 			}));
 			messages[messages.length - 1].content = [textObject, ...gptImages];
+		}
+
+		// Add developer message at the start of messages array if the model is o1 or o3 mini
+		if (
+			model.name === ApiModel.GPT_o1 ||
+			model.name === ApiModel.GPT_o1_mini ||
+			model.name === ApiModel.GPT_o1_preview ||
+			model.name === ApiModel.GPT_o3_mini
+		) {
+			messages.unshift({
+				role: 'developer',
+				content: 'Formatting re-enabled'
+			});
 		}
 
 		let imageCost = 0;
