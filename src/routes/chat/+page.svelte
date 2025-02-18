@@ -79,6 +79,9 @@
 	let windowWidth = browser ? window.innerWidth : 0;
 	let isLargeScreen = windowWidth > 810;
 	let mobileSidebarOpen = false;
+    let showModelSearch = false;
+    let searchQuery = '';
+    let filteredModels: {company: ApiProvider, model: Model, formattedName: string}[] = [];
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -103,6 +106,41 @@
 	$: if (isSettingsOpen) {
 		loadSettings();
 	}
+
+    function handleInput(event: Event & { currentTarget: EventTarget & HTMLDivElement }) {
+        const target = event.currentTarget;
+        const content = target.textContent || '';
+        
+        if (content.startsWith('@')) {
+            showModelSearch = true;
+            searchQuery = content.slice(1).toLowerCase();
+            
+            // Create filtered list of all models across companies with formatted names
+            filteredModels = Object.entries(modelDictionary).flatMap(([company, details]) => 
+                Object.values(details.models).map(model => ({
+                    company: company as ApiProvider,
+                    model: model as Model,
+                    formattedName: formatModelEnumToReadable((model as Model).name)
+                }))
+            ).filter(item => 
+                item.formattedName.toLowerCase().includes(searchQuery) ||
+                item.company.toLowerCase().includes(searchQuery)
+            );
+        } else {
+            showModelSearch = false;
+        }
+        
+        placeholderVisible = false;
+        promptBarHeight = promptBar.offsetHeight;
+    }
+
+    function selectModelFromSearch(company: ApiProvider, model: Model) {
+        selectCompany(company);
+        selectModel(model);
+        showModelSearch = false;
+        prompt = '';
+        placeholderVisible = true;
+    }
 
 	const handleResize = () => {
 		windowWidth = window.innerWidth;
@@ -597,6 +635,7 @@
 <svelte:window
 	on:click={() => {
 		closeAllTabWidths();
+        showModelSearch = false;
 	}}
 	on:scroll={() => {
 		handleScroll();
@@ -1081,16 +1120,51 @@
 						{/if}
 					</div>
 				{/if}
+                {#if showModelSearch && filteredModels.length > 0}
+                    <div class="model-search-container">
+                        {#each filteredModels as {company, model, formattedName}}
+                            <div 
+                                class="model-search-item"
+                                role="button"
+                                tabindex="0"
+                                on:click={() => selectModelFromSearch(company, model)}
+                                on:keydown={(e) => {
+                                    if (e.key === 'Enter') selectModelFromSearch(company, model);
+                                }}
+                            >
+                                <div class="model-icon">
+                                    {#if isModelAnthropic(model.name)}
+                                        <img src={ClaudeIcon} alt="Claude's icon" />
+                                    {:else if isModelOpenAI(model.name)}
+                                        <ChatGPTIcon color="var(--text-color)" width="22px" height="22px" />
+                                    {:else if isModelGoogle(model.name)}
+                                        <GeminiIcon />
+                                    {:else if isModelXAI(model.name)}
+                                        <GrokIcon color="var(--text-color)" />
+                                    {:else if isModelMeta(model.name)}
+                                        <MetaIcon />
+                                    {/if}
+                                </div>
+                                <div class="model-info">
+                                    <span class="model-name">{formattedName}</span>
+                                    <span class="company-name">{company}</span>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
 				<div
 					contenteditable
 					bind:this={promptBar}
 					role="textbox"
 					tabindex="0"
 					bind:innerHTML={prompt}
-					on:input={() => {
-						placeholderVisible = false;
-						promptBarHeight = promptBar.offsetHeight;
-					}}
+					on:input={handleInput}
+                    on:click|stopPropagation={() => {
+                        if (prompt.startsWith('@')) {
+                            showModelSearch = true;
+                        }
+                    }}
 					on:keydown={(event) => {
 						if (event.key === 'Enter' && !event.shiftKey) {
 							event.preventDefault();
@@ -1214,8 +1288,8 @@
     :global(hr) {
         border: none;
         height: 1px;
-        background-color: #e5e5e5;  /* or any light gray color */
-        margin: 48px 0;  /* Adjust spacing above and below */
+        background-color: #e5e5e5;
+        margin: 48px 0;
     }
 
     :global(table) {
@@ -1224,7 +1298,7 @@
         border-spacing: 0;
         margin-bottom: 20px;
         border-radius: 10px;
-        border: 1px solid #ddd;
+        border: 1px solid var(--bg-color-light);
         overflow: hidden;
     }
 
@@ -1233,7 +1307,7 @@
     }
 
     :global(th), :global(td) {
-        border: 1px solid #ddd;
+        border: 1px solid var(--bg-color-light);
         padding: 10px;
     }
 
@@ -1869,7 +1943,63 @@
 								}
 							}
 						}
+
 					}
+                    .model-search-container {
+                        position: absolute;
+                        bottom: 110%;
+                        left: 0;
+                        width: 100%;
+                        background: var(--bg-color-light);
+                        border-radius: 10px;
+                        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+                        max-height: 300px;
+                        overflow-y: auto;
+                        z-index: 1000;
+                        
+                        .model-search-item {
+                            display: flex;
+                            align-items: center;
+                            padding: 10px 20px;
+                            cursor: pointer;
+                            transition: background 0.2s ease;
+                            
+                            &:hover {
+                                background: var(--bg-color);
+                            }
+                            
+                            .model-icon {
+                                width: 20px;
+                                height: 20px;
+                                margin-right: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                
+                                img {
+                                    width: 100%;
+                                    height: 100%;
+                                    object-fit: contain;
+                                }
+                            }
+                            
+                            .model-info {
+                                display: flex;
+                                flex-direction: column;
+                                
+                                .model-name {
+                                    font-size: 14px;
+                                    font-weight: 500;
+                                    color: var(--text-color);
+                                }
+                                
+                                .company-name {
+                                    font-size: 12px;
+                                    color: var(--text-color-light);
+                                }
+                            }
+                        }
+                    }
 
 					div[contenteditable] {
 						max-height: 350px;
