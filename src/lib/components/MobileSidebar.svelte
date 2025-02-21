@@ -29,6 +29,7 @@
 	} from '$lib/chatHistory';
 	import ImageIcon from './icons/ImageIcon.svelte';
 	import LightningIcon from './icons/LightningIcon.svelte';
+	import LightningReasoningIcon from './icons/LightningReasoningIcon.svelte';
 
 	export let companySelection: ApiProvider[];
 	export let gptModelSelection: Model[];
@@ -209,15 +210,18 @@
 								>
 									<div class="record">
 										{#if model.generatesImages}
-											<div class="image">
-												<ImageIcon color="var(--text-color)" />
-											</div>
-										{:else}
-											<div class="image">
-												<LightningIcon color="var(--text-color)" />
-											</div>
-										{/if}
-
+										<div class="image">
+											<ImageIcon color="var(--text-color)" />
+										</div>
+                                        {:else if model.reasoning}
+                                            <div class="image">
+                                                <LightningReasoningIcon color="var(--text-color)" />
+                                            </div>
+                                        {:else}
+                                            <div class="image">
+                                                <LightningIcon color="var(--text-color)" />
+                                            </div>
+                                        {/if}
 										<p>
 											{formatModelEnumToReadable(model.name)}
 											{#if $showPricing}
