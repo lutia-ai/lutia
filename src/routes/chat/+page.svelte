@@ -280,7 +280,19 @@
 
 			// Add user's message to chat history
 			chatHistory.update((history) => [...history, userPrompt]);
-			scrollToBottom();
+			
+			// Scroll the new message to the top after a brief delay to ensure DOM update
+			setTimeout(() => {
+				const chatMessages = document.querySelectorAll('.user-chat-wrapper, .llm-container');
+				if (chatMessages.length > 0) {
+					const lastMessage = chatMessages[chatMessages.length - 1];
+					const offset = lastMessage.getBoundingClientRect().top + window.scrollY - 150; // 100px from top
+					window.scrollTo({
+						top: offset,
+						behavior: 'smooth'
+					});
+				}
+			}, 100);
 
 			// Initialize AI's response in chat history
 			chatHistory.update((history) => [
@@ -292,7 +304,7 @@
 					output_cost: 0,
 					price_open: false,
 					loading: true,
-					copied: false
+					copied: false,
 				}
 			]);
 
@@ -300,7 +312,6 @@
 
 			try {
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
-				console.log('fullPrompt: ', fullPrompt);
 
 				let uri: string;
 				switch ($chosenCompany) {
@@ -403,7 +414,7 @@
 								: msg
 						)
 					);
-					if (isScrollingProgrammatically) scrollToBottom();
+					// if (isScrollingProgrammatically) scrollToBottom();
 				}
 				const lastItem = $chatHistory[currentChatIndex];
 				const outputPriceResult = await countTokensNoTimeout(
@@ -442,7 +453,6 @@
 					});
 				});
 				promptBarHeight = promptBar.offsetHeight;
-				console.log($chatHistory[currentChatIndex]);
 			} catch (error) {
 				if (error instanceof Error) {
 					console.error('Error:', error.message);
@@ -761,7 +771,7 @@
 					transition:fade={{ duration: 300, delay: 300 }}
 					class="chat-history"
 					style="
-                        padding-bottom: {380 + promptBarHeight * 0.3}px;
+                        padding-bottom: {400 + promptBarHeight * 0.3}px;
                     "
 				>
 					{#each $chatHistory as chat, chatIndex}
@@ -783,7 +793,7 @@
 								</div>
 							</div>
 						{:else}
-							<div class="llm-container">
+							<div class="llm-container" style={chatIndex === $chatHistory.length - 1 ? `min-height: 45vh` : 'min-height: 0'}>
 								{#if isLlmChatComponent(chat)}
 									{#if isModelAnthropic(chat.by)}
 										<div
@@ -1586,6 +1596,11 @@
 					margin-left: auto;
 					margin-right: auto;
 
+					// Add this condition to set min-height when loading
+					&:last-child:has(.gpt-loading-dot) {
+						min-height: 80vh;
+					}
+					
 					.gpt-icon-container {
 						position: relative;
 						width: 22px;
@@ -1610,6 +1625,11 @@
 						width: calc(100% - 50px);
 						padding: 3px 0px;
 						box-sizing: border-box;
+
+						// Add minimum height when loading
+						&:has(.gpt-loading-dot) {
+							min-height: 80vh;
+						}
 
 						&:hover {
 							.chat-toolbar-container {
