@@ -56,7 +56,6 @@
 	import type { ApiProvider } from '@prisma/client';
 	import { fade, fly } from 'svelte/transition';
 	import { browser } from '$app/environment';
-	import Xai from '$lib/components/icons/XAI.svelte';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
 
 	export let data;
@@ -82,6 +81,8 @@
     let showModelSearch = false;
     let searchQuery = '';
     let filteredModels: {company: ApiProvider, model: Model, formattedName: string}[] = [];
+    let selectedModelIndex: number | null = null;
+    let modelSearchItems: HTMLDivElement[] = [];
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -110,26 +111,54 @@
     function handleInput(event: Event & { currentTarget: EventTarget & HTMLDivElement }) {
         const target = event.currentTarget;
         const content = target.textContent || '';
-        
-        if (content.startsWith('@')) {
+
+        // Function to check if @ is valid (at start, after newline, or after whitespace)
+        const isValidAtPosition = (str: string, atIndex: number): boolean => {
+            if (atIndex === 0) return true; // @ at start
+            const charBefore = str.charAt(atIndex - 1);
+            // return charBefore === '\n' || charBefore === ' '; // @ after newline or space
+            return true;
+        };
+
+        // Find all @ positions and check if any are valid
+        const atIndices = [...content.matchAll(/@/g)].map(match => match.index!);
+        const hasValidAt = atIndices.some(index => isValidAtPosition(content, index));
+
+        if (hasValidAt) {
             showModelSearch = true;
-            searchQuery = content.slice(1).toLowerCase();
+            // Get the text after the last valid @
+            const lastValidAtIndex = atIndices
+                .filter(index => isValidAtPosition(content, index))
+                .pop();
             
-            // Create filtered list of all models across companies with formatted names
-            filteredModels = Object.entries(modelDictionary).flatMap(([company, details]) => 
-                Object.values(details.models).map(model => ({
-                    company: company as ApiProvider,
-                    model: model as Model,
-                    formattedName: formatModelEnumToReadable((model as Model).name)
-                }))
-            ).filter(item => 
-                item.formattedName.toLowerCase().includes(searchQuery) ||
-                item.company.toLowerCase().includes(searchQuery)
-            );
+            if (lastValidAtIndex !== undefined) {
+                const afterAt = content.slice(lastValidAtIndex + 1);
+                searchQuery = afterAt.trim().toLowerCase();
+                
+                // Filter models based on search query
+                filteredModels = Object.entries(modelDictionary)
+                    .flatMap(([company, details]) => {
+                        if (!details || !details.models) return [];
+                        return Object.values(details.models).map(model => ({
+                            company: company as ApiProvider,
+                            model: model as Model,
+                            formattedName: formatModelEnumToReadable((model as Model).name)
+                        }));
+                    })
+                    .filter(
+                        item =>
+                            item.formattedName.toLowerCase().includes(searchQuery) ||
+                            item.company.toLowerCase().includes(searchQuery)
+                    );
+                
+                if (filteredModels.length === 0) {
+                    showModelSearch = false
+                }
+            }
         } else {
             showModelSearch = false;
         }
-        
+
         placeholderVisible = false;
         promptBarHeight = promptBar.offsetHeight;
     }
@@ -138,8 +167,8 @@
         selectCompany(company);
         selectModel(model);
         showModelSearch = false;
-        prompt = '';
-        placeholderVisible = true;
+        prompt = prompt.replace(/@.*$/, '').trim();
+        // placeholderVisible = true;
     }
 
 	const handleResize = () => {
@@ -1122,15 +1151,20 @@
 				{/if}
                 {#if showModelSearch && filteredModels.length > 0}
                     <div class="model-search-container">
-                        {#each filteredModels as {company, model, formattedName}}
+                        {#each filteredModels as {company, model, formattedName}, index}
                             <div 
-                                class="model-search-item"
+                                class="model-search-item {selectedModelIndex === index ? 'selected' : ''}"
                                 role="button"
                                 tabindex="0"
+                                bind:this={modelSearchItems[index]}
                                 on:click={() => selectModelFromSearch(company, model)}
                                 on:keydown={(e) => {
-                                    if (e.key === 'Enter') selectModelFromSearch(company, model);
+                                    if (e.key === 'Enter') {
+                                        selectModelFromSearch(company, model);
+                                    }
                                 }}
+                                on:mouseenter={() => selectedModelIndex = index}
+                                on:mouseleave={() => selectedModelIndex = null}
                             >
                                 <div class="model-icon">
                                     {#if isModelAnthropic(model.name)}
@@ -1166,10 +1200,28 @@
                         }
                     }}
 					on:keydown={(event) => {
-						if (event.key === 'Enter' && !event.shiftKey) {
-							event.preventDefault();
-							submitPrompt();
-							promptBarHeight = promptBar.offsetHeight;
+						if (showModelSearch) {
+							if (event.key === 'Enter') {
+								event.preventDefault();
+								if (selectedModelIndex !== null) {
+									const selectedModel = filteredModels[selectedModelIndex];
+									selectModelFromSearch(selectedModel.company, selectedModel.model);
+								}
+							}
+                            if (event.key === 'ArrowDown') {
+                                selectedModelIndex = (selectedModelIndex === null || selectedModelIndex === filteredModels.length - 1) ? 0 : selectedModelIndex + 1;
+                                modelSearchItems[selectedModelIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                            if (event.key === 'ArrowUp') {
+                                selectedModelIndex = (selectedModelIndex === null || selectedModelIndex === 0) ? filteredModels.length - 1 : selectedModelIndex - 1;
+                                modelSearchItems[selectedModelIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+						} else {
+							if (event.key === 'Enter' && !event.shiftKey) {
+								event.preventDefault();
+								submitPrompt();
+								promptBarHeight = promptBar.offsetHeight;
+							}
 						}
 					}}
 					on:paste={handlePaste}
@@ -1956,6 +2008,10 @@
                         max-height: 300px;
                         overflow-y: auto;
                         z-index: 1000;
+
+                        .selected {
+                            background: var(--bg-color);
+                        }
                         
                         .model-search-item {
                             display: flex;
@@ -1964,9 +2020,9 @@
                             cursor: pointer;
                             transition: background 0.2s ease;
                             
-                            &:hover {
-                                background: var(--bg-color);
-                            }
+                            // &:hover {
+                            //     background: var(--bg-color);
+                            // }
                             
                             .model-icon {
                                 width: 20px;
