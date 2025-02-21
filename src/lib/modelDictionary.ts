@@ -12,7 +12,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 128000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
-				maxImages: 0
+				maxImages: 0,
+                reasoning: true
 			},
             o1: {
 				name: 'GPT_o1',
@@ -23,7 +24,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 128000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 5
+				maxImages: 5,
+                reasoning: true
 			},
 			o1preview: {
 				name: 'GPT_o1_preview',
@@ -34,7 +36,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 128000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
-				maxImages: 0
+				maxImages: 0,
+                reasoning: true
 			},
 			o1mini: {
 				name: 'GPT_o1_mini',
@@ -45,7 +48,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 128000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
-				maxImages: 0
+				maxImages: 0,
+                reasoning: true
 			},
 			gpt4o: {
 				name: 'GPT_4o',

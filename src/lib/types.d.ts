@@ -47,6 +47,7 @@ export type Model = {
 	handlesImages: boolean;
 	maxImages: number;
 	generatesImages: boolean;
+	reasoning: boolean;
 };
 
 export type ModelLogos = Record<string, { logo: any }>;
