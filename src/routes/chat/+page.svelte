@@ -81,7 +81,7 @@
     let showModelSearch = false;
     let searchQuery = '';
     let filteredModels: {company: ApiProvider, model: Model, formattedName: string}[] = [];
-    let selectedModelIndex: number | null = null;
+    let selectedModelIndex: number | null = 0;
     let modelSearchItems: HTMLDivElement[] = [];
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
@@ -1310,7 +1310,12 @@
 		height: 100vh;
 	}
 
-	:global(h1, h2) {
+    :global(h1) {
+        margin: 0px 0 16px 0;
+		padding: 0;
+    }
+
+	:global(h2) {
 		margin: 32px 0 16px 0;
 		padding: 0;
 	}

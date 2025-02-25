@@ -28,6 +28,7 @@ enum ApiModel {
   GPT_4
   GPT_3_5_Turbo
   DALL_E
+  Claude_3_7_Sonnet
   Claude_3_5_Sonnet
   Claude_3_5_Haiku
   Claude_3_Opus

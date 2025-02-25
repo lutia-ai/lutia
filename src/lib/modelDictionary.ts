@@ -124,10 +124,23 @@ export const modelDictionary: ModelDictionary = {
 	},
 	anthropic: {
 		models: {
+            claude37Sonnet: {
+				name: 'Claude_3_7_Sonnet',
+				param: 'claude-3-7-sonnet-latest',
+				legacy: false,
+				input_price: 3 * 1.1,
+				output_price: 15 * 1.1,
+				context_window: 200000,
+				hub: 'Xenova/claude-tokenizer',
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false,
+                reasoning: true
+			},
 			claude35Sonnet: {
 				name: 'Claude_3_5_Sonnet',
 				param: 'claude-3-5-sonnet-latest',
-				legacy: false,
+				legacy: true,
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
 				context_window: 200000,
