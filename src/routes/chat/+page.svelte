@@ -52,7 +52,7 @@
 		handleKeyboardShortcut,
 		loadChatHistory,
 		parseMessageContent,
-		sanitizeLLmContent
+		sanitizeLLmContent,
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
 	import type { ApiProvider } from '@prisma/client';
@@ -92,18 +92,19 @@
 	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
 	let chosenModel = gptModelSelection[0];
 
-    const markedKatexOptions = {
+    const markedKatexOptions = markedKatex({
         throwOnError: false,
         displayMode: true,
-        delimiters: [
-            { left: '$$', right: '$$', display: false },  // Block math with $$
-            { left: '$', right: '$', display: false },   // Inline math with $
-            { left: '\[', right: '\]', display: true },  // Block math with \[ \]
-            { left: '\(', right: '\)', display: true }  // Inline math with \( \)
-        ]
-    };
+        output: "html",
+        // delimiters: [
+        //     { left: '$$', right: '$$', display: false },  // Block math with $$
+        //     { left: '$', right: '$', display: false },   // Inline math with $
+        //     { left: '\[', right: '\]', display: true },  // Block math with \[ \]
+        //     { left: '\(', right: '\)', display: true }  // Inline math with \( \)
+        // ]
+    });
 
-    marked.use(markedKatex(markedKatexOptions));
+    marked.use(markedKatexOptions);
 
 	// Generates the fullPrompt and counts input tokens when the prompt changes
 	$: if (prompt || prompt === '' || $numberPrevMessages || imagePreview) {
@@ -854,14 +855,12 @@
 								<div class="llm-chat">
 									{#if isLlmChatComponent(chat)}
 										{#each chat.components || [] as component, componentIndex}
-											{#if component.type === 'text' || (component.type == 'code' && component.language === 'latex')}
+											{#if component.type === 'text'}
 												<p class="content-paragraph">
 													{@html marked(
 														component.type === 'text'
 															? sanitizeLLmContent(component.content)
-															: component.type === 'code' 
-                                                                ? sanitizeLLmContent('\n$$\n'+component.code+'\n$$\n')
-                                                                : ''
+															: ''
 													)}
 												</p>
 											{:else if component.type === 'code'}
