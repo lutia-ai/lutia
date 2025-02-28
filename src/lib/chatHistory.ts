@@ -317,18 +317,45 @@ export async function clearChatHistory() {
 }
 
 export function sanitizeLLmContent(content: string) {
-	if (!content) return '';
-
-	// Trim the content
-	content = content.trim();
-
-	// Replace <style>, <script>, and <html> tags with backtick-wrapped versions in one pass
-	content = content.replace(/<(style|script|html)>/g, (match, p1) => `\`<${p1}>\``);
-
-	// Replace </style>, </script>, and </html> tags with backtick-wrapped versions in one pass
-	content = content.replace(/<(style|script|html)>/g, (match, p1) => `\`<${p1}>\``);
-
-	return content;
+    if (!content) return '';
+    
+    // Trim the content
+    content = content.trim();
+    
+    // Replace <style>, <script>, and <html> tags with backtick-wrapped versions
+    content = content.replace(/<(style|script|html)>/g, (match, p1) => `\`<${p1}>\``);
+    content = content.replace(/<\/(style|script|html)>/g, (match, p1) => `\`</${p1}>\``);
+    
+    // First, protect legitimate LaTeX expressions
+    // Store block math expressions
+    const blockMathExpressions: string[] = [];
+    content = content.replace(/\\\[\s*([\s\S]*?)\s*\\\]/gm, (match, inner) => {
+        blockMathExpressions.push(inner);
+        return `__BLOCK_MATH_${blockMathExpressions.length - 1}__`;
+    });
+    
+    // Store inline math expressions
+    const inlineMathExpressions: string[] = [];
+    content = content.replace(/\\\(\s*([\s\S]*?)\s*\\\)/gm, (match, inner) => {
+        inlineMathExpressions.push(inner);
+        return `__INLINE_MATH_${inlineMathExpressions.length - 1}__`;
+    });
+    
+    // Escape dollar signs used for currency (when a dollar sign is followed by a number)
+    content = content.replace(/\$(\d)/g, '\\$$$1');
+    
+    // Now restore LaTeX expressions
+    // Restore block math with proper delimiters
+    content = content.replace(/__BLOCK_MATH_(\d+)__/g, (match, index) => {
+        return `\n$$\n${blockMathExpressions[parseInt(index)]}\n$$\n`;
+    });
+    
+    // Restore inline math with proper delimiters
+    content = content.replace(/__INLINE_MATH_(\d+)__/g, (match, index) => {
+        return `$${inlineMathExpressions[parseInt(index)]}$`;
+    });
+    
+    return content;
 }
 
 export function formatModelEnumToReadable(enumValue: string): string {

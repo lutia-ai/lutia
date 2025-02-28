@@ -2,6 +2,8 @@
 	import { onMount, tick, type ComponentType } from 'svelte';
 	import { HighlightAuto, LineNumbers } from 'svelte-highlight';
 	import { marked } from 'marked';
+    import markedKatex from "marked-katex-extension";
+    import 'katex/dist/katex.min.css';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
 	import { chatHistory, numberPrevMessages, chosenCompany } from '$lib/stores.ts';
 	import type {
@@ -89,6 +91,19 @@
 
 	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
 	let chosenModel = gptModelSelection[0];
+
+    const markedKatexOptions = {
+        throwOnError: false,
+        displayMode: true,
+        delimiters: [
+            { left: '$$', right: '$$', display: false },  // Block math with $$
+            { left: '$', right: '$', display: false },   // Inline math with $
+            { left: '\[', right: '\]', display: true },  // Block math with \[ \]
+            { left: '\(', right: '\)', display: true }  // Inline math with \( \)
+        ]
+    };
+
+    marked.use(markedKatex(markedKatexOptions));
 
 	// Generates the fullPrompt and counts input tokens when the prompt changes
 	$: if (prompt || prompt === '' || $numberPrevMessages || imagePreview) {
@@ -414,7 +429,6 @@
 								: msg
 						)
 					);
-					// if (isScrollingProgrammatically) scrollToBottom();
 				}
 				const lastItem = $chatHistory[currentChatIndex];
 				const outputPriceResult = await countTokensNoTimeout(
@@ -840,14 +854,14 @@
 								<div class="llm-chat">
 									{#if isLlmChatComponent(chat)}
 										{#each chat.components || [] as component, componentIndex}
-											{#if component.type === 'text'}
+											{#if component.type === 'text' || (component.type == 'code' && component.language === 'latex')}
 												<p class="content-paragraph">
 													{@html marked(
-														component.content
-															? sanitizeLLmContent(
-																	component.content.trim()
-																)
-															: ''
+														component.type === 'text'
+															? sanitizeLLmContent(component.content)
+															: component.type === 'code' 
+                                                                ? sanitizeLLmContent('\n$$\n'+component.code+'\n$$\n')
+                                                                : ''
 													)}
 												</p>
 											{:else if component.type === 'code'}
@@ -1306,16 +1320,19 @@
 </div>
 
 <style lang="scss">
+
 	.settings-open {
 		height: 100vh;
 	}
 
     :global(h1) {
+        font-size: 26px;
         margin: 0px 0 16px 0;
 		padding: 0;
     }
 
 	:global(h2) {
+        font-size: 24px;
 		margin: 32px 0 16px 0;
 		padding: 0;
 	}
@@ -1650,7 +1667,7 @@
 							width: max-content;
 							max-width: 100%;
 							overflow-y: hidden;
-							overflow-x: visible !important;
+							overflow-x: hidden !important;
 
 							&::-webkit-scrollbar {
 								height: 10px;
