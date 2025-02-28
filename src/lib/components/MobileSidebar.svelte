@@ -210,15 +210,15 @@
 								>
 									<div class="record">
 										{#if model.generatesImages}
-										<div class="image">
+										<div class="icon">
 											<ImageIcon color="var(--text-color)" />
 										</div>
                                         {:else if model.reasoning}
-                                            <div class="image">
+                                            <div class="icon">
                                                 <LightningReasoningIcon color="var(--text-color)" />
                                             </div>
                                         {:else}
-                                            <div class="image">
+                                            <div class="icon">
                                                 <LightningIcon color="var(--text-color)" />
                                             </div>
                                         {/if}
@@ -524,53 +524,66 @@
 					box-shadow: 0 5px 15px rgba(50, 50, 50, 0.15);
 					border-radius: 10px;
 					display: flex;
+                    gap: 5px;
 					flex-direction: column;
 					z-index: inherit;
-					padding: 10px;
+					padding: 10px 5px;
+                    box-sizing: border-box;
 					min-width: 300px;
+                    max-width: calc(100vw - 40px);
+                    max-height: calc(100vh - 180px);
 					cursor: default;
+                    overflow-y: auto;
 
 					.llm-options {
-						display: flex;
-						height: 50px;
+                        display: flex;
+						flex-direction: column; /* Change to column for a list layout */
+						min-height: 62px; /* Set a fixed height for uniformity */
+						width: 100%; /* Ensure full width for each option */
 						overflow: hidden;
 						transition: all 0.3s ease;
-						// margin: 10px;
+                        gap: 2px;
+						box-sizing: border-box; /* Include padding and border in the element's total width and height */
 
 						.record {
 							display: flex;
-							gap: 20px;
+							gap: 8px;
+                            margin: auto;
 							align-items: center;
 							width: 100%;
 							height: 100%;
-							padding: 0 10px;
+							// padding: 5px 6px;
 							border-radius: 10px;
 							color: var(--text-color);
 							cursor: pointer;
+                            box-sizing: border-box;
 
 							&:hover {
 								background: var(--bg-color-light-alt);
 							}
 
 							p {
-								// flex: 10;
 								display: flex;
 								gap: 5px;
 								flex-direction: column;
-								// align-items: center;
 								margin: 0;
-								padding: 0;
-								width: 200px;
+								padding: 4px 0;
+								width: 150px;
+
 
 								.pricing {
 									display: flex;
 									gap: 10px;
-									width: max-content;
+									width: 100%; /* Change to 100% to allow wrapping */
+                                    flex-wrap: wrap;
+                                    column-gap: 10px;      /* Horizontal gap between items on the same line */
+                                    row-gap: 2px;          /* Vertical gap between wrapped lines */
 
 									span {
 										text-align: left;
 										color: var(--text-color-light);
 										font-size: 12px;
+										white-space: nowrap; /* Prevent text from wrapping within the span */
 									}
 								}
 							}
@@ -579,17 +592,23 @@
 								border-radius: 20px;
 								border: 1px solid var(--text-color-light);
 								background: var(--bg-color-light);
-								padding: 5px 10px;
+								padding: 4px 8px;
 								color: var(--text-color);
 
 								p {
 									width: max-content;
-									font-size: 14px;
+									font-size: 10px;
 									color: var(--text-color-light);
 								}
 							}
 
-							.image {
+							.icon {
+                                margin-left: 5px;
+								width: 26px;
+								height: 26px;
+							}
+
+                            .image {
 								width: 20px;
 								height: 20px;
 							}

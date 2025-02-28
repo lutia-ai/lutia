@@ -199,53 +199,62 @@
 							>
 								<div class="record">
 									{#if model.generatesImages}
-										<div class="image">
+										<div class="icon">
 											<ImageIcon color="var(--text-color)" />
 										</div>
 									{:else if model.reasoning}
-										<div class="image">
+										<div class="icon">
 											<LightningReasoningIcon color="var(--text-color)" />
 										</div>
 									{:else}
-										<div class="image">
+										<div class="icon">
 											<LightningIcon color="var(--text-color)" />
 										</div>
 									{/if}
-									<p>
-										{formatModelEnumToReadable(model.name)}
-										{#if $showPricing}
-											<div class="pricing">
-												<span>
-													Input: ${Number(model.input_price.toFixed(3))}
-													{model.input_price > 0 ? '/ 1M' : ''}
-												</span>
-												<span>
-													Output: ${Number(model.output_price.toFixed(3))}
-													/ {model.generatesImages ? 'Image' : '1M'}
-												</span>
-											</div>
-										{/if}
-									</p>
-									{#if model.legacy}
-										<div class="legacy">
-											<p>Legacy</p>
-										</div>
-									{/if}
-									{#if model.handlesImages}
-										<div class="image">
-											<AttachmentIcon color="var(--text-color" />
-										</div>
-									{/if}
-									<div
-										class="selected-container"
-										style="margin-left: {model.handlesImages ? '0' : 'auto'}"
-									>
-										{#if chosenModel.name === model.name}
-											<div class="selected">
-												<TickIcon color="var(--bg-color)" strokeWidth={3} />
-											</div>
-										{/if}
-									</div>
+                                    <div class="split">
+                                        <div class="main-content">
+                                            <p>
+                                                {formatModelEnumToReadable(model.name)}
+                                                {#if $showPricing}
+                                                    <div class="pricing">
+                                                        <span>
+                                                            Input: ${Number(model.input_price.toFixed(3))}
+                                                            {model.input_price > 0 ? '/ 1M' : ''}
+                                                        </span>
+                                                        <span>
+                                                            Output: ${Number(model.output_price.toFixed(3))}
+                                                            / {model.generatesImages ? 'Image' : '1M'}
+                                                        </span>
+                                                    </div>
+                                                {/if}
+                                            </p>
+                                        </div>
+                                        <div class="description">
+                                            {#if !model.legacy && model.description}
+                                                <span>{model.description}</span>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                    <div class="image">
+                                        {#if model.handlesImages}
+                                            <AttachmentIcon color="var(--text-color" />
+                                        {/if}
+                                    </div>
+                                    {#if model.legacy}
+                                        <div class="legacy">
+                                            <p>Legacy</p>
+                                        </div>
+                                    {/if}
+                                    <div
+                                        class="selected-container"
+                                        style="margin-left: {model.handlesImages ? '0' : 'auto'}"
+                                    >
+                                        {#if chosenModel.name === model.name}
+                                            <div class="selected">
+                                                <TickIcon color="var(--bg-color)" strokeWidth={3} />
+                                            </div>
+                                        {/if}
+                                    </div>
 								</div>
 							</div>
 						{/if}
@@ -500,74 +509,123 @@
 					padding: 10px;
 					min-width: 300px;
 					cursor: default;
+                    max-height: calc(100vh - 120px);
+                    // height: 100%;
+                    overflow-y: auto;
 
 					.llm-options {
 						display: flex;
-						height: 50px;
+						flex-direction: column; /* Change to column for a list layout */
+						min-height: 62px; /* Set a fixed height for uniformity */
+						width: 100%; /* Ensure full width for each option */
 						overflow: hidden;
 						transition: all 0.3s ease;
+						// margin: 5px 0; /* Add margin for spacing between options */
+                        gap: 5px;
+						box-sizing: border-box; /* Include padding and border in the element's total width and height */
+                        
 						// margin: 10px;
-
+                        
 						.record {
-							display: flex;
+                            display: flex;
 							gap: 20px;
 							align-items: center;
 							width: 100%;
 							height: 100%;
-							padding: 0 10px;
+							// padding: 0 10px;
 							border-radius: 10px;
 							color: var(--text-color);
 							cursor: pointer;
+                            padding: 8px 2px;
+                            box-sizing: border-box;
 
 							&:hover {
 								background: var(--bg-color-light-alt);
 							}
 
-							p {
-								// flex: 10;
-								display: flex;
-								gap: 5px;
-								flex-direction: column;
-								// align-items: center;
-								margin: 0;
-								padding: 0;
-								width: 200px;
+                            .icon {
+                                display: flex;
+                                margin-left: 10px;
+                                width: 30px;
+                                height: 30px;
+                            }
 
-								.pricing {
-									display: flex;
-									gap: 10px;
-									width: max-content;
+                            .split {
+                                display: flex;
+                                flex-direction: column;
+                                height: max-content;
+                                gap: 2px;
+                                // width: 80px;
 
-									span {
-										text-align: left;
-										color: var(--text-color-light);
-										font-size: 12px;
-									}
-								}
-							}
+                                .main-content {
+                                    display: flex;
+                                    gap: 10px;
+                                    align-items: center;
+                                    width: 100%;
+                                    height: 100%;
+                                    // max-height: 30px;
+                                    
+                                    p {
+                                        display: flex;
+                                        // gap: 5px;
+                                        flex-direction: column;
+                                        margin: 0;
+                                        padding: 0;
+                                        width: 220px;
+                                        
+                                        .pricing {
+                                            display: flex;
+                                            gap: 10px;
+                                            width: max-content;
+                                            margin-top: 2px;
+                                            
+                                            span {
+                                                text-align: left;
+                                                color: var(--text-color-light);
+                                                font-size: 12px;
+                                            }
+                                        }
+                                    }
+                                }
 
-							.legacy {
-								border-radius: 20px;
-								border: 1px solid var(--text-color-light);
-								background: var(--bg-color-light);
-								padding: 5px 10px;
-								color: var(--text-color);
+                                .description {
+                                    display: flex;
+                                    margin-right: 4px;
 
-								p {
-									width: max-content;
-									font-size: 14px;
-									color: var(--text-color-light);
-								}
-							}
+                                    span {
+                                        width: 220px;
+                                        font-size: 13px;
+                                        color: var(--text-color-light);
+                                    }
+                                }
+                            }
+
+                            .legacy {
+                                display: flex;
+                                border-radius: 20px;
+                                border: 1px solid var(--text-color-light-opacity);
+                                background: var(--bg-color-light);
+                                padding: 5px 10px;
+                                color: var(--text-color);
+
+                                p {
+                                    width: max-content;
+                                    font-size: 12px;
+                                    color: var(--text-color-light);
+                                    margin: 0;
+                                }
+                            }
 
 							.image {
-								width: 26px;
-								height: 26px;
+                                display: flex;
+								width: 20px;
+								height: 20px;
 							}
 
 							.selected-container {
 								width: 20px;
 								height: 20px;
+                                margin: 0 10px;
 
 								.selected {
 									width: inherit;

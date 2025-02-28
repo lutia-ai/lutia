@@ -13,7 +13,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
-                reasoning: true
+                reasoning: true,
+                description: 'Fast, flexible reasoning model'
 			},
             o1: {
 				name: 'GPT_o1',
@@ -25,7 +26,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 5,
-                reasoning: true
+                reasoning: true,
+                description: 'High intelligence reasoning model'
 			},
 			o1preview: {
 				name: 'GPT_o1_preview',
@@ -37,7 +39,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
-                reasoning: true
+                reasoning: true,
+                description: 'Preview version of o1'
 			},
 			o1mini: {
 				name: 'GPT_o1_mini',
@@ -49,7 +52,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
-                reasoning: true
+                reasoning: true,
+                description: ''
 			},
 			gpt4o: {
 				name: 'GPT_4o',
@@ -61,7 +65,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 5,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Versatile, high-intelligence flagship model'
 			},
 			gpt4mini: {
 				name: 'GPT_4o_mini',
@@ -73,7 +78,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 5,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Fast, affordable small model'
 			},
 			gpt4turbo: {
 				name: 'GPT_4_Turbo',
@@ -85,7 +91,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4',
 				handlesImages: true,
 				maxImages: 5,
-				generatesImages: false
+				generatesImages: false,
+                description: ''
 			},
 			gpt4: {
 				name: 'GPT_4',
@@ -96,7 +103,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 8000,
 				hub: 'Xenova/gpt-4',
 				handlesImages: false,
-				generatesImages: false
+				generatesImages: false,
+                description: ''
 			},
 			gpt35turbo: {
 				name: 'GPT_3_5_Turbo',
@@ -107,7 +115,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 16385,
 				hub: 'Xenova/gpt-3.5-turbo',
 				handlesImages: false,
-				generatesImages: false
+				generatesImages: false,
+                description: ''
 			},
 			dalle3: {
 				name: 'DALL_E',
@@ -118,7 +127,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 4032,
 				hub: '',
 				handlesImages: false,
-				generatesImages: true
+				generatesImages: true,
+                description: 'Generate photo-realistic images'
 			}
 		}
 	},
@@ -135,7 +145,8 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                reasoning: true
+                reasoning: true,
+                description: 'Smartest model with extended thinking'
 			},
 			claude35Sonnet: {
 				name: 'Claude_3_5_Sonnet',
@@ -147,7 +158,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Highest level of intelligence and capability'
 			},
 			claude35Haiku: {
 				name: 'Claude_3_5_Haiku',
@@ -159,7 +171,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: false,
 				maxImages: 0,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Intelligence at blazing speeds'
 			},
 			claude3Opus: {
 				name: 'Claude_3_Opus',
@@ -171,7 +184,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Top-level intelligence, fluency, and understanding'
 			},
 			claude3Sonnet: {
 				name: 'Claude_3_Sonnet',
@@ -183,7 +197,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
-				generatesImages: false
+				generatesImages: false,
+                description: ''
 			},
 			claude3Haiku: {
 				name: 'Claude_3_Haiku',
@@ -195,7 +210,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Quick and accurate targeted performance'
 			}
 		}
 	},
@@ -211,7 +227,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 1,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Fast and versatile performance'
 			},
             gemini20FlashLite: {
 				name: 'Gemini_2_0_Flash_Lite',
@@ -223,7 +240,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 1,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Cost efficient and low latency'
 			},
 			gemini15Pro: {
 				name: 'Gemini_1_5_Pro',
@@ -237,7 +255,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 1,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Complex reasoning tasks requiring more intelligence'
 			},
 			gemini15Flash: {
 				name: 'Gemini_1_5_Flash',
@@ -251,7 +270,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 1,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Fast and versatile performance across a diverse variety of tasks'
 			},
 			gemini1Pro: {
 				name: 'Gemini_1_0_Pro',
@@ -263,7 +283,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 1,
-				generatesImages: false
+				generatesImages: false,
+                description: ''
 			}
 		}
 	},
@@ -279,7 +300,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: undefined,
 				handlesImages: false,
 				maxImages: 0,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Unfiltered intelligence, blazing speed'
 			},
             grok2Vision: {
                 name: 'Grok_2_vision',
@@ -291,7 +313,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: undefined,
 				handlesImages: true,
 				maxImages: 5,
-				generatesImages: false
+				generatesImages: false,
+                description: 'Unfiltered intelligence with image-understanding'
 			},
             grokBeta: {
                 name: 'Grok_beta',
@@ -303,7 +326,8 @@ export const modelDictionary: ModelDictionary = {
                 hub: undefined,
                 handlesImages: false,
                 maxImages: 0,
-                generatesImages: false
+                generatesImages: false,
+                description: ''
             },
 		}
 	}
