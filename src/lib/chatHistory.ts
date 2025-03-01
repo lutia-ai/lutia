@@ -51,7 +51,7 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 			};
 		}
 
-		const components: Component[] = initParseMessageContent(message.response);
+		const components: Component[] = parseMessageContent(message.response);
 
 		const llmChat: LlmChat = {
 			by: apiRequest.apiModel.toString(),
@@ -88,56 +88,6 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 	// Interleave user and LLM messages
 	chatComponents = chatComponents.flatMap((chat, index) => [userChats[index], chat]);
 	return chatComponents;
-}
-
-function initParseMessageContent(content: string): Component[] {
-	const components: Component[] = [];
-	const codeBlockRegex = /([ \t]*)```(\w+)?\n([\s\S]*?)```/g; // Match leading whitespaces before ```
-	let lastIndex = 0;
-	let match;
-
-	while ((match = codeBlockRegex.exec(content)) !== null) {
-		const leadingWhitespace = match[1] || ''; // Capture leading whitespaces before the code block
-		const whitespaceLength = leadingWhitespace.length;
-
-		// If there's text before the code block, capture it as a 'text' component
-		if (match.index > lastIndex) {
-			components.push({
-				type: 'text',
-				content: content.slice(lastIndex, match.index)
-			});
-		}
-
-		// Normalize the code inside the block by removing leading whitespaces from each line
-		const normalizedCode = match[3]
-			.split('\n')
-			.map((line) =>
-				line.startsWith(leadingWhitespace) ? line.slice(whitespaceLength) : line
-			) // Remove leading whitespaces
-			.join('\n');
-
-		// Push the code block as a 'code' component
-		components.push({
-			type: 'code',
-			language: match[2] || 'plaintext',
-			code: normalizedCode,
-			copied: false,
-			tabWidth: calculateTabWidth(normalizedCode),
-			tabWidthOpen: false
-		});
-
-		lastIndex = match.index + match[0].length;
-	}
-
-	// If there's remaining content after the last code block, capture it as 'text'
-	if (lastIndex < content.length) {
-		components.push({
-			type: 'text',
-			content: content.slice(lastIndex)
-		});
-	}
-
-	return components;
 }
 
 export function parseMessageContent(content: string): Component[] {
