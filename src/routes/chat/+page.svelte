@@ -185,7 +185,18 @@
         selectModel(model);
         showModelSearch = false;
         prompt = prompt.replace(/@.*$/, '').trim();
-        // placeholderVisible = true;
+        requestAnimationFrame(() => {
+            promptBar.focus();
+            // Set cursor to end of content
+            const range = document.createRange();
+            const selection = window.getSelection();
+            if (selection) {
+                range.selectNodeContents(promptBar);
+                range.collapse(false); // false means collapse to end
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        });
     }
 
 	const handleResize = () => {
