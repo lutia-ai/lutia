@@ -233,22 +233,29 @@
 	}
 
 	function handlePaste(event: ClipboardEvent): void {
-		event.preventDefault();
-		if (!event.clipboardData) return;
-
-		const text = event.clipboardData.getData('text/plain');
-
-		// Preserve line breaks and handle HTML entities, but keep normal spaces
-		const formattedText = text
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/\n/g, '<br>')
-			// Only replace multiple consecutive spaces with &nbsp;
-			.replace(/ {2,}/g, (match) => '&nbsp;'.repeat(match.length));
-
-		document.execCommand('insertHTML', false, formattedText);
-	}
+        event.preventDefault();
+        if (!event.clipboardData) return;
+        
+        const text = event.clipboardData.getData('text/plain');
+        
+        // Preserve line breaks and handle HTML entities
+        const formattedText = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .split('\n')
+            .map(line => {
+                // Replace leading spaces with non-breaking spaces
+                // Match all spaces at the beginning of the line
+                return line.replace(/^(\s+)/, (match) => {
+                    // Replace each space with a non-breaking space
+                    return '&nbsp;'.repeat(match.length);
+                });
+            })
+            .join('<br>');
+        
+        document.execCommand('insertHTML', false, formattedText);
+    }
 
 	function copyToClipboard(text: string): Promise<void> {
 		return new Promise((resolve, reject) => {
