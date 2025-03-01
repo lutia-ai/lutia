@@ -326,7 +326,14 @@ export function sanitizeLLmContent(content: string) {
     content = content.replace(/<(style|script|html)>/g, (match, p1) => `\`<${p1}>\``);
     content = content.replace(/<\/(style|script|html)>/g, (match, p1) => `\`</${p1}>\``);
     
-    // First, protect legitimate LaTeX expressions
+    // First, protect code blocks (content within backticks)
+    const codeBlocks: string[] = [];
+    content = content.replace(/`([^`]+)`/g, (match, inner) => {
+        codeBlocks.push(inner);
+        return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+    });
+    
+    // Now protect legitimate LaTeX expressions
     // Store block math expressions
     const blockMathExpressions: string[] = [];
     content = content.replace(/\\\[\s*([\s\S]*?)\s*\\\]/gm, (match, inner) => {
@@ -344,7 +351,7 @@ export function sanitizeLLmContent(content: string) {
     // Escape dollar signs used for currency (when a dollar sign is followed by a number)
     content = content.replace(/\$(\d)/g, '\\$$$1');
     
-    // Now restore LaTeX expressions
+    // Restore LaTeX expressions
     // Restore block math with proper delimiters
     content = content.replace(/__BLOCK_MATH_(\d+)__/g, (match, index) => {
         return `\n$$\n${blockMathExpressions[parseInt(index)]}\n$$\n`;
@@ -353,6 +360,11 @@ export function sanitizeLLmContent(content: string) {
     // Restore inline math with proper delimiters
     content = content.replace(/__INLINE_MATH_(\d+)__/g, (match, index) => {
         return `$${inlineMathExpressions[parseInt(index)]}$`;
+    });
+    
+    // Finally restore code blocks
+    content = content.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => {
+        return `\`${codeBlocks[parseInt(index)]}\``;
     });
     
     return content;
