@@ -716,6 +716,9 @@
 	on:click={() => {
 		closeAllTabWidths();
         showModelSearch = false;
+        if (prompt.length === 0 || prompt === '<br>') {
+            placeholderVisible = true;
+        }
 	}}
 	on:scroll={() => {
 		handleScroll();
