@@ -95,8 +95,6 @@ export async function POST({ request, locals }) {
 		// Add developer message at the start of messages array if the model is o1 or o3 mini
 		if (
 			model.name === ApiModel.GPT_o1 ||
-			model.name === ApiModel.GPT_o1_mini ||
-			model.name === ApiModel.GPT_o1_preview ||
 			model.name === ApiModel.GPT_o3_mini
 		) {
 			messages.unshift({
