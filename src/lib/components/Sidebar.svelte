@@ -110,7 +110,7 @@
 		>
 			<div class="choose-company-container">
 				<div
-					class="company-logo-container"
+					class="company-logo-container selected"
 					role="button"
 					tabindex="0"
 					on:click|stopPropagation={() => {
@@ -441,6 +441,10 @@
 						background: var(--bg-color-light);
 					}
 				}
+
+                .selected {
+                    background: var(--bg-color-light); 
+                }
 			}
 
 			.options-container {
