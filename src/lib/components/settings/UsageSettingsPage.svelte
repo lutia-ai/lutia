@@ -43,6 +43,13 @@
 		xAI: {
 			colors: ['var(--text-color)'],
 			layout: 'stacked'
+		},
+        deepSeek: {
+			colors: [
+                'rgba(77,107,254,1)',
+                'rgba(77,107,254,0.8)'
+            ],
+			layout: 'stacked'
 		}
 	};
 
@@ -175,9 +182,112 @@
 		return { startDate, endDate };
 	}
 
-	function getCompanyColors(company: string): string[] {
-		return companyVars[company as keyof typeof companyVars].colors;
-	}
+	// Add this function at an appropriate location in your script
+    function getColorForModel(company: Company, modelIndex: number): string {
+        const baseColors = companyVars[company].colors;
+        
+        // If we have a color for this index, use it
+        if (modelIndex < baseColors.length) {
+            return baseColors[modelIndex];
+        }
+        
+        // Otherwise, generate a new color based on the company's color palette
+        // Take the first color and modify it
+        const baseColor = baseColors[0];
+        
+        // Initialize r, g, b, and a with default values
+        let r = 0, g = 0, b = 0, a = 1; // Default values for rgba components
+        
+        if (baseColor.startsWith('rgba')) {
+            const match = baseColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)/);
+            if (match) {
+                [, r, g, b, a] = match.map((v, i) => i > 0 ? parseFloat(v) : v) as [string, number, number, number, number];
+            }
+        } else if (baseColor.startsWith('rgb')) {
+            const match = baseColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+            if (match) {
+                [, r, g, b] = match.map((v, i) => i > 0 ? parseFloat(v) : v) as [string, number, number, number];
+            }
+        } else if (baseColor.startsWith('#')) {
+            const hex = baseColor.substring(1);
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
+        } else {
+            // Use a fallback color with some variation
+            return `hsl(${(modelIndex * 137) % 360}, 70%, 50%)`;
+        }
+        
+        // Create a variation based on the model index
+        // Different strategies based on company to maintain palette feel
+        if (company === 'openAI') {
+            // Vary the green hue slightly and decrease opacity for additional models
+            return `rgba(17, ${150 + (modelIndex % 5) * 10}, ${120 + (modelIndex % 3) * 10}, ${Math.max(0.2, 1 - (modelIndex - baseColors.length) * 0.15)})`;
+        } else if (company === 'anthropic') {
+            // Vary the warm tones for anthropic
+            return `rgba(${200 + (modelIndex % 3) * 15}, ${150 + (modelIndex % 4) * 10}, ${110 + (modelIndex % 5) * 10}, ${Math.max(0.2, 1 - (modelIndex - baseColors.length) * 0.15)})`;
+        } else if (company === 'google') {
+            // Cycle through Google's brand colors with variations
+            const googleBaseColors = [
+                [234, 68, 53],   // Red
+                [251, 189, 4],   // Yellow
+                [52, 168, 84],   // Green
+                [66, 133, 245]   // Blue
+            ];
+            const baseIdx = modelIndex % googleBaseColors.length;
+            const [baseR, baseG, baseB] = googleBaseColors[baseIdx];
+            // Add a slight variation
+            return `rgba(${Math.min(255, baseR + (modelIndex % 3) * 10)}, ${Math.min(255, baseG + (modelIndex % 4) * 10)}, ${Math.min(255, baseB + (modelIndex % 5) * 10)}, ${Math.max(0.35, 1 - (modelIndex - baseColors.length) * 0.1)})`;
+        } else if (company === 'deepSeek') {
+            // Vary the blue for deepSeek
+            return `rgba(${70 + (modelIndex % 3) * 10}, ${100 + (modelIndex % 4) * 10}, ${240 + (modelIndex % 5) * 5}, ${Math.max(0.3, 1 - (modelIndex - baseColors.length) * 0.15)})`;
+        } else {
+            // Default approach for other companies
+            // Create a slight variation in the color with the same hue family
+            const variation = modelIndex * 20;
+            r = Math.min(255, Math.max(0, r + ((modelIndex % 3) - 1) * variation));
+            g = Math.min(255, Math.max(0, g + ((modelIndex % 5) - 2) * variation));
+            b = Math.min(255, Math.max(0, b + ((modelIndex % 7) - 3) * variation));
+            a = Math.max(0.2, a - (modelIndex - baseColors.length) * 0.1);
+            
+            return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${a})`;
+        }
+    }
+
+    // Now, modify the getCompanyColors function to use this
+    function getCompanyColors(company: string): string[] {
+        if (!isValidCompany(company)) {
+            return [];
+        }
+        
+        // Get the base colors
+        const baseColors = companyVars[company as Company].colors;
+        
+        // Check how many models we have for this company
+        const models = usageData[company as Company];
+        if (!models || models.length === 0) {
+            return baseColors;
+        }
+        
+        // Get unique model names
+        const uniqueModels = [...new Set(models.map(item => item.model))];
+        const numModels = uniqueModels.length;
+        
+        // If we have enough colors, return them directly
+        if (numModels <= baseColors.length) {
+            return baseColors;
+        }
+        
+        // Otherwise, create an extended color array
+        const extendedColors = [...baseColors];
+        
+        // Generate additional colors
+        for (let i = baseColors.length; i < numModels; i++) {
+            extendedColors.push(getColorForModel(company as Company, i));
+        }
+        
+        return extendedColors;
+    }
 
 	function setLayout(company: string, layout: Layout): void {
 		companyVars[company as keyof typeof companyVars].layout = layout;
