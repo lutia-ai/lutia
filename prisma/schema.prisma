@@ -15,6 +15,7 @@ enum ApiProvider {
   google
   meta
   xAI
+  deepSeek
 }
 
 enum ApiModel {
@@ -43,6 +44,8 @@ enum ApiModel {
   Grok_beta
   Grok_2
   Grok_2_vision
+  R1
+  V3
 }
 
 model User {

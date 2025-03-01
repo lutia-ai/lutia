@@ -330,6 +330,37 @@ export const modelDictionary: ModelDictionary = {
                 description: ''
             },
 		}
+	},
+    deepSeek: {
+		models: {
+            r1: {
+				name: 'R1',
+				param: 'deepseek-reasoner',
+				legacy: false,
+				input_price: 0.55 * 1.1,
+				output_price: 2.19 * 1.1,
+				context_window: 64000,
+				hub: undefined,
+				handlesImages: false,
+				maxImages: 0,
+				generatesImages: false,
+                reasoning: true,
+                description: 'Cost effective intelligence and reasoning'
+			},
+            v3: {
+                name: 'V3',
+				param: 'deepseek-chat',
+				legacy: false,
+				input_price: 0.27 * 1.1,
+				output_price: 1.1 * 1.1,
+				context_window: 64000,
+				hub: undefined,
+				handlesImages: false,
+				maxImages: 0,
+				generatesImages: false,
+                description: 'Fast, affordable intelligence'
+			},
+		}
 	}
 	// meta: {
 	//     models: {

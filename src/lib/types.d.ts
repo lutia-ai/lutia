@@ -154,7 +154,7 @@ type UsageObject = {
 	value: number;
 };
 
-type Company = 'openAI' | 'anthropic' | 'google' | 'xAI';
+type Company = 'openAI' | 'anthropic' | 'google' | 'xAI' | 'deepSeek';
 
 declare global {
 	namespace App {

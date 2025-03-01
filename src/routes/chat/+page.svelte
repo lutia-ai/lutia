@@ -59,6 +59,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { browser } from '$app/environment';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
+	import DeepSeekIcon from '$lib/components/icons/DeepSeekIcon.svelte';
 
 	export let data;
 
@@ -343,6 +344,9 @@
 					case 'xAI':
 						uri = '/api/xAI';
 						break;
+                    case 'deepSeek':
+                        uri = '/api/deepSeek';
+                        break;
 					default:
 						uri = '/api/gemini';
 				}
@@ -546,6 +550,10 @@
 
 	function isModelXAI(modelName: string): boolean {
 		return isModelByCompany('xAI', modelName);
+	}
+
+    function isModelDeepSeek(modelName: string): boolean {
+		return isModelByCompany('deepSeek', modelName);
 	}
 
 	let isScrollingProgrammatically = false;
@@ -842,14 +850,18 @@
 										<div class="llm-icon-container">
 											<GrokIcon color="var(--text-color)" />
 										</div>
-									{:else if isModelMeta(chat.by)}
+                                    {:else if isModelDeepSeek(chat.by)}
+                                        <div class="deepseek-icon-container">
+                                            <DeepSeekIcon />
+                                        </div>
+									<!-- {:else if isModelMeta(chat.by)}
 										<div
 											class="llm-icon-container {chat.loading
 												? 'rotateLoading'
 												: ''}"
 										>
 											<MetaIcon />
-										</div>
+										</div> -->
 									{/if}
 								{/if}
 								<div class="llm-chat">
@@ -1198,8 +1210,10 @@
                                         <GeminiIcon />
                                     {:else if isModelXAI(model.name)}
                                         <GrokIcon color="var(--text-color)" />
-                                    {:else if isModelMeta(model.name)}
-                                        <MetaIcon />
+                                    <!-- {:else if isModelMeta(model.name)}
+                                        <MetaIcon /> -->
+                                    {:else if isModelDeepSeek(model.name)}
+                                        <DeepSeekIcon />
                                     {/if}
                                 </div>
                                 <div class="model-info">
@@ -1298,7 +1312,7 @@
 					class="placeholder"
 					style="display: {placeholderVisible || prompt === '' ? 'block' : 'none'};"
 				>
-					Enter a prompt here
+					Enter a prompt here or @mention model
 				</span>
 				{#if data.user.user_settings?.prompt_pricing_visible}
 					<div class="input-token-container">
@@ -1630,6 +1644,14 @@
 						border-radius: 50%;
 						padding: 4px;
 						border: 1px solid var(--text-color-light-opacity);
+					}
+
+                    .deepseek-icon-container {
+						position: relative;
+						width: 32px;
+						height: 32px;
+						display: flex;
+						border-radius: 50%;
 					}
 
 					.llm-icon-container {
@@ -2252,6 +2274,15 @@
 							margin-top: 6px;
 							border: none;
 						}
+
+                        .deepseek-icon-container {
+                            position: relative;
+                            width: 28px;
+                            height: 28px;
+                            display: flex;
+                            border-radius: 50%;
+                            padding-top: 4px;
+                        }
 
 						.llm-icon-container {
 							width: 24px;
