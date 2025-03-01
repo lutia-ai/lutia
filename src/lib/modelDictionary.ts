@@ -273,19 +273,19 @@ export const modelDictionary: ModelDictionary = {
 				generatesImages: false,
                 description: 'Fast and versatile performance across a diverse variety of tasks'
 			},
-			gemini1Pro: {
-				name: 'Gemini_1_0_Pro',
-				param: 'gemini-1.0-pro',
-				legacy: true,
-				input_price: 0.5 * 1.1,
-				output_price: 1.5 * 1.1,
-				context_window: 1000000,
-				hub: 'Xenova/gpt-4o',
-				handlesImages: false,
-				maxImages: 1,
-				generatesImages: false,
-                description: ''
-			}
+			// gemini1Pro: {
+			// 	name: 'Gemini_1_0_Pro',
+			// 	param: 'gemini-1.0-pro',
+			// 	legacy: true,
+			// 	input_price: 0.5 * 1.1,
+			// 	output_price: 1.5 * 1.1,
+			// 	context_window: 1000000,
+			// 	hub: 'Xenova/gpt-4o',
+			// 	handlesImages: false,
+			// 	maxImages: 1,
+			// 	generatesImages: false,
+            //     description: ''
+			// }
 		}
 	},
 	xAI: {
