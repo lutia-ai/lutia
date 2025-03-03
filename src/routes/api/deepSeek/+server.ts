@@ -133,6 +133,20 @@ export async function POST({ request, locals }) {
                         const reasoningContent = chunk.choices[0].delta.reasoning_content || '';
 						if (chunk.usage) {
 							finalUsage = chunk.usage;
+                            const inputTokens = finalUsage.prompt_tokens;
+							const outputTokens = finalUsage.completion_tokens;
+							// Calculate prices based on actual token usage
+							const inputPrice = (inputTokens * model.input_price) / 1000000;
+							const outputPrice = (outputTokens * model.output_price) / 1000000;
+                            controller.enqueue(new TextEncoder().encode(
+                                JSON.stringify({
+                                    type: "usage",
+                                    usage: {
+                                        inputPrice,
+                                        outputPrice
+                                    }
+                                }) + "\n"
+                            ));
 						}
                         if (reasoningContent) {
                             console.log(reasoningContent);
@@ -154,7 +168,6 @@ export async function POST({ request, locals }) {
                             ));
 						}
 					}
-					controller.close();
 				} catch (err) {
 					console.error('Error in stream processing: ', err);
 					error = err;

@@ -448,6 +448,9 @@
                 let reasoningText = '';
 				let responseComponents: Component[] = [];
                 let reasoningComponent: ReasoningComponent;
+                let inputPrice: number = 0;
+                let outputPrice: number = 0;
+
 
 				while (true) {
 					const { value, done } = await reader.read();
@@ -472,6 +475,9 @@
                                     type: 'reasoning',
                                     content: reasoningText
                                 }
+                            } else if (data.type === 'usage') {
+                                inputPrice = data.usage.inputPrice;
+                                outputPrice = data.usage.outputPrice;
                             }
 
                             chatHistory.update((history) =>
@@ -489,16 +495,6 @@
 				}
 
 				const lastItem = $chatHistory[currentChatIndex];
-				const outputPriceResult = await countTokensNoTimeout(
-					lastItem.text,
-					chosenModel,
-					'output'
-				);
-				const inputPriceResult = await countTokensNoTimeout(
-					fullPrompt,
-					chosenModel,
-					'input'
-				);
 				let imageCost = 0;
 				let imageTokens = 0;
 				for (const image of imageArray) {
@@ -516,8 +512,8 @@
 						if (index === currentChatIndex) {
 							return {
 								...item,
-								input_cost: inputPriceResult.price + imageCost,
-								output_cost: outputPriceResult.price,
+								input_cost: inputPrice + imageCost,
+								output_cost: outputPrice,
 								loading: false
 							};
 						}

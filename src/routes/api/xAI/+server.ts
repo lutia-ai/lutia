@@ -57,7 +57,6 @@ export async function POST({ request, locals }) {
 			imageTokens += result.tokens;
 		}
 
-		// const inputCost = inputGPTCount.price + imageCost;
 		let balance = await retrieveUsersBalance(Number(session.user.id));
 		if (balance <= 0.1) {
 			throw new InsufficientBalanceError();
@@ -80,6 +79,17 @@ export async function POST({ request, locals }) {
 					for await (const chunk of stream) {
 						if (chunk.usage) {
 							tokenUsage = chunk.usage;
+                            const inputPrice = calculateInputCost(tokenUsage?.prompt_tokens || 0, model);
+							const outputPrice = calculateOutputCost(tokenUsage?.completion_tokens || 0, model);
+							controller.enqueue(new TextEncoder().encode(
+                                JSON.stringify({
+                                    type: "usage",
+                                    usage: {
+                                        inputPrice,
+                                        outputPrice
+                                    }
+                                }) + "\n"
+                            ));
 						}
 						const content = chunk.choices[0]?.delta?.content || '';
 						if (content) {
@@ -108,20 +118,23 @@ export async function POST({ request, locals }) {
 							// need to add previous message ids
 						);
 
+                        const inputPrice = calculateInputCost(tokenUsage?.prompt_tokens || 0, model);
+                        const outputPrice = calculateOutputCost(tokenUsage?.completion_tokens || 0, model);
+
 						await updateUserBalanceWithDeduction(
 							Number(session.user!.id),
-							calculateTotalCost(tokenUsage, model)
+							(inputPrice + outputPrice)
 						);
 
 						await createApiRequestEntry(
 							Number(session.user!.id!),
 							'xAI',
 							model.name,
-							tokenUsage?.prompt_tokens || 0, // inputGPTCount.tokens + imageTokens
-							calculateInputCost(tokenUsage?.prompt_tokens || 0, model), // inputCost
+							tokenUsage?.prompt_tokens || 0,
+							inputPrice,
 							tokenUsage?.completion_tokens || 0, // outputGPTCount.tokens
-							calculateOutputCost(tokenUsage?.completion_tokens || 0, model), // outputGPTCount.price
-							calculateTotalCost(tokenUsage, model), // Total cost, // inputCost + outputGPTCount.price
+							outputPrice,
+							inputPrice + outputPrice,
 							message
 						);
 					}
@@ -161,11 +174,4 @@ function calculateInputCost(tokens: number, model: Model) {
 function calculateOutputCost(tokens: number, model: Model) {
 	// Implement your pricing logic here
 	return (tokens / 1000000) * model.output_price;
-}
-
-function calculateTotalCost(usage: any, model: Model) {
-	if (!usage) return 0;
-	const inputCost = calculateInputCost(usage.prompt_tokens, model);
-	const outputCost = calculateOutputCost(usage.completion_tokens, model);
-	return inputCost + outputCost;
 }

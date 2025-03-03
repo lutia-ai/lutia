@@ -138,6 +138,20 @@ export async function POST({ request, locals }) {
 						const content = chunk.choices[0]?.delta?.content || '';
 						if (chunk.usage) {
 							finalUsage = chunk.usage;
+                            const inputTokens = finalUsage.prompt_tokens;
+							const outputTokens = finalUsage.completion_tokens;
+							// Calculate prices based on actual token usage
+							const inputPrice = (inputTokens * model.input_price) / 1000000;
+							const outputPrice = (outputTokens * model.output_price) / 1000000;
+                            controller.enqueue(new TextEncoder().encode(
+                                JSON.stringify({
+                                    type: "usage",
+                                    usage: {
+                                        inputPrice,
+                                        outputPrice
+                                    }
+                                }) + "\n"
+                            ));
 						}
 						if (content) {
 							chunks.push(content);

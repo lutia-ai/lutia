@@ -106,9 +106,23 @@ export async function POST({ request, locals }) {
 							finalUsage.prompt_tokens = chunk.message.usage.input_tokens;
 						}
 						if (chunk.type === 'message_delta') {
-							finalUsage.completion_tokens = chunk.usage.output_tokens;
+                            finalUsage.completion_tokens = chunk.usage.output_tokens;
 							finalUsage.total_tokens =
-								finalUsage.prompt_tokens + finalUsage.completion_tokens;
+                            finalUsage.prompt_tokens + finalUsage.completion_tokens;
+                            const inputTokens = finalUsage.prompt_tokens;
+                            const outputTokens = finalUsage.completion_tokens;
+                            // Calculate prices based on actual token usage
+                            const inputPrice = (inputTokens * model.input_price) / 1000000;
+                            const outputPrice = (outputTokens * model.output_price) / 1000000;
+                            controller.enqueue(new TextEncoder().encode(
+                                JSON.stringify({
+                                    type: "usage",
+                                    usage: {
+                                        inputPrice,
+                                        outputPrice
+                                    }
+                                }) + "\n"
+                            ));
 						}
 						else if (chunk.type === 'content_block_delta') {
                             // @ts-ignore

@@ -87,6 +87,18 @@ export async function POST({ request, locals }) {
                             ));
 						}
 					}
+                    const response = chunks.join('');
+                    const outputCountResult = await genAIModel.countTokens(response);
+					const outputPrice = (outputCountResult.totalTokens / 1000000) * model.output_price;
+                    controller.enqueue(new TextEncoder().encode(
+                        JSON.stringify({
+                            type: "usage",
+                            usage: {
+                                inputPrice: inputCost,
+                                outputPrice
+                            }
+                        }) + "\n"
+                    ));
 					controller.close();
 				} catch (err) {
 					console.error('Error in stream processing: ', err);
