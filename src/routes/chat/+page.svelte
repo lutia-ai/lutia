@@ -1410,10 +1410,10 @@
 					<div class="input-token-container">
 						<p>Context window: {$numberPrevMessages}</p>
 						<p class="middle">
-							Input tokens: {input_tokens === -1 ? '?' : input_tokens}
+							~ Input tokens: {input_tokens === -1 ? '?' : input_tokens}
 						</p>
 						<p class="right">
-							Input cost: {input_price === -1
+							~ Input cost: {input_price === -1
 								? '?'
 								: '$' + roundToFirstTwoNonZeroDecimals(input_price)}
 						</p>
