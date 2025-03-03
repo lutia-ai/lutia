@@ -13,7 +13,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
-                reasoning: true,
+                reasons: true,
                 description: 'Fast, flexible reasoning model'
 			},
             o1: {
@@ -26,7 +26,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 5,
-                reasoning: true,
+                reasons: true,
                 description: 'High intelligence reasoning model'
 			},
 			o1preview: {
@@ -39,7 +39,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
-                reasoning: true,
+                reasons: true,
                 description: 'Preview version of o1'
 			},
 			o1mini: {
@@ -52,7 +52,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
-                reasoning: true,
+                reasons: true,
                 description: ''
 			},
 			gpt4o: {
@@ -141,11 +141,13 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
 				context_window: 200000,
+                max_tokens: 8192,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                reasoning: true,
+                reasons: true,
+                extendedThinking: true,
                 description: 'Smartest model with extended thinking'
 			},
 			claude35Sonnet: {
@@ -155,6 +157,7 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
 				context_window: 200000,
+                max_tokens: 8192,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
@@ -168,6 +171,7 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 1 * 1.1,
 				output_price: 5 * 1.1,
 				context_window: 200000,
+                max_tokens: 8192,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: false,
 				maxImages: 0,
@@ -181,6 +185,7 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 15 * 1.1,
 				output_price: 75 * 1.1,
 				context_window: 200000,
+                max_tokens: 4096,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
@@ -194,6 +199,7 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
 				context_window: 200000,
+                max_tokens: 4096,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
@@ -207,6 +213,7 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 0.25 * 1.1,
 				output_price: 1.25 * 1.1,
 				context_window: 200000,
+                max_tokens: 4096,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
@@ -344,7 +351,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: false,
 				maxImages: 0,
 				generatesImages: false,
-                reasoning: true,
+                reasons: true,
                 description: 'Cost effective intelligence and reasoning'
 			},
             v3: {

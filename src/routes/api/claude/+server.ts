@@ -15,7 +15,7 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const { plainTextPrompt, promptStr, modelStr, imagesStr } = await request.json();
+		const { plainTextPrompt, promptStr, modelStr, imagesStr, reasoningOn, max_tokens } = await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
 
@@ -60,15 +60,36 @@ export async function POST({ request, locals }) {
 			throw new InsufficientBalanceError();
 		}
 
+		// Model constraints
+        const MODEL_MAX_OUTPUT_TOKENS = 64000; // Maximum allowed for claude-3-7-sonnet
+
+        // Define thinking budget - adjust based on your needs
+        // Leave some room for the actual response
+        const thinkingBudget = reasoningOn ? 60000 : 0; 
+
+        // Calculate max_tokens respecting the model's limits
+        // When thinking is enabled, max_tokens must be > thinking budget
+        // But max_tokens can't exceed MODEL_MAX_OUTPUT_TOKENS
+        const totalMaxTokens = reasoningOn 
+            ? Math.min(thinkingBudget + 4000, MODEL_MAX_OUTPUT_TOKENS) 
+            : Math.min(max_tokens, MODEL_MAX_OUTPUT_TOKENS);
+        
 		const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
-		const stream = await client.messages.stream({
-			// @ts-ignore
-			messages: messages,
-			model: model.param,
-			max_tokens: 4096
-		});
+        const stream = await client.messages.stream({
+            // @ts-ignore
+            messages: messages,
+            model: model.param,
+            max_tokens: totalMaxTokens,
+            ...(reasoningOn ? {
+                thinking: {
+                  type: "enabled",
+                  budget_tokens: thinkingBudget
+                }
+            } : {})
+        });
 
 		const chunks: string[] = [];
+        const thinkingChunks: string[] = [];
 		let finalUsage: GptTokenUsage | null = {
 			prompt_tokens: 0,
 			completion_tokens: 0,
@@ -88,15 +109,29 @@ export async function POST({ request, locals }) {
 							finalUsage.total_tokens =
 								finalUsage.prompt_tokens + finalUsage.completion_tokens;
 						}
-						if (
-							chunk.type === 'content_block_start' ||
-							chunk.type === 'content_block_delta'
-						) {
-							const content = (chunk as any).delta?.text || '';
-							if (content) {
-								chunks.push(content);
-								controller.enqueue(new TextEncoder().encode(content));
-							}
+						else if (chunk.type === 'content_block_delta') {
+                            // @ts-ignore
+                            if (chunk.delta.type === 'thinking_delta') {
+                                const thinkingContent = (chunk as any).delta?.thinking || '';
+                                thinkingChunks.push(thinkingContent);
+                                controller.enqueue(new TextEncoder().encode(
+                                    JSON.stringify({
+                                        type: "reasoning",
+                                        content: thinkingContent
+                                    }) + "\n"
+                                ));
+                            } else if (chunk.delta.type === 'text_delta') {
+                                const content = (chunk as any).delta?.text || '';
+                                if (content) {
+                                    chunks.push(content);
+                                    controller.enqueue(new TextEncoder().encode(
+                                        JSON.stringify({
+                                            type: "text",
+                                            content: content
+                                        }) + "\n"
+                                    ));
+                                }
+                            }
 						} else if (chunk.type === 'message_stop') {
 							break;
 						}
@@ -106,6 +141,7 @@ export async function POST({ request, locals }) {
 					error = err;
 				} finally {
 					if (chunks.length > 0) {
+                        const thinkingResponse = thinkingChunks.join('');
 						const response = chunks.join('');
 						const outputGPTCount = await countTokens(response, model, 'output');
 
@@ -125,7 +161,7 @@ export async function POST({ request, locals }) {
 
 						await updateUserBalanceWithDeduction(Number(session.user!.id), totalCost);
 
-						const message = await createMessage(plainText, response, images);
+						const message = await createMessage(plainText, response, images, thinkingResponse);
 
 						await createApiRequestEntry(
 							Number(session.user!.id),

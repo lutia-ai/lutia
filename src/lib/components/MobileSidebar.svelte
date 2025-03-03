@@ -213,7 +213,7 @@
 										<div class="icon">
 											<ImageIcon color="var(--text-color)" />
 										</div>
-                                        {:else if model.reasoning}
+                                        {:else if model.reasons}
                                             <div class="icon">
                                                 <LightningReasoningIcon color="var(--text-color)" />
                                             </div>
@@ -421,6 +421,9 @@
 {/if}
 
 <style lang="scss">
+    * {
+        font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol !important;
+    }
 	.sidebar {
 		position: fixed;
 		display: flex;
@@ -521,7 +524,7 @@
 					top: 110%;
 					border: 1px solid var(--bg-color-dark);
 					background: var(--bg-color);
-					box-shadow: 0 5px 15px rgba(50, 50, 50, 0.15);
+					box-shadow: 0 0 #0000, 0 0 #0000, 0 9px 9px 0px rgba(0, 0, 0, .01), 0 2px 5px 0px rgba(0, 0, 0, .06);
 					border-radius: 10px;
 					display: flex;
                     gap: 5px;

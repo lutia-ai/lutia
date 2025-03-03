@@ -95,19 +95,6 @@ export async function POST({ request, locals }) {
 			messages[messages.length - 1].content = [textObject, ...gptImages];
 		}
 
-		// // Add developer message at the start of messages array if the model is o1 or o3 mini
-		// if (
-		// 	model.name === ApiModel.GPT_o1 ||
-		// 	model.name === ApiModel.GPT_o1_mini ||
-		// 	model.name === ApiModel.GPT_o1_preview ||
-		// 	model.name === ApiModel.GPT_o3_mini
-		// ) {
-		// 	messages.unshift({
-		// 		role: 'developer',
-		// 		content: 'Formatting re-enabled'
-		// 	});
-		// }
-
 		let imageCost = 0;
 		let imageTokens = 0;
 		for (const image of images) {
@@ -146,7 +133,12 @@ export async function POST({ request, locals }) {
 						}
 						if (content) {
 							chunks.push(content);
-							controller.enqueue(new TextEncoder().encode(`${content}`));
+                            controller.enqueue(new TextEncoder().encode(
+                                JSON.stringify({
+                                    type: "text",
+                                    content: content
+                                }) + "\n"
+                            ));
 						}
 					}
 					controller.close();

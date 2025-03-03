@@ -84,6 +84,7 @@ model Message {
   prompt             String
   response           String
   pictures           Json?
+  reasoning          String?
   referencedMessages Message[] @relation("MessageReferences")
   referencedBy       Message[] @relation("MessageReferences")
   apiRequest         ApiRequest?

@@ -14,7 +14,10 @@
 		ChatComponent,
 		ModelDictionary,
 		Component,
-		SerializedApiRequest
+		SerializedApiRequest,
+
+		ReasoningComponent
+
 	} from '$lib/types';
 	import { isCodeComponent, isLlmChatComponent, isUserChatComponent } from '$lib/typeGuards';
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
@@ -35,13 +38,11 @@
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
-	import MetaIcon from '$lib/components/icons/MetaIcon.svelte';
 	import CopyIcon from '$lib/components/icons/CopyIcon.svelte';
 	import CopyIconFilled from '$lib/components/icons/CopyIconFilled.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import ArrowIcon from '$lib/components/icons/Arrow.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
-	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
 	import BurgerIcon from '$lib/components/icons/BurgerIcon.svelte';
@@ -60,6 +61,10 @@
 	import { browser } from '$app/environment';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
 	import DeepSeekIcon from '$lib/components/icons/DeepSeekIcon.svelte';
+	import PlusIcon from '$lib/components/icons/PlusIcon.svelte';
+	import HoverTag from '$lib/components/HoverTag.svelte';
+	import BrainIcon from '$lib/components/icons/BrainIcon.svelte';
+	import WarningIcon from '$lib/components/icons/WarningIcon.svelte';
 
 	export let data;
 
@@ -86,6 +91,7 @@
     let filteredModels: {company: ApiProvider, model: Model, formattedName: string}[] = [];
     let selectedModelIndex: number | null = 0;
     let modelSearchItems: HTMLDivElement[] = [];
+    let reasoningOn: boolean = false;
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -210,7 +216,7 @@
 	}
 
 	async function handleCountTokens(fullPrompt: Message[] | string, chosenModel: Model) {
-		if (chosenModel.generatesImages) {
+		if (chosenModel.generatesImages || fullPrompt === '<br>') {
 			input_tokens = 0;
 			input_price = 0;
 			return;
@@ -219,10 +225,10 @@
 		let imageCost = 0;
 		let imageTokens = 0;
 		for (const image of imagePreview) {
-			let imgResult;
+			let imgResult = { price: 0, tokens: 0 };
 			if ($chosenCompany === 'openAI') {
 				imgResult = calculateGptVisionPricing(image.width, image.height);
-			} else {
+			} else if ($chosenCompany === 'anthropic' || $chosenCompany === 'google') {
 				imgResult = calculateClaudeImageCost(image.width, image.height, chosenModel);
 			}
 			imageCost += imgResult.price;
@@ -301,10 +307,13 @@
 	}
 
 	async function submitPrompt(): Promise<void> {
+        if (prompt.length === 0 || prompt === '<br>') {
+            return;
+        }
 		const plainText = prompt;
 		const imageArray = chosenModel.handlesImages ? imagePreview : [];
 		prompt = '';
-		imagePreview = [];
+		imagePreview = chosenModel.handlesImages ? [] : imagePreview;
 		handleCountTokens(prompt, chosenModel);
 		if (plainText.trim()) {
 			let userPrompt: UserChat = {
@@ -347,6 +356,7 @@
 
 			try {
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
+                console.log(fullPrompt);
 
 				let uri: string;
 				switch ($chosenCompany) {
@@ -378,7 +388,9 @@
 						plainTextPrompt: JSON.stringify(plainText),
 						promptStr: JSON.stringify(fullPrompt),
 						modelStr: JSON.stringify(chosenModel),
-						imagesStr: JSON.stringify(imageArray)
+						imagesStr: JSON.stringify(imageArray),
+						...$chosenCompany === 'anthropic' ? { reasoningOn } : {},
+                        ...$chosenCompany === 'anthropic' ? { max_tokens: chosenModel.max_tokens } : {}
 					})
 				});
 
@@ -434,26 +446,51 @@
 				const reader = response.body.getReader();
 				const decoder = new TextDecoder();
 				let responseText = '';
+                let reasoningText = '';
 				let responseComponents: Component[] = [];
+                let reasoningComponent: ReasoningComponent;
 
 				while (true) {
 					const { value, done } = await reader.read();
 					if (done) break;
 
-					let newText = done ? '' : decoder.decode(value);
-					responseText += newText;
+                    // Decode the chunk
+                    const chunk = decoder.decode(value, { stream: true });
+                    
+                    // Process lines (each JSON object is on its own line)
+                    const lines = chunk.split('\n').filter(line => line.trim());
 
-					responseComponents = parseMessageContent(responseText);
-					// Update only the AI's response in chat history
-					chatHistory.update((history) =>
-						history.map((msg, index) =>
-							index === currentChatIndex
-								? { ...msg, text: responseText, components: responseComponents }
-								: msg
-						)
-					);
+                    for (const line of lines) {
+                        try {
+                            const data = JSON.parse(line);
+                            // Handle different message types
+                            if (data.type === 'text') {
+                                responseText += data.content;
+                                responseComponents = parseMessageContent(responseText);
+                            } else if (data.type === 'reasoning') {
+                                reasoningText += data.content;
+                                reasoningComponent = {
+                                    type: 'reasoning',
+                                    content: reasoningText
+                                }
+                            }
+
+                            chatHistory.update((history) =>
+                                history.map((msg, index) =>
+                                    index === currentChatIndex
+                                        ? { ...msg, text: responseText, components: responseComponents, reasoning: reasoningComponent }
+                                        : msg
+                                )
+                            );
+                        } catch (e) {
+                            console.error('Error parsing stream chunk:', e);
+                            // Continue with the next line if one fails to parse
+                        }
+                    }
 				}
+
 				const lastItem = $chatHistory[currentChatIndex];
+                console.log(lastItem);
 				const outputPriceResult = await countTokensNoTimeout(
 					lastItem.text,
 					chosenModel,
@@ -887,6 +924,12 @@
 								{/if}
 								<div class="llm-chat">
 									{#if isLlmChatComponent(chat)}
+                                        {#if chat.reasoning}
+                                            <p class="reasoning-paragraph">
+                                                <span>Reasoning:</span>
+                                                {@html marked(sanitizeLLmContent(chat.reasoning.content))}
+                                            </p>
+                                        {/if}
 										{#each chat.components || [] as component, componentIndex}
 											{#if component.type === 'text'}
 												<p class="content-paragraph">
@@ -1157,7 +1200,7 @@
 					: 'auto auto 20px auto'};
                 "
 			>
-				{#if (imagePreview.length > 0 || isDragging) && chosenModel.handlesImages}
+				{#if (imagePreview.length > 0 || isDragging)}
 					<div
 						class="image-viewer"
 						role="region"
@@ -1166,8 +1209,19 @@
 							event.preventDefault();
 							handleFileSelect(event);
 						}}
+                        style="
+                            background: {chosenModel.handlesImages ? '' : 'rgba(255,50,50,0.25)'}
+                        "
 					>
 						{#if !isDragging}
+                            {#if !chosenModel.handlesImages}
+                                <div class="warning">
+                                    <div class="icon">
+                                        <WarningIcon color="rgba(255,100,100,0.99)" strokeWidth={1.5} />
+                                    </div>
+                                    <p>Vision not supported</p>   
+                                </div>
+                            {/if}
 							{#each imagePreview as image, index}
 								<div class="image-container">
 									<img src={image.data} alt="Uploaded file" />
@@ -1231,8 +1285,6 @@
                                         <GeminiIcon />
                                     {:else if isModelXAI(model.name)}
                                         <GrokIcon color="var(--text-color)" />
-                                    <!-- {:else if isModelMeta(model.name)}
-                                        <MetaIcon /> -->
                                     {:else if isModelDeepSeek(model.name)}
                                         <DeepSeekIcon />
                                     {/if}
@@ -1285,56 +1337,89 @@
 					on:paste={handlePaste}
 				/>
 				<div class="prompt-bar-buttons-container">
-					{#if chosenModel.handlesImages}
-						<div
-							class="button"
-							role="button"
-							tabindex="0"
-							on:click={() => {
-								fileInput.click();
-							}}
-							on:keydown|stopPropagation={(e) => {
-								if (e.key === 'Enter') {
-									fileInput.click();
-								}
-							}}
-						>
-							<AttachmentIcon color="var(--text-color)" strokeWidth={2} />
-							<input
-								bind:this={fileInput}
-								type="file"
-								accept="image/jpeg,image/png,image/webp"
-								style="display: none;"
-								on:change={handleFileSelect}
-								multiple={$chosenCompany !== 'google'}
-							/>
-							<div class="hover-tag">
-								<p>Attach image</p>
-							</div>
-						</div>
-					{/if}
-					<div
-						class="button submit-container"
-						role="button"
-						tabindex="0"
-						on:click={() => {
-							if (!placeholderVisible) submitPrompt();
-						}}
-						on:keydown|stopPropagation={(e) => {
-							if (e.key === 'Enter') {
-								if (!placeholderVisible) submitPrompt();
-							}
-						}}
-					>
-						<ArrowIcon color="var(--bg-color)" />
-					</div>
+					<!-- {#if chosenModel.handlesImages} -->
+                     <div class="left">
+                        <div
+                            class="plus-icon button"
+                            role="button"
+                            tabindex="0"
+                            on:click={() => {
+                                fileInput.click();
+                                }}
+                                on:keydown|stopPropagation={(e) => {
+                                    if (e.key === 'Enter') {
+                                        fileInput.click();
+                                    }
+                                }}
+                            >
+                                <PlusIcon color="var(--text-color-light)" strokeWidth={1.8} />
+                            <input
+                                bind:this={fileInput}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                style="display: none;"
+                                on:change={handleFileSelect}
+                                multiple={$chosenCompany !== 'google'}
+                            />
+                            <HoverTag text="Add image" position="top" />
+                        </div>
+                        <div
+                            class="{((chosenModel.reasons && !chosenModel.extendedThinking) || (reasoningOn && chosenModel.extendedThinking)) ? 'selected' : '' } reason-button"
+                            role="button"
+                            tabindex="0"
+                            on:click={() => {
+                                if (chosenModel.extendedThinking) {
+                                    reasoningOn = !reasoningOn;
+                                }
+                            }}
+                            on:keydown|stopPropagation={(e) => {
+                                if (e.key === 'Enter') {
+                                    if (chosenModel.extendedThinking) {
+                                        reasoningOn = !reasoningOn;
+                                    }   
+                                }
+                            }}
+                            >
+                                <div class="brain-icon">
+                                    <BrainIcon color={((chosenModel.reasons && !chosenModel.extendedThinking) || (reasoningOn && chosenModel.extendedThinking)) ? '#16a1f9' : "var(--text-color-light)"} />
+                                </div>
+                                <p>Reason</p>
+                            <input
+                                bind:this={fileInput}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                style="display: none;"
+                                on:change={handleFileSelect}
+                                multiple={$chosenCompany !== 'google'}
+                            />
+                            <HoverTag text={chosenModel.reasons ? "Thinks before responding" : "Selected model doesn't support reasoning"} position="top" />
+                        </div>
+                    </div>
+					<!-- {/if} -->
+                     <div class="right">
+                        <div
+                            class="button submit-container"
+                            role="button"
+                            tabindex="0"
+                            on:click={() => {
+                                if (!placeholderVisible) submitPrompt();
+                            }}
+                            on:keydown|stopPropagation={(e) => {
+                                if (e.key === 'Enter') {
+                                    if (!placeholderVisible) submitPrompt();
+                                }
+                            }}
+                        >
+                            <ArrowIcon color="var(--bg-color)" />
+                        </div>
+                    </div>
 				</div>
 				<span
-					class="placeholder"
-					style="display: {placeholderVisible || prompt === '' ? 'block' : 'none'};"
-				>
-					Enter a prompt here or @mention model
-				</span>
+                    class="placeholder"
+                    style="display: {placeholderVisible || prompt === '' ? 'block' : 'none'};"
+                >
+                    Write your prompt here or @mention model
+                </span>
 				{#if data.user.user_settings?.prompt_pricing_visible}
 					<div class="input-token-container">
 						<p>Context window: {$numberPrevMessages}</p>
@@ -1701,6 +1786,26 @@
 							}
 						}
 
+                        .reasoning-paragraph {
+                            border-left: 2px solid var(--text-color-light-opacity-extreme);
+                            padding-left: 25px;
+                            display: flex;
+							flex-direction: column;
+							font-weight: 300;
+							line-height: 30px;
+							width: max-content;
+							max-width: 100%;
+							overflow-y: hidden;
+							overflow-x: hidden !important;
+                            margin-bottom: 35px;
+
+                            span {
+                                font-size: 18px;
+                                font-weight: 500;
+                                margin-bottom: 5px;
+                            }
+                        }
+
 						.content-paragraph {
 							display: flex;
 							flex-direction: column;
@@ -1974,9 +2079,12 @@
 					min-width: 300px;
 					height: max-content;
 					box-sizing: border-box;
-					background: var(--bg-color-light);
+					background: var(--bg-color-prompt-bar);
+                    border: 1px solid rgba(0,0,0,0.1);
+                    box-shadow: 0 0 #0000, 0 0 #0000, 0 9px 9px 0px rgba(0, 0, 0, .01), 0 2px 5px 0px rgba(0, 0, 0, .06);
 					border-radius: 30px;
 					display: flex;
+                    flex-direction: column;
 					gap: 5px;
 					transition: margin 0.3s ease;
 
@@ -1984,7 +2092,7 @@
 						position: absolute;
 						display: flex;
 						gap: 10px;
-						top: -120px;
+						top: -110px;
 						border-radius: 10px;
 						left: 0%;
 						background: var(--bg-color-light-opacity);
@@ -1992,8 +2100,29 @@
 						height: 100px;
 						padding: 10px;
 						box-sizing: border-box;
+                        // overflow-y: visible;
 						overflow-x: auto;
 						white-space: nowrap;
+
+                        .warning {
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translateX(-50%) translateY(-50%);
+
+                            .icon {
+                                margin: 0 auto;
+                                width: 30px;
+                                height: 30px;
+                            }
+                            
+                            p {
+                                font-size: 16px;
+                                font-weight: 600;
+                                color: rgba(255,100,100,0.99);
+                                margin: 0 !important;
+                            }
+                        }
 
 						.image-container {
 							position: relative;
@@ -2104,10 +2233,6 @@
                             cursor: pointer;
                             transition: background 0.2s ease;
                             
-                            // &:hover {
-                            //     background: var(--bg-color);
-                            // }
-                            
                             .model-icon {
                                 width: 20px;
                                 height: 20px;
@@ -2146,14 +2271,79 @@
 						overflow: auto;
 						outline: none;
 						font-weight: 300;
-						padding: 15px 30px;
+						padding: 15px 20px;
 						margin: 5px 0;
 						width: 100%;
+                        box-sizing: border-box;
 					}
 
 					.prompt-bar-buttons-container {
-						margin: auto 10px 10px auto;
-						display: flex;
+                        display: flex;
+
+                        .left {
+                            display: flex;
+                            margin: auto auto 14px 14px;
+                            width: 100%;
+
+                            .plus-icon {
+                                margin: auto 0;
+                                border: 1px solid var(--text-color-light-opacity-extreme);
+                                width: 32px !important;
+                                height: 32px !important;
+                                padding: 6px;
+                                box-sizing: border-box;
+
+                                &:hover {
+                                    background: var(--bg-color-light-alt);
+                                }
+                            }
+
+                            .selected {
+                                border-color: #16a1f9 !important;
+                                background-color: rgba(22,161,249,0.1);
+
+                                p {
+                                    color: #16a1f9 !important;
+                                }
+                            }
+
+                            .reason-button {
+                                position: relative;
+                                display: flex;
+                                gap: 5px;
+                                margin-left: 5px;
+                                border: 1px solid var(--text-color-light-opacity-extreme);
+                                width: auto;
+                                border-radius: 99999px;
+                                height: 36px !important;
+                                padding: 8px 10px;
+                                box-sizing: border-box;
+                                cursor: pointer;
+
+                                &:hover {
+                                    background: var(--bg-color-light-alt);
+                                }
+
+                                .brain-icon {
+                                    padding: 0;
+                                    box-sizing: border-box;
+                                }
+
+                                p {
+                                    padding: 0;
+                                    margin: auto;
+                                    font-size: 14px;
+                                    color: var(--text-color-light);
+                                    font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
+                                }
+                            }
+
+                        }
+
+                        .right {
+                            margin: auto 10px 10px auto;
+                            display: flex;
+                        }
 
 						.button {
 							position: relative;
@@ -2164,30 +2354,6 @@
 							box-sizing: border-box;
 							cursor: pointer;
 							transition: background 0.1s ease;
-
-							&:hover {
-								.hover-tag {
-									opacity: 1;
-								}
-							}
-
-							.hover-tag {
-								position: absolute;
-								bottom: 130%;
-								left: 50%;
-								transform: translateX(-50%);
-								background: var(--bg-color-light);
-								padding: 10px;
-								box-sizing: border-box;
-								border-radius: 10px;
-								width: max-content;
-								opacity: 0;
-								transition: all 0.5s ease-in;
-
-								p {
-									margin: 0;
-								}
-							}
 						}
 
 						.submit-container {
@@ -2201,12 +2367,13 @@
 
 					.placeholder {
 						position: absolute;
-						top: 50%;
-						left: 30px;
-						transform: translateY(-50%);
+						top: 17%;
+						left: 20px;
+						// transform: translateY(-50%);
 						color: var(--text-color-light);
 						font-weight: 300 !important;
 						pointer-events: none;
+                        font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
 					}
 				}
 
@@ -2224,6 +2391,7 @@
 						color: var(--text-color-light);
 						margin: 0;
 						font-size: 12px;
+                        font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
 					}
 
 					.middle {

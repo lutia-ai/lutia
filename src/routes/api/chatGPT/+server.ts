@@ -141,7 +141,12 @@ export async function POST({ request, locals }) {
 						}
 						if (content) {
 							chunks.push(content);
-							controller.enqueue(new TextEncoder().encode(`${content}`));
+                            controller.enqueue(new TextEncoder().encode(
+                                JSON.stringify({
+                                    type: "text",
+                                    content: content
+                                }) + "\n"
+                            ));
 						}
 					}
 					controller.close();

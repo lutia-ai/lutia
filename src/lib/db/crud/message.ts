@@ -6,6 +6,7 @@ export async function createMessage(
 	prompt: string,
 	response: string,
 	pictures: Image[],
+    reasoning?: string, 
 	referencedMessageIds?: number[]
 ): Promise<Message> {
 	try {
@@ -25,6 +26,7 @@ export async function createMessage(
 				prompt,
 				response,
 				pictures,
+                reasoning,
 				referencedMessages: {
 					connect: referencedMessages.map((msg) => ({ id: msg.id }))
 				}

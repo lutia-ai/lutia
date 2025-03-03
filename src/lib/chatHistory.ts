@@ -32,6 +32,7 @@ export function serializeApiRequest(apiRequest: ApiRequestWithMessage): Serializ
 					id: apiRequest.message.id,
 					prompt: apiRequest.message.prompt,
 					response: apiRequest.message.response,
+                    reasoning: apiRequest.message.reasoning || '',
 					pictures: Array.isArray(apiRequest.message.pictures)
 						? (apiRequest.message.pictures as Image[])
 						: []
@@ -61,6 +62,10 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 			price_open: false,
 			loading: false,
 			copied: false,
+            reasoning: {
+                type: 'reasoning',
+                content: apiRequest.message?.reasoning || '',
+            },
 			components:
 				apiRequest.message?.pictures &&
 				apiRequest.message?.pictures.length > 0 &&
