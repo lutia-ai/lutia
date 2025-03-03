@@ -162,6 +162,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
+                reasons: false,
                 description: 'Highest level of intelligence and capability'
 			},
 			claude35Haiku: {
@@ -176,6 +177,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: false,
 				maxImages: 0,
 				generatesImages: false,
+                reasons: false,
                 description: 'Intelligence at blazing speeds'
 			},
 			claude3Opus: {
@@ -190,6 +192,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
+                reasons: false,
                 description: 'Top-level intelligence, fluency, and understanding'
 			},
 			claude3Sonnet: {
@@ -204,6 +207,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
+                reasons: false,
                 description: ''
 			},
 			claude3Haiku: {
@@ -218,6 +222,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
+                reasons: false,
                 description: 'Quick and accurate targeted performance'
 			}
 		}

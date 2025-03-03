@@ -71,9 +71,9 @@ export async function POST({ request, locals }) {
         // Calculate max_tokens respecting the model's limits
         // When thinking is enabled, max_tokens must be > thinking budget
         // But max_tokens can't exceed MODEL_MAX_OUTPUT_TOKENS
-        const totalMaxTokens = reasoningOn 
+        const totalMaxTokens = reasoningOn && model.reasons 
             ? Math.min(thinkingBudget + 4000, MODEL_MAX_OUTPUT_TOKENS) 
-            : Math.min(max_tokens, MODEL_MAX_OUTPUT_TOKENS);
+            : max_tokens;
         
 		const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
         const stream = await client.messages.stream({
@@ -81,7 +81,7 @@ export async function POST({ request, locals }) {
             messages: messages,
             model: model.param,
             max_tokens: totalMaxTokens,
-            ...(reasoningOn ? {
+            ...(reasoningOn && model.reasons ? {
                 thinking: {
                   type: "enabled",
                   budget_tokens: thinkingBudget
