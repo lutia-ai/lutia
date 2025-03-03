@@ -15,7 +15,7 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const { plainTextPrompt, promptStr, modelStr, imagesStr, reasoningOn, max_tokens } = await request.json();
+		const { plainTextPrompt, promptStr, modelStr, imagesStr, reasoningOn } = await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
 
@@ -62,6 +62,7 @@ export async function POST({ request, locals }) {
 
 		// Model constraints
         const MODEL_MAX_OUTPUT_TOKENS = 64000; // Maximum allowed for claude-3-7-sonnet
+        const max_tokens = model.max_tokens ? model.max_tokens : 4096
 
         // Define thinking budget - adjust based on your needs
         // Leave some room for the actual response

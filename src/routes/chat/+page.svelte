@@ -409,7 +409,7 @@
 					throw new Error(errorData.message || 'An error occurred');
 				}
 
-				placeholderVisible = true;
+                if (prompt.length === 0 || prompt === '<br>') placeholderVisible = true;
 
 				if (!response.body) {
 					throw new Error('Response body is null');
@@ -912,14 +912,6 @@
                                         <div class="deepseek-icon-container">
                                             <DeepSeekIcon />
                                         </div>
-									<!-- {:else if isModelMeta(chat.by)}
-										<div
-											class="llm-icon-container {chat.loading
-												? 'rotateLoading'
-												: ''}"
-										>
-											<MetaIcon />
-										</div> -->
 									{/if}
 								{/if}
 								<div class="llm-chat">
