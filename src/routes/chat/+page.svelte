@@ -390,7 +390,6 @@
 						modelStr: JSON.stringify(chosenModel),
 						imagesStr: JSON.stringify(imageArray),
 						...$chosenCompany === 'anthropic' ? { reasoningOn } : {},
-                        ...$chosenCompany === 'anthropic' ? { max_tokens: chosenModel.max_tokens } : {}
 					})
 				});
 
@@ -490,7 +489,6 @@
 				}
 
 				const lastItem = $chatHistory[currentChatIndex];
-                console.log(lastItem);
 				const outputPriceResult = await countTokensNoTimeout(
 					lastItem.text,
 					chosenModel,

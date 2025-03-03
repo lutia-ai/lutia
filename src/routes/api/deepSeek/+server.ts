@@ -120,6 +120,7 @@ export async function POST({ request, locals }) {
 		});
 
 		const chunks: string[] = [];
+        const thinkingChunks: string[] = [];
 		let finalUsage: GptTokenUsage | null = null;
 		let error: any;
 
@@ -128,9 +129,21 @@ export async function POST({ request, locals }) {
 				try {
 					for await (const chunk of stream) {
 						const content = chunk.choices[0]?.delta?.content || '';
+                        // @ts-ignore
+                        const reasoningContent = chunk.choices[0].delta.reasoning_content || '';
 						if (chunk.usage) {
 							finalUsage = chunk.usage;
 						}
+                        if (reasoningContent) {
+                            console.log(reasoningContent);
+                            thinkingChunks.push(reasoningContent);
+                            controller.enqueue(new TextEncoder().encode(
+                                JSON.stringify({
+                                    type: "reasoning",
+                                    content: reasoningContent
+                                }) + "\n"
+                            ));
+                        }
 						if (content) {
 							chunks.push(content);
                             controller.enqueue(new TextEncoder().encode(
@@ -147,6 +160,7 @@ export async function POST({ request, locals }) {
 					error = err;
 				} finally {
 					if (chunks.length > 0) {
+                        const thinkingResponse = thinkingChunks.join('');
 						const response = chunks.join('');
 						const outputGPTCount = await countTokens(response, model, 'output');
 
@@ -154,8 +168,6 @@ export async function POST({ request, locals }) {
 						let outputTokens = outputGPTCount.tokens;
 						let inputPrice = inputCost;
 						let outputPrice = outputGPTCount.price;
-
-                        console.log('finalUsage: ', finalUsage);
 
 						if (finalUsage) {
 							inputTokens = finalUsage.prompt_tokens;
@@ -167,12 +179,11 @@ export async function POST({ request, locals }) {
 
 						const totalCost = inputPrice + outputPrice;
 
-                        console.log('totalCost: ', totalCost);
-
 						const message: MessageEntity = await createMessage(
 							plainText,
 							response,
-							images
+							images,
+                            thinkingResponse
 							// need to add previous message ids
 						);
 
