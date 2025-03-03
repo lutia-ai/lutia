@@ -924,7 +924,7 @@
 								{/if}
 								<div class="llm-chat">
 									{#if isLlmChatComponent(chat)}
-                                        {#if chat.reasoning}
+                                        {#if chat.reasoning && chat.reasoning.content !== ''}
                                             <p class="reasoning-paragraph">
                                                 <span>Reasoning:</span>
                                                 {@html marked(sanitizeLLmContent(chat.reasoning.content))}
