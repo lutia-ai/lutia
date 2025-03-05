@@ -358,6 +358,9 @@
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
                 console.log(fullPrompt);
 
+                // Generate a unique ID for this request
+                const requestId = crypto.randomUUID();
+
 				let uri: string;
 				switch ($chosenCompany) {
 					case 'anthropic':
@@ -494,7 +497,6 @@
                     }
 				}
 
-				const lastItem = $chatHistory[currentChatIndex];
 				let imageCost = 0;
 				let imageTokens = 0;
 				for (const image of imageArray) {

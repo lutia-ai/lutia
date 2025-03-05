@@ -9,6 +9,7 @@ import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 
 export async function POST({ request, locals }) {
+    
 	let session = await locals.auth();
 	if (!session || !session.user || !session.user.email) {
 		throw error(401, 'Forbidden');
@@ -18,9 +19,17 @@ export async function POST({ request, locals }) {
 		const { plainTextPrompt, promptStr, modelStr, imagesStr } = await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
-		const messages: Message[] = JSON.parse(promptStr);
+		let messages: Message[] = JSON.parse(promptStr);
 		const model: Model = JSON.parse(modelStr);
 		const images: Image[] = JSON.parse(imagesStr);
+
+        // Filter out assistant messages with empty content (ie that are still streaming)
+        messages = messages.map(msg => {
+            if (msg.role === 'assistant' && (msg.content === undefined || msg.content === null || msg.content === '')) {
+                return { ...msg, content: 'Streaming in progress...' };
+            }
+            return msg;
+        });
 
 		const prompt = {
 			contents: messages.map((message) => ({

@@ -10,6 +10,7 @@ import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 
 export async function POST({ request, locals }) {
+
 	let session = await locals.auth();
 	if (!session || !session.user || !session.user.email) {
 		throw error(401, 'Forbidden');
@@ -27,6 +28,14 @@ export async function POST({ request, locals }) {
 		const images: Image[] = JSON.parse(imagesStr);
 
 		let gptImages: ChatGPTImage[] = [];
+
+        // Filter out assistant messages with empty content (ie that are still streaming)
+        messages = messages.map(msg => {
+            if (msg.role === 'assistant' && (msg.content === undefined || msg.content === null || msg.content === '')) {
+                return { ...msg, content: 'Streaming in progress...' };
+            }
+            return msg;
+        });
 
 		const openai = new OpenAI({
 			apiKey: env.SECRET_DEEPSEEK_API_KEY,
