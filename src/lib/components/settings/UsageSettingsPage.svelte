@@ -7,6 +7,8 @@
 	import { capitalizeFirstLetter } from '$lib/components/barchart/utils';
 	import type { ApiModel, ApiProvider } from '@prisma/client';
 
+    export let user: UserWithSettings;
+
 	let mounted = false;
 
 	type Layout = 'stacked' | 'grouped' | 'percent';
@@ -332,7 +334,7 @@
 		</div>
 		{#if mounted}
 			<div class="doughnut-container">
-				<PieChart {usageData} companyColors={pieColors} />
+				<PieChart {usageData} companyColors={pieColors} {user} />
 			</div>
 		{/if}
 	</div>

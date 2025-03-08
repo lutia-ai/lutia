@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Chart } from 'chart.js/auto';
-	import type { UsageObject, Company } from '$lib/types';
+	import type { UsageObject, Company, UserWithSettings } from '$lib/types';
 	import { capitalizeFirstLetter } from './utils';
+	import { PaymentTier } from '@prisma/client';
+
+    export let user: UserWithSettings;
 
 	type PieData = {
 		company: string;
@@ -112,15 +115,21 @@
 </script>
 
 <div class="chart-container">
-	<div class="total-container">
-		<p>Total</p>
-		<span>
-			{#if data.length === 1 && data[0].company === 'No data'}
-				$0.00
-			{:else}
-				${data.reduce((sum, item) => sum + item.value, 0).toFixed(2)}
-			{/if}
-		</span>
+    
+    <div class="total-container">
+        {#if user.payment_tier === PaymentTier.PayAsYouGo}
+            <p>Total</p>
+            <span>
+                {#if data.length === 1 && data[0].company === 'No data'}
+                    $0.00
+                {:else}
+                    ${data.reduce((sum, item) => sum + item.value, 0).toFixed(2)}
+                {/if}
+            </span>
+        {:else}
+            <p>Total requests</p>
+            <span>1300</span>
+        {/if}
 	</div>
 	<canvas bind:this={chartCanvas}></canvas>
 </div>

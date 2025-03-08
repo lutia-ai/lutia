@@ -35,13 +35,13 @@
 			name: 'Billing',
 			icon: DollarIcon,
 			window: BillingSettingsPage,
-			props: {}
+			props: { user }
 		},
 		{
 			name: 'Usage',
 			icon: UsageIcon,
 			window: UsageSettingsPage,
-			props: {}
+			props: { user }
 		}
 	];
 
