@@ -315,7 +315,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 	{@html synthMidnightTerminalDark}
 	<meta
 		name="description"
-		content="Level up your productivity by accessing all the leading generative AI models from the same chat window. Avoid those costly monthly subscriptions with the choice of either pay-as-you-go pricing or monthly subscriptions from as little as $3.99."
+		content="Level up your productivity by accessing all the leading generative AI models from the same chat window. Avoid those costly monthly subscriptions with the choice of either pay-as-you-go pricing or monthly subscriptions from as little as $4.99."
 	/>
 	<title>Lutia | Access leading AI models from as little as $3.99 a month</title>
 </svelte:head>

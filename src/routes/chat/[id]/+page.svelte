@@ -2436,7 +2436,7 @@
 								gap: 5px;
 								margin-left: 5px;
 								border: 1px solid var(--text-color-light-opacity-extreme);
-								width: auto;
+								// width: auto;
 								border-radius: 99999px;
 								height: 36px !important;
 								padding: 8px 10px;
@@ -2449,6 +2449,8 @@
 
 								.brain-icon {
 									padding: 0;
+                                    margin: 0;
+                                    max-width: 18px;
 									box-sizing: border-box;
 								}
 
