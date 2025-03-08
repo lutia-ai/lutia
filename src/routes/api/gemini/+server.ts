@@ -2,11 +2,14 @@ import { error } from '@sveltejs/kit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Message, Model, Image, GeminiImage } from '$lib/types.d';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
-import type { Message as MessageEntity } from '@prisma/client';
+import { PaymentTier, type Message as MessageEntity, type User } from '@prisma/client';
 import { createMessage } from '$lib/db/crud/message';
 import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
+import { retrieveUserByEmail } from '$lib/db/crud/user';
+import { createConversation, updateConversation, updateConversationLastMessage } from '$lib/db/crud/conversation.js';
+import { generateConversationTitle } from '$lib/utils/titleGenerator.js';
 
 export async function POST({ request, locals }) {
     
@@ -16,12 +19,15 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const { plainTextPrompt, promptStr, modelStr, imagesStr } = await request.json();
+		const { plainTextPrompt, promptStr, modelStr, imagesStr, conversationId } = await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
 		let messages: Message[] = JSON.parse(promptStr);
 		const model: Model = JSON.parse(modelStr);
 		const images: Image[] = JSON.parse(imagesStr);
+        const user: User = await retrieveUserByEmail(session.user!.email);
+
+        let messageConversationId = conversationId;
 
         // Filter out assistant messages with empty content (ie that are still streaming)
         messages = messages.map(msg => {
@@ -65,10 +71,12 @@ export async function POST({ request, locals }) {
 			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		}
 
-		let balance = await retrieveUsersBalance(Number(session.user.id));
-		if (balance - inputCost <= 0.1) {
-			throw new InsufficientBalanceError();
-		}
+        if (user.payment_tier === PaymentTier.PayAsYouGo) {
+            let balance = await retrieveUsersBalance(Number(session.user.id));
+            if (balance - inputCost <= 0.1) {
+                throw new InsufficientBalanceError();
+            }
+        }
 
 		let result;
 		if (geminiImage) {
@@ -79,12 +87,31 @@ export async function POST({ request, locals }) {
 		}
 
 		let error: any;
+        let isFirstChunk = true;
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
 				try {
 					for await (const chunk of result.stream) {
 						const content = (chunk as any).candidates[0].content.parts[0].text;
+                        if (isFirstChunk) {
+                            // Create conversation for premium users if needed
+                            if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
+                                const conversation = await createConversation(
+                                    user.id,
+                                    'New chat'
+                                );
+                                messageConversationId = conversation.id;
+                            }
+                            
+                            // Send conversation ID back to client
+                            controller.enqueue(new TextEncoder().encode(
+                                JSON.stringify({
+                                    type: "conversation_id",
+                                    id: messageConversationId
+                                }) + "\n"
+                            ));
+                        }
 						if (content) {
 							// Append each chunk to the array
 							chunks.push(content);
@@ -126,11 +153,24 @@ export async function POST({ request, locals }) {
 							// need to add previous message ids
 						);
 
-						await updateUserBalanceWithDeduction(
-							Number(session.user!.id),
-							outputCost + inputCost
-						);
+                        if (user.payment_tier === PaymentTier.PayAsYouGo) {
+                            await updateUserBalanceWithDeduction(
+                                Number(session.user!.id),
+                                outputCost + inputCost
+                            );
+                        }
 
+                        if (user.payment_tier === PaymentTier.Premium && !conversationId) {
+							// Generate a title for the new conversation
+							try {
+								const title = await generateConversationTitle(plainText);
+								await updateConversation(messageConversationId, { title });
+							} catch (titleError) {
+								console.error('Error generating conversation title:', titleError);
+								// Continue even if title generation fails
+							}
+						}
+                            
 						await createApiRequestEntry(
 							Number(session.user!.id!),
 							'google',
@@ -140,8 +180,14 @@ export async function POST({ request, locals }) {
 							outputCountResult.totalTokens,
 							outputCost,
 							inputCost + outputCost,
-							message
+							message,
+                            messageConversationId
 						);
+
+                        // Update the conversation's last_message timestamp
+						if (messageConversationId) {
+							await updateConversationLastMessage(messageConversationId);
+						}
 					}
 					if (error) {
 						const errorMessage = JSON.stringify({

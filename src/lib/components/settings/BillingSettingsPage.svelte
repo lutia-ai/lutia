@@ -20,9 +20,6 @@
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import LoadingSpinner from '$lib/components/icons/LoadingSpinner.svelte';
 
-	// this doesn't get used but is still passed as a prop from Settings.svelte
-	export let user: UserWithSettings;
-
 	let loading = true;
 	let errorPopup: ErrorPopup;
 	let userBalance: number = 0;
@@ -82,7 +79,6 @@
 			if (result.type === 'success' && result.data) {
 				errorPopup.showError('Top-up successful!', null, 5000, 'success');
 				userBalance = result.data.balance;
-				console.log(result.data.balance);
 				addCreditOpen = false;
 				addCreditAmount = 0;
 			} else if (result.type === 'failure' && result.data) {

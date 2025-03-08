@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	if (user) {
-		// if the user is authenticated then redirect to the chat page
-		throw redirect(307, '/chat');
+		// if the user is authenticated & premium member then redirect to the chat new page
+		throw redirect(307, '/chat/new');
 	}
 };

@@ -13,27 +13,39 @@ export async function createApiRequestEntry(
 	outputTokens: number,
 	outputCost: number,
 	totalCost: number,
-	message: Message
+	message: Message,
+    conversationId?: number,
 ): Promise<ApiRequest> {
 	try {
+		// Create the base data object
+		const data: any = {
+			user: {
+				connect: { id: userId } // Link the user to the ApiRequest
+			},
+			api_provider: apiProvider,
+			api_model: apiModel,
+			input_tokens: inputTokens,
+			input_cost: inputCost,
+			output_tokens: outputTokens,
+			output_cost: outputCost,
+			total_cost: totalCost,
+			message: {
+				connect: { id: message.id } // Link the message to the ApiRequest
+			}
+		};
+
+		// Only add the conversation connection if conversationId is provided
+		if (conversationId) {
+			data.conversation = {
+				connect: { id: conversationId }
+			};
+		}
+
 		// Create a new ApiRequest entry
 		const apiRequest = await prisma.apiRequest.create({
-			data: {
-				user: {
-					connect: { id: userId } // Link the user to the ApiRequest
-				},
-				api_provider: apiProvider,
-				api_model: apiModel,
-				input_tokens: inputTokens,
-				input_cost: inputCost,
-				output_tokens: outputTokens,
-				output_cost: outputCost,
-				total_cost: totalCost,
-				message: {
-					connect: { id: message.id } // Link the message to the ApiRequest
-				}
-			}
+			data
 		});
+		
 		return apiRequest;
 	} catch (error) {
 		console.error('Error adding API request entry:', error);
@@ -64,30 +76,31 @@ export async function retrieveApiRequests(userEmail: string): Promise<ApiRequest
 }
 
 export async function retrieveApiRequestsWithMessage(
-	userId: number,
-	serialize: boolean = false
+    userId: number,
+    serialize: boolean = false
 ): Promise<ApiRequestWithMessage[] | SerializedApiRequest[]> {
-	try {
-		const apiRequests = await prisma.apiRequest.findMany({
-			where: {
-				user_id: userId, // Filter by user ID
-				message: {
-					// Ensure that the message relation exists (is not null)
-					NOT: {
-						id: undefined
-					}
-				}
-			},
-			include: {
-				message: true // Include the related message entity
-			}
-		});
-
-		return serialize ? apiRequests.map(serializeApiRequest) : apiRequests;
-	} catch (error) {
-		console.error('Error retrieving API requests for user:', error);
-		throw error;
-	}
+    try {
+        const apiRequests = await prisma.apiRequest.findMany({
+            where: {
+                user_id: userId, // Filter by user ID
+                message: {
+                    // Ensure that the message relation exists (is not null)
+                    NOT: {
+                        id: undefined
+                    }
+                },
+                conversation_id: null // Only include requests without a conversation ID
+            },
+            include: {
+                message: true // Include the related message entity
+            }
+        });
+        
+        return serialize ? apiRequests.map(serializeApiRequest) : apiRequests;
+    } catch (error) {
+        console.error('Error retrieving API requests for user:', error);
+        throw error;
+    }
 }
 
 export async function retrieveUserRequestsInDateRange(

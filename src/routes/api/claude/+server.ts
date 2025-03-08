@@ -3,10 +3,14 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { Message, Model, Image, ClaudeImage, GptTokenUsage } from '$lib/types.d';
 import { calculateClaudeImageCost, countTokens } from '$lib/tokenizer';
 import { createApiRequestEntry } from '$lib/db/crud/apiRequest';
+import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { createMessage } from '$lib/db/crud/message';
 import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
+import { PaymentTier, type User } from '@prisma/client';
+import { createConversation, updateConversation, updateConversationLastMessage } from '$lib/db/crud/conversation';
+import { generateConversationTitle } from '$lib/utils/titleGenerator';
 
 export async function POST({ request, locals }) {
     
@@ -16,7 +20,7 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const { plainTextPrompt, promptStr, modelStr, imagesStr, reasoningOn } = await request.json();
+		const { plainTextPrompt, promptStr, modelStr, imagesStr, reasoningOn, conversationId } = await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
 
@@ -28,7 +32,7 @@ export async function POST({ request, locals }) {
 
 		let claudeImages: ClaudeImage[] = [];
 
-		const inputGPTCount = await countTokens(messages, model, 'input');
+        const user: User = await retrieveUserByEmail(session.user!.email);
 
         // Filter out assistant messages with empty content (ie that are still streaming)
         messages = messages.map(msg => {
@@ -54,20 +58,23 @@ export async function POST({ request, locals }) {
 			messages[messages.length - 1].content = [textObject, ...claudeImages];
 		}
 
-		let imageCost = 0;
-		let imageTokens = 0;
-		for (const image of images) {
-			const result = calculateClaudeImageCost(image.width, image.height, model);
-			imageCost += result.price;
-			imageTokens += result.tokens;
-		}
-
-		const inputCost = inputGPTCount.price + imageCost;
-		let balance = await retrieveUsersBalance(Number(session.user.id));
-
-		if (balance - inputCost <= 0.1) {
-			throw new InsufficientBalanceError();
-		}
+        if (user.payment_tier === PaymentTier.PayAsYouGo) {
+            let imageCost = 0;
+            let imageTokens = 0;
+            for (const image of images) {
+                const result = calculateClaudeImageCost(image.width, image.height, model);
+                imageCost += result.price;
+                imageTokens += result.tokens;
+            }
+            
+            const inputGPTCount = await countTokens(messages, model, 'input');
+            const inputCost = inputGPTCount.price + imageCost;
+            let balance = await retrieveUsersBalance(user.id);
+            
+            if (balance - inputCost <= 0.1) {
+                throw new InsufficientBalanceError();
+            }
+        }
 
 		// Model constraints
         const MODEL_MAX_OUTPUT_TOKENS = 64000; // Maximum allowed for claude-3-7-sonnet
@@ -106,6 +113,7 @@ export async function POST({ request, locals }) {
 			total_tokens: 0
 		};
 		let error: any;
+        let messageConversationId = conversationId;
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -113,6 +121,23 @@ export async function POST({ request, locals }) {
 					for await (const chunk of stream) {
 						if (chunk.type === 'message_start') {
 							finalUsage.prompt_tokens = chunk.message.usage.input_tokens;
+                            // Create a new conversation only if:
+                            // 1. User is premium AND
+                            // 2. No existing conversationId was provided
+                            if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
+                                const conversation = await createConversation(
+                                    user.id,
+                                    'New chat'
+                                );
+                                messageConversationId = conversation.id;
+                            }
+                            // Send the conversation ID back to the client
+							controller.enqueue(new TextEncoder().encode(
+								JSON.stringify({
+									type: "conversation_id",
+									id: messageConversationId
+								}) + "\n"
+							));
 						}
 						if (chunk.type === 'message_delta') {
                             finalUsage.completion_tokens = chunk.usage.output_tokens;
@@ -160,35 +185,46 @@ export async function POST({ request, locals }) {
 							break;
 						}
 					}
-					controller.close();
 				} catch (err) {
 					error = err;
+                    console.error(error);
+                    controller.enqueue(new TextEncoder().encode(
+                        JSON.stringify({
+                            type: "error",
+                            message: error.error.error.message
+                        }) + "\n"
+                    ));
 				} finally {
 					if (chunks.length > 0) {
                         const thinkingResponse = thinkingChunks.join('');
 						const response = chunks.join('');
-						const outputGPTCount = await countTokens(response, model, 'output');
 
-						let inputTokens = inputGPTCount.tokens + imageTokens;
-						let outputTokens = outputGPTCount.tokens;
-						let inputPrice = inputCost;
-						let outputPrice = outputGPTCount.price;
-
-						if (finalUsage.total_tokens > 0) {
-							inputTokens = finalUsage.prompt_tokens;
-							outputTokens = finalUsage.completion_tokens;
-							inputPrice = (inputTokens * model.input_price) / 1000000;
-							outputPrice = (outputTokens * model.output_price) / 1000000;
-						}
-
+                        const inputTokens = finalUsage.prompt_tokens;
+                        const outputTokens = finalUsage.completion_tokens;
+                        const inputPrice = (inputTokens * model.input_price) / 1000000;
+                        const outputPrice = (outputTokens * model.output_price) / 1000000;
 						const totalCost = inputPrice + outputPrice;
 
-						await updateUserBalanceWithDeduction(Number(session.user!.id), totalCost);
+                        if (user.payment_tier === PaymentTier.PayAsYouGo) {
+                            await updateUserBalanceWithDeduction(user.id, totalCost);
+                        }
 
 						const message = await createMessage(plainText, response, images, thinkingResponse);
 
+						if (user.payment_tier === PaymentTier.Premium && !conversationId) {
+							// Generate a title for the new conversation
+							try {
+								const title = await generateConversationTitle(plainText);
+								await updateConversation(messageConversationId, { title });
+							} catch (titleError) {
+								console.error('Error generating conversation title:', titleError);
+								// Continue even if title generation fails
+							}
+						}
+						
+						// Create API request with the conversation ID
 						await createApiRequestEntry(
-							Number(session.user!.id),
+							user.id,
 							'anthropic',
 							model.name,
 							inputTokens,
@@ -196,8 +232,14 @@ export async function POST({ request, locals }) {
 							outputTokens,
 							outputPrice,
 							totalCost,
-							message
+							message,
+							messageConversationId
 						);
+
+						// Update the conversation's last_message timestamp
+						if (messageConversationId) {
+							await updateConversationLastMessage(messageConversationId);
+						}
 					}
 					if (error) {
 						const errorMessage = JSON.stringify({

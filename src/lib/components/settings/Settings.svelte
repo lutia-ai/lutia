@@ -35,13 +35,13 @@
 			name: 'Billing',
 			icon: DollarIcon,
 			window: BillingSettingsPage,
-			props: { user }
+			props: { }
 		},
 		{
 			name: 'Usage',
 			icon: UsageIcon,
 			window: UsageSettingsPage,
-			props: { user }
+			props: { }
 		}
 	];
 
@@ -85,7 +85,7 @@
 				{/each}
 			</div>
 			<div class="settings-page">
-				<svelte:component this={selectedTab.window} bind:user />
+				<svelte:component this={selectedTab.window} {...selectedTab.props} />
 			</div>
 		</div>
 	</div>

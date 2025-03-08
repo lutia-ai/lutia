@@ -7,9 +7,12 @@
 		darkMode,
 		showPricing,
 		showLegacyModels,
-		chosenCompany
+		chosenCompany,
+
+		chatHistory
+
 	} from '$lib/stores.ts';
-	import type { ApiProvider } from '@prisma/client';
+	import { PaymentTier, type ApiProvider } from '@prisma/client';
 	import type { Model, UserWithSettings } from '$lib/types';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 
@@ -30,6 +33,10 @@
 	import ImageIcon from './icons/ImageIcon.svelte';
 	import LightningIcon from './icons/LightningIcon.svelte';
 	import LightningReasoningIcon from './icons/LightningReasoningIcon.svelte';
+    import ConversationsSideBar from './ConversationsSideBar.svelte';
+	import CreateIcon from './icons/CreateIcon.svelte';
+	import { goto } from '$app/navigation';
+	import ConversationsIcon from './icons/ConversationsIcon.svelte';
 
 	export let companySelection: ApiProvider[];
 	export let gptModelSelection: Model[];
@@ -38,6 +45,7 @@
 	export let user: UserWithSettings; // controls if the menu is always open
 	export let userImage;
 	export let mobileSidebarOpen: boolean;
+    export let conversationsOpen: boolean = false; // Add two-way binding for conversations sidebar
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
@@ -94,8 +102,10 @@
 		}
 	}}
 />
-
-{#if mobileSidebarOpen}
+{#if conversationsOpen}
+    <ConversationsSideBar bind:conversationsOpen />
+{/if}
+{#if mobileSidebarOpen && !conversationsOpen}
 	<div
 		class="sidebar"
 		transition:fly={{
@@ -299,35 +309,92 @@
 		</div>
 
 		<div class="settings-container">
-			<div class="settings-wrapper">
-				<div
-					class="settings-icon"
-					role="button"
-					tabindex="0"
-					on:click|stopPropagation={() => {
-						clearChatHistory();
-						isRotating = true;
-						setTimeout(() => {
-							isRotating = false;
-						}, 500);
-					}}
-					on:keydown|stopPropagation={(e) => {
-						if (e.key === 'Enter') {
-							clearChatHistory();
-							isRotating = true;
-							setTimeout(() => {
-								isRotating = false;
-							}, 500);
-						}
-					}}
-					style="padding: 8px;"
-				>
-					<div class:rotate={isRotating}>
-						<RefreshIcon color="var(--text-color-light)" />
-					</div>
-					<p class="tag">Clear chat</p>
-				</div>
-			</div>
+			{#if user.payment_tier === PaymentTier.Premium}
+                <div class="settings-wrapper">
+                    <div
+                        class="settings-icon"
+                        role="button"
+                        tabindex="0"
+                        on:click|stopPropagation={() => {
+                            conversationsOpen = !conversationsOpen;
+                            if (conversationsOpen) {
+                                contextOpen = false;
+                                settingsOpen = false;
+                            }
+                        }}
+                        on:keydown|stopPropagation={(e) => {
+                            if (e.key === 'Enter') {
+                                conversationsOpen = !conversationsOpen;
+                                if (conversationsOpen) {
+                                    contextOpen = false;
+                                    settingsOpen = false;
+                                }
+                            }
+                        }}
+                        style="padding: 8px;"
+                    >
+                        <div style="transform: scale(1.2);">
+                            <ConversationsIcon color="var(--text-color-light)" />
+                        </div>
+                        <p class="tag">View history</p>
+                    </div>
+                </div>
+                <div class="settings-wrapper">
+                    <div
+                        class="settings-icon"
+                        role="button"
+                        tabindex="0"
+                        on:click|stopPropagation={() => {
+                            chatHistory.set([]);
+                            goto('/chat/new', { replaceState: true });
+                        }}
+                        on:keydown|stopPropagation={(e) => {
+                            if (e.key === 'Enter') {
+                                chatHistory.set([]);
+                                goto('/chat/new', { replaceState: true });
+                            }
+                        }}
+                        style="padding: 8px;"
+                    >
+                        <div>
+                            <CreateIcon color="var(--text-color-light)" />
+                        </div>
+                        <p class="tag">New chat</p>
+                    </div>
+                </div>
+            {:else}
+                <div class="settings-wrapper">
+                    <div
+                        class="settings-icon"
+                        role="button"
+                        tabindex="0"
+                        on:click|stopPropagation={() => {
+                            clearChatHistory();
+                            isRotating = true;
+                            goto('/chat/new', { replaceState: true });
+                            setTimeout(() => {
+                                isRotating = false;
+                            }, 500);
+                        }}
+                        on:keydown|stopPropagation={(e) => {
+                            if (e.key === 'Enter') {
+                                clearChatHistory();
+                                isRotating = true;
+                                goto('/chat/new', { replaceState: true });
+                                setTimeout(() => {
+                                    isRotating = false;
+                                }, 500);
+                            }
+                        }}
+                        style="padding: 8px;"
+                    >
+                        <div class:rotate={isRotating}>
+                            <RefreshIcon color="var(--text-color-light)" />
+                        </div>
+                        <p class="tag">Clear chat</p>
+                    </div>
+                </div>
+            {/if}
 			{#if showContextWindowButton}
 				<div class="settings-wrapper">
 					<div
@@ -432,6 +499,12 @@
 		z-index: 10001;
 		padding: 10px 0px;
 		width: 65px;
+        overflow-y: scroll; /* Allow scrolling */
+        scrollbar-width: none; /* For Firefox */
+        -ms-overflow-style: none; /* For Internet Explorer and Edge */
+		&::-webkit-scrollbar { /* For Chrome, Safari, and Opera */
+			display: none; 
+		}
 
 		.company-and-llm-container {
 			position: relative;
@@ -674,7 +747,6 @@
 				.settings-icon {
 					padding: 6px;
 					border-radius: 50%;
-					border: 2px solid var(--text-color-light);
 					width: 45px;
 					height: 45px;
 					margin: 0 auto;
@@ -683,7 +755,7 @@
 					cursor: pointer;
 
 					&:hover {
-						outline: 7px solid var(--bg-color-light);
+						background: var(--bg-color-light);
 
 						.tag {
 							opacity: 1;

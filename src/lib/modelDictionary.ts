@@ -55,6 +55,19 @@ export const modelDictionary: ModelDictionary = {
                 reasons: true,
                 description: ''
 			},
+            gpt45preview: {
+                name: 'GPT_4_5_preview',
+				param: 'gpt-4.5-preview',
+				legacy: false,
+				input_price: 75 * 1.1,
+				output_price: 150 * 1.1,
+				context_window: 128000,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false,
+                description: 'Largest and most capable GPT model (preview)'
+            },
 			gpt4o: {
 				name: 'GPT_4o',
 				param: 'gpt-4o',

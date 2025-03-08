@@ -15,9 +15,7 @@
 		ModelDictionary,
 		Component,
 		SerializedApiRequest,
-
 		ReasoningComponent
-
 	} from '$lib/types';
 	import { isCodeComponent, isLlmChatComponent, isUserChatComponent } from '$lib/typeGuards';
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
@@ -31,6 +29,7 @@
 	} from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import MobileSidebar from '$lib/components/MobileSidebar.svelte';
+	import ConversationsSideBar from '$lib/components/ConversationsSideBar.svelte';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
 	import logo from '$lib/images/logos/logo3.png';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
@@ -56,7 +55,7 @@
 		sanitizeLLmContent,
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
-	import type { ApiProvider } from '@prisma/client';
+	import { PaymentTier, type ApiProvider } from '@prisma/client';
 	import { fade, fly } from 'svelte/transition';
 	import { browser } from '$app/environment';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
@@ -65,6 +64,8 @@
 	import HoverTag from '$lib/components/HoverTag.svelte';
 	import BrainIcon from '$lib/components/icons/BrainIcon.svelte';
 	import WarningIcon from '$lib/components/icons/WarningIcon.svelte';
+	import { pushState } from '$app/navigation';
+    import SettingsComponent from '$lib/components/settings/Settings.svelte';
 
 	export let data;
 
@@ -80,9 +81,10 @@
 	let scrollAnimationFrame: number | null = null;
 	let isSettingsOpen: boolean = false;
 	let isDragging: boolean = false;
+	let conversationsOpen: boolean = false;
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
-	let SettingsComponent: ComponentType;
+	// let SettingsComponent: ComponentType;
 	let windowWidth = browser ? window.innerWidth : 0;
 	let isLargeScreen = windowWidth > 810;
 	let mobileSidebarOpen = false;
@@ -92,6 +94,13 @@
     let selectedModelIndex: number | null = 0;
     let modelSearchItems: HTMLDivElement[] = [];
     let reasoningOn: boolean = false;
+    let conversationId: string | undefined;
+
+    $: {
+        const id = $page.params.id;
+        const currentConversationId = id === 'new' ? undefined : id;
+        conversationId = currentConversationId;
+    }
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -125,10 +134,6 @@
 			}
 			handleCountTokens(fullPrompt, chosenModel);
 		}
-	}
-
-	$: if (isSettingsOpen) {
-		loadSettings();
 	}
 
     function handleInput(event: Event & { currentTarget: EventTarget & HTMLDivElement }) {
@@ -209,11 +214,6 @@
 		windowWidth = window.innerWidth;
 		isLargeScreen = windowWidth > 810;
 	};
-
-	async function loadSettings() {
-		const module = await import('$lib/components/settings/Settings.svelte');
-		SettingsComponent = module.default;
-	}
 
 	async function handleCountTokens(fullPrompt: Message[] | string, chosenModel: Model) {
 		if (chosenModel.generatesImages || fullPrompt === '<br>') {
@@ -358,8 +358,18 @@
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
                 console.log(fullPrompt);
 
-                // Generate a unique ID for this request
-                const requestId = crypto.randomUUID();
+                // Get conversationId from slug parameter
+                let conversationId = $page.params.id;
+
+                // UUID validation function
+                const isValidUUID = (uuid: string) => {
+                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+                    return uuidRegex.test(uuid);
+                };
+                
+                // Only include conversationId if it's a valid UUID and user is premium
+                const validConversationId = 
+                    conversationId && isValidUUID(conversationId) ? conversationId : undefined;
 
 				let uri: string;
 				switch ($chosenCompany) {
@@ -393,6 +403,7 @@
 						modelStr: JSON.stringify(chosenModel),
 						imagesStr: JSON.stringify(imageArray),
 						...$chosenCompany === 'anthropic' ? { reasoningOn } : {},
+                        ...data.user.payment_tier === PaymentTier.Premium ? { conversationId: validConversationId } : {},
 					})
 				});
 
@@ -481,6 +492,16 @@
                             } else if (data.type === 'usage') {
                                 inputPrice = data.usage.inputPrice;
                                 outputPrice = data.usage.outputPrice;
+                            } else if (data.type === 'conversation_id') {
+                                // Update the URL without reloading the page
+                                const url = new URL(window.location.href);
+                                url.pathname = `/chat/${data.id}`;
+                                
+                                // This updates the URL without causing a page reload
+                                pushState(url.toString(), {});
+                                conversationId = data.id;
+                            } else if (data.type === 'error') {
+                                console.error(data.message);
                             }
 
                             chatHistory.update((history) =>
@@ -722,6 +743,7 @@
 				errorPopup.showError(message, null, 5000, 'success');
 			}
 		}
+        const id = $page.params.id;
 		const apiRequests = (await data.apiRequests) as SerializedApiRequest[];
 		chatHistory.set(loadChatHistory(apiRequests));
 		if (promptBar) {
@@ -739,6 +761,21 @@
 		}, 100);
 		mounted = true;
 	});
+
+	// This reactive statement will update chatHistory whenever data.apiRequests changes
+	// (including when navigating between different conversation IDs)
+	$: {
+		if (data.apiRequests) {
+			Promise.resolve(data.apiRequests).then((apiRequests) => {
+				chatHistory.set(loadChatHistory(apiRequests as SerializedApiRequest[]));
+				
+				// If the component is mounted, update the UI and scroll to bottom
+				if (mounted) {
+					setTimeout(scrollToBottom, 100);
+				}
+			});
+		}
+	}
 </script>
 
 <svelte:head>
@@ -757,6 +794,10 @@
 		handleScroll();
 	}}
 	on:keydown={(e) => handleKeyboardShortcut(e, data.user.user_settings)}
+	on:dragover|preventDefault={(event) => {
+		event.preventDefault;
+		isDragging = true;
+	}}
 />
 
 <ErrorPopup bind:this={errorPopup} />
@@ -773,9 +814,11 @@
 						{gptModelSelection}
 						bind:chosenModel
 						bind:isSettingsOpen
+						bind:conversationsOpen
 						user={data.user}
 						userImage={data.userImage}
 					/>
+					
 				{:else if !mobileSidebarOpen}
 					<div class="floating-sidebar">
 						<div
@@ -805,13 +848,13 @@
 					{gptModelSelection}
 					bind:chosenModel
 					bind:isSettingsOpen
+					bind:mobileSidebarOpen
+                    bind:conversationsOpen
 					user={data.user}
 					userImage={data.userImage}
-					bind:mobileSidebarOpen
 				/>
 				{#if isSettingsOpen}
-					<svelte:component
-						this={SettingsComponent}
+					<SettingsComponent
 						bind:isOpen={isSettingsOpen}
 						bind:user={data.user}
 					/>
@@ -822,6 +865,7 @@
 
 	<div
 		class="body"
+		class:shifted={conversationsOpen}
 		role="region"
 		on:dragover|preventDefault={(event) => {
 			event.preventDefault;
@@ -839,8 +883,8 @@
 				{#if $chatHistory.length === 0}
 					<div class="empty-content-options">
 						<div class="logo-container">
-							<img src={logo} alt="logo" />
-							<h1>Lutia</h1>
+							<!-- <img src={logo} alt="logo" /> -->
+							<h1 class="animated-text">What can I help you with?</h1>
 						</div>
 					</div>
 				{/if}
@@ -1176,12 +1220,14 @@
 		<div
 			class="prompt-bar-wrapper"
 			style="
-                transform: {mobileSidebarOpen ? 'translateX(calc(-50% + 20px))' : ''};
+                transform: {mobileSidebarOpen ? 'translateX(calc(-50% + 20px))' : (conversationsOpen && isLargeScreen) ? 'translateX(calc(-50% + 180px))' : ''};
                 padding: {mobileSidebarOpen ? '0 30px 0 50px' : ''};
+                width: {(conversationsOpen && !mobileSidebarOpen && isLargeScreen) ? 'calc(100% - 310px)' : ''};
             "
 		>
 			<div
 				class="prompt-bar"
+                class:shifted={conversationsOpen}
 				style="
                     margin: {data.user.user_settings?.prompt_pricing_visible
 					? ''
@@ -1429,7 +1475,7 @@
 <style lang="scss">
 
 	.settings-open {
-		height: 100vh;
+		height: 100vh !important;
 	}
 
     :global(h1) {
@@ -1529,6 +1575,7 @@
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
+        min-height: 90vh;
 		min-width: 450px;
 		font-family: 'Albert Sans', sans-serif;
 
@@ -1556,8 +1603,16 @@
 
 		.body {
 			position: relative;
-			width: 100%;
-			height: 100%;
+			display: flex;
+			flex-direction: column;
+            min-height: 90vh;
+			// margin-left: 65px;
+			transition: margin-left 0.3s ease;
+			
+			&.shifted {
+				margin-left: 300px; /* 300px (conversations sidebar) + 65px (main sidebar) */
+			}
+
 			background: var(--bg-color);
 			z-index: 1000;
 			display: flex;
@@ -1615,9 +1670,8 @@
 			.empty-content-options {
 				position: absolute;
 				left: 50%;
-				top: 50%;
-				height: 50%;
-				transform: translate(calc(-50% + 30px), -45%);
+				top: 40%;
+				transform: translate(-50%, -50%);
 				display: flex;
 				width: max-content;
 				flex-direction: column;
@@ -1627,6 +1681,7 @@
 				.logo-container {
 					margin: 0 auto;
 					display: flex;
+                    
 
 					img {
 						width: 100px;
@@ -1637,6 +1692,9 @@
 						margin: auto 0;
 						font-size: 40px;
 						font-weight: 500;
+                        text-align: center;
+                        word-wrap: break-word;
+                        font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
 					}
 				}
 			}
@@ -2058,13 +2116,14 @@
 				flex-direction: column;
 				box-sizing: border-box;
 				padding: 0 50px;
+                transition: transform 0.3s ease, width 0.3s ease;
 
 				.prompt-bar {
 					position: relative;
 					margin: auto auto 35px auto;
 					width: 100%;
 					max-width: 900px;
-					min-width: 300px;
+					// min-width: 300px;
 					height: max-content;
 					box-sizing: border-box;
 					background: var(--bg-color-prompt-bar);
@@ -2200,12 +2259,13 @@
 					}
                     .model-search-container {
                         position: absolute;
-                        bottom: 110%;
+                        bottom: 100%;
+                        transform: translateY(-10px);
                         left: 0;
                         width: 100%;
                         background: var(--bg-color-light);
                         border-radius: 10px;
-                        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+                        box-shadow: 0 0 #0000, 0 0 #0000, 0 9px 9px 0px rgba(0, 0, 0, .01), 0 2px 5px 0px rgba(0, 0, 0, .06);
                         max-height: 300px;
                         overflow-y: auto;
                         z-index: 1000;
@@ -2370,7 +2430,8 @@
 					top: 100%;
 					display: flex;
 					width: 100%;
-					padding: 10px 50px 10px 50px;
+					// padding: 10px 50px 10px 50px;
+                    padding: 10px 2vw 10px 2vw;
 					box-sizing: border-box;
 
 					p {
@@ -2412,9 +2473,9 @@
 			.body {
 				padding-left: 0;
 
-				.empty-content-options {
-					transform: translate(calc(-50%), -45%);
-				}
+                &.shifted {
+                    margin-left: 0px; /* 300px (conversations sidebar) + 65px (main sidebar) */
+                }
 
 				.chat-history {
 					padding: 0 35px 300px 35px;
@@ -2471,8 +2532,14 @@
 						.chat-toolbar-container {
 							transform: translateY(-5px);
 						}
+
 					}
 				}
+                .empty-content-options {
+                    .logo-container {
+                        width: 90%;
+                    }
+                }
 
 				.prompt-bar-wrapper {
 					transform: translateX(-50%);
@@ -2481,13 +2548,18 @@
 				}
 			}
 
-			.empty-content-options {
-				transform: translate(-50%, -45%);
-			}
-
 			.input-token-container {
 				padding: 10px 15px !important;
 			}
 		}
+	}
+
+    .animated-text {
+		font-weight: 800; /* High font weight */
+		background: linear-gradient(270deg, #1d60c2, #e91e63, #9c27b0, #1d60c2);
+		background-size: 400%; /* To ensure smooth animation */
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent; /* Makes text fill color transparent */
+		animation: gradient-animation 25s ease infinite; /* Animation */
 	}
 </style>
