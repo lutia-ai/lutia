@@ -16,9 +16,9 @@ export type CodeComponent = {
 };
 
 export type ReasoningComponent = {
-    type: 'reasoning';
-    content: string;
-}
+	type: 'reasoning';
+	content: string;
+};
 
 export type Component = CodeComponent | TextComponent | Image | ReasoningComponent;
 
@@ -31,7 +31,7 @@ export type LlmChat = {
 	loading: boolean;
 	copied: boolean;
 	components: Component[];
-    reasoning?: ReasoningComponent;
+	reasoning?: ReasoningComponent;
 };
 
 export type UserChat = {
@@ -49,14 +49,14 @@ export type Model = {
 	input_price: number;
 	output_price: number;
 	context_window: number;
-    max_tokens?: number;
+	max_tokens?: number;
 	hub: string;
 	handlesImages: boolean;
 	maxImages: number;
 	generatesImages: boolean;
-	reasons: boolean = false;
-    extendedThinking: boolean = false;
-    description: string;
+	reasons: boolean;
+	extendedThinking: boolean;
+	description: string;
 };
 
 export type ModelLogos = Record<string, { logo: any }>;
@@ -119,7 +119,7 @@ type SerializedMessage = {
 	id: number;
 	prompt: string;
 	response: string;
-    reasoning: string
+	reasoning: string;
 	pictures: Image[];
 };
 
@@ -186,7 +186,6 @@ type UserWithSettings = Prisma.UserGetPayload<{
 		user_settings: true;
 	};
 }>;
-
 
 export type ElementsContext = {
 	elements: StripeElements;

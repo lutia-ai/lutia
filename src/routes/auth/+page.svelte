@@ -97,7 +97,7 @@
 	async function register() {
 		const formDataTemp = new FormData(formData);
 		formDataTemp.set('email', (formDataTemp.get('email') as string).toLowerCase());
-		
+
 		const response = await fetch(`?/register`, {
 			method: 'POST',
 			body: formDataTemp
@@ -175,6 +175,10 @@
 		}
 	}
 </script>
+
+<svelte:head>
+	<title>Signup & Login | Lutia</title>
+</svelte:head>
 
 <ErrorPopup bind:this={errorPopup} />
 

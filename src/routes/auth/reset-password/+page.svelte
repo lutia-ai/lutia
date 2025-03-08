@@ -57,6 +57,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Reset password | Lutia</title>
+</svelte:head>
+
 <ErrorPopup bind:this={errorPopup} />
 
 <div class="body">

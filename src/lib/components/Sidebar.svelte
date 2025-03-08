@@ -8,9 +8,7 @@
 		showPricing,
 		showLegacyModels,
 		chosenCompany,
-
 		chatHistory
-
 	} from '$lib/stores.ts';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
 	import type { Model, UserWithSettings } from '$lib/types';
@@ -32,7 +30,7 @@
 	} from '$lib/chatHistory';
 	import ImageIcon from './icons/ImageIcon.svelte';
 	import LightningIcon from './icons/LightningIcon.svelte';
-    import LightningReasoningIcon from './icons/LightningReasoningIcon.svelte';
+	import LightningReasoningIcon from './icons/LightningReasoningIcon.svelte';
 	import CreateIcon from './icons/CreateIcon.svelte';
 	import ConversationsIcon from './icons/ConversationsIcon.svelte';
 	import ConversationsSideBar from './ConversationsSideBar.svelte';
@@ -100,7 +98,7 @@
 />
 
 {#if conversationsOpen}
-    <ConversationsSideBar bind:conversationsOpen />
+	<ConversationsSideBar bind:conversationsOpen />
 {/if}
 <div class="sidebar" class:shifted={conversationsOpen}>
 	<div class="company-and-llm-container">
@@ -222,50 +220,56 @@
 											<LightningIcon color="var(--text-color)" />
 										</div>
 									{/if}
-                                    <div class="split">
-                                        <div class="main-content">
-                                            <p>
-                                                {formatModelEnumToReadable(model.name)}
-                                                {#if $showPricing}
-                                                    <div class="pricing">
-                                                        <span>
-                                                            Input: ${Number(model.input_price.toFixed(3))}
-                                                            {model.input_price > 0 ? '/ 1M' : ''}
-                                                        </span>
-                                                        <span>
-                                                            Output: ${Number(model.output_price.toFixed(3))}
-                                                            / {model.generatesImages ? 'Image' : '1M'}
-                                                        </span>
-                                                    </div>
-                                                {/if}
-                                            </p>
-                                        </div>
-                                        <div class="description">
-                                            {#if !model.legacy && model.description}
-                                                <span>{model.description}</span>
-                                            {/if}
-                                        </div>
-                                    </div>
-                                    <div class="image">
-                                        {#if model.handlesImages}
-                                            <AttachmentIcon color="var(--text-color" />
-                                        {/if}
-                                    </div>
-                                    {#if model.legacy}
-                                        <div class="legacy">
-                                            <p>Legacy</p>
-                                        </div>
-                                    {/if}
-                                    <div
-                                        class="selected-container"
-                                        style="margin-left: {model.handlesImages ? '0' : 'auto'}"
-                                    >
-                                        {#if chosenModel.name === model.name}
-                                            <div class="selected">
-                                                <TickIcon color="var(--bg-color)" strokeWidth={3} />
-                                            </div>
-                                        {/if}
-                                    </div>
+									<div class="split">
+										<div class="main-content">
+											<p>
+												{formatModelEnumToReadable(model.name)}
+												{#if $showPricing}
+													<div class="pricing">
+														<span>
+															Input: ${Number(
+																model.input_price.toFixed(3)
+															)}
+															{model.input_price > 0 ? '/ 1M' : ''}
+														</span>
+														<span>
+															Output: ${Number(
+																model.output_price.toFixed(3)
+															)}
+															/ {model.generatesImages
+																? 'Image'
+																: '1M'}
+														</span>
+													</div>
+												{/if}
+											</p>
+										</div>
+										<div class="description">
+											{#if !model.legacy && model.description}
+												<span>{model.description}</span>
+											{/if}
+										</div>
+									</div>
+									<div class="image">
+										{#if model.handlesImages}
+											<AttachmentIcon color="var(--text-color" />
+										{/if}
+									</div>
+									{#if model.legacy}
+										<div class="legacy">
+											<p>Legacy</p>
+										</div>
+									{/if}
+									<div
+										class="selected-container"
+										style="margin-left: {model.handlesImages ? '0' : 'auto'}"
+									>
+										{#if chosenModel.name === model.name}
+											<div class="selected">
+												<TickIcon color="var(--bg-color)" strokeWidth={3} />
+											</div>
+										{/if}
+									</div>
 								</div>
 							</div>
 						{/if}
@@ -294,93 +298,93 @@
 	</div>
 
 	<div class="settings-container">
-            <!-- Conversations button -->
-            {#if user.payment_tier === PaymentTier.Premium}
-                <div class="settings-wrapper">
-                    <div
-                        class="settings-icon"
-                        role="button"
-                        tabindex="0"
-                        on:click|stopPropagation={() => {
-                            conversationsOpen = !conversationsOpen;
-                            if (conversationsOpen) {
-                                contextOpen = false;
-                                settingsOpen = false;
-                            }
-                        }}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                conversationsOpen = !conversationsOpen;
-                                if (conversationsOpen) {
-                                    contextOpen = false;
-                                    settingsOpen = false;
-                                }
-                            }
-                        }}
-                        style="padding: 8px;"
-                    >
-                        <div style="transform: scale(1.2);">
-                            <ConversationsIcon color="var(--text-color-light)" />
-                        </div>
-                        <p class="tag">View history</p>
-                    </div>
-                </div>
-                <div class="settings-wrapper">
-                    <div
-                        class="settings-icon"
-                        role="button"
-                        tabindex="0"
-                        on:click|stopPropagation={() => {
-                            chatHistory.set([]);
-                            goto('/chat/new', { replaceState: true });
-                        }}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                chatHistory.set([]);
-                                goto('/chat/new', { replaceState: true });
-                            }
-                        }}
-                        style="padding: 8px;"
-                    >
-                        <div>
-                            <CreateIcon color="var(--text-color-light)" />
-                        </div>
-                        <p class="tag">New chat</p>
-                    </div>
-                </div>
-            {:else}
-                <div class="settings-wrapper">
-                    <div
-                        class="settings-icon"
-                        role="button"
-                        tabindex="0"
-                        on:click|stopPropagation={() => {
-                            clearChatHistory();
-                            isRotating = true;
-                            goto('/chat/new', { replaceState: true });
-                            setTimeout(() => {
-                                isRotating = false;
-                            }, 500);
-                        }}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                clearChatHistory();
-                                isRotating = true;
-                                goto('/chat/new', { replaceState: true });
-                                setTimeout(() => {
-                                    isRotating = false;
-                                }, 500);
-                            }
-                        }}
-                        style="padding: 8px;"
-                    >
-                        <div class:rotate={isRotating}>
-                            <RefreshIcon color="var(--text-color-light)" />
-                        </div>
-                        <p class="tag">Clear chat</p>
-                    </div>
-                </div>
-            {/if}
+		<!-- Conversations button -->
+		{#if user.payment_tier === PaymentTier.Premium}
+			<div class="settings-wrapper">
+				<div
+					class="settings-icon"
+					role="button"
+					tabindex="0"
+					on:click|stopPropagation={() => {
+						conversationsOpen = !conversationsOpen;
+						if (conversationsOpen) {
+							contextOpen = false;
+							settingsOpen = false;
+						}
+					}}
+					on:keydown|stopPropagation={(e) => {
+						if (e.key === 'Enter') {
+							conversationsOpen = !conversationsOpen;
+							if (conversationsOpen) {
+								contextOpen = false;
+								settingsOpen = false;
+							}
+						}
+					}}
+					style="padding: 8px;"
+				>
+					<div style="transform: scale(1.2);">
+						<ConversationsIcon color="var(--text-color-light)" />
+					</div>
+					<p class="tag">View history</p>
+				</div>
+			</div>
+			<div class="settings-wrapper">
+				<div
+					class="settings-icon"
+					role="button"
+					tabindex="0"
+					on:click|stopPropagation={() => {
+						chatHistory.set([]);
+						goto('/chat/new', { replaceState: true });
+					}}
+					on:keydown|stopPropagation={(e) => {
+						if (e.key === 'Enter') {
+							chatHistory.set([]);
+							goto('/chat/new', { replaceState: true });
+						}
+					}}
+					style="padding: 8px;"
+				>
+					<div>
+						<CreateIcon color="var(--text-color-light)" />
+					</div>
+					<p class="tag">New chat</p>
+				</div>
+			</div>
+		{:else}
+			<div class="settings-wrapper">
+				<div
+					class="settings-icon"
+					role="button"
+					tabindex="0"
+					on:click|stopPropagation={() => {
+						clearChatHistory();
+						isRotating = true;
+						goto('/chat/new', { replaceState: true });
+						setTimeout(() => {
+							isRotating = false;
+						}, 500);
+					}}
+					on:keydown|stopPropagation={(e) => {
+						if (e.key === 'Enter') {
+							clearChatHistory();
+							isRotating = true;
+							goto('/chat/new', { replaceState: true });
+							setTimeout(() => {
+								isRotating = false;
+							}, 500);
+						}
+					}}
+					style="padding: 8px;"
+				>
+					<div class:rotate={isRotating}>
+						<RefreshIcon color="var(--text-color-light)" />
+					</div>
+					<p class="tag">Clear chat</p>
+				</div>
+			</div>
+		{/if}
 		{#if showContextWindowButton}
 			<div class="settings-wrapper">
 				<div
@@ -473,9 +477,19 @@
 </div>
 
 <style lang="scss">
-    * {
-        font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol !important;
-    }
+	* {
+		font-family:
+			ui-sans-serif,
+			-apple-system,
+			system-ui,
+			Segoe UI,
+			Helvetica,
+			Apple Color Emoji,
+			Arial,
+			sans-serif,
+			Segoe UI Emoji,
+			Segoe UI Symbol !important;
+	}
 	.sidebar {
 		position: fixed;
 		display: flex;
@@ -484,12 +498,12 @@
 		z-index: 10001;
 		padding: 10px 0px;
 		width: 65px;
-        left: 0;
-        transition: left 0.3s ease;
+		left: 0;
+		transition: left 0.3s ease;
 
-        &.shifted {
-            left: 300px; /* Match the width of the conversations sidebar */
-        }
+		&.shifted {
+			left: 300px; /* Match the width of the conversations sidebar */
+		}
 
 		.company-and-llm-container {
 			position: relative;
@@ -504,7 +518,7 @@
 
 				.choose-company-container {
 					width: 100%;
-                    margin-left: 8px;
+					margin-left: 8px;
 				}
 
 				.company-logo-container {
@@ -521,9 +535,9 @@
 					}
 				}
 
-                .selected {
-                    background: var(--bg-color-light); 
-                }
+				.selected {
+					background: var(--bg-color-light);
+				}
 			}
 
 			.options-container {
@@ -584,7 +598,11 @@
 					top: 110%;
 					border: 1px solid var(--bg-color-dark);
 					background: var(--bg-color);
-                    box-shadow: 0 0 #0000, 0 0 #0000, 0 9px 9px 0px rgba(0, 0, 0, .01), 0 2px 5px 0px rgba(0, 0, 0, .06);
+					box-shadow:
+						0 0 #0000,
+						0 0 #0000,
+						0 9px 9px 0px rgba(0, 0, 0, 0.01),
+						0 2px 5px 0px rgba(0, 0, 0, 0.06);
 					border-radius: 10px;
 					display: flex;
 					flex-direction: column;
@@ -592,9 +610,9 @@
 					padding: 10px;
 					min-width: 300px;
 					cursor: default;
-                    max-height: calc(100vh - 120px);
-                    // height: 100%;
-                    overflow-y: auto;
+					max-height: calc(100vh - 120px);
+					// height: 100%;
+					overflow-y: auto;
 
 					.llm-options {
 						display: flex;
@@ -604,13 +622,13 @@
 						overflow: hidden;
 						transition: all 0.3s ease;
 						// margin: 5px 0; /* Add margin for spacing between options */
-                        gap: 5px;
+						gap: 5px;
 						box-sizing: border-box; /* Include padding and border in the element's total width and height */
-                        
+
 						// margin: 10px;
-                        
+
 						.record {
-                            display: flex;
+							display: flex;
 							gap: 20px;
 							align-items: center;
 							width: 100%;
@@ -619,88 +637,88 @@
 							border-radius: 10px;
 							color: var(--text-color);
 							cursor: pointer;
-                            padding: 8px 2px;
-                            box-sizing: border-box;
+							padding: 8px 2px;
+							box-sizing: border-box;
 
 							&:hover {
 								background: var(--bg-color-light-alt);
 							}
 
-                            .icon {
-                                display: flex;
-                                margin-left: 10px;
-                                width: 30px;
-                                height: 30px;
-                            }
+							.icon {
+								display: flex;
+								margin-left: 10px;
+								width: 30px;
+								height: 30px;
+							}
 
-                            .split {
-                                display: flex;
-                                flex-direction: column;
-                                height: max-content;
-                                gap: 2px;
-                                // width: 80px;
+							.split {
+								display: flex;
+								flex-direction: column;
+								height: max-content;
+								gap: 2px;
+								// width: 80px;
 
-                                .main-content {
-                                    display: flex;
-                                    gap: 10px;
-                                    align-items: center;
-                                    width: 100%;
-                                    height: 100%;
-                                    // max-height: 30px;
-                                    
-                                    p {
-                                        display: flex;
-                                        // gap: 5px;
-                                        flex-direction: column;
-                                        margin: 0;
-                                        padding: 0;
-                                        width: 220px;
-                                        
-                                        .pricing {
-                                            display: flex;
-                                            gap: 10px;
-                                            width: max-content;
-                                            margin-top: 2px;
-                                            
-                                            span {
-                                                text-align: left;
-                                                color: var(--text-color-light);
-                                                font-size: 12px;
-                                            }
-                                        }
-                                    }
-                                }
+								.main-content {
+									display: flex;
+									gap: 10px;
+									align-items: center;
+									width: 100%;
+									height: 100%;
+									// max-height: 30px;
 
-                                .description {
-                                    display: flex;
-                                    margin-right: 4px;
+									p {
+										display: flex;
+										// gap: 5px;
+										flex-direction: column;
+										margin: 0;
+										padding: 0;
+										width: 220px;
 
-                                    span {
-                                        width: 220px;
-                                        font-size: 13px;
-                                        color: var(--text-color-light);
-                                    }
-                                }
-                            }
+										.pricing {
+											display: flex;
+											gap: 10px;
+											width: max-content;
+											margin-top: 2px;
 
-                            .legacy {
-                                display: flex;
-                                border-radius: 20px;
-                                border: 1px solid var(--text-color-light-opacity);
-                                background: var(--bg-color-light);
-                                padding: 5px 10px;
-                                color: var(--text-color);
+											span {
+												text-align: left;
+												color: var(--text-color-light);
+												font-size: 12px;
+											}
+										}
+									}
+								}
 
-                                p {
-                                    width: max-content;
-                                    font-size: 12px;
-                                    color: var(--text-color-light);
-                                    margin: 0;
-                                }
-                            }
+								.description {
+									display: flex;
+									margin-right: 4px;
+
+									span {
+										width: 220px;
+										font-size: 13px;
+										color: var(--text-color-light);
+									}
+								}
+							}
+
+							.legacy {
+								display: flex;
+								border-radius: 20px;
+								border: 1px solid var(--text-color-light-opacity);
+								background: var(--bg-color-light);
+								padding: 5px 10px;
+								color: var(--text-color);
+
+								p {
+									width: max-content;
+									font-size: 12px;
+									color: var(--text-color-light);
+									margin: 0;
+								}
+							}
 
 							.image {
-                                display: flex;
+								display: flex;
 								width: 20px;
 								height: 20px;
 							}
@@ -708,7 +726,7 @@
 							.selected-container {
 								width: 20px;
 								height: 20px;
-                                margin: 0 10px;
+								margin: 0 10px;
 
 								.selected {
 									width: inherit;
@@ -770,7 +788,7 @@
 					cursor: pointer;
 
 					&:hover {
-                        background: var(--bg-color-light);
+						background: var(--bg-color-light);
 
 						.tag {
 							opacity: 1;

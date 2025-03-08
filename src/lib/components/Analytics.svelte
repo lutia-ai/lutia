@@ -22,6 +22,6 @@
 		}
 
 		gtag('js', new Date());
-		gtag('config', 'G-WS8E8P29W4');
+		gtag('config', 'G-WS8E8P29W4', { page_title: document.title });
 	</script>
 </svelte:head>

@@ -90,6 +90,10 @@
 	$: eightChars = formData.password.length >= 8;
 </script>
 
+<svelte:head>
+	<title>Reset password | Lutia</title>
+</svelte:head>
+
 <ErrorPopup bind:this={errorPopup} />
 
 {#if data.success}

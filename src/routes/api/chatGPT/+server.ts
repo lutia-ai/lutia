@@ -9,18 +9,22 @@ import { createMessage } from '$lib/db/crud/message';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import { createConversation, updateConversation, updateConversationLastMessage } from '$lib/db/crud/conversation.js';
+import {
+	createConversation,
+	updateConversation,
+	updateConversationLastMessage
+} from '$lib/db/crud/conversation.js';
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
 
 export async function POST({ request, locals }) {
-    
 	let session = await locals.auth();
 	if (!session || !session.user || !session.user.email) {
 		throw error(401, 'Forbidden');
 	}
 
 	try {
-		const { plainTextPrompt, promptStr, modelStr, imagesStr, conversationId } = await request.json();
+		const { plainTextPrompt, promptStr, modelStr, imagesStr, conversationId } =
+			await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
 
@@ -34,17 +38,20 @@ export async function POST({ request, locals }) {
 
 		const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
 
-        const user: User = await retrieveUserByEmail(session.user!.email);
+		const user: User = await retrieveUserByEmail(session.user!.email);
 
-        let messageConversationId = conversationId;
+		let messageConversationId = conversationId;
 
-        // Filter out assistant messages with empty content (ie that are still streaming)
-        messages = messages.map(msg => {
-            if (msg.role === 'assistant' && (msg.content === undefined || msg.content === null || msg.content === '')) {
-                return { ...msg, content: 'Streaming in progress...' };
-            }
-            return msg;
-        });
+		// Filter out assistant messages with empty content (ie that are still streaming)
+		messages = messages.map((msg) => {
+			if (
+				msg.role === 'assistant' &&
+				(msg.content === undefined || msg.content === null || msg.content === '')
+			) {
+				return { ...msg, content: 'Streaming in progress...' };
+			}
+			return msg;
+		});
 
 		if (model.generatesImages) {
 			const response = await openai.images.generate({
@@ -68,28 +75,25 @@ export async function POST({ request, locals }) {
 				}
 			]);
 
-            if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
-                const conversation = await createConversation(
-                    user.id,
-                    'New chat'
-                );
-                messageConversationId = conversation.id;
-            }
+			if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
+				const conversation = await createConversation(user.id, 'New chat');
+				messageConversationId = conversation.id;
+			}
 
-            if (user.payment_tier === PaymentTier.Premium && !conversationId) {
-                // Generate a title for the new conversation
-                try {
-                    const title = await generateConversationTitle(plainText);
-                    await updateConversation(messageConversationId, { title });
-                } catch (titleError) {
-                    console.error('Error generating conversation title:', titleError);
-                    // Continue even if title generation fails
-                }
-            }
+			if (user.payment_tier === PaymentTier.Premium && !conversationId) {
+				// Generate a title for the new conversation
+				try {
+					const title = await generateConversationTitle(plainText);
+					await updateConversation(messageConversationId, { title });
+				} catch (titleError) {
+					console.error('Error generating conversation title:', titleError);
+					// Continue even if title generation fails
+				}
+			}
 
-            if (user.payment_tier === PaymentTier.PayAsYouGo) {
-                await updateUserBalanceWithDeduction(user.id, 0.04);
-            }
+			if (user.payment_tier === PaymentTier.PayAsYouGo) {
+				await updateUserBalanceWithDeduction(user.id, 0.04);
+			}
 
 			await createApiRequestEntry(
 				Number(session.user!.id!),
@@ -101,13 +105,13 @@ export async function POST({ request, locals }) {
 				0.04,
 				0.04,
 				message,
-                messageConversationId
+				messageConversationId
 			);
 
-            // Update the conversation's last_message timestamp
-            if (messageConversationId) {
-                await updateConversationLastMessage(messageConversationId);
-            }
+			// Update the conversation's last_message timestamp
+			if (messageConversationId) {
+				await updateConversationLastMessage(messageConversationId);
+			}
 
 			// Include the base64 data in the response to the frontend
 			return new Response(JSON.stringify({ image: base64Data }), {
@@ -119,22 +123,22 @@ export async function POST({ request, locals }) {
 			});
 		}
 
-        if (user.payment_tier === PaymentTier.PayAsYouGo) {
-            const inputGPTCount = await countTokens(messages, model, 'input');
-            let imageCost = 0;
-            let imageTokens = 0;
-            for (const image of images) {
-                const result = calculateGptVisionPricing(image.width, image.height);
-                imageCost += result.price;
-                imageTokens += result.tokens;
-            }
-            
-            const inputCost = inputGPTCount.price + imageCost;
-            let balance = await retrieveUsersBalance(Number(session.user.id));
-            if (balance - inputCost <= 0.1) {
-                throw new InsufficientBalanceError();
-            }
-        }
+		if (user.payment_tier === PaymentTier.PayAsYouGo) {
+			const inputGPTCount = await countTokens(messages, model, 'input');
+			let imageCost = 0;
+			let imageTokens = 0;
+			for (const image of images) {
+				const result = calculateGptVisionPricing(image.width, image.height);
+				imageCost += result.price;
+				imageTokens += result.tokens;
+			}
+
+			const inputCost = inputGPTCount.price + imageCost;
+			let balance = await retrieveUsersBalance(Number(session.user.id));
+			if (balance - inputCost <= 0.1) {
+				throw new InsufficientBalanceError();
+			}
+		}
 
 		if (images.length > 0) {
 			const textObject = {
@@ -151,10 +155,7 @@ export async function POST({ request, locals }) {
 		}
 
 		// Add developer message at the start of messages array if the model is o1 or o3 mini
-		if (
-			model.name === ApiModel.GPT_o1 ||
-			model.name === ApiModel.GPT_o3_mini
-		) {
+		if (model.name === ApiModel.GPT_o1 || model.name === ApiModel.GPT_o3_mini) {
 			messages.unshift({
 				role: 'developer',
 				content: 'Formatting re-enabled'
@@ -178,7 +179,7 @@ export async function POST({ request, locals }) {
 			total_tokens: 0
 		};
 		let error: any;
-        let isFirstChunk = true;
+		let isFirstChunk = true;
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -186,74 +187,82 @@ export async function POST({ request, locals }) {
 					for await (const chunk of stream) {
 						const content = chunk.choices[0]?.delta?.content || '';
 
-                        if (isFirstChunk) {
-                            // Create conversation for premium users if needed
-                            if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
-                                const conversation = await createConversation(
-                                    user.id,
-                                    'New chat'
-                                );
-                                messageConversationId = conversation.id;
-                            }
-                            
-                            // Send conversation ID back to client
-                            controller.enqueue(new TextEncoder().encode(
-                                JSON.stringify({
-                                    type: "conversation_id",
-                                    id: messageConversationId
-                                }) + "\n"
-                            ));
-                        }
+						if (isFirstChunk) {
+							// Create conversation for premium users if needed
+							if (
+								user.payment_tier === PaymentTier.Premium &&
+								!messageConversationId
+							) {
+								const conversation = await createConversation(user.id, 'New chat');
+								messageConversationId = conversation.id;
+							}
+
+							// Send conversation ID back to client
+							controller.enqueue(
+								new TextEncoder().encode(
+									JSON.stringify({
+										type: 'conversation_id',
+										id: messageConversationId
+									}) + '\n'
+								)
+							);
+						}
 
 						if (chunk.usage) {
 							finalUsage.prompt_tokens = chunk.usage.prompt_tokens;
-                            finalUsage.completion_tokens = chunk.usage.completion_tokens;
-                            finalUsage.total_tokens = chunk.usage.total_tokens;
-                            const inputTokens = finalUsage.prompt_tokens;
+							finalUsage.completion_tokens = chunk.usage.completion_tokens;
+							finalUsage.total_tokens = chunk.usage.total_tokens;
+							const inputTokens = finalUsage.prompt_tokens;
 							const outputTokens = finalUsage.completion_tokens;
 							// Calculate prices based on actual token usage
 							const inputPrice = (inputTokens * model.input_price) / 1000000;
 							const outputPrice = (outputTokens * model.output_price) / 1000000;
-                            controller.enqueue(new TextEncoder().encode(
-                                JSON.stringify({
-                                    type: "usage",
-                                    usage: {
-                                        inputPrice,
-                                        outputPrice
-                                    }
-                                }) + "\n"
-                            ));
+							controller.enqueue(
+								new TextEncoder().encode(
+									JSON.stringify({
+										type: 'usage',
+										usage: {
+											inputPrice,
+											outputPrice
+										}
+									}) + '\n'
+								)
+							);
 						}
 						if (content) {
 							chunks.push(content);
-                            controller.enqueue(new TextEncoder().encode(
-                                JSON.stringify({
-                                    type: "text",
-                                    content: content
-                                }) + "\n"
-                            ));
+							controller.enqueue(
+								new TextEncoder().encode(
+									JSON.stringify({
+										type: 'text',
+										content: content
+									}) + '\n'
+								)
+							);
 						}
 					}
 					// controller.close();
 				} catch (err) {
 					console.error('Error in stream processing: ', err);
 					error = err;
-                    console.error(error);
-                    controller.enqueue(new TextEncoder().encode(
-                        JSON.stringify({
-                            type: "error",
-                            message: error.error.error.message
-                        }) + "\n"
-                    ));
+					console.error(error);
+					controller.enqueue(
+						new TextEncoder().encode(
+							JSON.stringify({
+								type: 'error',
+								message: error.error.error.message
+							}) + '\n'
+						)
+					);
 				} finally {
 					if (chunks.length > 0) {
 						const response = chunks.join('');
 
-                        const inputTokens = finalUsage.prompt_tokens;
-                        const outputTokens = finalUsage.completion_tokens;
-                        // Calculate prices based on actual token usage
-                        const inputPrice = (inputTokens * model.input_price) / 1000000;
-                        const outputPrice = (outputTokens * model.output_price) / 1000000;
+						const inputTokens = finalUsage.prompt_tokens;
+						const outputTokens = finalUsage.completion_tokens;
+						// Calculate prices based on actual token usage
+						const inputPrice = (inputTokens * model.input_price) / 1000000;
+						const outputPrice = (outputTokens * model.output_price) / 1000000;
 
 						const totalCost = inputPrice + outputPrice;
 
@@ -265,10 +274,10 @@ export async function POST({ request, locals }) {
 						);
 
 						if (user.payment_tier === PaymentTier.PayAsYouGo) {
-                            await updateUserBalanceWithDeduction(user.id, totalCost);
-                        }
+							await updateUserBalanceWithDeduction(user.id, totalCost);
+						}
 
-                        if (user.payment_tier === PaymentTier.Premium && !conversationId) {
+						if (user.payment_tier === PaymentTier.Premium && !conversationId) {
 							// Generate a title for the new conversation
 							try {
 								const title = await generateConversationTitle(plainText);
@@ -289,10 +298,10 @@ export async function POST({ request, locals }) {
 							outputPrice,
 							totalCost,
 							message,
-                            messageConversationId
+							messageConversationId
 						);
 
-                        // Update the conversation's last_message timestamp
+						// Update the conversation's last_message timestamp
 						if (messageConversationId) {
 							await updateConversationLastMessage(messageConversationId);
 						}

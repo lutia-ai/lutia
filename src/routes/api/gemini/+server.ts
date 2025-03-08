@@ -8,34 +8,41 @@ import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/cr
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import { createConversation, updateConversation, updateConversationLastMessage } from '$lib/db/crud/conversation.js';
+import {
+	createConversation,
+	updateConversation,
+	updateConversationLastMessage
+} from '$lib/db/crud/conversation.js';
 import { generateConversationTitle } from '$lib/utils/titleGenerator.js';
 
 export async function POST({ request, locals }) {
-    
 	let session = await locals.auth();
 	if (!session || !session.user || !session.user.email) {
 		throw error(401, 'Forbidden');
 	}
 
 	try {
-		const { plainTextPrompt, promptStr, modelStr, imagesStr, conversationId } = await request.json();
+		const { plainTextPrompt, promptStr, modelStr, imagesStr, conversationId } =
+			await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
 		let messages: Message[] = JSON.parse(promptStr);
 		const model: Model = JSON.parse(modelStr);
 		const images: Image[] = JSON.parse(imagesStr);
-        const user: User = await retrieveUserByEmail(session.user!.email);
+		const user: User = await retrieveUserByEmail(session.user!.email);
 
-        let messageConversationId = conversationId;
+		let messageConversationId = conversationId;
 
-        // Filter out assistant messages with empty content (ie that are still streaming)
-        messages = messages.map(msg => {
-            if (msg.role === 'assistant' && (msg.content === undefined || msg.content === null || msg.content === '')) {
-                return { ...msg, content: 'Streaming in progress...' };
-            }
-            return msg;
-        });
+		// Filter out assistant messages with empty content (ie that are still streaming)
+		messages = messages.map((msg) => {
+			if (
+				msg.role === 'assistant' &&
+				(msg.content === undefined || msg.content === null || msg.content === '')
+			) {
+				return { ...msg, content: 'Streaming in progress...' };
+			}
+			return msg;
+		});
 
 		const prompt = {
 			contents: messages.map((message) => ({
@@ -71,12 +78,12 @@ export async function POST({ request, locals }) {
 			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		}
 
-        if (user.payment_tier === PaymentTier.PayAsYouGo) {
-            let balance = await retrieveUsersBalance(Number(session.user.id));
-            if (balance - inputCost <= 0.1) {
-                throw new InsufficientBalanceError();
-            }
-        }
+		if (user.payment_tier === PaymentTier.PayAsYouGo) {
+			let balance = await retrieveUsersBalance(Number(session.user.id));
+			if (balance - inputCost <= 0.1) {
+				throw new InsufficientBalanceError();
+			}
+		}
 
 		let result;
 		if (geminiImage) {
@@ -87,54 +94,61 @@ export async function POST({ request, locals }) {
 		}
 
 		let error: any;
-        let isFirstChunk = true;
+		let isFirstChunk = true;
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
 				try {
 					for await (const chunk of result.stream) {
 						const content = (chunk as any).candidates[0].content.parts[0].text;
-                        if (isFirstChunk) {
-                            // Create conversation for premium users if needed
-                            if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
-                                const conversation = await createConversation(
-                                    user.id,
-                                    'New chat'
-                                );
-                                messageConversationId = conversation.id;
-                            }
-                            
-                            // Send conversation ID back to client
-                            controller.enqueue(new TextEncoder().encode(
-                                JSON.stringify({
-                                    type: "conversation_id",
-                                    id: messageConversationId
-                                }) + "\n"
-                            ));
-                        }
+						if (isFirstChunk) {
+							// Create conversation for premium users if needed
+							if (
+								user.payment_tier === PaymentTier.Premium &&
+								!messageConversationId
+							) {
+								const conversation = await createConversation(user.id, 'New chat');
+								messageConversationId = conversation.id;
+							}
+
+							// Send conversation ID back to client
+							controller.enqueue(
+								new TextEncoder().encode(
+									JSON.stringify({
+										type: 'conversation_id',
+										id: messageConversationId
+									}) + '\n'
+								)
+							);
+						}
 						if (content) {
 							// Append each chunk to the array
 							chunks.push(content);
-                            controller.enqueue(new TextEncoder().encode(
-                                JSON.stringify({
-                                    type: "text",
-                                    content: content
-                                }) + "\n"
-                            ));
+							controller.enqueue(
+								new TextEncoder().encode(
+									JSON.stringify({
+										type: 'text',
+										content: content
+									}) + '\n'
+								)
+							);
 						}
 					}
-                    const response = chunks.join('');
-                    const outputCountResult = await genAIModel.countTokens(response);
-					const outputPrice = (outputCountResult.totalTokens / 1000000) * model.output_price;
-                    controller.enqueue(new TextEncoder().encode(
-                        JSON.stringify({
-                            type: "usage",
-                            usage: {
-                                inputPrice: inputCost,
-                                outputPrice
-                            }
-                        }) + "\n"
-                    ));
+					const response = chunks.join('');
+					const outputCountResult = await genAIModel.countTokens(response);
+					const outputPrice =
+						(outputCountResult.totalTokens / 1000000) * model.output_price;
+					controller.enqueue(
+						new TextEncoder().encode(
+							JSON.stringify({
+								type: 'usage',
+								usage: {
+									inputPrice: inputCost,
+									outputPrice
+								}
+							}) + '\n'
+						)
+					);
 					controller.close();
 				} catch (err) {
 					console.error('Error in stream processing: ', err);
@@ -153,14 +167,14 @@ export async function POST({ request, locals }) {
 							// need to add previous message ids
 						);
 
-                        if (user.payment_tier === PaymentTier.PayAsYouGo) {
-                            await updateUserBalanceWithDeduction(
-                                Number(session.user!.id),
-                                outputCost + inputCost
-                            );
-                        }
+						if (user.payment_tier === PaymentTier.PayAsYouGo) {
+							await updateUserBalanceWithDeduction(
+								Number(session.user!.id),
+								outputCost + inputCost
+							);
+						}
 
-                        if (user.payment_tier === PaymentTier.Premium && !conversationId) {
+						if (user.payment_tier === PaymentTier.Premium && !conversationId) {
 							// Generate a title for the new conversation
 							try {
 								const title = await generateConversationTitle(plainText);
@@ -170,7 +184,7 @@ export async function POST({ request, locals }) {
 								// Continue even if title generation fails
 							}
 						}
-                            
+
 						await createApiRequestEntry(
 							Number(session.user!.id!),
 							'google',
@@ -181,10 +195,10 @@ export async function POST({ request, locals }) {
 							outputCost,
 							inputCost + outputCost,
 							message,
-                            messageConversationId
+							messageConversationId
 						);
 
-                        // Update the conversation's last_message timestamp
+						// Update the conversation's last_message timestamp
 						if (messageConversationId) {
 							await updateConversationLastMessage(messageConversationId);
 						}

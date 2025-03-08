@@ -2,8 +2,8 @@
 	import { onMount, tick, type ComponentType } from 'svelte';
 	import { HighlightAuto, LineNumbers } from 'svelte-highlight';
 	import { marked } from 'marked';
-    import markedKatex from "marked-katex-extension";
-    import 'katex/dist/katex.min.css';
+	import markedKatex from 'marked-katex-extension';
+	import 'katex/dist/katex.min.css';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
 	import { chatHistory, numberPrevMessages, chosenCompany } from '$lib/stores.ts';
 	import type {
@@ -52,7 +52,7 @@
 		handleKeyboardShortcut,
 		loadChatHistory,
 		parseMessageContent,
-		sanitizeLLmContent,
+		sanitizeLLmContent
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
@@ -65,7 +65,7 @@
 	import BrainIcon from '$lib/components/icons/BrainIcon.svelte';
 	import WarningIcon from '$lib/components/icons/WarningIcon.svelte';
 	import { pushState } from '$app/navigation';
-    import SettingsComponent from '$lib/components/settings/Settings.svelte';
+	import SettingsComponent from '$lib/components/settings/Settings.svelte';
 
 	export let data;
 
@@ -88,19 +88,19 @@
 	let windowWidth = browser ? window.innerWidth : 0;
 	let isLargeScreen = windowWidth > 810;
 	let mobileSidebarOpen = false;
-    let showModelSearch = false;
-    let searchQuery = '';
-    let filteredModels: {company: ApiProvider, model: Model, formattedName: string}[] = [];
-    let selectedModelIndex: number | null = 0;
-    let modelSearchItems: HTMLDivElement[] = [];
-    let reasoningOn: boolean = false;
-    let conversationId: string | undefined;
+	let showModelSearch = false;
+	let searchQuery = '';
+	let filteredModels: { company: ApiProvider; model: Model; formattedName: string }[] = [];
+	let selectedModelIndex: number | null = 0;
+	let modelSearchItems: HTMLDivElement[] = [];
+	let reasoningOn: boolean = false;
+	let conversationId: string | undefined;
 
-    $: {
-        const id = $page.params.id;
-        const currentConversationId = id === 'new' ? undefined : id;
-        conversationId = currentConversationId;
-    }
+	$: {
+		const id = $page.params.id;
+		const currentConversationId = id === 'new' ? undefined : id;
+		conversationId = currentConversationId;
+	}
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
 	companySelection = companySelection.filter((c) => c !== $chosenCompany);
@@ -108,19 +108,19 @@
 	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
 	let chosenModel = gptModelSelection[0];
 
-    const markedKatexOptions = markedKatex({
-        throwOnError: false,
-        displayMode: true,
-        output: "html",
-        // delimiters: [
-        //     { left: '$$', right: '$$', display: false },  // Block math with $$
-        //     { left: '$', right: '$', display: false },   // Inline math with $
-        //     { left: '\[', right: '\]', display: true },  // Block math with \[ \]
-        //     { left: '\(', right: '\)', display: true }  // Inline math with \( \)
-        // ]
-    });
+	const markedKatexOptions = markedKatex({
+		throwOnError: false,
+		displayMode: true,
+		output: 'html'
+		// delimiters: [
+		//     { left: '$$', right: '$$', display: false },  // Block math with $$
+		//     { left: '$', right: '$', display: false },   // Inline math with $
+		//     { left: '\[', right: '\]', display: true },  // Block math with \[ \]
+		//     { left: '\(', right: '\)', display: true }  // Inline math with \( \)
+		// ]
+	});
 
-    marked.use(markedKatexOptions);
+	marked.use(markedKatexOptions);
 
 	// Generates the fullPrompt and counts input tokens when the prompt changes
 	$: if (prompt || prompt === '' || $numberPrevMessages || imagePreview) {
@@ -136,79 +136,79 @@
 		}
 	}
 
-    function handleInput(event: Event & { currentTarget: EventTarget & HTMLDivElement }) {
-        const target = event.currentTarget;
-        const content = target.textContent || '';
+	function handleInput(event: Event & { currentTarget: EventTarget & HTMLDivElement }) {
+		const target = event.currentTarget;
+		const content = target.textContent || '';
 
-        // Function to check if @ is valid (at start, after newline, or after whitespace)
-        const isValidAtPosition = (str: string, atIndex: number): boolean => {
-            if (atIndex === 0) return true; // @ at start
-            const charBefore = str.charAt(atIndex - 1);
-            // return charBefore === '\n' || charBefore === ' '; // @ after newline or space
-            return true;
-        };
+		// Function to check if @ is valid (at start, after newline, or after whitespace)
+		const isValidAtPosition = (str: string, atIndex: number): boolean => {
+			if (atIndex === 0) return true; // @ at start
+			const charBefore = str.charAt(atIndex - 1);
+			// return charBefore === '\n' || charBefore === ' '; // @ after newline or space
+			return true;
+		};
 
-        // Find all @ positions and check if any are valid
-        const atIndices = [...content.matchAll(/@/g)].map(match => match.index!);
-        const hasValidAt = atIndices.some(index => isValidAtPosition(content, index));
+		// Find all @ positions and check if any are valid
+		const atIndices = [...content.matchAll(/@/g)].map((match) => match.index!);
+		const hasValidAt = atIndices.some((index) => isValidAtPosition(content, index));
 
-        if (hasValidAt) {
-            showModelSearch = true;
-            // Get the text after the last valid @
-            const lastValidAtIndex = atIndices
-                .filter(index => isValidAtPosition(content, index))
-                .pop();
-            
-            if (lastValidAtIndex !== undefined) {
-                const afterAt = content.slice(lastValidAtIndex + 1);
-                searchQuery = afterAt.trim().toLowerCase();
-                
-                // Filter models based on search query
-                filteredModels = Object.entries(modelDictionary)
-                    .flatMap(([company, details]) => {
-                        if (!details || !details.models) return [];
-                        return Object.values(details.models).map(model => ({
-                            company: company as ApiProvider,
-                            model: model as Model,
-                            formattedName: formatModelEnumToReadable((model as Model).name)
-                        }));
-                    })
-                    .filter(
-                        item =>
-                            item.formattedName.toLowerCase().includes(searchQuery) ||
-                            item.company.toLowerCase().includes(searchQuery)
-                    );
-                
-                if (filteredModels.length === 0) {
-                    showModelSearch = false
-                }
-            }
-        } else {
-            showModelSearch = false;
-        }
+		if (hasValidAt) {
+			showModelSearch = true;
+			// Get the text after the last valid @
+			const lastValidAtIndex = atIndices
+				.filter((index) => isValidAtPosition(content, index))
+				.pop();
 
-        placeholderVisible = false;
-        promptBarHeight = promptBar.offsetHeight;
-    }
+			if (lastValidAtIndex !== undefined) {
+				const afterAt = content.slice(lastValidAtIndex + 1);
+				searchQuery = afterAt.trim().toLowerCase();
 
-    function selectModelFromSearch(company: ApiProvider, model: Model) {
-        selectCompany(company);
-        selectModel(model);
-        showModelSearch = false;
-        prompt = prompt.replace(/@.*$/, '').trim();
-        requestAnimationFrame(() => {
-            promptBar.focus();
-            // Set cursor to end of content
-            const range = document.createRange();
-            const selection = window.getSelection();
-            if (selection) {
-                range.selectNodeContents(promptBar);
-                range.collapse(false); // false means collapse to end
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        });
-    }
+				// Filter models based on search query
+				filteredModels = Object.entries(modelDictionary)
+					.flatMap(([company, details]) => {
+						if (!details || !details.models) return [];
+						return Object.values(details.models).map((model) => ({
+							company: company as ApiProvider,
+							model: model as Model,
+							formattedName: formatModelEnumToReadable((model as Model).name)
+						}));
+					})
+					.filter(
+						(item) =>
+							item.formattedName.toLowerCase().includes(searchQuery) ||
+							item.company.toLowerCase().includes(searchQuery)
+					);
+
+				if (filteredModels.length === 0) {
+					showModelSearch = false;
+				}
+			}
+		} else {
+			showModelSearch = false;
+		}
+
+		placeholderVisible = false;
+		promptBarHeight = promptBar.offsetHeight;
+	}
+
+	function selectModelFromSearch(company: ApiProvider, model: Model) {
+		selectCompany(company);
+		selectModel(model);
+		showModelSearch = false;
+		prompt = prompt.replace(/@.*$/, '').trim();
+		requestAnimationFrame(() => {
+			promptBar.focus();
+			// Set cursor to end of content
+			const range = document.createRange();
+			const selection = window.getSelection();
+			if (selection) {
+				range.selectNodeContents(promptBar);
+				range.collapse(false); // false means collapse to end
+				selection.removeAllRanges();
+				selection.addRange(range);
+			}
+		});
+	}
 
 	const handleResize = () => {
 		windowWidth = window.innerWidth;
@@ -239,29 +239,29 @@
 	}
 
 	function handlePaste(event: ClipboardEvent): void {
-        event.preventDefault();
-        if (!event.clipboardData) return;
-        
-        const text = event.clipboardData.getData('text/plain');
-        
-        // Preserve line breaks and handle HTML entities
-        const formattedText = text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .split('\n')
-            .map(line => {
-                // Replace leading spaces with non-breaking spaces
-                // Match all spaces at the beginning of the line
-                return line.replace(/^(\s+)/, (match) => {
-                    // Replace each space with a non-breaking space
-                    return '&nbsp;'.repeat(match.length);
-                });
-            })
-            .join('<br>');
-        
-        document.execCommand('insertHTML', false, formattedText);
-    }
+		event.preventDefault();
+		if (!event.clipboardData) return;
+
+		const text = event.clipboardData.getData('text/plain');
+
+		// Preserve line breaks and handle HTML entities
+		const formattedText = text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.split('\n')
+			.map((line) => {
+				// Replace leading spaces with non-breaking spaces
+				// Match all spaces at the beginning of the line
+				return line.replace(/^(\s+)/, (match) => {
+					// Replace each space with a non-breaking space
+					return '&nbsp;'.repeat(match.length);
+				});
+			})
+			.join('<br>');
+
+		document.execCommand('insertHTML', false, formattedText);
+	}
 
 	function copyToClipboard(text: string): Promise<void> {
 		return new Promise((resolve, reject) => {
@@ -307,9 +307,9 @@
 	}
 
 	async function submitPrompt(): Promise<void> {
-        if (prompt.length === 0 || prompt === '<br>') {
-            return;
-        }
+		if (prompt.length === 0 || prompt === '<br>') {
+			return;
+		}
 		const plainText = prompt;
 		const imageArray = chosenModel.handlesImages ? imagePreview : [];
 		prompt = '';
@@ -324,10 +324,12 @@
 
 			// Add user's message to chat history
 			chatHistory.update((history) => [...history, userPrompt]);
-			
+
 			// Scroll the new message to the top after a brief delay to ensure DOM update
 			setTimeout(() => {
-				const chatMessages = document.querySelectorAll('.user-chat-wrapper, .llm-container');
+				const chatMessages = document.querySelectorAll(
+					'.user-chat-wrapper, .llm-container'
+				);
 				if (chatMessages.length > 0) {
 					const lastMessage = chatMessages[chatMessages.length - 1];
 					const offset = lastMessage.getBoundingClientRect().top + window.scrollY - 150; // 100px from top
@@ -348,7 +350,7 @@
 					output_cost: 0,
 					price_open: false,
 					loading: true,
-					copied: false,
+					copied: false
 				}
 			]);
 
@@ -356,20 +358,21 @@
 
 			try {
 				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
-                console.log(fullPrompt);
+				console.log(fullPrompt);
 
-                // Get conversationId from slug parameter
-                let conversationId = $page.params.id;
+				// Get conversationId from slug parameter
+				let conversationId = $page.params.id;
 
-                // UUID validation function
-                const isValidUUID = (uuid: string) => {
-                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-                    return uuidRegex.test(uuid);
-                };
-                
-                // Only include conversationId if it's a valid UUID and user is premium
-                const validConversationId = 
-                    conversationId && isValidUUID(conversationId) ? conversationId : undefined;
+				// UUID validation function
+				const isValidUUID = (uuid: string) => {
+					const uuidRegex =
+						/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+					return uuidRegex.test(uuid);
+				};
+
+				// Only include conversationId if it's a valid UUID and user is premium
+				const validConversationId =
+					conversationId && isValidUUID(conversationId) ? conversationId : undefined;
 
 				let uri: string;
 				switch ($chosenCompany) {
@@ -385,9 +388,9 @@
 					case 'xAI':
 						uri = '/api/xAI';
 						break;
-                    case 'deepSeek':
-                        uri = '/api/deepSeek';
-                        break;
+					case 'deepSeek':
+						uri = '/api/deepSeek';
+						break;
 					default:
 						uri = '/api/gemini';
 				}
@@ -402,8 +405,10 @@
 						promptStr: JSON.stringify(fullPrompt),
 						modelStr: JSON.stringify(chosenModel),
 						imagesStr: JSON.stringify(imageArray),
-						...$chosenCompany === 'anthropic' ? { reasoningOn } : {},
-                        ...data.user.payment_tier === PaymentTier.Premium ? { conversationId: validConversationId } : {},
+						...($chosenCompany === 'anthropic' ? { reasoningOn } : {}),
+						...(data.user.payment_tier === PaymentTier.Premium
+							? { conversationId: validConversationId }
+							: {})
 					})
 				});
 
@@ -422,7 +427,7 @@
 					throw new Error(errorData.message || 'An error occurred');
 				}
 
-                if (prompt.length === 0 || prompt === '<br>') placeholderVisible = true;
+				if (prompt.length === 0 || prompt === '<br>') placeholderVisible = true;
 
 				if (!response.body) {
 					throw new Error('Response body is null');
@@ -459,63 +464,67 @@
 				const reader = response.body.getReader();
 				const decoder = new TextDecoder();
 				let responseText = '';
-                let reasoningText = '';
+				let reasoningText = '';
 				let responseComponents: Component[] = [];
-                let reasoningComponent: ReasoningComponent;
-                let inputPrice: number = 0;
-                let outputPrice: number = 0;
-
+				let reasoningComponent: ReasoningComponent;
+				let inputPrice: number = 0;
+				let outputPrice: number = 0;
 
 				while (true) {
 					const { value, done } = await reader.read();
 					if (done) break;
 
-                    // Decode the chunk
-                    const chunk = decoder.decode(value, { stream: true });
-                    
-                    // Process lines (each JSON object is on its own line)
-                    const lines = chunk.split('\n').filter(line => line.trim());
+					// Decode the chunk
+					const chunk = decoder.decode(value, { stream: true });
 
-                    for (const line of lines) {
-                        try {
-                            const data = JSON.parse(line);
-                            // Handle different message types
-                            if (data.type === 'text') {
-                                responseText += data.content;
-                                responseComponents = parseMessageContent(responseText);
-                            } else if (data.type === 'reasoning') {
-                                reasoningText += data.content;
-                                reasoningComponent = {
-                                    type: 'reasoning',
-                                    content: reasoningText
-                                }
-                            } else if (data.type === 'usage') {
-                                inputPrice = data.usage.inputPrice;
-                                outputPrice = data.usage.outputPrice;
-                            } else if (data.type === 'conversation_id') {
-                                // Update the URL without reloading the page
-                                const url = new URL(window.location.href);
-                                url.pathname = `/chat/${data.id}`;
-                                
-                                // This updates the URL without causing a page reload
-                                pushState(url.toString(), {});
-                                conversationId = data.id;
-                            } else if (data.type === 'error') {
-                                console.error(data.message);
-                            }
+					// Process lines (each JSON object is on its own line)
+					const lines = chunk.split('\n').filter((line) => line.trim());
 
-                            chatHistory.update((history) =>
-                                history.map((msg, index) =>
-                                    index === currentChatIndex
-                                        ? { ...msg, text: responseText, components: responseComponents, reasoning: reasoningComponent }
-                                        : msg
-                                )
-                            );
-                        } catch (e) {
-                            console.error('Error parsing stream chunk:', e);
-                            // Continue with the next line if one fails to parse
-                        }
-                    }
+					for (const line of lines) {
+						try {
+							const data = JSON.parse(line);
+							// Handle different message types
+							if (data.type === 'text') {
+								responseText += data.content;
+								responseComponents = parseMessageContent(responseText);
+							} else if (data.type === 'reasoning') {
+								reasoningText += data.content;
+								reasoningComponent = {
+									type: 'reasoning',
+									content: reasoningText
+								};
+							} else if (data.type === 'usage') {
+								inputPrice = data.usage.inputPrice;
+								outputPrice = data.usage.outputPrice;
+							} else if (data.type === 'conversation_id') {
+								// Update the URL without reloading the page
+								const url = new URL(window.location.href);
+								url.pathname = `/chat/${data.id}`;
+
+								// This updates the URL without causing a page reload
+								pushState(url.toString(), {});
+								conversationId = data.id;
+							} else if (data.type === 'error') {
+								console.error(data.message);
+							}
+
+							chatHistory.update((history) =>
+								history.map((msg, index) =>
+									index === currentChatIndex
+										? {
+												...msg,
+												text: responseText,
+												components: responseComponents,
+												reasoning: reasoningComponent
+											}
+										: msg
+								)
+							);
+						} catch (e) {
+							console.error('Error parsing stream chunk:', e);
+							// Continue with the next line if one fails to parse
+						}
+					}
 				}
 
 				let imageCost = 0;
@@ -624,7 +633,7 @@
 		return isModelByCompany('xAI', modelName);
 	}
 
-    function isModelDeepSeek(modelName: string): boolean {
+	function isModelDeepSeek(modelName: string): boolean {
 		return isModelByCompany('deepSeek', modelName);
 	}
 
@@ -743,7 +752,7 @@
 				errorPopup.showError(message, null, 5000, 'success');
 			}
 		}
-        const id = $page.params.id;
+		const id = $page.params.id;
 		const apiRequests = (await data.apiRequests) as SerializedApiRequest[];
 		chatHistory.set(loadChatHistory(apiRequests));
 		if (promptBar) {
@@ -768,7 +777,7 @@
 		if (data.apiRequests) {
 			Promise.resolve(data.apiRequests).then((apiRequests) => {
 				chatHistory.set(loadChatHistory(apiRequests as SerializedApiRequest[]));
-				
+
 				// If the component is mounted, update the UI and scroll to bottom
 				if (mounted) {
 					setTimeout(scrollToBottom, 100);
@@ -780,15 +789,16 @@
 
 <svelte:head>
 	{@html synthMidnightTerminalDark}
+	<title>Chat | Lutia</title>
 </svelte:head>
 
 <svelte:window
 	on:click={() => {
 		closeAllTabWidths();
-        showModelSearch = false;
-        if (prompt.length === 0 || prompt === '<br>') {
-            placeholderVisible = true;
-        }
+		showModelSearch = false;
+		if (prompt.length === 0 || prompt === '<br>') {
+			placeholderVisible = true;
+		}
 	}}
 	on:scroll={() => {
 		handleScroll();
@@ -818,7 +828,6 @@
 						user={data.user}
 						userImage={data.userImage}
 					/>
-					
 				{:else if !mobileSidebarOpen}
 					<div class="floating-sidebar">
 						<div
@@ -849,15 +858,12 @@
 					bind:chosenModel
 					bind:isSettingsOpen
 					bind:mobileSidebarOpen
-                    bind:conversationsOpen
+					bind:conversationsOpen
 					user={data.user}
 					userImage={data.userImage}
 				/>
 				{#if isSettingsOpen}
-					<SettingsComponent
-						bind:isOpen={isSettingsOpen}
-						bind:user={data.user}
-					/>
+					<SettingsComponent bind:isOpen={isSettingsOpen} bind:user={data.user} />
 				{/if}
 			</div>
 		{/if}
@@ -914,7 +920,12 @@
 								</div>
 							</div>
 						{:else}
-							<div class="llm-container" style={chatIndex === $chatHistory.length - 1 ? `min-height: 45vh` : 'min-height: 0'}>
+							<div
+								class="llm-container"
+								style={chatIndex === $chatHistory.length - 1
+									? `min-height: 45vh`
+									: 'min-height: 0'}
+							>
 								{#if isLlmChatComponent(chat)}
 									{#if isModelAnthropic(chat.by)}
 										<div
@@ -948,20 +959,22 @@
 										<div class="llm-icon-container">
 											<GrokIcon color="var(--text-color)" />
 										</div>
-                                    {:else if isModelDeepSeek(chat.by)}
-                                        <div class="deepseek-icon-container">
-                                            <DeepSeekIcon />
-                                        </div>
+									{:else if isModelDeepSeek(chat.by)}
+										<div class="deepseek-icon-container">
+											<DeepSeekIcon />
+										</div>
 									{/if}
 								{/if}
 								<div class="llm-chat">
 									{#if isLlmChatComponent(chat)}
-                                        {#if chat.reasoning && chat.reasoning.content !== ''}
-                                            <p class="reasoning-paragraph">
-                                                <span>Reasoning:</span>
-                                                {@html marked(sanitizeLLmContent(chat.reasoning.content))}
-                                            </p>
-                                        {/if}
+										{#if chat.reasoning && chat.reasoning.content !== ''}
+											<p class="reasoning-paragraph">
+												<span>Reasoning:</span>
+												{@html marked(
+													sanitizeLLmContent(chat.reasoning.content)
+												)}
+											</p>
+										{/if}
 										{#each chat.components || [] as component, componentIndex}
 											{#if component.type === 'text'}
 												<p class="content-paragraph">
@@ -1220,21 +1233,27 @@
 		<div
 			class="prompt-bar-wrapper"
 			style="
-                transform: {mobileSidebarOpen ? 'translateX(calc(-50% + 20px))' : (conversationsOpen && isLargeScreen) ? 'translateX(calc(-50% + 180px))' : ''};
+                transform: {mobileSidebarOpen
+				? 'translateX(calc(-50% + 20px))'
+				: conversationsOpen && isLargeScreen
+					? 'translateX(calc(-50% + 180px))'
+					: ''};
                 padding: {mobileSidebarOpen ? '0 30px 0 50px' : ''};
-                width: {(conversationsOpen && !mobileSidebarOpen && isLargeScreen) ? 'calc(100% - 310px)' : ''};
+                width: {conversationsOpen && !mobileSidebarOpen && isLargeScreen
+				? 'calc(100% - 310px)'
+				: ''};
             "
 		>
 			<div
 				class="prompt-bar"
-                class:shifted={conversationsOpen}
+				class:shifted={conversationsOpen}
 				style="
                     margin: {data.user.user_settings?.prompt_pricing_visible
 					? ''
 					: 'auto auto 20px auto'};
                 "
 			>
-				{#if (imagePreview.length > 0 || isDragging)}
+				{#if imagePreview.length > 0 || isDragging}
 					<div
 						class="image-viewer"
 						role="region"
@@ -1243,19 +1262,22 @@
 							event.preventDefault();
 							handleFileSelect(event);
 						}}
-                        style="
+						style="
                             background: {chosenModel.handlesImages ? '' : 'rgba(255,50,50,0.25)'}
                         "
 					>
 						{#if !isDragging}
-                            {#if !chosenModel.handlesImages}
-                                <div class="warning">
-                                    <div class="icon">
-                                        <WarningIcon color="rgba(255,100,100,0.99)" strokeWidth={1.5} />
-                                    </div>
-                                    <p>Vision not supported</p>   
-                                </div>
-                            {/if}
+							{#if !chosenModel.handlesImages}
+								<div class="warning">
+									<div class="icon">
+										<WarningIcon
+											color="rgba(255,100,100,0.99)"
+											strokeWidth={1.5}
+										/>
+									</div>
+									<p>Vision not supported</p>
+								</div>
+							{/if}
 							{#each imagePreview as image, index}
 								<div class="image-container">
 									<img src={image.data} alt="Uploaded file" />
@@ -1293,44 +1315,50 @@
 						{/if}
 					</div>
 				{/if}
-                {#if showModelSearch && filteredModels.length > 0}
-                    <div class="model-search-container">
-                        {#each filteredModels as {company, model, formattedName}, index}
-                            <div 
-                                class="model-search-item {selectedModelIndex === index ? 'selected' : ''}"
-                                role="button"
-                                tabindex="0"
-                                bind:this={modelSearchItems[index]}
-                                on:click={() => selectModelFromSearch(company, model)}
-                                on:keydown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        selectModelFromSearch(company, model);
-                                    }
-                                }}
-                                on:mouseenter={() => selectedModelIndex = index}
-                                on:mouseleave={() => selectedModelIndex = null}
-                            >
-                                <div class="model-icon">
-                                    {#if isModelAnthropic(model.name)}
-                                        <img src={ClaudeIcon} alt="Claude's icon" />
-                                    {:else if isModelOpenAI(model.name)}
-                                        <ChatGPTIcon color="var(--text-color)" width="22px" height="22px" />
-                                    {:else if isModelGoogle(model.name)}
-                                        <GeminiIcon />
-                                    {:else if isModelXAI(model.name)}
-                                        <GrokIcon color="var(--text-color)" />
-                                    {:else if isModelDeepSeek(model.name)}
-                                        <DeepSeekIcon />
-                                    {/if}
-                                </div>
-                                <div class="model-info">
-                                    <span class="model-name">{formattedName}</span>
-                                    <span class="company-name">{company}</span>
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
-                {/if}
+				{#if showModelSearch && filteredModels.length > 0}
+					<div class="model-search-container">
+						{#each filteredModels as { company, model, formattedName }, index}
+							<div
+								class="model-search-item {selectedModelIndex === index
+									? 'selected'
+									: ''}"
+								role="button"
+								tabindex="0"
+								bind:this={modelSearchItems[index]}
+								on:click={() => selectModelFromSearch(company, model)}
+								on:keydown={(e) => {
+									if (e.key === 'Enter') {
+										selectModelFromSearch(company, model);
+									}
+								}}
+								on:mouseenter={() => (selectedModelIndex = index)}
+								on:mouseleave={() => (selectedModelIndex = null)}
+							>
+								<div class="model-icon">
+									{#if isModelAnthropic(model.name)}
+										<img src={ClaudeIcon} alt="Claude's icon" />
+									{:else if isModelOpenAI(model.name)}
+										<ChatGPTIcon
+											color="var(--text-color)"
+											width="22px"
+											height="22px"
+										/>
+									{:else if isModelGoogle(model.name)}
+										<GeminiIcon />
+									{:else if isModelXAI(model.name)}
+										<GrokIcon color="var(--text-color)" />
+									{:else if isModelDeepSeek(model.name)}
+										<DeepSeekIcon />
+									{/if}
+								</div>
+								<div class="model-info">
+									<span class="model-name">{formattedName}</span>
+									<span class="company-name">{company}</span>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
 				<div
 					contenteditable
 					bind:this={promptBar}
@@ -1338,28 +1366,44 @@
 					tabindex="0"
 					bind:innerHTML={prompt}
 					on:input={handleInput}
-                    on:click|stopPropagation={() => {
-                        if (prompt.startsWith('@')) {
-                            showModelSearch = true;
-                        }
-                    }}
+					on:click|stopPropagation={() => {
+						if (prompt.startsWith('@')) {
+							showModelSearch = true;
+						}
+					}}
 					on:keydown={(event) => {
 						if (showModelSearch) {
 							if (event.key === 'Enter') {
 								event.preventDefault();
 								if (selectedModelIndex !== null) {
 									const selectedModel = filteredModels[selectedModelIndex];
-									selectModelFromSearch(selectedModel.company, selectedModel.model);
+									selectModelFromSearch(
+										selectedModel.company,
+										selectedModel.model
+									);
 								}
 							}
-                            if (event.key === 'ArrowDown') {
-                                selectedModelIndex = (selectedModelIndex === null || selectedModelIndex === filteredModels.length - 1) ? 0 : selectedModelIndex + 1;
-                                modelSearchItems[selectedModelIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                            }
-                            if (event.key === 'ArrowUp') {
-                                selectedModelIndex = (selectedModelIndex === null || selectedModelIndex === 0) ? filteredModels.length - 1 : selectedModelIndex - 1;
-                                modelSearchItems[selectedModelIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                            }
+							if (event.key === 'ArrowDown') {
+								selectedModelIndex =
+									selectedModelIndex === null ||
+									selectedModelIndex === filteredModels.length - 1
+										? 0
+										: selectedModelIndex + 1;
+								modelSearchItems[selectedModelIndex]?.scrollIntoView({
+									behavior: 'smooth',
+									block: 'nearest'
+								});
+							}
+							if (event.key === 'ArrowUp') {
+								selectedModelIndex =
+									selectedModelIndex === null || selectedModelIndex === 0
+										? filteredModels.length - 1
+										: selectedModelIndex - 1;
+								modelSearchItems[selectedModelIndex]?.scrollIntoView({
+									behavior: 'smooth',
+									block: 'nearest'
+								});
+							}
 						} else {
 							if (event.key === 'Enter' && !event.shiftKey) {
 								event.preventDefault();
@@ -1372,88 +1416,101 @@
 				/>
 				<div class="prompt-bar-buttons-container">
 					<!-- {#if chosenModel.handlesImages} -->
-                     <div class="left">
-                        <div
-                            class="plus-icon button"
-                            role="button"
-                            tabindex="0"
-                            on:click={() => {
-                                fileInput.click();
-                                }}
-                                on:keydown|stopPropagation={(e) => {
-                                    if (e.key === 'Enter') {
-                                        fileInput.click();
-                                    }
-                                }}
-                            >
-                                <PlusIcon color="var(--text-color-light)" strokeWidth={1.8} />
-                            <input
-                                bind:this={fileInput}
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                style="display: none;"
-                                on:change={handleFileSelect}
-                                multiple={$chosenCompany !== 'google'}
-                            />
-                            <HoverTag text="Add image" position="top" />
-                        </div>
-                        <div
-                            class="{((chosenModel.reasons && !chosenModel.extendedThinking) || (reasoningOn && chosenModel.extendedThinking)) ? 'selected' : '' } reason-button"
-                            role="button"
-                            tabindex="0"
-                            on:click={() => {
-                                if (chosenModel.extendedThinking) {
-                                    reasoningOn = !reasoningOn;
-                                }
-                            }}
-                            on:keydown|stopPropagation={(e) => {
-                                if (e.key === 'Enter') {
-                                    if (chosenModel.extendedThinking) {
-                                        reasoningOn = !reasoningOn;
-                                    }   
-                                }
-                            }}
-                            >
-                                <div class="brain-icon">
-                                    <BrainIcon color={((chosenModel.reasons && !chosenModel.extendedThinking) || (reasoningOn && chosenModel.extendedThinking)) ? '#16a1f9' : "var(--text-color-light)"} />
-                                </div>
-                                <p>Reason</p>
-                            <input
-                                bind:this={fileInput}
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                style="display: none;"
-                                on:change={handleFileSelect}
-                                multiple={$chosenCompany !== 'google'}
-                            />
-                            <HoverTag text={chosenModel.reasons ? "Thinks before responding" : "Selected model doesn't support reasoning"} position="top" />
-                        </div>
-                    </div>
+					<div class="left">
+						<div
+							class="plus-icon button"
+							role="button"
+							tabindex="0"
+							on:click={() => {
+								fileInput.click();
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									fileInput.click();
+								}
+							}}
+						>
+							<PlusIcon color="var(--text-color-light)" strokeWidth={1.8} />
+							<input
+								bind:this={fileInput}
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								style="display: none;"
+								on:change={handleFileSelect}
+								multiple={$chosenCompany !== 'google'}
+							/>
+							<HoverTag text="Add image" position="top" />
+						</div>
+						<div
+							class="{(chosenModel.reasons && !chosenModel.extendedThinking) ||
+							(reasoningOn && chosenModel.extendedThinking)
+								? 'selected'
+								: ''} reason-button"
+							role="button"
+							tabindex="0"
+							on:click={() => {
+								if (chosenModel.extendedThinking) {
+									reasoningOn = !reasoningOn;
+								}
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									if (chosenModel.extendedThinking) {
+										reasoningOn = !reasoningOn;
+									}
+								}
+							}}
+						>
+							<div class="brain-icon">
+								<BrainIcon
+									color={(chosenModel.reasons && !chosenModel.extendedThinking) ||
+									(reasoningOn && chosenModel.extendedThinking)
+										? '#16a1f9'
+										: 'var(--text-color-light)'}
+								/>
+							</div>
+							<p>Reason</p>
+							<input
+								bind:this={fileInput}
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								style="display: none;"
+								on:change={handleFileSelect}
+								multiple={$chosenCompany !== 'google'}
+							/>
+							<HoverTag
+								text={chosenModel.reasons
+									? 'Thinks before responding'
+									: "Selected model doesn't support reasoning"}
+								position="top"
+							/>
+						</div>
+					</div>
 					<!-- {/if} -->
-                     <div class="right">
-                        <div
-                            class="button submit-container"
-                            role="button"
-                            tabindex="0"
-                            on:click={() => {
-                                if (!placeholderVisible) submitPrompt();
-                            }}
-                            on:keydown|stopPropagation={(e) => {
-                                if (e.key === 'Enter') {
-                                    if (!placeholderVisible) submitPrompt();
-                                }
-                            }}
-                        >
-                            <ArrowIcon color="var(--bg-color)" />
-                        </div>
-                    </div>
+					<div class="right">
+						<div
+							class="button submit-container"
+							role="button"
+							tabindex="0"
+							on:click={() => {
+								if (!placeholderVisible) submitPrompt();
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									if (!placeholderVisible) submitPrompt();
+								}
+							}}
+						>
+							<ArrowIcon color="var(--bg-color)" />
+						</div>
+					</div>
 				</div>
 				<span
-                    class="placeholder"
-                    style="display: {placeholderVisible || prompt === '' ? 'block' : 'none'};"
-                >
-                    Write your prompt here or @mention model
-                </span>
+					class="placeholder"
+					style="display: {placeholderVisible || prompt === '' ? 'block' : 'none'};"
+				>
+					Write your prompt here or @mention model
+				</span>
 				{#if data.user.user_settings?.prompt_pricing_visible}
 					<div class="input-token-container">
 						<p>Context window: {$numberPrevMessages}</p>
@@ -1473,19 +1530,18 @@
 </div>
 
 <style lang="scss">
-
 	.settings-open {
 		height: 100vh !important;
 	}
 
-    :global(h1) {
-        font-size: 26px;
-        margin: 0px 0 16px 0;
+	:global(h1) {
+		font-size: 26px;
+		margin: 0px 0 16px 0;
 		padding: 0;
-    }
+	}
 
 	:global(h2) {
-        font-size: 24px;
+		font-size: 24px;
 		margin: 32px 0 16px 0;
 		padding: 0;
 	}
@@ -1500,7 +1556,7 @@
 		padding: 0;
 	}
 
-    :global(ul) {
+	:global(ul) {
 		margin: 0 0 20px;
 		padding: 0 0 0 26px;
 		list-style-position: outside;
@@ -1522,42 +1578,43 @@
 		}
 	}
 
-    :global(hr) {
-        border: none;
-        height: 1px;
-        background-color: #e5e5e5;
-        margin: 48px 0;
-    }
+	:global(hr) {
+		border: none;
+		height: 1px;
+		background-color: #e5e5e5;
+		margin: 48px 0;
+	}
 
-    :global(table) {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        margin-bottom: 20px;
-        border-radius: 10px;
-        border: 1px solid var(--bg-color-light);
-        overflow: hidden;
-    }
+	:global(table) {
+		width: 100%;
+		border-collapse: separate;
+		border-spacing: 0;
+		margin-bottom: 20px;
+		border-radius: 10px;
+		border: 1px solid var(--bg-color-light);
+		overflow: hidden;
+	}
 
-    :global(thead) {
-        background-color: var(--bg-color-light);
-    }
+	:global(thead) {
+		background-color: var(--bg-color-light);
+	}
 
-    :global(th), :global(td) {
-        border: 1px solid var(--bg-color-light);
-        padding: 10px;
-    }
+	:global(th),
+	:global(td) {
+		border: 1px solid var(--bg-color-light);
+		padding: 10px;
+	}
 
-    /* Main period rows */
-    :global(tr:not([class^="sub-"]) td:first-child) {
-        font-weight: bold;
-    }
+	/* Main period rows */
+	:global(tr:not([class^='sub-']) td:first-child) {
+		font-weight: bold;
+	}
 
-    /* Sub-period rows (those with dashes) */
-    :global(tr[class^="sub-"]) :global(td:first-child) {
-        padding-left: 30px;
-        color: #333;
-    }
+	/* Sub-period rows (those with dashes) */
+	:global(tr[class^='sub-']) :global(td:first-child) {
+		padding-left: 30px;
+		color: #333;
+	}
 
 	.content-paragraph {
 		:global(code) {
@@ -1575,7 +1632,7 @@
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
-        min-height: 90vh;
+		min-height: 90vh;
 		min-width: 450px;
 		font-family: 'Albert Sans', sans-serif;
 
@@ -1605,10 +1662,10 @@
 			position: relative;
 			display: flex;
 			flex-direction: column;
-            min-height: 90vh;
+			min-height: 90vh;
 			// margin-left: 65px;
 			transition: margin-left 0.3s ease;
-			
+
 			&.shifted {
 				margin-left: 300px; /* 300px (conversations sidebar) + 65px (main sidebar) */
 			}
@@ -1681,7 +1738,6 @@
 				.logo-container {
 					margin: 0 auto;
 					display: flex;
-                    
 
 					img {
 						width: 100px;
@@ -1692,9 +1748,19 @@
 						margin: auto 0;
 						font-size: 40px;
 						font-weight: 500;
-                        text-align: center;
-                        word-wrap: break-word;
-                        font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
+						text-align: center;
+						word-wrap: break-word;
+						font-family:
+							ui-sans-serif,
+							-apple-system,
+							system-ui,
+							Segoe UI,
+							Helvetica,
+							Apple Color Emoji,
+							Arial,
+							sans-serif,
+							Segoe UI Emoji,
+							Segoe UI Symbol;
 					}
 				}
 			}
@@ -1787,7 +1853,7 @@
 					&:last-child:has(.gpt-loading-dot) {
 						min-height: 80vh;
 					}
-					
+
 					.gpt-icon-container {
 						position: relative;
 						width: 22px;
@@ -1798,7 +1864,7 @@
 						border: 1px solid var(--text-color-light-opacity);
 					}
 
-                    .deepseek-icon-container {
+					.deepseek-icon-container {
 						position: relative;
 						width: 32px;
 						height: 32px;
@@ -1832,10 +1898,10 @@
 							}
 						}
 
-                        .reasoning-paragraph {
-                            border-left: 2px solid var(--text-color-light-opacity-extreme);
-                            padding-left: 25px;
-                            display: flex;
+						.reasoning-paragraph {
+							border-left: 2px solid var(--text-color-light-opacity-extreme);
+							padding-left: 25px;
+							display: flex;
 							flex-direction: column;
 							font-weight: 300;
 							line-height: 30px;
@@ -1843,14 +1909,14 @@
 							max-width: 100%;
 							overflow-y: hidden;
 							overflow-x: hidden !important;
-                            margin-bottom: 35px;
+							margin-bottom: 35px;
 
-                            span {
-                                font-size: 18px;
-                                font-weight: 500;
-                                margin-bottom: 5px;
-                            }
-                        }
+							span {
+								font-size: 18px;
+								font-weight: 500;
+								margin-bottom: 5px;
+							}
+						}
 
 						.content-paragraph {
 							display: flex;
@@ -2098,9 +2164,9 @@
 					border-bottom-left-radius: 10px;
 					border-bottom-right-radius: 10px;
 
-                    :global(table) {
-                        overflow: visible;  /* This will apply only to tables within .code-content */
-                    }
+					:global(table) {
+						overflow: visible; /* This will apply only to tables within .code-content */
+					}
 				}
 			}
 
@@ -2116,7 +2182,9 @@
 				flex-direction: column;
 				box-sizing: border-box;
 				padding: 0 50px;
-                transition: transform 0.3s ease, width 0.3s ease;
+				transition:
+					transform 0.3s ease,
+					width 0.3s ease;
 
 				.prompt-bar {
 					position: relative;
@@ -2127,11 +2195,15 @@
 					height: max-content;
 					box-sizing: border-box;
 					background: var(--bg-color-prompt-bar);
-                    border: 1px solid rgba(0,0,0,0.1);
-                    box-shadow: 0 0 #0000, 0 0 #0000, 0 9px 9px 0px rgba(0, 0, 0, .01), 0 2px 5px 0px rgba(0, 0, 0, .06);
+					border: 1px solid rgba(0, 0, 0, 0.1);
+					box-shadow:
+						0 0 #0000,
+						0 0 #0000,
+						0 9px 9px 0px rgba(0, 0, 0, 0.01),
+						0 2px 5px 0px rgba(0, 0, 0, 0.06);
 					border-radius: 30px;
 					display: flex;
-                    flex-direction: column;
+					flex-direction: column;
 					gap: 5px;
 					transition: margin 0.3s ease;
 
@@ -2147,29 +2219,29 @@
 						height: 100px;
 						padding: 10px;
 						box-sizing: border-box;
-                        // overflow-y: visible;
+						// overflow-y: visible;
 						overflow-x: auto;
 						white-space: nowrap;
 
-                        .warning {
-                            position: absolute;
-                            top: 50%;
-                            left: 50%;
-                            transform: translateX(-50%) translateY(-50%);
+						.warning {
+							position: absolute;
+							top: 50%;
+							left: 50%;
+							transform: translateX(-50%) translateY(-50%);
 
-                            .icon {
-                                margin: 0 auto;
-                                width: 30px;
-                                height: 30px;
-                            }
-                            
-                            p {
-                                font-size: 16px;
-                                font-weight: 600;
-                                color: rgba(255,100,100,0.99);
-                                margin: 0 !important;
-                            }
-                        }
+							.icon {
+								margin: 0 auto;
+								width: 30px;
+								height: 30px;
+							}
+
+							p {
+								font-size: 16px;
+								font-weight: 600;
+								color: rgba(255, 100, 100, 0.99);
+								margin: 0 !important;
+							}
+						}
 
 						.image-container {
 							position: relative;
@@ -2255,64 +2327,67 @@
 								}
 							}
 						}
-
 					}
-                    .model-search-container {
-                        position: absolute;
-                        bottom: 100%;
-                        transform: translateY(-10px);
-                        left: 0;
-                        width: 100%;
-                        background: var(--bg-color-light);
-                        border-radius: 10px;
-                        box-shadow: 0 0 #0000, 0 0 #0000, 0 9px 9px 0px rgba(0, 0, 0, .01), 0 2px 5px 0px rgba(0, 0, 0, .06);
-                        max-height: 300px;
-                        overflow-y: auto;
-                        z-index: 1000;
+					.model-search-container {
+						position: absolute;
+						bottom: 100%;
+						transform: translateY(-10px);
+						left: 0;
+						width: 100%;
+						background: var(--bg-color-light);
+						border-radius: 10px;
+						box-shadow:
+							0 0 #0000,
+							0 0 #0000,
+							0 9px 9px 0px rgba(0, 0, 0, 0.01),
+							0 2px 5px 0px rgba(0, 0, 0, 0.06);
+						max-height: 300px;
+						overflow-y: auto;
+						z-index: 1000;
 
-                        .selected {
-                            background: var(--bg-color);
-                        }
-                        
-                        .model-search-item {
-                            display: flex;
-                            align-items: center;
-                            padding: 10px 20px;
-                            cursor: pointer;
-                            transition: background 0.2s ease;
-                            
-                            .model-icon {
-                                width: 20px;
-                                height: 20px;
-                                margin-right: 12px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                
-                                img {
-                                    width: 100%;
-                                    height: 100%;
-                                    object-fit: contain;
-                                }
-                            }
-                            
-                            .model-info {
-                                display: flex;
-                                flex-direction: column;
-                                
-                                .model-name {
-                                    font-size: 14px;
-                                    font-weight: 500;
-                                    color: var(--text-color);
-                                }
-                                
-                                .company-name {
-                                    font-size: 12px;
-                                    color: var(--text-color-light);
-                                }
-                            }
-                        }
-                    }
+						.selected {
+							background: var(--bg-color);
+						}
+
+						.model-search-item {
+							display: flex;
+							align-items: center;
+							padding: 10px 20px;
+							cursor: pointer;
+							transition: background 0.2s ease;
+
+							.model-icon {
+								width: 20px;
+								height: 20px;
+								margin-right: 12px;
+								display: flex;
+								align-items: center;
+								justify-content: center;
+
+								img {
+									width: 100%;
+									height: 100%;
+									object-fit: contain;
+								}
+							}
+
+							.model-info {
+								display: flex;
+								flex-direction: column;
+
+								.model-name {
+									font-size: 14px;
+									font-weight: 500;
+									color: var(--text-color);
+								}
+
+								.company-name {
+									font-size: 12px;
+									color: var(--text-color-light);
+								}
+							}
+						}
+					}
 
 					div[contenteditable] {
 						max-height: 350px;
@@ -2322,76 +2397,85 @@
 						padding: 15px 20px;
 						margin: 5px 0;
 						width: 100%;
-                        box-sizing: border-box;
+						box-sizing: border-box;
 					}
 
 					.prompt-bar-buttons-container {
-                        display: flex;
+						display: flex;
 
-                        .left {
-                            display: flex;
-                            margin: auto auto 14px 14px;
-                            width: 100%;
+						.left {
+							display: flex;
+							margin: auto auto 14px 14px;
+							width: 100%;
 
-                            .plus-icon {
-                                margin: auto 0;
-                                border: 1px solid var(--text-color-light-opacity-extreme);
-                                width: 32px !important;
-                                height: 32px !important;
-                                padding: 6px;
-                                box-sizing: border-box;
+							.plus-icon {
+								margin: auto 0;
+								border: 1px solid var(--text-color-light-opacity-extreme);
+								width: 32px !important;
+								height: 32px !important;
+								padding: 6px;
+								box-sizing: border-box;
 
-                                &:hover {
-                                    background: var(--bg-color-light-alt);
-                                }
-                            }
+								&:hover {
+									background: var(--bg-color-light-alt);
+								}
+							}
 
-                            .selected {
-                                border-color: #16a1f9 !important;
-                                background-color: rgba(22,161,249,0.1);
+							.selected {
+								border-color: #16a1f9 !important;
+								background-color: rgba(22, 161, 249, 0.1);
 
-                                p {
-                                    color: #16a1f9 !important;
-                                }
-                            }
+								p {
+									color: #16a1f9 !important;
+								}
+							}
 
-                            .reason-button {
-                                position: relative;
-                                display: flex;
-                                gap: 5px;
-                                margin-left: 5px;
-                                border: 1px solid var(--text-color-light-opacity-extreme);
-                                width: auto;
-                                border-radius: 99999px;
-                                height: 36px !important;
-                                padding: 8px 10px;
-                                box-sizing: border-box;
-                                cursor: pointer;
+							.reason-button {
+								position: relative;
+								display: flex;
+								gap: 5px;
+								margin-left: 5px;
+								border: 1px solid var(--text-color-light-opacity-extreme);
+								width: auto;
+								border-radius: 99999px;
+								height: 36px !important;
+								padding: 8px 10px;
+								box-sizing: border-box;
+								cursor: pointer;
 
-                                &:hover {
-                                    background: var(--bg-color-light-alt);
-                                }
+								&:hover {
+									background: var(--bg-color-light-alt);
+								}
 
-                                .brain-icon {
-                                    padding: 0;
-                                    box-sizing: border-box;
-                                }
+								.brain-icon {
+									padding: 0;
+									box-sizing: border-box;
+								}
 
-                                p {
-                                    padding: 0;
-                                    margin: auto;
-                                    font-size: 14px;
-                                    color: var(--text-color-light);
-                                    font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
-                                }
-                            }
+								p {
+									padding: 0;
+									margin: auto;
+									font-size: 14px;
+									color: var(--text-color-light);
+									font-family:
+										ui-sans-serif,
+										-apple-system,
+										system-ui,
+										Segoe UI,
+										Helvetica,
+										Apple Color Emoji,
+										Arial,
+										sans-serif,
+										Segoe UI Emoji,
+										Segoe UI Symbol;
+								}
+							}
+						}
 
-                        }
-
-                        .right {
-                            margin: auto 10px 10px auto;
-                            display: flex;
-                        }
+						.right {
+							margin: auto 10px 10px auto;
+							display: flex;
+						}
 
 						.button {
 							position: relative;
@@ -2421,7 +2505,17 @@
 						color: var(--text-color-light);
 						font-weight: 300 !important;
 						pointer-events: none;
-                        font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
+						font-family:
+							ui-sans-serif,
+							-apple-system,
+							system-ui,
+							Segoe UI,
+							Helvetica,
+							Apple Color Emoji,
+							Arial,
+							sans-serif,
+							Segoe UI Emoji,
+							Segoe UI Symbol;
 					}
 				}
 
@@ -2431,7 +2525,7 @@
 					display: flex;
 					width: 100%;
 					// padding: 10px 50px 10px 50px;
-                    padding: 10px 2vw 10px 2vw;
+					padding: 10px 2vw 10px 2vw;
 					box-sizing: border-box;
 
 					p {
@@ -2440,7 +2534,17 @@
 						color: var(--text-color-light);
 						margin: 0;
 						font-size: 12px;
-                        font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
+						font-family:
+							ui-sans-serif,
+							-apple-system,
+							system-ui,
+							Segoe UI,
+							Helvetica,
+							Apple Color Emoji,
+							Arial,
+							sans-serif,
+							Segoe UI Emoji,
+							Segoe UI Symbol;
 					}
 
 					.middle {
@@ -2473,9 +2577,9 @@
 			.body {
 				padding-left: 0;
 
-                &.shifted {
-                    margin-left: 0px; /* 300px (conversations sidebar) + 65px (main sidebar) */
-                }
+				&.shifted {
+					margin-left: 0px; /* 300px (conversations sidebar) + 65px (main sidebar) */
+				}
 
 				.chat-history {
 					padding: 0 35px 300px 35px;
@@ -2513,14 +2617,14 @@
 							border: none;
 						}
 
-                        .deepseek-icon-container {
-                            position: relative;
-                            width: 28px;
-                            height: 28px;
-                            display: flex;
-                            border-radius: 50%;
-                            padding-top: 4px;
-                        }
+						.deepseek-icon-container {
+							position: relative;
+							width: 28px;
+							height: 28px;
+							display: flex;
+							border-radius: 50%;
+							padding-top: 4px;
+						}
 
 						.llm-icon-container {
 							width: 24px;
@@ -2532,14 +2636,13 @@
 						.chat-toolbar-container {
 							transform: translateY(-5px);
 						}
-
 					}
 				}
-                .empty-content-options {
-                    .logo-container {
-                        width: 90%;
-                    }
-                }
+				.empty-content-options {
+					.logo-container {
+						width: 90%;
+					}
+				}
 
 				.prompt-bar-wrapper {
 					transform: translateX(-50%);
@@ -2554,7 +2657,7 @@
 		}
 	}
 
-    .animated-text {
+	.animated-text {
 		font-weight: 800; /* High font weight */
 		background: linear-gradient(270deg, #1d60c2, #e91e63, #9c27b0, #1d60c2);
 		background-size: 400%; /* To ensure smooth animation */

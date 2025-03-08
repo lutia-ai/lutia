@@ -9,18 +9,22 @@ import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/cr
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { PaymentTier, type User } from '@prisma/client';
-import { createConversation, updateConversation, updateConversationLastMessage } from '$lib/db/crud/conversation';
+import {
+	createConversation,
+	updateConversation,
+	updateConversationLastMessage
+} from '$lib/db/crud/conversation';
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
 
 export async function POST({ request, locals }) {
-    
 	let session = await locals.auth();
 	if (!session || !session.user || !session.user.email) {
 		throw error(401, 'Forbidden');
 	}
 
 	try {
-		const { plainTextPrompt, promptStr, modelStr, imagesStr, reasoningOn, conversationId } = await request.json();
+		const { plainTextPrompt, promptStr, modelStr, imagesStr, reasoningOn, conversationId } =
+			await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
 
@@ -32,15 +36,18 @@ export async function POST({ request, locals }) {
 
 		let claudeImages: ClaudeImage[] = [];
 
-        const user: User = await retrieveUserByEmail(session.user!.email);
+		const user: User = await retrieveUserByEmail(session.user!.email);
 
-        // Filter out assistant messages with empty content (ie that are still streaming)
-        messages = messages.map(msg => {
-            if (msg.role === 'assistant' && (msg.content === undefined || msg.content === null || msg.content === '')) {
-                return { ...msg, content: 'Streaming in progress...' };
-            }
-            return msg;
-        });
+		// Filter out assistant messages with empty content (ie that are still streaming)
+		messages = messages.map((msg) => {
+			if (
+				msg.role === 'assistant' &&
+				(msg.content === undefined || msg.content === null || msg.content === '')
+			) {
+				return { ...msg, content: 'Streaming in progress...' };
+			}
+			return msg;
+		});
 
 		if (images.length > 0) {
 			const textObject = {
@@ -58,62 +65,65 @@ export async function POST({ request, locals }) {
 			messages[messages.length - 1].content = [textObject, ...claudeImages];
 		}
 
-        if (user.payment_tier === PaymentTier.PayAsYouGo) {
-            let imageCost = 0;
-            let imageTokens = 0;
-            for (const image of images) {
-                const result = calculateClaudeImageCost(image.width, image.height, model);
-                imageCost += result.price;
-                imageTokens += result.tokens;
-            }
-            
-            const inputGPTCount = await countTokens(messages, model, 'input');
-            const inputCost = inputGPTCount.price + imageCost;
-            let balance = await retrieveUsersBalance(user.id);
-            
-            if (balance - inputCost <= 0.1) {
-                throw new InsufficientBalanceError();
-            }
-        }
+		if (user.payment_tier === PaymentTier.PayAsYouGo) {
+			let imageCost = 0;
+			let imageTokens = 0;
+			for (const image of images) {
+				const result = calculateClaudeImageCost(image.width, image.height, model);
+				imageCost += result.price;
+				imageTokens += result.tokens;
+			}
+
+			const inputGPTCount = await countTokens(messages, model, 'input');
+			const inputCost = inputGPTCount.price + imageCost;
+			let balance = await retrieveUsersBalance(user.id);
+
+			if (balance - inputCost <= 0.1) {
+				throw new InsufficientBalanceError();
+			}
+		}
 
 		// Model constraints
-        const MODEL_MAX_OUTPUT_TOKENS = 64000; // Maximum allowed for claude-3-7-sonnet
-        const max_tokens = model.max_tokens ? model.max_tokens : 4096
+		const MODEL_MAX_OUTPUT_TOKENS = 64000; // Maximum allowed for claude-3-7-sonnet
+		const max_tokens = model.max_tokens ? model.max_tokens : 4096;
 
-        // Define thinking budget - adjust based on your needs
-        // Leave some room for the actual response
-        const thinkingBudget = reasoningOn ? 60000 : 0; 
+		// Define thinking budget - adjust based on your needs
+		// Leave some room for the actual response
+		const thinkingBudget = reasoningOn ? 60000 : 0;
 
-        // Calculate max_tokens respecting the model's limits
-        // When thinking is enabled, max_tokens must be > thinking budget
-        // But max_tokens can't exceed MODEL_MAX_OUTPUT_TOKENS
-        const totalMaxTokens = reasoningOn && model.reasons 
-            ? Math.min(thinkingBudget + 4000, MODEL_MAX_OUTPUT_TOKENS) 
-            : max_tokens;
-        
+		// Calculate max_tokens respecting the model's limits
+		// When thinking is enabled, max_tokens must be > thinking budget
+		// But max_tokens can't exceed MODEL_MAX_OUTPUT_TOKENS
+		const totalMaxTokens =
+			reasoningOn && model.reasons
+				? Math.min(thinkingBudget + 4000, MODEL_MAX_OUTPUT_TOKENS)
+				: max_tokens;
+
 		const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
-        const stream = await client.messages.stream({
-            // @ts-ignore
-            messages: messages,
-            model: model.param,
-            max_tokens: totalMaxTokens,
-            ...(reasoningOn && model.reasons ? {
-                thinking: {
-                  type: "enabled",
-                  budget_tokens: thinkingBudget
-                }
-            } : {})
-        });
+		const stream = await client.messages.stream({
+			// @ts-ignore
+			messages: messages,
+			model: model.param,
+			max_tokens: totalMaxTokens,
+			...(reasoningOn && model.reasons
+				? {
+						thinking: {
+							type: 'enabled',
+							budget_tokens: thinkingBudget
+						}
+					}
+				: {})
+		});
 
 		const chunks: string[] = [];
-        const thinkingChunks: string[] = [];
+		const thinkingChunks: string[] = [];
 		let finalUsage: GptTokenUsage | null = {
 			prompt_tokens: 0,
 			completion_tokens: 0,
 			total_tokens: 0
 		};
 		let error: any;
-        let messageConversationId = conversationId;
+		let messageConversationId = conversationId;
 
 		const readableStream = new ReadableStream({
 			async start(controller) {
@@ -121,95 +131,109 @@ export async function POST({ request, locals }) {
 					for await (const chunk of stream) {
 						if (chunk.type === 'message_start') {
 							finalUsage.prompt_tokens = chunk.message.usage.input_tokens;
-                            // Create a new conversation only if:
-                            // 1. User is premium AND
-                            // 2. No existing conversationId was provided
-                            if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
-                                const conversation = await createConversation(
-                                    user.id,
-                                    'New chat'
-                                );
-                                messageConversationId = conversation.id;
-                            }
-                            // Send the conversation ID back to the client
-							controller.enqueue(new TextEncoder().encode(
-								JSON.stringify({
-									type: "conversation_id",
-									id: messageConversationId
-								}) + "\n"
-							));
+							// Create a new conversation only if:
+							// 1. User is premium AND
+							// 2. No existing conversationId was provided
+							if (
+								user.payment_tier === PaymentTier.Premium &&
+								!messageConversationId
+							) {
+								const conversation = await createConversation(user.id, 'New chat');
+								messageConversationId = conversation.id;
+							}
+							// Send the conversation ID back to the client
+							controller.enqueue(
+								new TextEncoder().encode(
+									JSON.stringify({
+										type: 'conversation_id',
+										id: messageConversationId
+									}) + '\n'
+								)
+							);
 						}
 						if (chunk.type === 'message_delta') {
-                            finalUsage.completion_tokens = chunk.usage.output_tokens;
+							finalUsage.completion_tokens = chunk.usage.output_tokens;
 							finalUsage.total_tokens =
-                            finalUsage.prompt_tokens + finalUsage.completion_tokens;
-                            const inputTokens = finalUsage.prompt_tokens;
-                            const outputTokens = finalUsage.completion_tokens;
-                            // Calculate prices based on actual token usage
-                            const inputPrice = (inputTokens * model.input_price) / 1000000;
-                            const outputPrice = (outputTokens * model.output_price) / 1000000;
-                            controller.enqueue(new TextEncoder().encode(
-                                JSON.stringify({
-                                    type: "usage",
-                                    usage: {
-                                        inputPrice,
-                                        outputPrice
-                                    }
-                                }) + "\n"
-                            ));
-						}
-						else if (chunk.type === 'content_block_delta') {
-                            // @ts-ignore
-                            if (chunk.delta.type === 'thinking_delta') {
-                                const thinkingContent = (chunk as any).delta?.thinking || '';
-                                thinkingChunks.push(thinkingContent);
-                                controller.enqueue(new TextEncoder().encode(
-                                    JSON.stringify({
-                                        type: "reasoning",
-                                        content: thinkingContent
-                                    }) + "\n"
-                                ));
-                            } else if (chunk.delta.type === 'text_delta') {
-                                const content = (chunk as any).delta?.text || '';
-                                if (content) {
-                                    chunks.push(content);
-                                    controller.enqueue(new TextEncoder().encode(
-                                        JSON.stringify({
-                                            type: "text",
-                                            content: content
-                                        }) + "\n"
-                                    ));
-                                }
-                            }
+								finalUsage.prompt_tokens + finalUsage.completion_tokens;
+							const inputTokens = finalUsage.prompt_tokens;
+							const outputTokens = finalUsage.completion_tokens;
+							// Calculate prices based on actual token usage
+							const inputPrice = (inputTokens * model.input_price) / 1000000;
+							const outputPrice = (outputTokens * model.output_price) / 1000000;
+							controller.enqueue(
+								new TextEncoder().encode(
+									JSON.stringify({
+										type: 'usage',
+										usage: {
+											inputPrice,
+											outputPrice
+										}
+									}) + '\n'
+								)
+							);
+						} else if (chunk.type === 'content_block_delta') {
+							// @ts-ignore
+							if (chunk.delta.type === 'thinking_delta') {
+								const thinkingContent = (chunk as any).delta?.thinking || '';
+								thinkingChunks.push(thinkingContent);
+								controller.enqueue(
+									new TextEncoder().encode(
+										JSON.stringify({
+											type: 'reasoning',
+											content: thinkingContent
+										}) + '\n'
+									)
+								);
+							} else if (chunk.delta.type === 'text_delta') {
+								const content = (chunk as any).delta?.text || '';
+								if (content) {
+									chunks.push(content);
+									controller.enqueue(
+										new TextEncoder().encode(
+											JSON.stringify({
+												type: 'text',
+												content: content
+											}) + '\n'
+										)
+									);
+								}
+							}
 						} else if (chunk.type === 'message_stop') {
 							break;
 						}
 					}
 				} catch (err) {
 					error = err;
-                    console.error(error);
-                    controller.enqueue(new TextEncoder().encode(
-                        JSON.stringify({
-                            type: "error",
-                            message: error.error.error.message
-                        }) + "\n"
-                    ));
+					console.error(error);
+					controller.enqueue(
+						new TextEncoder().encode(
+							JSON.stringify({
+								type: 'error',
+								message: error.error.error.message
+							}) + '\n'
+						)
+					);
 				} finally {
 					if (chunks.length > 0) {
-                        const thinkingResponse = thinkingChunks.join('');
+						const thinkingResponse = thinkingChunks.join('');
 						const response = chunks.join('');
 
-                        const inputTokens = finalUsage.prompt_tokens;
-                        const outputTokens = finalUsage.completion_tokens;
-                        const inputPrice = (inputTokens * model.input_price) / 1000000;
-                        const outputPrice = (outputTokens * model.output_price) / 1000000;
+						const inputTokens = finalUsage.prompt_tokens;
+						const outputTokens = finalUsage.completion_tokens;
+						const inputPrice = (inputTokens * model.input_price) / 1000000;
+						const outputPrice = (outputTokens * model.output_price) / 1000000;
 						const totalCost = inputPrice + outputPrice;
 
-                        if (user.payment_tier === PaymentTier.PayAsYouGo) {
-                            await updateUserBalanceWithDeduction(user.id, totalCost);
-                        }
+						if (user.payment_tier === PaymentTier.PayAsYouGo) {
+							await updateUserBalanceWithDeduction(user.id, totalCost);
+						}
 
-						const message = await createMessage(plainText, response, images, thinkingResponse);
+						const message = await createMessage(
+							plainText,
+							response,
+							images,
+							thinkingResponse
+						);
 
 						if (user.payment_tier === PaymentTier.Premium && !conversationId) {
 							// Generate a title for the new conversation
@@ -221,7 +245,7 @@ export async function POST({ request, locals }) {
 								// Continue even if title generation fails
 							}
 						}
-						
+
 						// Create API request with the conversation ID
 						await createApiRequestEntry(
 							user.id,

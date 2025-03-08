@@ -1,3 +1,7 @@
+<svelte:head>
+	<title>Privacy policy | Lutia</title>
+</svelte:head>
+
 <div class="body">
 	<h1>Privacy Policy</h1>
 

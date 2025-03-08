@@ -22,7 +22,7 @@ export const modelLogos: ModelLogos = {
 	xAI: {
 		logo: XAiIcon
 	},
-    deepSeek: {
-        logo: DeepSeekIcon
-    }
+	deepSeek: {
+		logo: DeepSeekIcon
+	}
 };

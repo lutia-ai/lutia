@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fly, slide } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 	import { page } from '$app/stores';
 	import { signIn } from '@auth/sveltekit/client';
 	import {
@@ -8,9 +8,7 @@
 		showPricing,
 		showLegacyModels,
 		chosenCompany,
-
 		chatHistory
-
 	} from '$lib/stores.ts';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
 	import type { Model, UserWithSettings } from '$lib/types';
@@ -33,7 +31,7 @@
 	import ImageIcon from './icons/ImageIcon.svelte';
 	import LightningIcon from './icons/LightningIcon.svelte';
 	import LightningReasoningIcon from './icons/LightningReasoningIcon.svelte';
-    import ConversationsSideBar from './ConversationsSideBar.svelte';
+	import ConversationsSideBar from './ConversationsSideBar.svelte';
 	import CreateIcon from './icons/CreateIcon.svelte';
 	import { goto } from '$app/navigation';
 	import ConversationsIcon from './icons/ConversationsIcon.svelte';
@@ -45,7 +43,7 @@
 	export let user: UserWithSettings; // controls if the menu is always open
 	export let userImage;
 	export let mobileSidebarOpen: boolean;
-    export let conversationsOpen: boolean = false; // Add two-way binding for conversations sidebar
+	export let conversationsOpen: boolean = false; // Add two-way binding for conversations sidebar
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
@@ -103,7 +101,7 @@
 	}}
 />
 {#if conversationsOpen}
-    <ConversationsSideBar bind:conversationsOpen />
+	<ConversationsSideBar bind:conversationsOpen />
 {/if}
 {#if mobileSidebarOpen && !conversationsOpen}
 	<div
@@ -220,18 +218,18 @@
 								>
 									<div class="record">
 										{#if model.generatesImages}
-										<div class="icon">
-											<ImageIcon color="var(--text-color)" />
-										</div>
-                                        {:else if model.reasons}
-                                            <div class="icon">
-                                                <LightningReasoningIcon color="var(--text-color)" />
-                                            </div>
-                                        {:else}
-                                            <div class="icon">
-                                                <LightningIcon color="var(--text-color)" />
-                                            </div>
-                                        {/if}
+											<div class="icon">
+												<ImageIcon color="var(--text-color)" />
+											</div>
+										{:else if model.reasons}
+											<div class="icon">
+												<LightningReasoningIcon color="var(--text-color)" />
+											</div>
+										{:else}
+											<div class="icon">
+												<LightningIcon color="var(--text-color)" />
+											</div>
+										{/if}
 										<p>
 											{formatModelEnumToReadable(model.name)}
 											{#if $showPricing}
@@ -310,91 +308,91 @@
 
 		<div class="settings-container">
 			{#if user.payment_tier === PaymentTier.Premium}
-                <div class="settings-wrapper">
-                    <div
-                        class="settings-icon"
-                        role="button"
-                        tabindex="0"
-                        on:click|stopPropagation={() => {
-                            conversationsOpen = !conversationsOpen;
-                            if (conversationsOpen) {
-                                contextOpen = false;
-                                settingsOpen = false;
-                            }
-                        }}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                conversationsOpen = !conversationsOpen;
-                                if (conversationsOpen) {
-                                    contextOpen = false;
-                                    settingsOpen = false;
-                                }
-                            }
-                        }}
-                        style="padding: 8px;"
-                    >
-                        <div style="transform: scale(1.2);">
-                            <ConversationsIcon color="var(--text-color-light)" />
-                        </div>
-                        <p class="tag">View history</p>
-                    </div>
-                </div>
-                <div class="settings-wrapper">
-                    <div
-                        class="settings-icon"
-                        role="button"
-                        tabindex="0"
-                        on:click|stopPropagation={() => {
-                            chatHistory.set([]);
-                            goto('/chat/new', { replaceState: true });
-                        }}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                chatHistory.set([]);
-                                goto('/chat/new', { replaceState: true });
-                            }
-                        }}
-                        style="padding: 8px;"
-                    >
-                        <div>
-                            <CreateIcon color="var(--text-color-light)" />
-                        </div>
-                        <p class="tag">New chat</p>
-                    </div>
-                </div>
-            {:else}
-                <div class="settings-wrapper">
-                    <div
-                        class="settings-icon"
-                        role="button"
-                        tabindex="0"
-                        on:click|stopPropagation={() => {
-                            clearChatHistory();
-                            isRotating = true;
-                            goto('/chat/new', { replaceState: true });
-                            setTimeout(() => {
-                                isRotating = false;
-                            }, 500);
-                        }}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                clearChatHistory();
-                                isRotating = true;
-                                goto('/chat/new', { replaceState: true });
-                                setTimeout(() => {
-                                    isRotating = false;
-                                }, 500);
-                            }
-                        }}
-                        style="padding: 8px;"
-                    >
-                        <div class:rotate={isRotating}>
-                            <RefreshIcon color="var(--text-color-light)" />
-                        </div>
-                        <p class="tag">Clear chat</p>
-                    </div>
-                </div>
-            {/if}
+				<div class="settings-wrapper">
+					<div
+						class="settings-icon"
+						role="button"
+						tabindex="0"
+						on:click|stopPropagation={() => {
+							conversationsOpen = !conversationsOpen;
+							if (conversationsOpen) {
+								contextOpen = false;
+								settingsOpen = false;
+							}
+						}}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								conversationsOpen = !conversationsOpen;
+								if (conversationsOpen) {
+									contextOpen = false;
+									settingsOpen = false;
+								}
+							}
+						}}
+						style="padding: 8px;"
+					>
+						<div style="transform: scale(1.2);">
+							<ConversationsIcon color="var(--text-color-light)" />
+						</div>
+						<p class="tag">View history</p>
+					</div>
+				</div>
+				<div class="settings-wrapper">
+					<div
+						class="settings-icon"
+						role="button"
+						tabindex="0"
+						on:click|stopPropagation={() => {
+							chatHistory.set([]);
+							goto('/chat/new', { replaceState: true });
+						}}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								chatHistory.set([]);
+								goto('/chat/new', { replaceState: true });
+							}
+						}}
+						style="padding: 8px;"
+					>
+						<div>
+							<CreateIcon color="var(--text-color-light)" />
+						</div>
+						<p class="tag">New chat</p>
+					</div>
+				</div>
+			{:else}
+				<div class="settings-wrapper">
+					<div
+						class="settings-icon"
+						role="button"
+						tabindex="0"
+						on:click|stopPropagation={() => {
+							clearChatHistory();
+							isRotating = true;
+							goto('/chat/new', { replaceState: true });
+							setTimeout(() => {
+								isRotating = false;
+							}, 500);
+						}}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								clearChatHistory();
+								isRotating = true;
+								goto('/chat/new', { replaceState: true });
+								setTimeout(() => {
+									isRotating = false;
+								}, 500);
+							}
+						}}
+						style="padding: 8px;"
+					>
+						<div class:rotate={isRotating}>
+							<RefreshIcon color="var(--text-color-light)" />
+						</div>
+						<p class="tag">Clear chat</p>
+					</div>
+				</div>
+			{/if}
 			{#if showContextWindowButton}
 				<div class="settings-wrapper">
 					<div
@@ -488,9 +486,19 @@
 {/if}
 
 <style lang="scss">
-    * {
-        font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol !important;
-    }
+	* {
+		font-family:
+			ui-sans-serif,
+			-apple-system,
+			system-ui,
+			Segoe UI,
+			Helvetica,
+			Apple Color Emoji,
+			Arial,
+			sans-serif,
+			Segoe UI Emoji,
+			Segoe UI Symbol !important;
+	}
 	.sidebar {
 		position: fixed;
 		display: flex;
@@ -499,11 +507,12 @@
 		z-index: 10001;
 		padding: 10px 0px;
 		width: 65px;
-        overflow-y: scroll; /* Allow scrolling */
-        scrollbar-width: none; /* For Firefox */
-        -ms-overflow-style: none; /* For Internet Explorer and Edge */
-		&::-webkit-scrollbar { /* For Chrome, Safari, and Opera */
-			display: none; 
+		overflow-y: scroll; /* Allow scrolling */
+		scrollbar-width: none; /* For Firefox */
+		-ms-overflow-style: none; /* For Internet Explorer and Edge */
+		&::-webkit-scrollbar {
+			/* For Chrome, Safari, and Opera */
+			display: none;
 		}
 
 		.company-and-llm-container {
@@ -597,34 +606,38 @@
 					top: 110%;
 					border: 1px solid var(--bg-color-dark);
 					background: var(--bg-color);
-					box-shadow: 0 0 #0000, 0 0 #0000, 0 9px 9px 0px rgba(0, 0, 0, .01), 0 2px 5px 0px rgba(0, 0, 0, .06);
+					box-shadow:
+						0 0 #0000,
+						0 0 #0000,
+						0 9px 9px 0px rgba(0, 0, 0, 0.01),
+						0 2px 5px 0px rgba(0, 0, 0, 0.06);
 					border-radius: 10px;
 					display: flex;
-                    gap: 5px;
+					gap: 5px;
 					flex-direction: column;
 					z-index: inherit;
 					padding: 10px 5px;
-                    box-sizing: border-box;
+					box-sizing: border-box;
 					min-width: 300px;
-                    max-width: calc(100vw - 40px);
-                    max-height: calc(100vh - 180px);
+					max-width: calc(100vw - 40px);
+					max-height: calc(100vh - 180px);
 					cursor: default;
-                    overflow-y: auto;
+					overflow-y: auto;
 
 					.llm-options {
-                        display: flex;
+						display: flex;
 						flex-direction: column; /* Change to column for a list layout */
 						min-height: 62px; /* Set a fixed height for uniformity */
 						width: 100%; /* Ensure full width for each option */
 						overflow: hidden;
 						transition: all 0.3s ease;
-                        gap: 2px;
+						gap: 2px;
 						box-sizing: border-box; /* Include padding and border in the element's total width and height */
 
 						.record {
 							display: flex;
 							gap: 8px;
-                            margin: auto;
+							margin: auto;
 							align-items: center;
 							width: 100%;
 							height: 100%;
@@ -632,7 +645,7 @@
 							border-radius: 10px;
 							color: var(--text-color);
 							cursor: pointer;
-                            box-sizing: border-box;
+							box-sizing: border-box;
 
 							&:hover {
 								background: var(--bg-color-light-alt);
@@ -646,14 +659,13 @@
 								padding: 4px 0;
 								width: 150px;
 
-
 								.pricing {
 									display: flex;
 									gap: 10px;
 									width: 100%; /* Change to 100% to allow wrapping */
-                                    flex-wrap: wrap;
-                                    column-gap: 10px;      /* Horizontal gap between items on the same line */
-                                    row-gap: 2px;          /* Vertical gap between wrapped lines */
+									flex-wrap: wrap;
+									column-gap: 10px; /* Horizontal gap between items on the same line */
+									row-gap: 2px; /* Vertical gap between wrapped lines */
 
 									span {
 										text-align: left;
@@ -679,12 +691,12 @@
 							}
 
 							.icon {
-                                margin-left: 5px;
+								margin-left: 5px;
 								width: 26px;
 								height: 26px;
 							}
 
-                            .image {
+							.image {
 								width: 20px;
 								height: 20px;
 							}

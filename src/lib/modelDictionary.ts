@@ -3,7 +3,7 @@ import type { ModelDictionary } from './types.d';
 export const modelDictionary: ModelDictionary = {
 	openAI: {
 		models: {
-            o3mini: {
+			o3mini: {
 				name: 'GPT_o3_mini',
 				param: 'o3-mini',
 				legacy: false,
@@ -13,10 +13,10 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
-                reasons: true,
-                description: 'Fast, flexible reasoning model'
+				reasons: true,
+				description: 'Fast, flexible reasoning model'
 			},
-            o1: {
+			o1: {
 				name: 'GPT_o1',
 				param: 'o1',
 				legacy: false,
@@ -26,8 +26,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 5,
-                reasons: true,
-                description: 'High intelligence reasoning model'
+				reasons: true,
+				description: 'High intelligence reasoning model'
 			},
 			o1preview: {
 				name: 'GPT_o1_preview',
@@ -39,8 +39,8 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
-                reasons: true,
-                description: 'Preview version of o1'
+				reasons: true,
+				description: 'Preview version of o1'
 			},
 			o1mini: {
 				name: 'GPT_o1_mini',
@@ -52,11 +52,11 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
-                reasons: true,
-                description: ''
+				reasons: true,
+				description: ''
 			},
-            gpt45preview: {
-                name: 'GPT_4_5_preview',
+			gpt45preview: {
+				name: 'GPT_4_5_preview',
 				param: 'gpt-4.5-preview',
 				legacy: false,
 				input_price: 75 * 1.1,
@@ -66,8 +66,8 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                description: 'Largest and most capable GPT model (preview)'
-            },
+				description: 'Largest and most capable GPT model (preview)'
+			},
 			gpt4o: {
 				name: 'GPT_4o',
 				param: 'gpt-4o',
@@ -79,7 +79,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                description: 'Versatile, high-intelligence flagship model'
+				description: 'Versatile, high-intelligence flagship model'
 			},
 			gpt4mini: {
 				name: 'GPT_4o_mini',
@@ -92,7 +92,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                description: 'Fast, affordable small model'
+				description: 'Fast, affordable small model'
 			},
 			gpt4turbo: {
 				name: 'GPT_4_Turbo',
@@ -105,7 +105,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                description: ''
+				description: ''
 			},
 			gpt4: {
 				name: 'GPT_4',
@@ -117,7 +117,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4',
 				handlesImages: false,
 				generatesImages: false,
-                description: ''
+				description: ''
 			},
 			gpt35turbo: {
 				name: 'GPT_3_5_Turbo',
@@ -129,7 +129,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-3.5-turbo',
 				handlesImages: false,
 				generatesImages: false,
-                description: ''
+				description: ''
 			},
 			dalle3: {
 				name: 'DALL_E',
@@ -141,27 +141,27 @@ export const modelDictionary: ModelDictionary = {
 				hub: '',
 				handlesImages: false,
 				generatesImages: true,
-                description: 'Generate photo-realistic images'
+				description: 'Generate photo-realistic images'
 			}
 		}
 	},
 	anthropic: {
 		models: {
-            claude37Sonnet: {
+			claude37Sonnet: {
 				name: 'Claude_3_7_Sonnet',
 				param: 'claude-3-7-sonnet-latest',
 				legacy: false,
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
 				context_window: 200000,
-                max_tokens: 8192,
+				max_tokens: 8192,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                reasons: true,
-                extendedThinking: true,
-                description: 'Smartest model with extended thinking'
+				reasons: true,
+				extendedThinking: true,
+				description: 'Smartest model with extended thinking'
 			},
 			claude35Sonnet: {
 				name: 'Claude_3_5_Sonnet',
@@ -170,13 +170,13 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
 				context_window: 200000,
-                max_tokens: 8192,
+				max_tokens: 8192,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                reasons: false,
-                description: 'Highest level of intelligence and capability'
+				reasons: false,
+				description: 'Highest level of intelligence and capability'
 			},
 			claude35Haiku: {
 				name: 'Claude_3_5_Haiku',
@@ -185,13 +185,13 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 1 * 1.1,
 				output_price: 5 * 1.1,
 				context_window: 200000,
-                max_tokens: 8192,
+				max_tokens: 8192,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: false,
 				maxImages: 0,
 				generatesImages: false,
-                reasons: false,
-                description: 'Intelligence at blazing speeds'
+				reasons: false,
+				description: 'Intelligence at blazing speeds'
 			},
 			claude3Opus: {
 				name: 'Claude_3_Opus',
@@ -200,13 +200,13 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 15 * 1.1,
 				output_price: 75 * 1.1,
 				context_window: 200000,
-                max_tokens: 4096,
+				max_tokens: 4096,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                reasons: false,
-                description: 'Top-level intelligence, fluency, and understanding'
+				reasons: false,
+				description: 'Top-level intelligence, fluency, and understanding'
 			},
 			claude3Sonnet: {
 				name: 'Claude_3_Sonnet',
@@ -215,13 +215,13 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
 				context_window: 200000,
-                max_tokens: 4096,
+				max_tokens: 4096,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                reasons: false,
-                description: ''
+				reasons: false,
+				description: ''
 			},
 			claude3Haiku: {
 				name: 'Claude_3_Haiku',
@@ -230,19 +230,19 @@ export const modelDictionary: ModelDictionary = {
 				input_price: 0.25 * 1.1,
 				output_price: 1.25 * 1.1,
 				context_window: 200000,
-                max_tokens: 4096,
+				max_tokens: 4096,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                reasons: false,
-                description: 'Quick and accurate targeted performance'
+				reasons: false,
+				description: 'Quick and accurate targeted performance'
 			}
 		}
 	},
 	google: {
 		models: {
-            gemini20Flash: {
+			gemini20Flash: {
 				name: 'Gemini_2_0_Flash',
 				param: 'gemini-2.0-flash',
 				legacy: false,
@@ -253,9 +253,9 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 1,
 				generatesImages: false,
-                description: 'Fast and versatile performance'
+				description: 'Fast and versatile performance'
 			},
-            gemini20FlashLite: {
+			gemini20FlashLite: {
 				name: 'Gemini_2_0_Flash_Lite',
 				param: 'gemini-2.0-flash-lite-preview-02-05',
 				legacy: false,
@@ -266,7 +266,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 1,
 				generatesImages: false,
-                description: 'Cost efficient and low latency'
+				description: 'Cost efficient and low latency'
 			},
 			gemini15Pro: {
 				name: 'Gemini_1_5_Pro',
@@ -281,7 +281,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 1,
 				generatesImages: false,
-                description: 'Complex reasoning tasks requiring more intelligence'
+				description: 'Complex reasoning tasks requiring more intelligence'
 			},
 			gemini15Flash: {
 				name: 'Gemini_1_5_Flash',
@@ -296,8 +296,8 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 1,
 				generatesImages: false,
-                description: 'Fast and versatile performance across a diverse variety of tasks'
-			},
+				description: 'Fast and versatile performance across a diverse variety of tasks'
+			}
 			// gemini1Pro: {
 			// 	name: 'Gemini_1_0_Pro',
 			// 	param: 'gemini-1.0-pro',
@@ -309,13 +309,13 @@ export const modelDictionary: ModelDictionary = {
 			// 	handlesImages: false,
 			// 	maxImages: 1,
 			// 	generatesImages: false,
-            //     description: ''
+			//     description: ''
 			// }
 		}
 	},
 	xAI: {
 		models: {
-            grok2: {
+			grok2: {
 				name: 'Grok_2',
 				param: 'grok-2-1212',
 				legacy: false,
@@ -326,10 +326,10 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: false,
 				maxImages: 0,
 				generatesImages: false,
-                description: 'Unfiltered intelligence, blazing speed'
+				description: 'Unfiltered intelligence, blazing speed'
 			},
-            grok2Vision: {
-                name: 'Grok_2_vision',
+			grok2Vision: {
+				name: 'Grok_2_vision',
 				param: 'grok-2-vision',
 				legacy: false,
 				input_price: 2 * 1.1,
@@ -339,26 +339,26 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-                description: 'Unfiltered intelligence with image-understanding'
+				description: 'Unfiltered intelligence with image-understanding'
 			},
-            grokBeta: {
-                name: 'Grok_beta',
-                param: 'grok-beta',
-                legacy: true,
-                input_price: 5 * 1.1,
-                output_price: 15 * 1.1,
-                context_window: 131072,
-                hub: 'Xenova/gpt-4o',
-                handlesImages: false,
-                maxImages: 0,
-                generatesImages: false,
-                description: ''
-            },
+			grokBeta: {
+				name: 'Grok_beta',
+				param: 'grok-beta',
+				legacy: true,
+				input_price: 5 * 1.1,
+				output_price: 15 * 1.1,
+				context_window: 131072,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: false,
+				maxImages: 0,
+				generatesImages: false,
+				description: ''
+			}
 		}
 	},
-    deepSeek: {
+	deepSeek: {
 		models: {
-            r1: {
+			r1: {
 				name: 'R1',
 				param: 'deepseek-reasoner',
 				legacy: false,
@@ -369,11 +369,11 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: false,
 				maxImages: 0,
 				generatesImages: false,
-                reasons: true,
-                description: 'Cost effective intelligence and reasoning'
+				reasons: true,
+				description: 'Cost effective intelligence and reasoning'
 			},
-            v3: {
-                name: 'V3',
+			v3: {
+				name: 'V3',
 				param: 'deepseek-chat',
 				legacy: false,
 				input_price: 0.27 * 1.1,
@@ -383,8 +383,8 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: false,
 				maxImages: 0,
 				generatesImages: false,
-                description: 'Fast, affordable intelligence'
-			},
+				description: 'Fast, affordable intelligence'
+			}
 		}
 	}
 	// meta: {

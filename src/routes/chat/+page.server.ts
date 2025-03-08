@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (user) {
 		// if the user is authenticated & premium member then redirect to the chat new page
-		if (user.payment_tier == PaymentTier.Premium)  throw redirect(307, '/chat/new');
-        else throw redirect(307, '/chat/c');
+		if (user.payment_tier == PaymentTier.Premium) throw redirect(307, '/chat/new');
+		else throw redirect(307, '/chat/c');
 	}
 };

@@ -12,10 +12,17 @@ import {
 } from '$lib/stripe/stripeFunctions';
 import { updateUserSettings } from '$lib/db/crud/userSettings';
 import { PaymentTier, type Conversation, type UserSettings } from '@prisma/client';
-import { retrieveConversationsByUserId, retrieveApiRequestsByConversationId, retrieveConversationById, verifyConversationOwnership, updateConversation, deleteConversation } from '$lib/db/crud/conversation';
+import {
+	retrieveConversationsByUserId,
+	retrieveApiRequestsByConversationId,
+	retrieveConversationById,
+	verifyConversationOwnership,
+	updateConversation,
+	deleteConversation
+} from '$lib/db/crud/conversation';
 
 interface ChatParams {
-    id: string;
+	id: string;
 }
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -37,32 +44,31 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	// Check if we have a valid conversation ID (not 'new')
 	const { id: conversationId } = params as ChatParams;
 
-    if (user.payment_tier === PaymentTier.Premium) {
-        if (conversationId && conversationId !== 'new') {
-            // Try to load the specific conversation
-            const conversation = await retrieveConversationById(conversationId);
-            
-            // Verify this conversation belongs to the current user
-            if (conversation && conversation.user_id === Number(session.user.id)) {
-                // Return conversation-specific API requests
-                return {
-                    user,
-                    userImage: session.user.image,
-                    apiRequests: retrieveApiRequestsByConversationId(conversationId, true),
-                    conversation
-                };
-            } else {
+	if (user.payment_tier === PaymentTier.Premium) {
+		if (conversationId && conversationId !== 'new') {
+			// Try to load the specific conversation
+			const conversation = await retrieveConversationById(conversationId);
 
-            }
-        }
+			// Verify this conversation belongs to the current user
+			if (conversation && conversation.user_id === Number(session.user.id)) {
+				// Return conversation-specific API requests
+				return {
+					user,
+					userImage: session.user.image,
+					apiRequests: retrieveApiRequestsByConversationId(conversationId, true),
+					conversation
+				};
+			} else {
+			}
+		}
 
-        // return empty messages for all invalid conversations
-        return {
-            user,
-            userImage: session.user.image,
-            apiRequests: []
-        };
-    }
+		// return empty messages for all invalid conversations
+		return {
+			user,
+			userImage: session.user.image,
+			apiRequests: []
+		};
+	}
 
 	// If no conversation ID or ID not valid, return all user's API requests
 	return {
@@ -109,7 +115,7 @@ export const actions = {
 			cardDetails
 		};
 	},
-    getUsersConversations: async ({ locals }) => {
+	getUsersConversations: async ({ locals }) => {
 		const session = await locals.auth();
 
 		if (!session || !session.user) {
@@ -119,9 +125,9 @@ export const actions = {
 
 		// let balance;
 		// let cardDetails;
-        let conversations: Conversation[];
+		let conversations: Conversation[];
 		try {
-            conversations = await retrieveConversationsByUserId(Number(userId));
+			conversations = await retrieveConversationsByUserId(Number(userId));
 		} catch (err) {
 			throw err;
 		}
@@ -259,82 +265,86 @@ export const actions = {
 			};
 		}
 	},
-    // New action for updating conversation title
-    updateConversationTitle: async ({ request, locals }) => {
-        // Get the authenticated user
-        const session = await locals.auth();
-        if (!session || !session.user) {
+	// New action for updating conversation title
+	updateConversationTitle: async ({ request, locals }) => {
+		// Get the authenticated user
+		const session = await locals.auth();
+		if (!session || !session.user) {
 			throw redirect(307, '/auth');
 		}
-        
-        const userId = Number(session.user.id);
-        const formData = await request.formData();
-        const conversationId = formData.get('conversationId') as string;
-        const title = formData.get('title') as string;
-        
-        // Validate inputs
-        if (!conversationId) {
-            return fail(400, { message: 'Conversation ID is required' });
-        }
-        
-        if (!title || title.trim() === '') {
-            return fail(400, { message: 'Title cannot be empty' });
-        }
-        
-        try {
-            // Verify that the conversation belongs to this user
-            const isOwner = await verifyConversationOwnership(conversationId, userId);
-            if (!isOwner) {
-                return fail(403, { message: 'You do not have permission to update this conversation' });
-            }
-            
-            // Update the conversation
-            const updatedConversation = await updateConversation(conversationId, {
-                title: title.trim()
-            });
-            
-            return {
-                type: 'success',
-                conversation: updatedConversation
-            };
-        } catch (error) {
-            console.error('Error updating conversation title:', error);
-            return fail(500, { message: 'Failed to update conversation title' });
-        }
-    },
-    deleteConversation: async ({ request, locals }) => {
-        // Get the authenticated user
-        const session = await locals.auth();
-        if (!session || !session.user) {
+
+		const userId = Number(session.user.id);
+		const formData = await request.formData();
+		const conversationId = formData.get('conversationId') as string;
+		const title = formData.get('title') as string;
+
+		// Validate inputs
+		if (!conversationId) {
+			return fail(400, { message: 'Conversation ID is required' });
+		}
+
+		if (!title || title.trim() === '') {
+			return fail(400, { message: 'Title cannot be empty' });
+		}
+
+		try {
+			// Verify that the conversation belongs to this user
+			const isOwner = await verifyConversationOwnership(conversationId, userId);
+			if (!isOwner) {
+				return fail(403, {
+					message: 'You do not have permission to update this conversation'
+				});
+			}
+
+			// Update the conversation
+			const updatedConversation = await updateConversation(conversationId, {
+				title: title.trim()
+			});
+
+			return {
+				type: 'success',
+				conversation: updatedConversation
+			};
+		} catch (error) {
+			console.error('Error updating conversation title:', error);
+			return fail(500, { message: 'Failed to update conversation title' });
+		}
+	},
+	deleteConversation: async ({ request, locals }) => {
+		// Get the authenticated user
+		const session = await locals.auth();
+		if (!session || !session.user) {
 			throw redirect(307, '/auth');
 		}
-        
-        const userId = Number(session.user.id);
-        const formData = await request.formData();
-        const conversationId = formData.get('conversationId') as string;
-        
-        // Validate inputs
-        if (!conversationId) {
-            return fail(400, { message: 'Conversation ID is required' });
-        }
-        
-        try {
-            // Verify that the conversation belongs to this user
-            const isOwner = await verifyConversationOwnership(conversationId, userId);
-            if (!isOwner) {
-                return fail(403, { message: 'You do not have permission to delete this conversation' });
-            }
-            
-            // Delete the conversation
-            await deleteConversation(conversationId);
-            
-            return {
-                type: 'success',
-                message: 'Conversation deleted successfully'
-            };
-        } catch (error) {
-            console.error('Error deleting conversation:', error);
-            return fail(500, { message: 'Failed to delete conversation' });
-        }
-    }
+
+		const userId = Number(session.user.id);
+		const formData = await request.formData();
+		const conversationId = formData.get('conversationId') as string;
+
+		// Validate inputs
+		if (!conversationId) {
+			return fail(400, { message: 'Conversation ID is required' });
+		}
+
+		try {
+			// Verify that the conversation belongs to this user
+			const isOwner = await verifyConversationOwnership(conversationId, userId);
+			if (!isOwner) {
+				return fail(403, {
+					message: 'You do not have permission to delete this conversation'
+				});
+			}
+
+			// Delete the conversation
+			await deleteConversation(conversationId);
+
+			return {
+				type: 'success',
+				message: 'Conversation deleted successfully'
+			};
+		} catch (error) {
+			console.error('Error deleting conversation:', error);
+			return fail(500, { message: 'Failed to delete conversation' });
+		}
+	}
 } satisfies Actions;

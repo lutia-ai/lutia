@@ -32,7 +32,7 @@ export function serializeApiRequest(apiRequest: ApiRequestWithMessage): Serializ
 					id: apiRequest.message.id,
 					prompt: apiRequest.message.prompt,
 					response: apiRequest.message.response,
-                    reasoning: apiRequest.message.reasoning || '',
+					reasoning: apiRequest.message.reasoning || '',
 					pictures: Array.isArray(apiRequest.message.pictures)
 						? (apiRequest.message.pictures as Image[])
 						: []
@@ -62,10 +62,10 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 			price_open: false,
 			loading: false,
 			copied: false,
-            reasoning: {
-                type: 'reasoning',
-                content: apiRequest.message?.reasoning || '',
-            },
+			reasoning: {
+				type: 'reasoning',
+				content: apiRequest.message?.reasoning || ''
+			},
 			components:
 				apiRequest.message?.pictures &&
 				apiRequest.message?.pictures.length > 0 &&
@@ -272,79 +272,79 @@ export async function clearChatHistory() {
 }
 
 export function sanitizeLLmContent(content: string) {
-    if (!content) return '';
-    
-    // Trim the content
-    content = content.trim();
-    
-    // Replace <style>, <script>, and <html> tags with backtick-wrapped versions
-    content = content.replace(/<(style|script|html)>/g, (match, p1) => `\`<${p1}>\``);
-    content = content.replace(/<\/(style|script|html)>/g, (match, p1) => `\`</${p1}>\``);
-    
-    // Track all code blocks (single, double, or triple backticked content)
-    const codeBlocks: any[] = [];
-    
-    // First, protect triple backticks (``` code blocks ```)
-    content = content.replace(/```([\s\S]*?)```/g, (match, inner) => {
-        codeBlocks.push({ type: 'triple', content: inner });
-        return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
-    });
-    
-    // Then, protect double backticks (`` code with ` inside ``)
-    content = content.replace(/``([\s\S]*?)``/g, (match, inner) => {
-        codeBlocks.push({ type: 'double', content: inner });
-        return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
-    });
-    
-    // Finally, protect single backticks (` simple code `)
-    content = content.replace(/`([^`]+)`/g, (match, inner) => {
-        codeBlocks.push({ type: 'single', content: inner });
-        return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
-    });
-    
-    // Now protect legitimate LaTeX expressions
-    // Store block math expressions
-    const blockMathExpressions: any[] = [];
-    content = content.replace(/\\\[\s*([\s\S]*?)\s*\\\]/gm, (match, inner) => {
-        blockMathExpressions.push(inner);
-        return `__BLOCK_MATH_${blockMathExpressions.length - 1}__`;
-    });
-    
-    // Store inline math expressions
-    const inlineMathExpressions: any[] = [];
-    content = content.replace(/\\\(\s*([\s\S]*?)\s*\\\)/gm, (match, inner) => {
-        inlineMathExpressions.push(inner);
-        return `__INLINE_MATH_${inlineMathExpressions.length - 1}__`;
-    });
-    
-    // Escape dollar signs used for currency (when a dollar sign is followed by a number)
-    content = content.replace(/\$(\d)/g, '\\$$$1');
-    
-    // Restore LaTeX expressions
-    // Restore block math with proper delimiters
-    content = content.replace(/__BLOCK_MATH_(\d+)__/g, (match, index) => {
-        return `\n$$\n${blockMathExpressions[parseInt(index)]}\n$$\n`;
-    });
-    
-    // Restore inline math with proper delimiters
-    content = content.replace(/__INLINE_MATH_(\d+)__/g, (match, index) => {
-        return `$${inlineMathExpressions[parseInt(index)]}$`;
-    });
-    
-    // Finally restore code blocks
-    content = content.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => {
-        const block = codeBlocks[parseInt(index)];
-        if (block.type === 'single') {
-            return `\`${block.content}\``;
-        } else if (block.type === 'double') {
-            return `\`\`${block.content}\`\``;
-        } else if (block.type === 'triple') {
-            return `\`\`\`${block.content}\`\`\``;
-        }
-        return match; // Fallback
-    });
-    
-    return content;
+	if (!content) return '';
+
+	// Trim the content
+	content = content.trim();
+
+	// Replace <style>, <script>, and <html> tags with backtick-wrapped versions
+	content = content.replace(/<(style|script|html)>/g, (match, p1) => `\`<${p1}>\``);
+	content = content.replace(/<\/(style|script|html)>/g, (match, p1) => `\`</${p1}>\``);
+
+	// Track all code blocks (single, double, or triple backticked content)
+	const codeBlocks: any[] = [];
+
+	// First, protect triple backticks (``` code blocks ```)
+	content = content.replace(/```([\s\S]*?)```/g, (match, inner) => {
+		codeBlocks.push({ type: 'triple', content: inner });
+		return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+	});
+
+	// Then, protect double backticks (`` code with ` inside ``)
+	content = content.replace(/``([\s\S]*?)``/g, (match, inner) => {
+		codeBlocks.push({ type: 'double', content: inner });
+		return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+	});
+
+	// Finally, protect single backticks (` simple code `)
+	content = content.replace(/`([^`]+)`/g, (match, inner) => {
+		codeBlocks.push({ type: 'single', content: inner });
+		return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+	});
+
+	// Now protect legitimate LaTeX expressions
+	// Store block math expressions
+	const blockMathExpressions: any[] = [];
+	content = content.replace(/\\\[\s*([\s\S]*?)\s*\\\]/gm, (match, inner) => {
+		blockMathExpressions.push(inner);
+		return `__BLOCK_MATH_${blockMathExpressions.length - 1}__`;
+	});
+
+	// Store inline math expressions
+	const inlineMathExpressions: any[] = [];
+	content = content.replace(/\\\(\s*([\s\S]*?)\s*\\\)/gm, (match, inner) => {
+		inlineMathExpressions.push(inner);
+		return `__INLINE_MATH_${inlineMathExpressions.length - 1}__`;
+	});
+
+	// Escape dollar signs used for currency (when a dollar sign is followed by a number)
+	content = content.replace(/\$(\d)/g, '\\$$$1');
+
+	// Restore LaTeX expressions
+	// Restore block math with proper delimiters
+	content = content.replace(/__BLOCK_MATH_(\d+)__/g, (match, index) => {
+		return `\n$$\n${blockMathExpressions[parseInt(index)]}\n$$\n`;
+	});
+
+	// Restore inline math with proper delimiters
+	content = content.replace(/__INLINE_MATH_(\d+)__/g, (match, index) => {
+		return `$${inlineMathExpressions[parseInt(index)]}$`;
+	});
+
+	// Finally restore code blocks
+	content = content.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => {
+		const block = codeBlocks[parseInt(index)];
+		if (block.type === 'single') {
+			return `\`${block.content}\``;
+		} else if (block.type === 'double') {
+			return `\`\`${block.content}\`\``;
+		} else if (block.type === 'triple') {
+			return `\`\`\`${block.content}\`\`\``;
+		}
+		return match; // Fallback
+	});
+
+	return content;
 }
 
 export function formatModelEnumToReadable(enumValue: string): string {
