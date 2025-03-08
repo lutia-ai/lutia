@@ -1,4 +1,4 @@
-import type { ApiModel, Prisma } from '@prisma/client';
+import type { PaymentTier, ApiModel, Prisma } from '@prisma/client';
 import type { DataSource } from 'typeorm';
 
 export type TextComponent = {
@@ -186,6 +186,7 @@ type UserWithSettings = Prisma.UserGetPayload<{
 		user_settings: true;
 	};
 }>;
+
 
 export type ElementsContext = {
 	elements: StripeElements;

@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth();
 
 	if (!session || !session.user || !session.user.email) {
-		return; // as user is not authenticated so continue to normal homepage
+		throw redirect(307, '/auth');
 	}
 
 	// see if user exists in the db
