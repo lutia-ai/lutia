@@ -106,6 +106,7 @@ export async function POST({ request, locals }) {
 		let isFirstChunk = true;
 		let messageConversationId = conversationId;
 
+		// TODO: Add price calculation if chunk.usage not found (ie if there was an error before response)
 		const readableStream = new ReadableStream({
 			async start(controller) {
 				try {

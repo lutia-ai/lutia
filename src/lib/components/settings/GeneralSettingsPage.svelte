@@ -15,6 +15,7 @@
 	import Slider from '$lib/components/Slider.svelte';
 	import MouseCircleIcon from '../icons/MouseCircleIcon.svelte';
 	import { saveUserSettings } from '$lib/chatHistory';
+	import { PaymentTier } from '@prisma/client';
 
 	export let user: UserWithSettings;
 
@@ -147,54 +148,56 @@
 			<Switch bind:on={companyDropdownOpen} />
 		</div>
 	</div>
-	<div
-		class="setting"
-		role="button"
-		tabindex="0"
-		on:click|stopPropagation={() => {
-			showContextWindowButton = !showContextWindowButton;
-		}}
-		on:keydown|stopPropagation={(e) => {
-			if (e.key === 'Enter') {
+	<!-- {#if user.payment_tier === PaymentTier.PayAsYouGo}
+		<div
+			class="setting"
+			role="button"
+			tabindex="0"
+			on:click|stopPropagation={() => {
 				showContextWindowButton = !showContextWindowButton;
-			}
-		}}
-	>
-		<div class="icon-container">
-			<ContextWindowIcon color="var(--text-color-light)" />
-		</div>
-		<p>Show Context window button</p>
-		<div class="switch-wrapper">
-			<Switch bind:on={showContextWindowButton} />
-		</div>
-	</div>
-	<h1>Context window</h1>
-	<h2>
-		The context window adjusts how many of your previous messages will get sent with your
-		prompt.<br /><br />
-		The more previous messages you include, the more memory the AI will have of your conversation,
-		but the higher the cost of the message.
-	</h2>
-	<div class="context setting">
-		<div class="icon-container">
-			<ContextWindowIcon color="var(--text-color-light)" />
-		</div>
-		<p style="font-weight: 600;">Shortcut:</p>
-		<p style="font-weight: 600;">CTRL + [0-9]</p>
-	</div>
-	<div class="slider-container">
-		<p>0</p>
-		<Slider
-			value={$numberPrevMessages}
-			on:change={(e) => {
-				if (e.detail.value !== $numberPrevMessages) {
-					numberPrevMessages.set(e.detail.value);
-					handleSaveSettings();
+			}}
+			on:keydown|stopPropagation={(e) => {
+				if (e.key === 'Enter') {
+					showContextWindowButton = !showContextWindowButton;
 				}
 			}}
-		/>
-		<p>max</p>
-	</div>
+		>
+			<div class="icon-container">
+				<ContextWindowIcon color="var(--text-color-light)" />
+			</div>
+			<p>Show Context window button</p>
+			<div class="switch-wrapper">
+				<Switch bind:on={showContextWindowButton} />
+			</div>
+		</div>
+		<h1>Context window</h1>
+		<h2>
+			The context window adjusts how many of your previous messages will get sent with your
+			prompt.<br /><br />
+			The more previous messages you include, the more memory the AI will have of your conversation,
+			but the higher the cost of the message.
+		</h2>
+		<div class="context setting">
+			<div class="icon-container">
+				<ContextWindowIcon color="var(--text-color-light)" />
+			</div>
+			<p style="font-weight: 600;">Shortcut:</p>
+			<p style="font-weight: 600;">CTRL + [0-9]</p>
+		</div>
+		<div class="slider-container">
+			<p>0</p>
+			<Slider
+				value={$numberPrevMessages}
+				on:change={(e) => {
+					if (e.detail.value !== $numberPrevMessages) {
+						numberPrevMessages.set(e.detail.value);
+						handleSaveSettings();
+					}
+				}}
+			/>
+			<p>max</p>
+		</div>
+	{/if} -->
 	<h1>Account</h1>
 	{#if user.oauth !== 'google'}
 		<div
@@ -310,38 +313,6 @@
 			.switch-wrapper {
 				margin: auto auto auto 20px;
 			}
-		}
-
-		.context {
-			color: var(--text-color);
-			display: flex;
-			gap: 10px;
-			padding: 35px 35px 0 35px;
-			transition: none;
-			cursor: default;
-
-			&:hover {
-				background: inherit !important;
-			}
-
-			p {
-				flex: none;
-			}
-		}
-
-		.slider-container {
-			display: flex;
-			gap: 5px;
-			padding: 20px 35px;
-			--track-bgcolor: var(--text-color-light-opacity);
-			--track-highlight-bg: linear-gradient(
-				90deg,
-				var(--text-color),
-				var(--text-color-light)
-			);
-			--tooltip-bgcolor: var(--text-color);
-			--tooltip-bg: linear-gradient(90deg, var(--text-color), var(--text-color-light));
-			--tooltip-text: var(--bg-color);
 		}
 	}
 

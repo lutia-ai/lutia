@@ -42,3 +42,6 @@ export const showPricing = createPersistentStore<boolean>('showPricing', false);
 
 // Persistent store for controlling the legacy models are shown in the LLM dropdown container
 export const showLegacyModels = createPersistentStore<boolean>('showLegacyModels', false);
+
+// Persistent store for controlling if the context window is set to automatic or manual
+export const isContextWindowAuto = createPersistentStore<boolean>('isContextWindowAuto', true);

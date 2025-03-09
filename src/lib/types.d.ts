@@ -57,6 +57,7 @@ export type Model = {
 	reasons: boolean;
 	extendedThinking: boolean;
 	description: string;
+	max_input_per_request: number;
 };
 
 export type ModelLogos = Record<string, { logo: any }>;

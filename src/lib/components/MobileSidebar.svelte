@@ -8,10 +8,13 @@
 		showPricing,
 		showLegacyModels,
 		chosenCompany,
-		chatHistory
+		chatHistory,
+
+		isContextWindowAuto
+
 	} from '$lib/stores.ts';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
-	import type { Model, UserWithSettings } from '$lib/types';
+	import type { Message, Model, UserWithSettings } from '$lib/types';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 
 	import Slider from '$lib/components/Slider.svelte';
@@ -35,6 +38,7 @@
 	import CreateIcon from './icons/CreateIcon.svelte';
 	import { goto } from '$app/navigation';
 	import ConversationsIcon from './icons/ConversationsIcon.svelte';
+	import ContextWindowSideBar from './ContextWindowSideBar.svelte';
 
 	export let companySelection: ApiProvider[];
 	export let gptModelSelection: Model[];
@@ -44,18 +48,14 @@
 	export let userImage;
 	export let mobileSidebarOpen: boolean;
 	export let conversationsOpen: boolean = false; // Add two-way binding for conversations sidebar
+	export let contextWindowOpen: boolean = false;
+    export let fullPrompt: Message[] | string;
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
 
-	// Controls the visibility of the company dropdown.
-	let companyDropdownOpen: boolean = user.user_settings?.company_menu_open ?? true;
-
 	// Controls the visibility of the settings panel.
 	let settingsOpen: boolean = false;
-
-	// Controls the visibility of the context window.
-	let contextOpen: boolean = false;
 
 	// Controls if the context window sidebar button shows.
 	let showContextWindowButton: boolean = user.user_settings?.show_context_window_button ?? true;
@@ -65,7 +65,6 @@
 
 	// handles if the company menu should be always open or open on hover
 	$: if (user.user_settings || !user.user_settings) {
-		companyDropdownOpen = user.user_settings?.company_menu_open ?? true;
 		showContextWindowButton = user.user_settings?.show_context_window_button ?? true;
 	}
 
@@ -94,16 +93,18 @@
 	on:click={() => {
 		modelDropdownOpen = false;
 		settingsOpen = false;
-		contextOpen = false;
 		if (mobileSidebarOpen) {
 			mobileSidebarOpen = false;
 		}
 	}}
 />
+
 {#if conversationsOpen}
 	<ConversationsSideBar bind:conversationsOpen />
+{:else if contextWindowOpen}
+	<ContextWindowSideBar bind:contextWindowOpen {fullPrompt} />
 {/if}
-{#if mobileSidebarOpen && !conversationsOpen}
+{#if mobileSidebarOpen && !conversationsOpen && !contextWindowOpen}
 	<div
 		class="sidebar"
 		transition:fly={{
@@ -115,30 +116,10 @@
 		<div class="company-and-llm-container">
 			<div
 				class="company-container"
-				role="button"
-				tabindex="0"
-				on:click={() => (companyDropdownOpen = true)}
-				on:keydown={(e) => {
-					if (e.key === 'Enter') companyDropdownOpen = true;
-				}}
-				on:mouseenter={() => (companyDropdownOpen = true)}
-				on:mouseleave={() => {
-					if (!user.user_settings?.company_menu_open) {
-						companyDropdownOpen = false;
-					}
-				}}
 			>
 				<div class="choose-company-container">
 					<div
 						class="company-logo-container"
-						role="button"
-						tabindex="0"
-						on:click|stopPropagation={() => {
-							companyDropdownOpen = true;
-						}}
-						on:keydown|stopPropagation={(e) => {
-							if (e.key === 'Enter') companyDropdownOpen = true;
-						}}
 					>
 						<svelte:component this={modelLogos[$chosenCompany].logo} />
 					</div>
@@ -149,16 +130,10 @@
 							tabindex="0"
 							on:click|stopPropagation={() => {
 								selectCompany(company);
-								if (!user.user_settings?.company_menu_open) {
-									companyDropdownOpen = false;
-								}
 							}}
 							on:keydown|stopPropagation={(e) => {
 								if (e.key === 'Enter') {
 									selectCompany(company);
-									if (!user.user_settings?.company_menu_open) {
-										companyDropdownOpen = false;
-									}
 								}
 							}}
 							in:fly={{ y: -50, duration: 600, delay: index * 75 }}
@@ -307,6 +282,35 @@
 		</div>
 
 		<div class="settings-container">
+            <!-- context window button -->
+            {#if (!$isContextWindowAuto && showContextWindowButton && user.payment_tier === PaymentTier.PayAsYouGo) || !$isContextWindowAuto}
+                <div class="settings-wrapper">
+                    <div
+                        class="settings-icon"
+                        role="button"
+                        tabindex="0"
+                        on:click|stopPropagation={() => {
+                            contextWindowOpen = !contextWindowOpen;
+                            settingsOpen = false;
+                            conversationsOpen = false;
+                        }}
+                        on:keydown|stopPropagation={(e) => {
+                            if (e.key === 'Enter') {
+                                contextWindowOpen = !contextWindowOpen;
+                                settingsOpen = false;
+                                conversationsOpen = false;
+                            }
+                        }}
+                        style="
+                            pointer-events: {contextWindowOpen ? 'none' : ''};
+                            cursor: {contextWindowOpen ? 'default' : ''} !important;
+                        "
+                    >
+                        <ContextWindowIcon color="var(--text-color-light)" strokeWidth={1.5} />
+                        <p class="tag">View context window</p>
+                    </div>
+                </div>
+            {/if}
 			{#if user.payment_tier === PaymentTier.Premium}
 				<div class="settings-wrapper">
 					<div
@@ -316,7 +320,7 @@
 						on:click|stopPropagation={() => {
 							conversationsOpen = !conversationsOpen;
 							if (conversationsOpen) {
-								contextOpen = false;
+								contextWindowOpen = false;
 								settingsOpen = false;
 							}
 						}}
@@ -324,7 +328,7 @@
 							if (e.key === 'Enter') {
 								conversationsOpen = !conversationsOpen;
 								if (conversationsOpen) {
-									contextOpen = false;
+									contextWindowOpen = false;
 									settingsOpen = false;
 								}
 							}
@@ -393,58 +397,6 @@
 					</div>
 				</div>
 			{/if}
-			{#if showContextWindowButton}
-				<div class="settings-wrapper">
-					<div
-						class="settings-icon"
-						role="button"
-						tabindex="0"
-						on:click|stopPropagation={() => {
-							contextOpen = !contextOpen;
-							settingsOpen = false;
-						}}
-						on:keydown={(e) => {
-							if (e.key === 'Enter') {
-								contextOpen = !contextOpen;
-								settingsOpen = false;
-							}
-						}}
-						style="
-                            pointer-events: {contextOpen ? 'none' : ''};
-                            cursor: {contextOpen ? 'default' : ''} !important;
-                        "
-					>
-						<ContextWindowIcon color="var(--text-color-light)" />
-						<p class="tag">Context window</p>
-					</div>
-					{#if contextOpen}
-						<div
-							class="settings-open-container"
-							role="button"
-							tabindex="0"
-							on:click|stopPropagation
-							on:keydown
-						>
-							<div class="open-container">
-								<p>Previous messages included</p>
-								<div class="slider-container">
-									<p>0</p>
-									<Slider
-										value={$numberPrevMessages}
-										on:change={(e) => {
-											if (e.detail.value !== $numberPrevMessages) {
-												numberPrevMessages.set(e.detail.value);
-												handleSaveSettings();
-											}
-										}}
-									/>
-									<p>max</p>
-								</div>
-							</div>
-						</div>
-					{/if}
-				</div>
-			{/if}
 			<div class="settings-wrapper">
 				<div
 					class="settings-icon"
@@ -453,7 +405,7 @@
 					on:click|stopPropagation={() => {
 						if ($page.data.user) {
 							isSettingsOpen = true;
-							contextOpen = false;
+							contextWindowOpen = false;
 						} else {
 							signIn('google');
 						}
@@ -461,7 +413,7 @@
 					on:keydown={(e) => {
 						if (e.key === 'Enter') {
 							isSettingsOpen = true;
-							contextOpen = false;
+							contextWindowOpen = false;
 						}
 					}}
 					style="
@@ -832,37 +784,6 @@
 					z-index: inherit;
 					transition: none;
 					overflow: visible;
-
-					.open-container {
-						display: flex;
-						flex-direction: column;
-						gap: 20px;
-						padding: 15px 25px;
-						overflow: visible;
-
-						p {
-							margin: 0;
-							color: var(--text-color-light);
-						}
-
-						.slider-container {
-							display: flex;
-							gap: 5px;
-							--track-bgcolor: var(--text-color-light-opacity);
-							--track-highlight-bg: linear-gradient(
-								90deg,
-								var(--text-color),
-								var(--text-color-light)
-							);
-							--tooltip-bgcolor: var(--text-color);
-							--tooltip-bg: linear-gradient(
-								90deg,
-								var(--text-color),
-								var(--text-color-light)
-							);
-							--tooltip-text: var(--bg-color);
-						}
-					}
 				}
 			}
 		}

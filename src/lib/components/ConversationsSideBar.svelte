@@ -373,9 +373,24 @@
 {/if}
 
 <style lang="scss">
+	::-webkit-scrollbar {
+		height: 10px;
+	}
+
+	/* Scrollbar handle */
+	::-webkit-scrollbar-thumb {
+		background-color: #888;
+		border-radius: 6px;
+	}
+
+	/* Scrollbar track background */
+	::-webkit-scrollbar-track {
+		background-color: var(--bg-color-light);
+	}
 	a {
 		text-decoration: none;
 	}
+
 	.conversations-sidebar {
 		position: fixed;
 		top: 0;

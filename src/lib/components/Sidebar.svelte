@@ -8,10 +8,11 @@
 		showPricing,
 		showLegacyModels,
 		chosenCompany,
-		chatHistory
+		chatHistory,
+		isContextWindowAuto
 	} from '$lib/stores.ts';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
-	import type { Model, UserWithSettings } from '$lib/types';
+	import type { Message, Model, UserWithSettings } from '$lib/types';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 
 	import Slider from '$lib/components/Slider.svelte';
@@ -35,6 +36,7 @@
 	import ConversationsIcon from './icons/ConversationsIcon.svelte';
 	import ConversationsSideBar from './ConversationsSideBar.svelte';
 	import { goto } from '$app/navigation';
+	import ContextWindowSideBar from './ContextWindowSideBar.svelte';
 
 	export let companySelection: ApiProvider[];
 	export let gptModelSelection: Model[];
@@ -43,6 +45,8 @@
 	export let user: UserWithSettings; // controls if the menu is always open
 	export let userImage;
 	export let conversationsOpen: boolean = false; // Add two-way binding for conversations sidebar
+	export let contextWindowOpen: boolean = false;
+	export let fullPrompt: Message[] | string;
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
@@ -52,9 +56,6 @@
 
 	// Controls the visibility of the settings panel.
 	let settingsOpen: boolean = false;
-
-	// Controls the visibility of the context window.
-	let contextOpen: boolean = false;
 
 	// Controls if the context window sidebar button shows.
 	let showContextWindowButton: boolean = user.user_settings?.show_context_window_button ?? true;
@@ -66,11 +67,6 @@
 	$: if (user.user_settings || !user.user_settings) {
 		companyDropdownOpen = user.user_settings?.company_menu_open ?? true;
 		showContextWindowButton = user.user_settings?.show_context_window_button ?? true;
-	}
-
-	// handles the save user settings from the slider change
-	function handleSaveSettings() {
-		saveUserSettings(user.user_settings!);
 	}
 
 	// Updates the chosen company and resets the model selection based on the new company.
@@ -93,21 +89,22 @@
 	on:click={() => {
 		modelDropdownOpen = false;
 		settingsOpen = false;
-		contextOpen = false;
 	}}
 />
 
 {#if conversationsOpen}
 	<ConversationsSideBar bind:conversationsOpen />
+{:else if contextWindowOpen}
+	<ContextWindowSideBar bind:contextWindowOpen {fullPrompt} />
 {/if}
-<div class="sidebar" class:shifted={conversationsOpen}>
+<div class="sidebar" class:shifted={conversationsOpen || contextWindowOpen}>
 	<div class="company-and-llm-container">
 		<div
 			class="company-container"
 			role="button"
 			tabindex="0"
-			on:click={() => (companyDropdownOpen = true)}
-			on:keydown={(e) => {
+			on:click|stopPropagation={() => (companyDropdownOpen = true)}
+			on:keydown|stopPropagation={(e) => {
 				if (e.key === 'Enter') companyDropdownOpen = true;
 			}}
 			on:mouseenter={() => (companyDropdownOpen = true)}
@@ -202,7 +199,7 @@
 									selectModel(model);
 									modelDropdownOpen = false;
 								}}
-								on:keydown={(e) => {
+								on:keydown|stopPropagation={(e) => {
 									if (e.key === 'Enter') selectModel(model);
 								}}
 							>
@@ -298,7 +295,35 @@
 	</div>
 
 	<div class="settings-container">
-		<!-- Conversations button -->
+		<!-- context window button -->
+		{#if (!$isContextWindowAuto && showContextWindowButton && user.payment_tier === PaymentTier.PayAsYouGo) || !$isContextWindowAuto}
+			<div class="settings-wrapper">
+				<div
+					class="settings-icon"
+					role="button"
+					tabindex="0"
+					on:click|stopPropagation={() => {
+						contextWindowOpen = !contextWindowOpen;
+						settingsOpen = false;
+						conversationsOpen = false;
+					}}
+					on:keydown|stopPropagation={(e) => {
+						if (e.key === 'Enter') {
+							contextWindowOpen = !contextWindowOpen;
+							settingsOpen = false;
+							conversationsOpen = false;
+						}
+					}}
+					style="
+                        pointer-events: {contextWindowOpen ? 'none' : ''};
+                        cursor: {contextWindowOpen ? 'default' : ''} !important;
+                    "
+				>
+					<ContextWindowIcon color="var(--text-color-light)" strokeWidth={1.5} />
+					<p class="tag">View context window</p>
+				</div>
+			</div>
+		{/if}
 		{#if user.payment_tier === PaymentTier.Premium}
 			<div class="settings-wrapper">
 				<div
@@ -308,7 +333,7 @@
 					on:click|stopPropagation={() => {
 						conversationsOpen = !conversationsOpen;
 						if (conversationsOpen) {
-							contextOpen = false;
+							contextWindowOpen = false;
 							settingsOpen = false;
 						}
 					}}
@@ -316,7 +341,7 @@
 						if (e.key === 'Enter') {
 							conversationsOpen = !conversationsOpen;
 							if (conversationsOpen) {
-								contextOpen = false;
+								contextWindowOpen = false;
 								settingsOpen = false;
 							}
 						}
@@ -385,58 +410,6 @@
 				</div>
 			</div>
 		{/if}
-		{#if showContextWindowButton}
-			<div class="settings-wrapper">
-				<div
-					class="settings-icon"
-					role="button"
-					tabindex="0"
-					on:click|stopPropagation={() => {
-						contextOpen = !contextOpen;
-						settingsOpen = false;
-					}}
-					on:keydown={(e) => {
-						if (e.key === 'Enter') {
-							contextOpen = !contextOpen;
-							settingsOpen = false;
-						}
-					}}
-					style="
-                        pointer-events: {contextOpen ? 'none' : ''};
-                        cursor: {contextOpen ? 'default' : ''} !important;
-                    "
-				>
-					<ContextWindowIcon color="var(--text-color-light)" />
-					<p class="tag">Context window</p>
-				</div>
-				{#if contextOpen}
-					<div
-						class="settings-open-container"
-						role="button"
-						tabindex="0"
-						on:click|stopPropagation
-						on:keydown
-					>
-						<div class="open-container">
-							<p>Previous messages included</p>
-							<div class="slider-container">
-								<p>0</p>
-								<Slider
-									value={$numberPrevMessages}
-									on:change={(e) => {
-										if (e.detail.value !== $numberPrevMessages) {
-											numberPrevMessages.set(e.detail.value);
-											handleSaveSettings();
-										}
-									}}
-								/>
-								<p>max</p>
-							</div>
-						</div>
-					</div>
-				{/if}
-			</div>
-		{/if}
 		<div class="settings-wrapper">
 			<div
 				class="settings-icon"
@@ -445,7 +418,7 @@
 				on:click|stopPropagation={() => {
 					if ($page.data.user) {
 						isSettingsOpen = true;
-						contextOpen = false;
+						contextWindowOpen = false;
 					} else {
 						signIn('google');
 					}
@@ -453,7 +426,7 @@
 				on:keydown={(e) => {
 					if (e.key === 'Enter') {
 						isSettingsOpen = true;
-						contextOpen = false;
+						contextWindowOpen = false;
 					}
 				}}
 				style="
@@ -833,54 +806,6 @@
 							font-size: 24px;
 							font-weight: 400;
 							color: var(--bg-color);
-						}
-					}
-				}
-
-				.settings-open-container {
-					position: absolute;
-					border: 1px solid var(--bg-color-dark);
-					background: var(--bg-color);
-					box-shadow: 0 5px 15px rgba(50, 50, 50, 0.15);
-					border-radius: 10px;
-					left: 120%;
-					bottom: 0%;
-					width: max-content;
-					display: flex;
-					flex-direction: column;
-					gap: 10px;
-					z-index: inherit;
-					transition: none;
-					overflow: visible;
-
-					.open-container {
-						display: flex;
-						flex-direction: column;
-						gap: 20px;
-						padding: 15px 25px;
-						overflow: visible;
-
-						p {
-							margin: 0;
-							color: var(--text-color-light);
-						}
-
-						.slider-container {
-							display: flex;
-							gap: 5px;
-							--track-bgcolor: var(--text-color-light-opacity);
-							--track-highlight-bg: linear-gradient(
-								90deg,
-								var(--text-color),
-								var(--text-color-light)
-							);
-							--tooltip-bgcolor: var(--text-color);
-							--tooltip-bg: linear-gradient(
-								90deg,
-								var(--text-color),
-								var(--text-color-light)
-							);
-							--tooltip-text: var(--bg-color);
 						}
 					}
 				}

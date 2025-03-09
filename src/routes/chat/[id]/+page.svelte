@@ -1,11 +1,16 @@
 <script lang="ts">
-	import { onMount, tick, type ComponentType } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { HighlightAuto, LineNumbers } from 'svelte-highlight';
 	import { marked } from 'marked';
 	import markedKatex from 'marked-katex-extension';
 	import 'katex/dist/katex.min.css';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
-	import { chatHistory, numberPrevMessages, chosenCompany } from '$lib/stores.ts';
+	import {
+		chatHistory,
+		numberPrevMessages,
+		chosenCompany,
+		isContextWindowAuto
+	} from '$lib/stores.ts';
 	import type {
 		Message,
 		Image,
@@ -28,9 +33,7 @@
 	} from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import MobileSidebar from '$lib/components/MobileSidebar.svelte';
-	import ConversationsSideBar from '$lib/components/ConversationsSideBar.svelte';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
-	import logo from '$lib/images/logos/logo3.png';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import StarsIcon from '$lib/components/icons/StarsIcon.svelte';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
@@ -65,6 +68,7 @@
 	import WarningIcon from '$lib/components/icons/WarningIcon.svelte';
 	import { pushState } from '$app/navigation';
 	import SettingsComponent from '$lib/components/settings/Settings.svelte';
+	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 
 	export let data;
 
@@ -81,6 +85,7 @@
 	let isSettingsOpen: boolean = false;
 	let isDragging: boolean = false;
 	let conversationsOpen: boolean = false;
+	let contextWindowOpen: boolean = false;
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
 	// let SettingsComponent: ComponentType;
@@ -93,12 +98,12 @@
 	let selectedModelIndex: number | null = 0;
 	let modelSearchItems: HTMLDivElement[] = [];
 	let reasoningOn: boolean = false;
-	let conversationId: string | undefined;
 
 	$: {
 		const id = $page.params.id;
-		const currentConversationId = id === 'new' ? undefined : id;
-		conversationId = currentConversationId;
+		if ($isContextWindowAuto) {
+			contextWindowOpen = false;
+		}
 	}
 
 	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
@@ -122,11 +127,19 @@
 	marked.use(markedKatexOptions);
 
 	// Generates the fullPrompt and counts input tokens when the prompt changes
-	$: if (prompt || prompt === '' || $numberPrevMessages || imagePreview) {
+	$: if (prompt || prompt === '' || $numberPrevMessages || imagePreview || $isContextWindowAuto) {
 		if (mounted) {
 			fullPrompt = sanitizeHtml(prompt);
 			if ($numberPrevMessages > 0) {
-				fullPrompt = generateFullPrompt(prompt, $chatHistory, $numberPrevMessages, false);
+				console.log('input_tokens: ', input_tokens);
+				fullPrompt = generateFullPrompt(
+					prompt,
+					$chatHistory,
+					$numberPrevMessages,
+					chosenModel,
+					false,
+					$isContextWindowAuto
+				);
 				if (fullPrompt.length === 1 && fullPrompt[0].content.length === 0) {
 					fullPrompt = prompt;
 				}
@@ -356,8 +369,15 @@
 			const currentChatIndex = $chatHistory.length - 1;
 
 			try {
-				const fullPrompt = generateFullPrompt(plainText, $chatHistory, $numberPrevMessages);
-				console.log(fullPrompt);
+				const fullPrompt = generateFullPrompt(
+					prompt,
+					$chatHistory,
+					$numberPrevMessages,
+					chosenModel,
+					true,
+					$isContextWindowAuto
+				);
+				// console.log(fullPrompt);
 
 				// Get conversationId from slug parameter
 				let conversationId = $page.params.id;
@@ -784,6 +804,8 @@
 			});
 		}
 	}
+
+	$: console.log('contextOpen: ', contextWindowOpen);
 </script>
 
 <svelte:head>
@@ -792,7 +814,7 @@
 </svelte:head>
 
 <svelte:window
-	on:click={() => {
+	on:click|stopPropagation={() => {
 		closeAllTabWidths();
 		showModelSearch = false;
 		if (prompt.length === 0 || prompt === '<br>') {
@@ -824,8 +846,10 @@
 						bind:chosenModel
 						bind:isSettingsOpen
 						bind:conversationsOpen
+						bind:contextWindowOpen
 						user={data.user}
 						userImage={data.userImage}
+						{fullPrompt}
 					/>
 				{:else if !mobileSidebarOpen}
 					<div class="floating-sidebar">
@@ -858,8 +882,10 @@
 					bind:isSettingsOpen
 					bind:mobileSidebarOpen
 					bind:conversationsOpen
+					bind:contextWindowOpen
 					user={data.user}
 					userImage={data.userImage}
+                    {fullPrompt}
 				/>
 				{#if isSettingsOpen}
 					<SettingsComponent bind:isOpen={isSettingsOpen} bind:user={data.user} />
@@ -870,7 +896,7 @@
 
 	<div
 		class="body"
-		class:shifted={conversationsOpen}
+		class:shifted={conversationsOpen || contextWindowOpen}
 		role="region"
 		on:dragover|preventDefault={(event) => {
 			event.preventDefault;
@@ -1234,24 +1260,18 @@
 			style="
                 transform: {mobileSidebarOpen
 				? 'translateX(calc(-50% + 20px))'
-				: conversationsOpen && isLargeScreen
+				: (conversationsOpen || contextWindowOpen) && isLargeScreen
 					? 'translateX(calc(-50% + 180px))'
 					: ''};
                 padding: {mobileSidebarOpen ? '0 30px 0 50px' : ''};
-                width: {conversationsOpen && !mobileSidebarOpen && isLargeScreen
+                width: {(conversationsOpen || contextWindowOpen) &&
+			!mobileSidebarOpen &&
+			isLargeScreen
 				? 'calc(100% - 310px)'
 				: ''};
             "
 		>
-			<div
-				class="prompt-bar"
-				class:shifted={conversationsOpen}
-				style="
-                    margin: {data.user.user_settings?.prompt_pricing_visible
-					? ''
-					: 'auto auto 20px auto'};
-                "
-			>
+			<div class="prompt-bar" class:shifted={conversationsOpen || contextWindowOpen}>
 				{#if imagePreview.length > 0 || isDragging}
 					<div
 						class="image-viewer"
@@ -1469,20 +1489,35 @@
 								/>
 							</div>
 							<p>Reason</p>
-							<input
-								bind:this={fileInput}
-								type="file"
-								accept="image/jpeg,image/png,image/webp"
-								style="display: none;"
-								on:change={handleFileSelect}
-								multiple={$chosenCompany !== 'google'}
-							/>
 							<HoverTag
 								text={chosenModel.reasons
 									? 'Thinks before responding'
 									: "Selected model doesn't support reasoning"}
 								position="top"
 							/>
+						</div>
+						<div
+							class="{!$isContextWindowAuto ? 'selected' : ''} reason-button"
+							role="button"
+							tabindex="0"
+							on:click={() => {
+								isContextWindowAuto.set(!$isContextWindowAuto);
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									isContextWindowAuto.set(!$isContextWindowAuto);
+								}
+							}}
+						>
+							<div class="brain-icon">
+								<ContextWindowIcon
+									color={!$isContextWindowAuto
+										? '#16a1f9'
+										: 'var(--text-color-light)'}
+								/>
+							</div>
+							<p>Custom</p>
+							<HoverTag text={'Customise your context window'} position="top" />
 						</div>
 					</div>
 					<!-- {/if} -->
@@ -1510,16 +1545,18 @@
 				>
 					Write your prompt here or @mention model
 				</span>
-				{#if data.user.user_settings?.prompt_pricing_visible}
+				{#if !$isContextWindowAuto && (data.user.user_settings?.prompt_pricing_visible || !$isContextWindowAuto)}
 					<div class="input-token-container">
 						<p>Context window: {$numberPrevMessages}</p>
-						<p class="middle">
-							~ Input tokens: {input_tokens === -1 ? '?' : input_tokens}
-						</p>
+						{#if data.user.payment_tier === PaymentTier.PayAsYouGo}
+							<p class="middle">
+								~ Input cost: {input_price === -1
+									? '?'
+									: '$' + roundToTwoSignificantDigits(input_price)}
+							</p>
+						{/if}
 						<p class="right">
-							~ Input cost: {input_price === -1
-								? '?'
-								: '$' + roundToTwoSignificantDigits(input_price)}
+							~ Input tokens: {input_tokens === -1 ? '?' : input_tokens}
 						</p>
 					</div>
 				{/if}
