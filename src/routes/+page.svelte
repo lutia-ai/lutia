@@ -664,6 +664,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		<div class="left">
 			<h2>FAQ</h2>
 			<h1>Frequently Asked Questions</h1>
+            <a style="display: flex; padding-top: 25px;" href="https://theresanaiforthat.com/ai/lutia/?ref=featured&v=4958596" target="_blank" rel="nofollow"><img width="200" alt="TAAFT" src="https://media.theresanaiforthat.com/featured-on-taaft.png?width=600"></a>
 		</div>
 		<div class="right">
 			<div
