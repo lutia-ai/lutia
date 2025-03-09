@@ -42,19 +42,3 @@
 	on:mouseenter={(e) => handleMouseEnter(e, item)}
 	on:mouseleave={handleMouseLeave}
 />
-<!-- {#if hoveredItem}
-    <g transform={`translate(${tooltipX + 10}, ${tooltipY - 10})`}>
-        <rect
-            x="0"
-            y="0"
-            width="120"
-            height="50"
-            fill="white"
-            stroke="black"
-            stroke-width="1"
-        />
-        <text x="5" y="15" font-size="12">{hoveredItem.key}</text>
-        <text x="5" y="30" font-size="12">Value: {hoveredItem.values[1]}</text>
-        <text x="5" y="45" font-size="12">Date: {hoveredItem.data.date}</text>
-    </g>
-{/if} -->

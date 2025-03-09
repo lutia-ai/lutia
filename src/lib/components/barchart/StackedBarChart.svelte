@@ -21,6 +21,8 @@
 	export let data = tempData;
 	export let keyColors: string[];
 	export let layout = 'stacked'; // stacked, grouped, percent, or separated
+	export let showCost = true;
+
 	let hoveredItem: any;
 	let tooltipX = 0;
 	let tooltipY = 0;
@@ -75,6 +77,10 @@
 		<Tooltip
 			model={hoveredItem.key}
 			cost={hoveredItem.values[1] - hoveredItem.values[0]}
+			input_tokens={hoveredItem.input_tokens}
+			output_tokens={hoveredItem.output_tokens}
+			request_count={hoveredItem.request_count}
+			{showCost}
 			x={tooltipX}
 			y={tooltipY}
 		/>

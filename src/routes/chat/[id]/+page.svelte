@@ -24,8 +24,7 @@
 		calculateClaudeImageCost,
 		calculateGptVisionPricing,
 		countTokens,
-		countTokensNoTimeout,
-		roundToFirstTwoNonZeroDecimals
+		roundToTwoSignificantDigits
 	} from '$lib/tokenizer.ts';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import MobileSidebar from '$lib/components/MobileSidebar.svelte';
@@ -1188,7 +1187,7 @@
 															<div class="price-record">
 																<p>Input:</p>
 																<span
-																	>${roundToFirstTwoNonZeroDecimals(
+																	>${roundToTwoSignificantDigits(
 																		chat.input_cost
 																	)}</span
 																>
@@ -1196,7 +1195,7 @@
 															<div class="price-record">
 																<p>Output:</p>
 																<span
-																	>${roundToFirstTwoNonZeroDecimals(
+																	>${roundToTwoSignificantDigits(
 																		chat.output_cost
 																	)}</span
 																>
@@ -1204,7 +1203,7 @@
 															<div class="price-record">
 																<p>Total:</p>
 																<span
-																	>${roundToFirstTwoNonZeroDecimals(
+																	>${roundToTwoSignificantDigits(
 																		chat.input_cost +
 																			chat.output_cost
 																	)}</span
@@ -1520,7 +1519,7 @@
 						<p class="right">
 							~ Input cost: {input_price === -1
 								? '?'
-								: '$' + roundToFirstTwoNonZeroDecimals(input_price)}
+								: '$' + roundToTwoSignificantDigits(input_price)}
 						</p>
 					</div>
 				{/if}
@@ -2449,8 +2448,8 @@
 
 								.brain-icon {
 									padding: 0;
-                                    margin: 0;
-                                    max-width: 18px;
+									margin: 0;
+									max-width: 18px;
 									box-sizing: border-box;
 								}
 
@@ -2641,7 +2640,7 @@
 					}
 				}
 				.empty-content-options {
-                    left: calc(50% - 32.5px);
+					left: calc(50% - 32.5px);
 					.logo-container {
 						width: 90%;
 					}

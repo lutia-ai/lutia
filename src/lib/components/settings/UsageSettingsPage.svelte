@@ -5,9 +5,9 @@
 	import { modelLogos } from '$lib/modelLogos';
 	import PieChart from '$lib/components/barchart/PieChart.svelte';
 	import { capitalizeFirstLetter } from '$lib/components/barchart/utils';
-	import type { ApiModel, ApiProvider } from '@prisma/client';
+	import { PaymentTier, type ApiModel, type ApiProvider } from '@prisma/client';
 
-    export let user: UserWithSettings;
+	export let user: UserWithSettings;
 
 	let mounted = false;
 
@@ -83,6 +83,8 @@
 
 			const data = await response.json();
 			usageData = processData(data.apiRequests);
+			console.log('usageData: ', usageData);
+			console.log('data.apiRequests: ', data.apiRequests);
 		} catch (err) {
 			console.error('Error retrieving usage details: ', err);
 		}
@@ -93,6 +95,8 @@
 		api_model: ApiModel;
 		request_timestamp: string;
 		total_cost: string;
+		input_tokens: number;
+		output_tokens: number;
 	}
 
 	function processData(inputArray: PartialApiRequest[]): Record<string, UsageObject[]> {
@@ -101,6 +105,7 @@
 
 		// Initialize the result object with empty arrays for each day
 		const result: Record<string, UsageObject[]> = {};
+
 		// Group by apiProvider
 		const groupedByProvider = inputArray.reduce(
 			(acc, curr) => {
@@ -113,27 +118,50 @@
 			{} as Record<string, PartialApiRequest[]>
 		);
 
+		// Define an interface for the token data
+		interface ModelData {
+			value: number;
+			input_tokens: number;
+			output_tokens: number;
+			request_count: number; // Add request count
+		}
+
 		// Process each provider
 		for (const [provider, objects] of Object.entries(groupedByProvider)) {
 			result[provider] = [];
 
 			// Create a map to store data for each day and model
-			const dayModelMap = new Map<string, Map<ApiModel, number>>();
+			const dayModelMap = new Map<string, Map<ApiModel, ModelData>>();
 
 			// Initialize the map with all days of the month
 			for (let day = 1; day <= daysInMonth; day++) {
-				dayModelMap.set(day.toString(), new Map<ApiModel, number>());
+				dayModelMap.set(day.toString(), new Map<ApiModel, ModelData>());
 			}
 
 			// Process each object
 			for (const obj of objects) {
 				const day = new Date(obj.request_timestamp).getDate().toString();
-				const modelString = obj.api_model;
-				const model = modelString; // Convert string to enum value
+				const model = obj.api_model;
 				const value = parseFloat(obj.total_cost);
+				const input_tokens = obj.input_tokens;
+				const output_tokens = obj.output_tokens;
 
 				const modelMap = dayModelMap.get(day)!;
-				modelMap.set(model, (modelMap.get(model) || 0) + value);
+
+				if (!modelMap.has(model)) {
+					modelMap.set(model, {
+						value: 0,
+						input_tokens: 0,
+						output_tokens: 0,
+						request_count: 0 // Initialize request count
+					});
+				}
+
+				const currentData = modelMap.get(model)!;
+				currentData.value += value;
+				currentData.input_tokens += input_tokens;
+				currentData.output_tokens += output_tokens;
+				currentData.request_count += 1; // Increment request count
 			}
 
 			// Convert the map to the desired format
@@ -141,11 +169,14 @@
 				const dayStr = day.toString();
 				const modelMap = dayModelMap.get(dayStr)!;
 
-				for (const [model, value] of modelMap) {
+				for (const [model, data] of modelMap) {
 					result[provider].push({
 						date: dayStr,
 						model: model,
-						value: value > 0 ? value : 0 // Ensure we don't push negative or zero values
+						value: data.value > 0 ? data.value : 0,
+						input_tokens: data.input_tokens,
+						output_tokens: data.output_tokens,
+						request_count: data.request_count // Add to result
 					});
 				}
 
@@ -156,7 +187,10 @@
 						result[provider].push({
 							date: dayStr,
 							model: model,
-							value: 0
+							value: 0,
+							input_tokens: 0,
+							output_tokens: 0,
+							request_count: 0 // Add with 0 count
 						});
 					}
 				}
@@ -334,7 +368,11 @@
 		</div>
 		{#if mounted}
 			<div class="doughnut-container">
-				<PieChart {usageData} companyColors={pieColors} {user} />
+				<PieChart
+					{usageData}
+					companyColors={pieColors}
+					showCost={user.payment_tier === PaymentTier.PayAsYouGo}
+				/>
 			</div>
 		{/if}
 	</div>
@@ -405,7 +443,12 @@
 					</div>
 				</div>
 			</div>
-			<StackedBarChart {data} keyColors={getCompanyColors(company)} layout={currentLayout} />
+			<StackedBarChart
+				{data}
+				keyColors={getCompanyColors(company)}
+				layout={currentLayout}
+				showCost={user.payment_tier === PaymentTier.PayAsYouGo}
+			/>
 		{/each}
 	{/if}
 </div>

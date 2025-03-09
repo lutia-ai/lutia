@@ -21,7 +21,7 @@
 	import LoadingSpinner from '$lib/components/icons/LoadingSpinner.svelte';
 	import { PaymentTier } from '@prisma/client';
 
-    export let user: UserWithSettings;
+	export let user: UserWithSettings;
 
 	let loading = true;
 	let errorPopup: ErrorPopup;
@@ -198,30 +198,30 @@
 <ErrorPopup bind:this={errorPopup} />
 
 <div class="billing-body">
-    {#if user.payment_tier === PaymentTier.PayAsYouGo}
-        <div class="balance-container {loading ? 'shimmerBG' : 'container-bg'}">
-            {#if !loading}
-            <h1>${userBalance.toFixed(2)}</h1>
-            <p>Remaining balance</p>
-            <div
-            class="top-up"
-            role="button"
-            tabindex="0"
-            on:click={() => (addCreditOpen = true)}
-            on:keydown|stopPropagation={(e) => {
-                if (e.key === 'Enter') {
-                    addCreditOpen = true;
-                }
-            }}
-                >
-                <div class="icon">
-                    <Topup color="var(--text-color-light)" />
-                </div>
-                <p>Top-up</p>
-            </div>
-            {/if}
-        </div>
-    {/if}
+	{#if user.payment_tier === PaymentTier.PayAsYouGo}
+		<div class="balance-container {loading ? 'shimmerBG' : 'container-bg'}">
+			{#if !loading}
+				<h1>${userBalance.toFixed(2)}</h1>
+				<p>Remaining balance</p>
+				<div
+					class="top-up"
+					role="button"
+					tabindex="0"
+					on:click={() => (addCreditOpen = true)}
+					on:keydown|stopPropagation={(e) => {
+						if (e.key === 'Enter') {
+							addCreditOpen = true;
+						}
+					}}
+				>
+					<div class="icon">
+						<Topup color="var(--text-color-light)" />
+					</div>
+					<p>Top-up</p>
+				</div>
+			{/if}
+		</div>
+	{/if}
 	{#if addCreditOpen}
 		<form class="top-up-open" on:submit|preventDefault={handleTopupSubmit}>
 			<div class="left">

@@ -317,7 +317,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		name="description"
 		content="Level up your productivity by accessing all the leading generative AI models from the same chat window. Avoid those costly monthly subscriptions with the choice of either pay-as-you-go pricing or monthly subscriptions from as little as $4.99."
 	/>
-	<title>Lutia | Generate AI toolkit | All your AI models in one chat</title>
+	<title>Lutia - A next level AI chat window</title>
 </svelte:head>
 
 <header>

@@ -161,6 +161,9 @@ type UsageObject = {
 	date: string;
 	model: ApiModel;
 	value: number;
+	input_tokens: number;
+	output_tokens: number;
+	request_count: number;
 };
 
 type Company = 'openAI' | 'anthropic' | 'google' | 'xAI' | 'deepSeek';

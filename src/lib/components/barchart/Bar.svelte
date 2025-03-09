@@ -83,19 +83,36 @@
 	$: chartData = grouped
 		? pivotData.flatMap((d: any) => {
 				return stackKeys.map((key) => {
+					// Find the original data item with matching date and model in the raw data
+					const originalData = $data.find(
+						(item: any) => item[groupBy] === d[groupBy] && item[stackBy] === key
+					);
+
 					return {
 						key,
 						values: [0, d[key]],
-						data: d
+						data: d,
+						input_tokens: originalData?.input_tokens || 0,
+						output_tokens: originalData?.output_tokens || 0,
+						request_count: originalData?.request_count || 0
 					};
 				});
 			})
 		: stackData.flatMap((series) => {
 				return series.map((d) => {
+					// Find the original data item with matching date and model in the raw data
+					const originalData = $data.find(
+						(item: any) =>
+							item[groupBy] === d.data[groupBy] && item[stackBy] === series.key
+					);
+
 					return {
 						key: series.key,
 						values: [d[0], d[1]],
-						data: d.data
+						data: d.data,
+						input_tokens: originalData?.input_tokens || 0,
+						output_tokens: originalData?.output_tokens || 0,
+						request_count: originalData?.request_count || 0
 					};
 				});
 			});

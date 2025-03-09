@@ -5,13 +5,13 @@
 	import { capitalizeFirstLetter } from './utils';
 	import { PaymentTier } from '@prisma/client';
 
-    export let user: UserWithSettings;
-
 	type PieData = {
 		company: string;
 		value: number;
+		request_count: number;
 	};
 
+	export let showCost: boolean = true;
 	export let usageData: Record<Company, UsageObject[]>;
 	export let companyColors: Record<Company, string>;
 
@@ -27,12 +27,17 @@
 	function processUsageData(usageData: Record<Company, UsageObject[]>) {
 		data = Object.entries(usageData).map(([company, usageObject]) => ({
 			company,
-			value: usageObject.reduce((total, item) => total + item.value, 0)
+			// The reduce function iterates over each item in usageObject, accumulating the total value.
+			// It starts with an initial total of 0 and adds each item's value to this total.
+			value: usageObject.reduce((total, item) => total + item.value, 0),
+			// Here, we are also accumulating the request_count from each UsageObject.
+			// The reduce function will sum up the request_count for all items in usageObject.
+			request_count: usageObject.reduce((total, item) => total + item.request_count, 0)
 		}));
 
 		// If data is empty, add a default gray slice
 		if (data.length === 0) {
-			data = [{ company: 'No data', value: 1 }];
+			data = [{ company: 'No data', value: 1, request_count: 0 }];
 		}
 	}
 
@@ -76,9 +81,18 @@
 								if (data.length === 1 && data[0].company === 'No data') {
 									return 'No data';
 								}
-								let label = '';
-								if (context.parsed !== null) {
-									label = ' $' + context.parsed.toFixed(2);
+
+								// Get the corresponding data item for this tooltip
+								const dataIndex = context.dataIndex;
+								const dataItem = data[dataIndex];
+
+								let label = context.label || '';
+
+								// Format the value based on showCost flag
+								if (showCost) {
+									label = '$' + context.parsed.toFixed(2);
+								} else {
+									label = dataItem.request_count.toLocaleString(); // Format with commas
 								}
 								return label;
 							}
@@ -115,21 +129,26 @@
 </script>
 
 <div class="chart-container">
-    
-    <div class="total-container">
-        {#if user.payment_tier === PaymentTier.PayAsYouGo}
-            <p>Total</p>
-            <span>
-                {#if data.length === 1 && data[0].company === 'No data'}
-                    $0.00
-                {:else}
-                    ${data.reduce((sum, item) => sum + item.value, 0).toFixed(2)}
-                {/if}
-            </span>
-        {:else}
-            <p>Total requests</p>
-            <span>1300</span>
-        {/if}
+	<div class="total-container">
+		{#if showCost}
+			<p>Total</p>
+			<span>
+				{#if data.length === 1 && data[0].company === 'No data'}
+					$0.00
+				{:else}
+					${data.reduce((sum, item) => sum + item.value, 0).toFixed(2)}
+				{/if}
+			</span>
+		{:else}
+			<p>Total requests</p>
+			<span>
+				{#if data.length === 1 && data[0].company === 'No data'}
+					0
+				{:else}
+					{data.reduce((sum, item) => sum + item.request_count, 0).toLocaleString()}
+				{/if}
+			</span>
+		{/if}
 	</div>
 	<canvas bind:this={chartCanvas}></canvas>
 </div>

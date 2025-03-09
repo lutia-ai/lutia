@@ -151,28 +151,11 @@ export function calculateClaudeImageCost(width: number, height: number, model: M
 	};
 }
 
-export function roundToFirstTwoNonZeroDecimals(num: number, roundUp: boolean = true): string {
-	let str = num.toFixed(20);
-	let match = str.match(/\.(?:0*[1-9]\d?|0*[1-9]\d|0+[1-9])\d?/);
+export function roundToTwoSignificantDigits(num: number): string {
+	if (num === 0) return '0';
 
-	if (match) {
-		let matchedPart = match[0];
-		let integerPart = str.split('.')[0];
-		let lastPosition = matchedPart.length - 1;
+	const magnitude = Math.floor(Math.log10(Math.abs(num)));
+	const scale = Math.pow(10, magnitude - 1);
 
-		if (roundUp && matchedPart.length < str.length - integerPart.length - 1) {
-			let nextDigit = parseInt(str[integerPart.length + matchedPart.length]);
-			if (nextDigit >= 5) {
-				let roundedPart = (parseFloat(matchedPart) + Math.pow(10, -lastPosition)).toFixed(
-					lastPosition
-				);
-				return (parseFloat(integerPart) + parseFloat(roundedPart)).toString();
-			}
-		}
-		let result = parseFloat(integerPart + matchedPart);
-		// check if the result is in scientific notation, if so then just return 0 as number is so small
-		return /^-?\d+(\.\d+)?[eE][-+]?\d+$/.test(result.toString()) ? '0' : result.toString();
-	} else {
-		return str.split('.')[0];
-	}
+	return (Math.round(num / scale) * scale).toFixed(Math.max(0, -(magnitude - 1)));
 }
