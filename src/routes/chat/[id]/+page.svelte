@@ -885,7 +885,7 @@
 					bind:contextWindowOpen
 					user={data.user}
 					userImage={data.userImage}
-                    {fullPrompt}
+					{fullPrompt}
 				/>
 				{#if isSettingsOpen}
 					<SettingsComponent bind:isOpen={isSettingsOpen} bind:user={data.user} />

@@ -9,9 +9,7 @@
 		showLegacyModels,
 		chosenCompany,
 		chatHistory,
-
 		isContextWindowAuto
-
 	} from '$lib/stores.ts';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
 	import type { Message, Model, UserWithSettings } from '$lib/types';
@@ -49,7 +47,7 @@
 	export let mobileSidebarOpen: boolean;
 	export let conversationsOpen: boolean = false; // Add two-way binding for conversations sidebar
 	export let contextWindowOpen: boolean = false;
-    export let fullPrompt: Message[] | string;
+	export let fullPrompt: Message[] | string;
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
@@ -114,13 +112,9 @@
 		}}
 	>
 		<div class="company-and-llm-container">
-			<div
-				class="company-container"
-			>
+			<div class="company-container">
 				<div class="choose-company-container">
-					<div
-						class="company-logo-container"
-					>
+					<div class="company-logo-container">
 						<svelte:component this={modelLogos[$chosenCompany].logo} />
 					</div>
 					{#each companySelection as company, index}
@@ -282,35 +276,35 @@
 		</div>
 
 		<div class="settings-container">
-            <!-- context window button -->
-            {#if (!$isContextWindowAuto && showContextWindowButton && user.payment_tier === PaymentTier.PayAsYouGo) || !$isContextWindowAuto}
-                <div class="settings-wrapper">
-                    <div
-                        class="settings-icon"
-                        role="button"
-                        tabindex="0"
-                        on:click|stopPropagation={() => {
-                            contextWindowOpen = !contextWindowOpen;
-                            settingsOpen = false;
-                            conversationsOpen = false;
-                        }}
-                        on:keydown|stopPropagation={(e) => {
-                            if (e.key === 'Enter') {
-                                contextWindowOpen = !contextWindowOpen;
-                                settingsOpen = false;
-                                conversationsOpen = false;
-                            }
-                        }}
-                        style="
+			<!-- context window button -->
+			{#if (!$isContextWindowAuto && showContextWindowButton && user.payment_tier === PaymentTier.PayAsYouGo) || !$isContextWindowAuto}
+				<div class="settings-wrapper">
+					<div
+						class="settings-icon"
+						role="button"
+						tabindex="0"
+						on:click|stopPropagation={() => {
+							contextWindowOpen = !contextWindowOpen;
+							settingsOpen = false;
+							conversationsOpen = false;
+						}}
+						on:keydown|stopPropagation={(e) => {
+							if (e.key === 'Enter') {
+								contextWindowOpen = !contextWindowOpen;
+								settingsOpen = false;
+								conversationsOpen = false;
+							}
+						}}
+						style="
                             pointer-events: {contextWindowOpen ? 'none' : ''};
                             cursor: {contextWindowOpen ? 'default' : ''} !important;
                         "
-                    >
-                        <ContextWindowIcon color="var(--text-color-light)" strokeWidth={1.5} />
-                        <p class="tag">View context window</p>
-                    </div>
-                </div>
-            {/if}
+					>
+						<ContextWindowIcon color="var(--text-color-light)" strokeWidth={1.5} />
+						<p class="tag">View context window</p>
+					</div>
+				</div>
+			{/if}
 			{#if user.payment_tier === PaymentTier.Premium}
 				<div class="settings-wrapper">
 					<div
@@ -767,23 +761,6 @@
 							color: var(--bg-color);
 						}
 					}
-				}
-
-				.settings-open-container {
-					position: absolute;
-					border: 1px solid var(--bg-color-dark);
-					background: var(--bg-color);
-					box-shadow: 0 5px 15px rgba(50, 50, 50, 0.15);
-					border-radius: 10px;
-					left: 120%;
-					bottom: 0%;
-					width: max-content;
-					display: flex;
-					flex-direction: column;
-					gap: 10px;
-					z-index: inherit;
-					transition: none;
-					overflow: visible;
 				}
 			}
 		}

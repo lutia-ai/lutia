@@ -73,12 +73,12 @@
 
 	<div class="details">
 		<h2>
-			The context window adjusts how many of your previous messages will get sent with your
-			prompt.<br /><br />
-			<span
-				>The more previous messages you include, the more memory the AI will have of your
-				conversation, but the higher the cost of each message.</span
-			>
+			A custom context window lets you adjust how many previous messages will get sent with
+			your prompt.<br /><br />
+			<span>
+				The more previous messages you include, the more memory the AI will have of your
+				conversation, but the higher the cost of each message.
+			</span>
 		</h2>
 		<div class="shortcut">
 			<h1>Shortcut:</h1>
