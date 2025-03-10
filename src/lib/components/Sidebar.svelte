@@ -304,20 +304,20 @@
 					tabindex="0"
 					on:click|stopPropagation={() => {
 						contextWindowOpen = !contextWindowOpen;
-						settingsOpen = false;
-						conversationsOpen = false;
+                        if (contextWindowOpen) {
+                            settingsOpen = false;
+                            conversationsOpen = false;
+                        }
 					}}
 					on:keydown|stopPropagation={(e) => {
 						if (e.key === 'Enter') {
 							contextWindowOpen = !contextWindowOpen;
-							settingsOpen = false;
-							conversationsOpen = false;
+							if (contextWindowOpen) {
+                                settingsOpen = false;
+                                conversationsOpen = false;
+                            }
 						}
 					}}
-					style="
-                        pointer-events: {contextWindowOpen ? 'none' : ''};
-                        cursor: {contextWindowOpen ? 'default' : ''} !important;
-                    "
 				>
 					<ContextWindowIcon color="var(--text-color-light)" strokeWidth={1.5} />
 					<p class="tag">View context window</p>
