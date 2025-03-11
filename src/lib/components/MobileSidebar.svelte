@@ -453,7 +453,7 @@
 		z-index: 10001;
 		padding: 10px 0px;
 		width: 65px;
-		overflow-y: scroll; /* Allow scrolling */
+        overflow-y: scroll;
 		scrollbar-width: none; /* For Firefox */
 		-ms-overflow-style: none; /* For Internet Explorer and Edge */
 		&::-webkit-scrollbar {
@@ -469,11 +469,12 @@
 			.company-container {
 				position: relative;
 				display: flex;
-				// cursor: pointer;
+				cursor: pointer;
 				z-index: 10;
 				width: 100%;
 				background: var(--bg-color);
 				border-radius: 0 10px 10px 0;
+                overflow-y: scroll; /* Allow scrolling */
 
 				.company-logo-button {
 					width: 60px;
@@ -522,7 +523,7 @@
 			}
 
 			.choose-llm-model-container {
-				position: absolute;
+				position: fixed;
 				left: 70px;
 				height: max-content;
 				width: max-content;
@@ -562,13 +563,19 @@
 					gap: 5px;
 					flex-direction: column;
 					z-index: inherit;
-					padding: 10px 5px;
+					padding: 10px;
 					box-sizing: border-box;
 					min-width: 300px;
 					max-width: calc(100vw - 40px);
 					max-height: calc(100vh - 180px);
 					cursor: default;
 					overflow-y: auto;
+                    scrollbar-width: none; /* For Firefox */
+                    -ms-overflow-style: none; /* For Internet Explorer and Edge */
+                    &::-webkit-scrollbar {
+                        /* For Chrome, Safari, and Opera */
+                        display: none;
+                    }
 
 					.llm-options {
 						display: flex;
