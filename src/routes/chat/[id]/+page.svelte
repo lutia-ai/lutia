@@ -100,7 +100,6 @@
 	let reasoningOn: boolean = false;
 
 	$: {
-		const id = $page.params.id;
 		if ($isContextWindowAuto) {
 			contextWindowOpen = false;
 		}
@@ -131,7 +130,6 @@
 		if (mounted) {
 			fullPrompt = sanitizeHtml(prompt);
 			if ($numberPrevMessages > 0) {
-				console.log('input_tokens: ', input_tokens);
 				fullPrompt = generateFullPrompt(
 					prompt,
 					$chatHistory,
@@ -370,7 +368,7 @@
 
 			try {
 				const fullPrompt = generateFullPrompt(
-					prompt,
+					plainText,
 					$chatHistory,
 					$numberPrevMessages,
 					chosenModel,
@@ -1676,7 +1674,7 @@
 			position: fixed;
 			display: flex;
 			flex-direction: column;
-			height: 100%;
+			// height: 100%; // if height is 100% then floating sidebar covers buttons
 			z-index: 10001;
 			width: 65px;
 			padding-top: 5px;
