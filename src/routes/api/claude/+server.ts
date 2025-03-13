@@ -38,16 +38,30 @@ export async function POST({ request, locals }) {
 
 		const user: User = await retrieveUserByEmail(session.user!.email);
 
-		// Filter out assistant messages with empty content (ie that are still streaming)
-		messages = messages.map((msg) => {
-			if (
+		let error: any;
+
+		// Extract system message and ensure non-empty content in messages
+		let systemMessage = null;
+		let userMessages = [];
+
+		for (const msg of messages) {
+			if (msg.role === 'system') {
+				// Extract system message
+				systemMessage = msg.content || '';
+			} else if (
 				msg.role === 'assistant' &&
 				(msg.content === undefined || msg.content === null || msg.content === '')
 			) {
-				return { ...msg, content: 'Streaming in progress...' };
+				// Replace empty assistant content with placeholder
+				userMessages.push({ ...msg, content: 'Streaming in progress...' });
+			} else if (msg.content === undefined || msg.content === null || msg.content === '') {
+				// Skip user messages with empty content
+				continue;
+			} else {
+				// Keep valid messages
+				userMessages.push(msg);
 			}
-			return msg;
-		});
+		}
 
 		if (images.length > 0) {
 			const textObject = {
@@ -83,24 +97,47 @@ export async function POST({ request, locals }) {
 			}
 		}
 
+		// Simple token estimation function (replace with more accurate if available)
+		const estimateTokens = (text: string) => Math.ceil(text.length / 4);
+		let inputTokenEstimate = 0;
+		for (const message of messages) {
+			if (typeof message.content === 'string') {
+				inputTokenEstimate += estimateTokens(message.content);
+			}
+		}
+
 		// Model constraints
-		const MODEL_MAX_OUTPUT_TOKENS = 64000; // Maximum allowed for claude-3-7-sonnet
 		const max_tokens = model.max_tokens ? model.max_tokens : 4096;
 
-		// Define thinking budget - adjust based on your needs
-		// Leave some room for the actual response
-		const thinkingBudget = reasoningOn ? 60000 : 0;
+		// Calculate available tokens for output (including thinking)
+		const availableOutputTokens = Math.max(0, 65536 - inputTokenEstimate);
+
+		// Adjust thinking budget dynamically
+		const thinkingBudget = reasoningOn
+			? Math.min(45000, Math.floor(availableOutputTokens * 0.9)) // Lower from 60000
+			: 0;
 
 		// Calculate max_tokens respecting the model's limits
 		// When thinking is enabled, max_tokens must be > thinking budget
-		// But max_tokens can't exceed MODEL_MAX_OUTPUT_TOKENS
 		const totalMaxTokens =
 			reasoningOn && model.reasons
-				? Math.min(thinkingBudget + 4000, MODEL_MAX_OUTPUT_TOKENS)
-				: max_tokens;
+				? Math.min(thinkingBudget + 4000, availableOutputTokens)
+				: Math.min(max_tokens, availableOutputTokens);
+
+		// Ensure first message has 'user' role by removing leading non-user messages
+		while (userMessages.length > 0 && userMessages[0].role !== 'user') {
+			userMessages.shift();
+		}
+
+		// If no user messages remain, throw error
+		if (userMessages.length === 0) {
+			throw error(400, 'No user messages found. The first message must use the user role.');
+		}
 
 		const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
 		const stream = await client.messages.stream({
+			// Include system parameter only if we have a system message
+			...(systemMessage !== null ? { system: systemMessage } : {}),
 			// @ts-ignore
 			messages: messages,
 			model: model.param,
@@ -122,7 +159,6 @@ export async function POST({ request, locals }) {
 			completion_tokens: 0,
 			total_tokens: 0
 		};
-		let error: any;
 		let messageConversationId = conversationId;
 
 		const readableStream = new ReadableStream({

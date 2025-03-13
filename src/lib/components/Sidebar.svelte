@@ -304,18 +304,18 @@
 					tabindex="0"
 					on:click|stopPropagation={() => {
 						contextWindowOpen = !contextWindowOpen;
-                        if (contextWindowOpen) {
-                            settingsOpen = false;
-                            conversationsOpen = false;
-                        }
+						if (contextWindowOpen) {
+							settingsOpen = false;
+							conversationsOpen = false;
+						}
 					}}
 					on:keydown|stopPropagation={(e) => {
 						if (e.key === 'Enter') {
 							contextWindowOpen = !contextWindowOpen;
 							if (contextWindowOpen) {
-                                settingsOpen = false;
-                                conversationsOpen = false;
-                            }
+								settingsOpen = false;
+								conversationsOpen = false;
+							}
 						}
 					}}
 				>

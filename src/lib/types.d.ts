@@ -80,7 +80,7 @@ export type ChatCompletionMessageParam = {
 };
 
 export type Message = {
-	role: 'user' | 'assistant' | 'developer';
+	role: 'user' | 'assistant' | 'developer' | 'system';
 	content: string | Object[];
 };
 

@@ -111,7 +111,5 @@ export function generateFullPrompt(
 	// Add the current prompt
 	fullPrompt.push({ role: 'user', content: sanitizeHtml(prompt).trim() });
 
-	console.log('fullPrompt: ', fullPrompt);
-
 	return fullPrompt;
 }
