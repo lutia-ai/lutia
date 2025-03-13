@@ -374,7 +374,7 @@
 
 <style lang="scss">
 	::-webkit-scrollbar {
-		height: 10px;
+        width: 5px;
 	}
 
 	/* Scrollbar handle */
@@ -385,8 +385,9 @@
 
 	/* Scrollbar track background */
 	::-webkit-scrollbar-track {
-		background-color: var(--bg-color-light);
+		background-color: transparent;
 	}
+
 	a {
 		text-decoration: none;
 	}
