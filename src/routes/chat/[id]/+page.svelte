@@ -380,7 +380,7 @@
 				// console.log(fullPrompt);
 
 				// Get conversationId from slug parameter
-                if (!conversationId) {
+                if (!conversationId || conversationId === 'new') {
                     conversationId = $page.params.id;
                 }
 
@@ -806,8 +806,6 @@
 			});
 		}
 	}
-
-	$: console.log('contextOpen: ', contextWindowOpen);
 </script>
 
 <svelte:head>
@@ -852,6 +850,7 @@
 						user={data.user}
 						userImage={data.userImage}
 						{fullPrompt}
+                        bind:conversationId
 					/>
 				{:else if !mobileSidebarOpen}
 					<div class="floating-sidebar">

@@ -47,6 +47,7 @@
 	export let conversationsOpen: boolean = false; // Add two-way binding for conversations sidebar
 	export let contextWindowOpen: boolean = false;
 	export let fullPrompt: Message[] | string;
+    export let conversationId: string;
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
@@ -361,11 +362,13 @@
 					tabindex="0"
 					on:click|stopPropagation={() => {
 						chatHistory.set([]);
+                        conversationId = 'new';
 						goto('/chat/new', { replaceState: true });
 					}}
 					on:keydown|stopPropagation={(e) => {
 						if (e.key === 'Enter') {
 							chatHistory.set([]);
+                            conversationId = 'new';
 							goto('/chat/new', { replaceState: true });
 						}
 					}}
