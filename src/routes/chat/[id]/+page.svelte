@@ -2676,7 +2676,7 @@
 					}
 				}
 				.empty-content-options {
-					left: calc(50% - 32.5px);
+					left: calc(50%);
 					.logo-container {
 						width: 90%;
 					}
