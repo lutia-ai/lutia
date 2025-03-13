@@ -88,7 +88,6 @@
 	let contextWindowOpen: boolean = false;
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
-	// let SettingsComponent: ComponentType;
 	let windowWidth = browser ? window.innerWidth : 0;
 	let isLargeScreen = windowWidth > 810;
 	let mobileSidebarOpen = false;

@@ -46,6 +46,9 @@ export async function updateUserBalanceWithDeduction(
 	deductionAmount: number
 ): Promise<number> {
 	try {
+        if (isNaN(deductionAmount) || deductionAmount <= 0) {
+            throw new Error(`Invalid deduction amount: ${deductionAmount}`);
+        }
 		const updatedBalanceRecord = await prisma.balance.update({
 			where: { user_id: userId },
 			data: {
