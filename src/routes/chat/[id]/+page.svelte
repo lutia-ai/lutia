@@ -98,6 +98,7 @@
 	let selectedModelIndex: number | null = 0;
 	let modelSearchItems: HTMLDivElement[] = [];
 	let reasoningOn: boolean = false;
+    let conversationId: string;
 
 	$: {
 		if ($isContextWindowAuto) {
@@ -379,7 +380,9 @@
 				// console.log(fullPrompt);
 
 				// Get conversationId from slug parameter
-				let conversationId = $page.params.id;
+                if (!conversationId) {
+                    conversationId = $page.params.id;
+                }
 
 				// UUID validation function
 				const isValidUUID = (uuid: string) => {
