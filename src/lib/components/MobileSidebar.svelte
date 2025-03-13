@@ -103,43 +103,204 @@
 	<ContextWindowSideBar bind:contextWindowOpen {fullPrompt} />
 {/if}
 {#if mobileSidebarOpen && !conversationsOpen && !contextWindowOpen}
-	<div
-		class="sidebar"
-		transition:fly={{
-			delay: 250,
-			duration: 300,
-			x: -250
-		}}
-	>
-		<div class="company-and-llm-container">
-			<div class="company-container">
-				<div class="choose-company-container">
-					<div class="company-logo-container">
-						<svelte:component this={modelLogos[$chosenCompany].logo} />
+	<div class="sidebar-container">
+		<div
+			class="sidebar"
+			transition:fly={{
+				delay: 250,
+				duration: 300,
+				x: -250
+			}}
+		>
+			<div class="company-and-llm-container">
+				<div class="company-container">
+					<div class="choose-company-container">
+						<div class="company-logo-container">
+							<svelte:component this={modelLogos[$chosenCompany].logo} />
+						</div>
+						{#each companySelection as company, index}
+							<div
+								class="company-logo-button"
+								role="button"
+								tabindex="0"
+								on:click|stopPropagation={() => {
+									selectCompany(company);
+								}}
+								on:keydown|stopPropagation={(e) => {
+									if (e.key === 'Enter') {
+										selectCompany(company);
+									}
+								}}
+								in:fly={{ y: -50, duration: 600, delay: index * 75 }}
+								out:fly={{ y: -50, duration: 450, delay: index * 50 }}
+							>
+								<div class="company-logo-container">
+									<svelte:component this={modelLogos[company].logo} />
+								</div>
+							</div>
+						{/each}
 					</div>
-					{#each companySelection as company, index}
+				</div>
+			</div>
+
+			<div class="settings-container">
+				<!-- context window button -->
+				{#if (!$isContextWindowAuto && showContextWindowButton && user.payment_tier === PaymentTier.PayAsYouGo) || !$isContextWindowAuto}
+					<div class="settings-wrapper">
 						<div
-							class="company-logo-button"
+							class="settings-icon"
 							role="button"
 							tabindex="0"
 							on:click|stopPropagation={() => {
-								selectCompany(company);
+								contextWindowOpen = !contextWindowOpen;
+								settingsOpen = false;
+								conversationsOpen = false;
 							}}
 							on:keydown|stopPropagation={(e) => {
 								if (e.key === 'Enter') {
-									selectCompany(company);
+									contextWindowOpen = !contextWindowOpen;
+									settingsOpen = false;
+									conversationsOpen = false;
 								}
 							}}
-							in:fly={{ y: -50, duration: 600, delay: index * 75 }}
-							out:fly={{ y: -50, duration: 450, delay: index * 50 }}
+							style="
+                            pointer-events: {contextWindowOpen ? 'none' : ''};
+                            cursor: {contextWindowOpen ? 'default' : ''} !important;
+                        "
 						>
-							<div class="company-logo-container">
-								<svelte:component this={modelLogos[company].logo} />
-							</div>
+							<ContextWindowIcon color="var(--text-color-light)" strokeWidth={1.5} />
+							<p class="tag">View context window</p>
 						</div>
-					{/each}
+					</div>
+				{/if}
+				{#if user.payment_tier === PaymentTier.Premium}
+					<div class="settings-wrapper">
+						<div
+							class="settings-icon"
+							role="button"
+							tabindex="0"
+							on:click|stopPropagation={() => {
+								conversationsOpen = !conversationsOpen;
+								if (conversationsOpen) {
+									contextWindowOpen = false;
+									settingsOpen = false;
+								}
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									conversationsOpen = !conversationsOpen;
+									if (conversationsOpen) {
+										contextWindowOpen = false;
+										settingsOpen = false;
+									}
+								}
+							}}
+							style="padding: 8px;"
+						>
+							<div style="transform: scale(1.2);">
+								<ConversationsIcon color="var(--text-color-light)" />
+							</div>
+							<p class="tag">View history</p>
+						</div>
+					</div>
+					<div class="settings-wrapper">
+						<div
+							class="settings-icon"
+							role="button"
+							tabindex="0"
+							on:click|stopPropagation={() => {
+								chatHistory.set([]);
+								goto('/chat/new', { replaceState: true });
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									chatHistory.set([]);
+									goto('/chat/new', { replaceState: true });
+								}
+							}}
+							style="padding: 8px;"
+						>
+							<div>
+								<CreateIcon color="var(--text-color-light)" />
+							</div>
+							<p class="tag">New chat</p>
+						</div>
+					</div>
+				{:else}
+					<div class="settings-wrapper">
+						<div
+							class="settings-icon"
+							role="button"
+							tabindex="0"
+							on:click|stopPropagation={() => {
+								clearChatHistory();
+								isRotating = true;
+								goto('/chat/new', { replaceState: true });
+								setTimeout(() => {
+									isRotating = false;
+								}, 500);
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									clearChatHistory();
+									isRotating = true;
+									goto('/chat/new', { replaceState: true });
+									setTimeout(() => {
+										isRotating = false;
+									}, 500);
+								}
+							}}
+							style="padding: 8px;"
+						>
+							<div class:rotate={isRotating}>
+								<RefreshIcon color="var(--text-color-light)" />
+							</div>
+							<p class="tag">Clear chat</p>
+						</div>
+					</div>
+				{/if}
+				<div class="settings-wrapper">
+					<div
+						class="settings-icon"
+						role="button"
+						tabindex="0"
+						on:click|stopPropagation={() => {
+							if ($page.data.user) {
+								isSettingsOpen = true;
+								contextWindowOpen = false;
+							} else {
+								signIn('google');
+							}
+						}}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								isSettingsOpen = true;
+								contextWindowOpen = false;
+							}
+						}}
+						style="
+                        pointer-events: {settingsOpen ? 'none' : ''};
+                        cursor: {settingsOpen ? 'default' : ''} !important;
+                    "
+					>
+						{#if userImage}
+							<img class="user-profile-img" src={userImage} alt="User profile" />
+						{:else}
+							<div class="user-profile-noimg">
+								<h1>
+									{user.name[0]}
+								</h1>
+							</div>
+						{/if}
+						<p class="tag">Settings</p>
+					</div>
 				</div>
 			</div>
+		</div>
+		<div
+			class="llm-dropdown-container-wrapper"
+			transition:fly={{ delay: 250, duration: 300, x: -250 }}
+		>
 			<div
 				class="choose-llm-model-container"
 				role="button"
@@ -152,8 +313,8 @@
 				<div
 					class="options-container chosen-llm"
 					style="
-                        background: {modelDropdownOpen ? 'var(--bg-color-light)' : ''};
-                    "
+                    background: {modelDropdownOpen ? 'var(--bg-color-light)' : ''};
+                "
 				>
 					<p class="chosen-model-p">{formatModelEnumToReadable(chosenModel.name)}</p>
 					<div class="dropdown-icon">
@@ -164,8 +325,8 @@
 					<div
 						class="llm-dropdown-container"
 						style="
-                            background: {$darkMode ? 'var(--bg-color-light)' : 'var(--bg-color)'};
-                        "
+                        background: {$darkMode ? 'var(--bg-color-light)' : 'var(--bg-color)'};
+                    "
 						role="button"
 						tabindex="0"
 						on:click|stopPropagation
@@ -274,160 +435,6 @@
 				{/if}
 			</div>
 		</div>
-
-		<div class="settings-container">
-			<!-- context window button -->
-			{#if (!$isContextWindowAuto && showContextWindowButton && user.payment_tier === PaymentTier.PayAsYouGo) || !$isContextWindowAuto}
-				<div class="settings-wrapper">
-					<div
-						class="settings-icon"
-						role="button"
-						tabindex="0"
-						on:click|stopPropagation={() => {
-							contextWindowOpen = !contextWindowOpen;
-							settingsOpen = false;
-							conversationsOpen = false;
-						}}
-						on:keydown|stopPropagation={(e) => {
-							if (e.key === 'Enter') {
-								contextWindowOpen = !contextWindowOpen;
-								settingsOpen = false;
-								conversationsOpen = false;
-							}
-						}}
-						style="
-                            pointer-events: {contextWindowOpen ? 'none' : ''};
-                            cursor: {contextWindowOpen ? 'default' : ''} !important;
-                        "
-					>
-						<ContextWindowIcon color="var(--text-color-light)" strokeWidth={1.5} />
-						<p class="tag">View context window</p>
-					</div>
-				</div>
-			{/if}
-			{#if user.payment_tier === PaymentTier.Premium}
-				<div class="settings-wrapper">
-					<div
-						class="settings-icon"
-						role="button"
-						tabindex="0"
-						on:click|stopPropagation={() => {
-							conversationsOpen = !conversationsOpen;
-							if (conversationsOpen) {
-								contextWindowOpen = false;
-								settingsOpen = false;
-							}
-						}}
-						on:keydown|stopPropagation={(e) => {
-							if (e.key === 'Enter') {
-								conversationsOpen = !conversationsOpen;
-								if (conversationsOpen) {
-									contextWindowOpen = false;
-									settingsOpen = false;
-								}
-							}
-						}}
-						style="padding: 8px;"
-					>
-						<div style="transform: scale(1.2);">
-							<ConversationsIcon color="var(--text-color-light)" />
-						</div>
-						<p class="tag">View history</p>
-					</div>
-				</div>
-				<div class="settings-wrapper">
-					<div
-						class="settings-icon"
-						role="button"
-						tabindex="0"
-						on:click|stopPropagation={() => {
-							chatHistory.set([]);
-							goto('/chat/new', { replaceState: true });
-						}}
-						on:keydown|stopPropagation={(e) => {
-							if (e.key === 'Enter') {
-								chatHistory.set([]);
-								goto('/chat/new', { replaceState: true });
-							}
-						}}
-						style="padding: 8px;"
-					>
-						<div>
-							<CreateIcon color="var(--text-color-light)" />
-						</div>
-						<p class="tag">New chat</p>
-					</div>
-				</div>
-			{:else}
-				<div class="settings-wrapper">
-					<div
-						class="settings-icon"
-						role="button"
-						tabindex="0"
-						on:click|stopPropagation={() => {
-							clearChatHistory();
-							isRotating = true;
-							goto('/chat/new', { replaceState: true });
-							setTimeout(() => {
-								isRotating = false;
-							}, 500);
-						}}
-						on:keydown|stopPropagation={(e) => {
-							if (e.key === 'Enter') {
-								clearChatHistory();
-								isRotating = true;
-								goto('/chat/new', { replaceState: true });
-								setTimeout(() => {
-									isRotating = false;
-								}, 500);
-							}
-						}}
-						style="padding: 8px;"
-					>
-						<div class:rotate={isRotating}>
-							<RefreshIcon color="var(--text-color-light)" />
-						</div>
-						<p class="tag">Clear chat</p>
-					</div>
-				</div>
-			{/if}
-			<div class="settings-wrapper">
-				<div
-					class="settings-icon"
-					role="button"
-					tabindex="0"
-					on:click|stopPropagation={() => {
-						if ($page.data.user) {
-							isSettingsOpen = true;
-							contextWindowOpen = false;
-						} else {
-							signIn('google');
-						}
-					}}
-					on:keydown={(e) => {
-						if (e.key === 'Enter') {
-							isSettingsOpen = true;
-							contextWindowOpen = false;
-						}
-					}}
-					style="
-                        pointer-events: {settingsOpen ? 'none' : ''};
-                        cursor: {settingsOpen ? 'default' : ''} !important;
-                    "
-				>
-					{#if userImage}
-						<img class="user-profile-img" src={userImage} alt="User profile" />
-					{:else}
-						<div class="user-profile-noimg">
-							<h1>
-								{user.name[0]}
-							</h1>
-						</div>
-					{/if}
-					<p class="tag">Settings</p>
-				</div>
-			</div>
-		</div>
 	</div>
 {/if}
 
@@ -445,15 +452,23 @@
 			Segoe UI Emoji,
 			Segoe UI Symbol !important;
 	}
-	.sidebar {
+
+	.sidebar-container {
 		position: fixed;
+		touch-action: pan-y;
+		z-index: 10001;
+		height: 100%;
+		width: 65px;
+	}
+
+	.sidebar {
+		position: relative;
 		display: flex;
 		flex-direction: column;
+		overflow-y: scroll;
 		height: 100%;
-		z-index: 10001;
 		padding: 10px 0px;
 		width: 65px;
-		overflow-y: scroll;
 		scrollbar-width: none; /* For Firefox */
 		-ms-overflow-style: none; /* For Internet Explorer and Edge */
 		&::-webkit-scrollbar {
@@ -492,206 +507,6 @@
 
 					&:hover {
 						background: var(--bg-color-light);
-					}
-				}
-			}
-
-			.options-container {
-				position: relative;
-				display: flex;
-				flex-direction: column;
-				height: 50px;
-				padding: 5px 2px 5px 7px;
-				border-radius: 50%;
-				overflow: hidden;
-				transition: all 0.3s ease;
-				cursor: pointer;
-
-				p {
-					margin: auto 0;
-					text-align: center;
-					color: var(--text-color);
-					user-select: none;
-					cursor: inherit;
-				}
-
-				.chosen-model-p {
-					margin: auto 0;
-					font-size: 18px;
-					cursor: inherit;
-				}
-			}
-
-			.choose-llm-model-container {
-				position: fixed;
-				left: 70px;
-				height: max-content;
-				width: max-content;
-				border-radius: 10px !important;
-				display: flex;
-				flex-direction: column;
-				transition: all 0.3s ease;
-				cursor: pointer;
-				background: var(--bg-color);
-
-				.chosen-llm {
-					flex-direction: row;
-					gap: 5px;
-					border-radius: 10px !important;
-					// padding: 5px 15px;
-
-					.dropdown-icon {
-						margin: auto;
-						width: 25px;
-						height: 25px;
-						transform: translateY(2px);
-					}
-				}
-
-				.llm-dropdown-container {
-					position: absolute;
-					top: 110%;
-					border: 1px solid var(--bg-color-dark);
-					background: var(--bg-color);
-					box-shadow:
-						0 0 #0000,
-						0 0 #0000,
-						0 9px 9px 0px rgba(0, 0, 0, 0.01),
-						0 2px 5px 0px rgba(0, 0, 0, 0.06);
-					border-radius: 10px;
-					display: flex;
-					gap: 5px;
-					flex-direction: column;
-					z-index: inherit;
-					padding: 10px;
-					box-sizing: border-box;
-					min-width: 300px;
-					max-width: calc(100vw - 40px);
-					max-height: calc(100vh - 180px);
-					cursor: default;
-					overflow-y: auto;
-					scrollbar-width: none; /* For Firefox */
-					-ms-overflow-style: none; /* For Internet Explorer and Edge */
-					&::-webkit-scrollbar {
-						/* For Chrome, Safari, and Opera */
-						display: none;
-					}
-
-					.llm-options {
-						display: flex;
-						flex-direction: column; /* Change to column for a list layout */
-						min-height: 62px; /* Set a fixed height for uniformity */
-						width: 100%; /* Ensure full width for each option */
-						overflow: hidden;
-						transition: all 0.3s ease;
-						gap: 2px;
-						box-sizing: border-box; /* Include padding and border in the element's total width and height */
-
-						.record {
-							display: flex;
-							gap: 8px;
-							margin: auto;
-							align-items: center;
-							width: 100%;
-							height: 100%;
-							// padding: 5px 6px;
-							border-radius: 10px;
-							color: var(--text-color);
-							cursor: pointer;
-							box-sizing: border-box;
-
-							&:hover {
-								background: var(--bg-color-light-alt);
-							}
-
-							p {
-								display: flex;
-								gap: 5px;
-								flex-direction: column;
-								margin: 0;
-								padding: 4px 0;
-								width: 150px;
-
-								.pricing {
-									display: flex;
-									gap: 10px;
-									width: 100%; /* Change to 100% to allow wrapping */
-									flex-wrap: wrap;
-									column-gap: 10px; /* Horizontal gap between items on the same line */
-									row-gap: 2px; /* Vertical gap between wrapped lines */
-
-									span {
-										text-align: left;
-										color: var(--text-color-light);
-										font-size: 12px;
-										white-space: nowrap; /* Prevent text from wrapping within the span */
-									}
-								}
-							}
-
-							.legacy {
-								border-radius: 20px;
-								border: 1px solid var(--text-color-light);
-								background: var(--bg-color-light);
-								padding: 4px 8px;
-								color: var(--text-color);
-
-								p {
-									width: max-content;
-									font-size: 10px;
-									color: var(--text-color-light);
-								}
-							}
-
-							.icon {
-								margin-left: 5px;
-								width: 26px;
-								height: 26px;
-							}
-
-							.image {
-								width: 20px;
-								height: 20px;
-							}
-
-							.selected-container {
-								width: 20px;
-								height: 20px;
-
-								.selected {
-									width: inherit;
-									height: inherit;
-									padding: 2px;
-									box-sizing: border-box;
-									border-radius: 50%;
-									background: var(--text-color);
-								}
-							}
-						}
-					}
-
-					.toggles-container {
-						display: grid;
-						grid-template-columns: repeat(2, 1fr);
-						gap: 25px;
-						border-top: 1px solid var(--bg-color-dark);
-						margin-top: 5px;
-						padding: 10px;
-						padding-top: 15px;
-
-						.toggle {
-							display: flex;
-
-							p {
-								margin: auto 0;
-								font-size: 14px;
-								color: var(--text-color);
-							}
-
-							.switch {
-								margin: auto 0 auto auto;
-							}
-						}
 					}
 				}
 			}
@@ -766,6 +581,214 @@
 							font-size: 24px;
 							font-weight: 400;
 							color: var(--bg-color);
+						}
+					}
+				}
+			}
+		}
+	}
+	.llm-dropdown-container-wrapper {
+		position: absolute;
+		left: 70px; // Position relative to viewport
+		top: 10px; // Adjust based on your trigger position
+		z-index: 10002; // Higher than sidebar
+		height: max-content;
+		width: max-content;
+		display: flex;
+
+		.choose-llm-model-container {
+			position: relative;
+			display: flex;
+			border-radius: 10px !important;
+			flex-direction: column;
+			transition: all 0.3s ease;
+			cursor: pointer;
+			background: var(--bg-color);
+
+			.options-container {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				height: 50px;
+				padding: 5px 2px 5px 7px;
+				border-radius: 50%;
+				overflow: hidden;
+				transition: all 0.3s ease;
+				cursor: pointer;
+
+				p {
+					margin: auto 0;
+					text-align: center;
+					color: var(--text-color);
+					user-select: none;
+					cursor: inherit;
+				}
+
+				.chosen-model-p {
+					margin: auto 0;
+					font-size: 18px;
+					cursor: inherit;
+				}
+			}
+
+			.chosen-llm {
+				flex-direction: row;
+				gap: 5px;
+				border-radius: 10px !important;
+				// padding: 5px 15px;
+
+				.dropdown-icon {
+					margin: auto;
+					width: 25px;
+					height: 25px;
+					transform: translateY(2px);
+				}
+			}
+
+			.llm-dropdown-container {
+				position: absolute;
+				top: 110%;
+				border: 1px solid var(--bg-color-dark);
+				background: var(--bg-color);
+				box-shadow:
+					0 0 #0000,
+					0 0 #0000,
+					0 9px 9px 0px rgba(0, 0, 0, 0.01),
+					0 2px 5px 0px rgba(0, 0, 0, 0.06);
+				border-radius: 10px;
+				display: flex;
+				gap: 5px;
+				flex-direction: column;
+				z-index: inherit;
+				padding: 10px;
+				box-sizing: border-box;
+				min-width: 300px;
+				max-width: calc(100vw - 40px);
+				max-height: calc(100vh - 180px);
+				cursor: default;
+				overflow-y: auto;
+				scrollbar-width: none; /* For Firefox */
+				-ms-overflow-style: none; /* For Internet Explorer and Edge */
+				&::-webkit-scrollbar {
+					/* For Chrome, Safari, and Opera */
+					display: none;
+				}
+
+				.llm-options {
+					display: flex;
+					flex-direction: column; /* Change to column for a list layout */
+					min-height: 62px; /* Set a fixed height for uniformity */
+					width: 100%; /* Ensure full width for each option */
+					overflow: hidden;
+					transition: all 0.3s ease;
+					gap: 2px;
+					box-sizing: border-box; /* Include padding and border in the element's total width and height */
+
+					.record {
+						display: flex;
+						gap: 8px;
+						margin: auto;
+						padding: 0px 5px;
+						align-items: center;
+						width: 100%;
+						height: 100%;
+						min-height: 60px;
+						// padding: 5px 6px;
+						border-radius: 10px;
+						color: var(--text-color);
+						cursor: pointer;
+						box-sizing: border-box;
+
+						&:hover {
+							background: var(--bg-color-light-alt);
+						}
+
+						p {
+							display: flex;
+							gap: 5px;
+							flex-direction: column;
+							margin: 0;
+							padding: 4px 0;
+							width: 150px;
+
+							.pricing {
+								display: flex;
+								gap: 10px;
+								width: 100%; /* Change to 100% to allow wrapping */
+								flex-wrap: wrap;
+								column-gap: 10px; /* Horizontal gap between items on the same line */
+								row-gap: 2px; /* Vertical gap between wrapped lines */
+
+								span {
+									text-align: left;
+									color: var(--text-color-light);
+									font-size: 12px;
+									white-space: nowrap; /* Prevent text from wrapping within the span */
+								}
+							}
+						}
+
+						.legacy {
+							border-radius: 20px;
+							border: 1px solid var(--text-color-light);
+							background: var(--bg-color-light);
+							padding: 4px 8px;
+							color: var(--text-color);
+
+							p {
+								width: max-content;
+								font-size: 10px;
+								color: var(--text-color-light);
+							}
+						}
+
+						.icon {
+							margin-left: 5px;
+							width: 26px;
+							height: 26px;
+						}
+
+						.image {
+							width: 20px;
+							height: 20px;
+						}
+
+						.selected-container {
+							width: 20px;
+							height: 20px;
+
+							.selected {
+								width: inherit;
+								height: inherit;
+								padding: 2px;
+								box-sizing: border-box;
+								border-radius: 50%;
+								background: var(--text-color);
+							}
+						}
+					}
+				}
+
+				.toggles-container {
+					display: grid;
+					grid-template-columns: repeat(2, 1fr);
+					gap: 25px;
+					border-top: 1px solid var(--bg-color-dark);
+					margin-top: 5px;
+					padding: 10px;
+					padding-top: 15px;
+
+					.toggle {
+						display: flex;
+
+						p {
+							margin: auto 0;
+							font-size: 14px;
+							color: var(--text-color);
+						}
+
+						.switch {
+							margin: auto 0 auto auto;
 						}
 					}
 				}

@@ -223,6 +223,7 @@
 	const handleResize = () => {
 		windowWidth = window.innerWidth;
 		isLargeScreen = windowWidth > 810;
+		if (isLargeScreen) mobileSidebarOpen = false;
 	};
 
 	async function handleCountTokens(fullPrompt: Message[] | string, chosenModel: Model) {
