@@ -48,11 +48,6 @@
 				};
 		}
 	}
-
-	$: {
-		console.log($chatHistory.length);
-		console.log($numberPrevMessages);
-	}
 </script>
 
 <div

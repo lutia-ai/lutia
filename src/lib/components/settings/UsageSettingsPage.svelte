@@ -83,8 +83,6 @@
 
 			const data = await response.json();
 			usageData = processData(data.apiRequests);
-			console.log('usageData: ', usageData);
-			console.log('data.apiRequests: ', data.apiRequests);
 		} catch (err) {
 			console.error('Error retrieving usage details: ', err);
 		}

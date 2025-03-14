@@ -97,32 +97,6 @@ export async function POST({ request, locals }) {
 			}
 		}
 
-		// Simple token estimation function (replace with more accurate if available)
-		const estimateTokens = (text: string) => Math.ceil(text.length / 4);
-		let inputTokenEstimate = 0;
-		for (const message of messages) {
-			if (typeof message.content === 'string') {
-				inputTokenEstimate += estimateTokens(message.content);
-			}
-		}
-
-		// Model constraints
-		const max_tokens = model.max_tokens ? model.max_tokens : 4096;
-
-		// Calculate available tokens for output (including thinking)
-		const availableOutputTokens = Math.max(0, 65536 - inputTokenEstimate);
-
-		// Adjust thinking budget dynamically
-		const thinkingBudget = reasoningOn
-			? Math.min(45000, Math.floor(availableOutputTokens * 0.9)) // Lower from 60000
-			: 0;
-
-		// Calculate max_tokens respecting the model's limits
-		// When thinking is enabled, max_tokens must be > thinking budget
-		const totalMaxTokens =
-			reasoningOn && model.reasons
-				? Math.min(thinkingBudget + 4000, availableOutputTokens)
-				: Math.min(max_tokens, availableOutputTokens);
 
 		// Ensure first message has 'user' role by removing leading non-user messages
 		while (userMessages.length > 0 && userMessages[0].role !== 'user') {
@@ -134,6 +108,11 @@ export async function POST({ request, locals }) {
 			throw error(400, 'No user messages found. The first message must use the user role.');
 		}
 
+        const budget_tokens = 16000
+        const max_tokens = (reasoningOn && model.reasons) 
+            ? (model.max_tokens! + budget_tokens) 
+            : model.max_tokens!;
+
 		const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
 		const stream = await client.messages.stream({
 			// Include system parameter only if we have a system message
@@ -141,12 +120,12 @@ export async function POST({ request, locals }) {
 			// @ts-ignore
 			messages: messages,
 			model: model.param,
-			max_tokens: totalMaxTokens,
+			max_tokens: max_tokens,
 			...(reasoningOn && model.reasons
 				? {
 						thinking: {
 							type: 'enabled',
-							budget_tokens: thinkingBudget
+							budget_tokens
 						}
 					}
 				: {})
