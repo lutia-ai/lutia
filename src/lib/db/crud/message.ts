@@ -94,3 +94,20 @@ export async function deleteAllUserMessagesWithoutAConversation(userId: number):
 		await prisma.$disconnect();
 	}
 }
+
+export async function updateMessage(
+	id: number,
+	updatedData: Partial<Omit<Message, 'id' | 'pictures'>> & { pictures?: Image[] }
+): Promise<Message> {
+	try {
+		const updatedMessage = await prisma.message.update({
+			where: { id },
+			data: updatedData
+		});
+		console.log('Message updated successfully');
+		return updatedMessage;
+	} catch (error) {
+		console.error('Error updating Message entry:', error);
+		throw error;
+	}
+}

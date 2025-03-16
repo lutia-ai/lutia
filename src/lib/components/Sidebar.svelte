@@ -24,11 +24,7 @@
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
 	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
 	import { modelLogos } from '$lib/modelLogos';
-	import {
-		clearChatHistory,
-		formatModelEnumToReadable,
-		saveUserSettings
-	} from '$lib/chatHistory';
+	import { clearChatHistory, formatModelEnumToReadable } from '$lib/chatHistory';
 	import ImageIcon from './icons/ImageIcon.svelte';
 	import LightningIcon from './icons/LightningIcon.svelte';
 	import LightningReasoningIcon from './icons/LightningReasoningIcon.svelte';
@@ -47,7 +43,7 @@
 	export let conversationsOpen: boolean = false; // Add two-way binding for conversations sidebar
 	export let contextWindowOpen: boolean = false;
 	export let fullPrompt: Message[] | string;
-    export let conversationId: string;
+	export let conversationId: string;
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
@@ -362,13 +358,13 @@
 					tabindex="0"
 					on:click|stopPropagation={() => {
 						chatHistory.set([]);
-                        conversationId = 'new';
+						conversationId = 'new';
 						goto('/chat/new', { replaceState: true });
 					}}
 					on:keydown|stopPropagation={(e) => {
 						if (e.key === 'Enter') {
 							chatHistory.set([]);
-                            conversationId = 'new';
+							conversationId = 'new';
 							goto('/chat/new', { replaceState: true });
 						}
 					}}
@@ -453,7 +449,6 @@
 </div>
 
 <style lang="scss">
-
 	* {
 		font-family:
 			ui-sans-serif,

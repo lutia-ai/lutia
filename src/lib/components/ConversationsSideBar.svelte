@@ -374,7 +374,7 @@
 
 <style lang="scss">
 	::-webkit-scrollbar {
-        width: 5px;
+		width: 5px;
 	}
 
 	/* Scrollbar handle */

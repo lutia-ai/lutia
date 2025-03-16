@@ -225,3 +225,26 @@ export interface GptTokenUsage {
 	completion_tokens: number;
 	total_tokens: number;
 }
+
+export interface CreateMessageData {
+	prompt: string;
+	response: string;
+	pictures: Image[];
+	reasoning?: string;
+	referencedMessageIds?: number[];
+}
+
+export interface CreateApiRequestData {
+	userId: number;
+	apiProvider: ApiProvider;
+	apiModel: ApiModel;
+	inputTokens: number;
+	inputCost: number;
+	outputTokens: number;
+	outputCost: number;
+	totalCost: number;
+	requestId: string;
+	status: ApiRequestStatus;
+	conversationId?: number;
+	error?: string;
+}

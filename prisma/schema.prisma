@@ -1,155 +1,172 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+    provider      = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 enum ApiProvider {
-  openAI
-  anthropic
-  google
-  meta
-  xAI
-  deepSeek
+    openAI
+    anthropic
+    google
+    meta
+    xAI
+    deepSeek
 }
 
 enum ApiModel {
-  GPT_4_5_preview
-  GPT_o1
-  GPT_o1_preview
-  GPT_o1_mini
-  GPT_o3_mini
-  GPT_4o
-  GPT_4o_mini
-  GPT_4_Turbo
-  GPT_4
-  GPT_3_5_Turbo
-  DALL_E
-  Claude_3_7_Sonnet
-  Claude_3_5_Sonnet
-  Claude_3_5_Haiku
-  Claude_3_Opus
-  Claude_3_Sonnet
-  Claude_3_Haiku
-  Gemini_1_5_Pro
-  Gemini_1_5_Flash
-  Gemini_1_0_Pro
-  Gemini_2_0_Flash
-  Gemini_2_0_Flash_Lite
-  Llama_3_2_90b_Vision
-  Grok_beta
-  Grok_2
-  Grok_2_vision
-  R1
-  V3
+    GPT_4_5_preview
+    GPT_o1
+    GPT_o1_preview
+    GPT_o1_mini
+    GPT_o3_mini
+    GPT_4o
+    GPT_4o_mini
+    GPT_4_Turbo
+    GPT_4
+    GPT_3_5_Turbo
+    DALL_E
+    Claude_3_7_Sonnet
+    Claude_3_5_Sonnet
+    Claude_3_5_Haiku
+    Claude_3_Opus
+    Claude_3_Sonnet
+    Claude_3_Haiku
+    Gemini_1_5_Pro
+    Gemini_1_5_Flash
+    Gemini_1_0_Pro
+    Gemini_2_0_Flash
+    Gemini_2_0_Flash_Lite
+    Llama_3_2_90b_Vision
+    Grok_beta
+    Grok_2
+    Grok_2_vision
+    R1
+    V3
 }
 
 enum PaymentTier {
-  PayAsYouGo
-  Premium
+    PayAsYouGo
+    Premium
+}
+
+enum ApiRequestStatus {
+    PENDING
+    COMPLETED
+    FAILED
+    ABORTED
 }
 
 model User {
-  id                   Int            @id @default(autoincrement())
-  email                String         @unique
-  name                 String
-  password_hash        String?
-  oauth                String?
-  oauth_link_token     String?
-  reset_password_token String?
-  reset_expiration     DateTime?
-  stripe_id            String?
-  email_verified       Boolean?       @default(false)
-  email_code           Int?
-  payment_tier         PaymentTier    @default(PayAsYouGo)
-  premium_until        DateTime?
-  requests             ApiRequest[]
-  balance              Balance?
-  user_settings        UserSettings?
-  folders              Folder[]
-  conversations        Conversation[]
-  @@map("users")
+    id                   Int            @id @default(autoincrement())
+    email                String         @unique
+    name                 String
+    password_hash        String?
+    oauth                String?
+    oauth_link_token     String?
+    reset_password_token String?
+    reset_expiration     DateTime?
+    stripe_id            String?
+    email_verified       Boolean?       @default(false)
+    email_code           Int?
+    payment_tier         PaymentTier    @default(PayAsYouGo)
+    premium_until        DateTime?
+    requests             ApiRequest[]
+    balance              Balance?
+    user_settings        UserSettings?
+    folders              Folder[]
+    conversations        Conversation[]
+
+    @@map("users")
 }
 
 model UserSettings {
-  id                         Int     @id @default(autoincrement())
-  user_id                    Int     @unique
-  user                       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  company_menu_open          Boolean @default(true)
-  prompt_pricing_visible     Boolean @default(true)
-  show_context_window_button Boolean @default(true)
-  context_window             Int     @default(0)
-  @@map("user_settings")
+    id                         Int     @id @default(autoincrement())
+    user_id                    Int     @unique
+    user                       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    company_menu_open          Boolean @default(true)
+    prompt_pricing_visible     Boolean @default(true)
+    show_context_window_button Boolean @default(true)
+    context_window             Int     @default(0)
+
+    @@map("user_settings")
 }
 
 model Message {
-  id                 Int         @id @default(autoincrement())
-  prompt             String
-  response           String
-  pictures           Json?
-  reasoning          String?
-  referencedMessages Message[]   @relation("MessageReferences")
-  referencedBy       Message[]   @relation("MessageReferences")
-  apiRequest         ApiRequest?
-  created_at         DateTime    @default(now())
-  @@map("messages")
+    id                 Int         @id @default(autoincrement())
+    prompt             String
+    response           String
+    pictures           Json?
+    reasoning          String?
+    referencedMessages Message[]   @relation("MessageReferences")
+    referencedBy       Message[]   @relation("MessageReferences")
+    apiRequest         ApiRequest?
+    created_at         DateTime    @default(now())
+
+    @@map("messages")
 }
 
 model ApiRequest {
-  id                Int           @id @default(autoincrement())
-  user              User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id           Int
-  api_provider      ApiProvider
-  api_model         ApiModel
-  request_timestamp DateTime      @default(now())
-  input_tokens      Int
-  input_cost        Decimal       @db.Decimal(15, 10)
-  output_tokens     Int
-  output_cost       Decimal       @db.Decimal(15, 10)
-  total_cost        Decimal       @db.Decimal(15, 10)
-  message           Message?      @relation(fields: [message_id], references: [id])
-  message_id        Int?          @unique
-  conversation_id   String?
-  conversation      Conversation? @relation(fields: [conversation_id], references: [id])
-  @@map("api_requests")
+    id                Int              @id @default(autoincrement())
+    request_id        String?          @unique
+    user              User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    user_id           Int
+    api_provider      ApiProvider
+    api_model         ApiModel
+    request_timestamp DateTime         @default(now())
+    input_tokens      Int
+    input_cost        Decimal          @db.Decimal(15, 10)
+    output_tokens     Int
+    output_cost       Decimal          @db.Decimal(15, 10)
+    total_cost        Decimal          @db.Decimal(15, 10)
+    status            ApiRequestStatus?
+    message           Message?         @relation(fields: [message_id], references: [id])
+    message_id        Int?             @unique
+    error             String?
+    conversation_id   String?
+    conversation      Conversation?    @relation(fields: [conversation_id], references: [id])
+
+    @@map("api_requests")
 }
 
 model Balance {
-  id      Int   @id @default(autoincrement())
-  amount  Float @default(0)
-  user    User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id Int   @unique
-  @@map("balances")
+    id      Int   @id @default(autoincrement())
+    amount  Float @default(0)
+    user    User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    user_id Int   @unique
+
+    @@map("balances")
 }
 
 model Folder {
-  id            Int            @id @default(autoincrement())
-  name          String
-  user          User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id       Int
-  parent_folder Folder?        @relation("FolderHierarchy", fields: [parent_id], references: [id], onDelete: Cascade)
-  parent_id     Int?
-  subfolders    Folder[]       @relation("FolderHierarchy")
-  conversations Conversation[]
-  created_at    DateTime       @default(now())
-  updated_at    DateTime       @updatedAt
-  @@map("folders")
+    id            Int            @id @default(autoincrement())
+    name          String
+    user          User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    user_id       Int
+    parent_folder Folder?        @relation("FolderHierarchy", fields: [parent_id], references: [id], onDelete: Cascade)
+    parent_id     Int?
+    subfolders    Folder[]       @relation("FolderHierarchy")
+    conversations Conversation[]
+    created_at    DateTime       @default(now())
+    updated_at    DateTime       @updatedAt
+
+    @@map("folders")
 }
 
 model Conversation {
-  id           String       @id @default(uuid())
-  title        String
-  user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id      Int
-  folder       Folder?      @relation(fields: [folder_id], references: [id], onDelete: SetNull)
-  folder_id    Int?
-  api_requests ApiRequest[]
-  created_at   DateTime     @default(now())
-  updated_at   DateTime     @updatedAt
-  last_message DateTime     @default(now())
-  @@map("conversations")
+    id           String       @id @default(uuid())
+    title        String
+    user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    user_id      Int
+    folder       Folder?      @relation(fields: [folder_id], references: [id], onDelete: SetNull)
+    folder_id    Int?
+    api_requests ApiRequest[]
+    created_at   DateTime     @default(now())
+    updated_at   DateTime     @updatedAt
+    last_message DateTime     @default(now())
+
+    @@map("conversations")
 }

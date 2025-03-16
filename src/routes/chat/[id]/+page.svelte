@@ -97,7 +97,7 @@
 	let selectedModelIndex: number | null = 0;
 	let modelSearchItems: HTMLDivElement[] = [];
 	let reasoningOn: boolean = false;
-    let conversationId: string;
+	let conversationId: string;
 
 	$: {
 		if ($isContextWindowAuto) {
@@ -379,9 +379,9 @@
 				// console.log(fullPrompt);
 
 				// Get conversationId from slug parameter
-                if (!conversationId || conversationId === 'new') {
-                    conversationId = $page.params.id;
-                }
+				if (!conversationId || conversationId === 'new') {
+					conversationId = $page.params.id;
+				}
 
 				// UUID validation function
 				const isValidUUID = (uuid: string) => {
@@ -433,9 +433,10 @@
 				});
 
 				if (!response.ok) {
+					const errorData = await response.clone().json();
 					prompt = $chatHistory[$chatHistory.length - 2].text;
 					chatHistory.update((history) => history.slice(0, -2));
-					const errorData = await response.json();
+					// Clone the response so that we can safely read it as JSON
 					if (errorData.message === 'Insufficient balance') {
 						errorPopup.showError(
 							errorData.message,
@@ -453,9 +454,13 @@
 					throw new Error('Response body is null');
 				}
 
+				let inputPrice: number = 0;
+				let outputPrice: number = 0;
+
 				if (chosenModel.generatesImages) {
 					const data = await response.json();
 					const base64ImageData = data.image;
+					outputPrice = data.outputPrice;
 					// Update only the AI's response in chat history
 					chatHistory.update((history) =>
 						history.map((msg, index) =>
@@ -473,6 +478,8 @@
 												ai: true
 											}
 										],
+										input_cost: inputPrice,
+										output_cost: outputPrice,
 										loading: false
 									}
 								: msg
@@ -487,8 +494,6 @@
 				let reasoningText = '';
 				let responseComponents: Component[] = [];
 				let reasoningComponent: ReasoningComponent;
-				let inputPrice: number = 0;
-				let outputPrice: number = 0;
 
 				while (true) {
 					const { value, done } = await reader.read();
@@ -516,16 +521,17 @@
 							} else if (data.type === 'usage') {
 								inputPrice = data.usage.inputPrice;
 								outputPrice = data.usage.outputPrice;
-							} else if (data.type === 'conversation_id') {
+							} else if (data.type === 'request_info') {
 								// Update the URL without reloading the page
 								const url = new URL(window.location.href);
 								url.pathname = `/chat/${data.id}`;
 
 								// This updates the URL without causing a page reload
 								pushState(url.toString(), {});
-								conversationId = data.id;
+								conversationId = data.conversation_id;
 							} else if (data.type === 'error') {
 								console.error(data.message);
+                                errorPopup.showError(data.message, null, 5000, 'error');
 							}
 
 							chatHistory.update((history) =>
@@ -790,21 +796,6 @@
 		}, 100);
 		mounted = true;
 	});
-
-	// This reactive statement will update chatHistory whenever data.apiRequests changes
-	// (including when navigating between different conversation IDs)
-	$: {
-		if (data.apiRequests) {
-			Promise.resolve(data.apiRequests).then((apiRequests) => {
-				chatHistory.set(loadChatHistory(apiRequests as SerializedApiRequest[]));
-
-				// If the component is mounted, update the UI and scroll to bottom
-				if (mounted) {
-					setTimeout(scrollToBottom, 100);
-				}
-			});
-		}
-	}
 </script>
 
 <svelte:head>
@@ -849,7 +840,7 @@
 						user={data.user}
 						userImage={data.userImage}
 						{fullPrompt}
-                        bind:conversationId
+						bind:conversationId
 					/>
 				{:else if !mobileSidebarOpen}
 					<div class="floating-sidebar">

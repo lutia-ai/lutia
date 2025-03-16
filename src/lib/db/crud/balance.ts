@@ -1,4 +1,4 @@
-import { UserNotFoundError } from '$lib/customErrors';
+import { InsufficientBalanceError, UserNotFoundError } from '$lib/customErrors';
 import type { PrismaClient } from '@prisma/client';
 import prisma from '$lib/prisma';
 
@@ -46,9 +46,9 @@ export async function updateUserBalanceWithDeduction(
 	deductionAmount: number
 ): Promise<number> {
 	try {
-        if (isNaN(deductionAmount) || deductionAmount <= 0) {
-            throw new Error(`Invalid deduction amount: ${deductionAmount}`);
-        }
+		if (isNaN(deductionAmount) || deductionAmount <= 0) {
+			throw new Error(`Invalid deduction amount: ${deductionAmount}`);
+		}
 		const updatedBalanceRecord = await prisma.balance.update({
 			where: { user_id: userId },
 			data: {
@@ -67,6 +67,29 @@ export async function updateUserBalanceWithDeduction(
 			throw new Error('An unknown error occurred');
 		}
 	}
+}
+
+export async function deductAndCheckBalance(userId: number, amount: number) {
+	// Use a database transaction to lock the balance
+	return await prisma.$transaction(async (tx) => {
+		const balanceRecord = await prisma.balance.findUnique({
+			where: { user_id: userId }
+		});
+
+		if (!balanceRecord) {
+			throw new UserNotFoundError(userId);
+		}
+
+		if (balanceRecord.amount - amount < 0.1) {
+			throw new InsufficientBalanceError();
+		}
+
+		// Update balance BEFORE processing the request
+		return await tx.balance.update({
+			where: { user_id: userId },
+			data: { amount: { decrement: amount } }
+		});
+	});
 }
 
 export async function updateUserBalanceWithIncrement(
