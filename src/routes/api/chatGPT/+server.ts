@@ -180,6 +180,16 @@ export async function POST({ request, locals }) {
 			}
 		}
 
+        // Ensure first message has 'user' role by removing leading non-user messages
+		while (messages.length > 0 && messages[0].role !== 'user') {
+			messages.shift();
+		}
+
+		// If no user messages remain, throw error
+		if (messages.length === 0) {
+			throw error(400, 'No user messages found. The first message must use the user role.');
+		}
+
 		// Add developer message at the start of messages array if the model is o1 or o3 mini
 		if (model.name === ApiModel.GPT_o1 || model.name === ApiModel.GPT_o3_mini) {
 			messages.unshift({
