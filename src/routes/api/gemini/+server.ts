@@ -1,26 +1,20 @@
 import { error } from '@sveltejs/kit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Message, Model, Image, GeminiImage, GptTokenUsage } from '$lib/types.d';
-import { createApiRequestEntry, createMessageAndApiRequestEntry } from '$lib/db/crud/apiRequest';
 import {
 	ApiModel,
 	ApiProvider,
-	ApiRequestStatus,
 	PaymentTier,
 	type Message as MessageEntity,
 	type User
 } from '@prisma/client';
-import { createMessage } from '$lib/db/crud/message';
-import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
+import { retrieveUsersBalance } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import {
 	createConversation,
-	updateConversation,
-	updateConversationLastMessage
 } from '$lib/db/crud/conversation.js';
-import { generateConversationTitle } from '$lib/utils/titleGenerator.js';
 import { isValidMessageArray } from '$lib/utils/typeGuards';
 import { getModelFromName } from '$lib/utils/modelConverter';
 import { finalizeResponse } from '$lib/utils/responseFinalizer';
@@ -44,7 +38,7 @@ export async function POST({ request, locals }) {
 		let geminiImage: GeminiImage | undefined = undefined;
 		const user: User = await retrieveUserByEmail(session.user!.email);
 		let messageConversationId = conversationId;
-		let error: any;
+		let errorMessage: any;
 
 		if (!isValidMessageArray(rawMessages)) {
 			throw error(400, 'Invalid messages array');
@@ -252,7 +246,7 @@ export async function POST({ request, locals }) {
 						clientDisconnected = true;
 					}
 				} catch (err) {
-					error = err;
+					errorMessage = err;
 					console.error(error);
 					try {
 						controller.enqueue(
@@ -260,8 +254,8 @@ export async function POST({ request, locals }) {
 								JSON.stringify({
 									type: 'error',
 									message:
-										error?.error?.error?.message ||
-										error?.message ||
+                                        errorMessage?.error?.error?.message ||
+										errorMessage?.message ||
 										'Unknown error occurred'
 								}) + '\n'
 							)
@@ -281,7 +275,7 @@ export async function POST({ request, locals }) {
 							thinkingChunks,
 							finalUsage,
 							wasAborted: clientDisconnected,
-							error,
+							error: errorMessage,
 							requestId,
 							messageConversationId,
 							originalConversationId: conversationId,

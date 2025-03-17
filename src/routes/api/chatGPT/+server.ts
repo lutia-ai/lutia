@@ -17,7 +17,6 @@ import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import {
 	createConversation,
-	updateConversation,
 	updateConversationLastMessage
 } from '$lib/db/crud/conversation.js';
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
@@ -45,7 +44,7 @@ export async function POST({ request, locals }) {
 		const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
 		const user: User = await retrieveUserByEmail(session.user!.email);
 		let messageConversationId = conversationId;
-		let error: any;
+		let errorMessage: any;
 
 		if (!isValidMessageArray(rawMessages)) {
 			throw error(400, 'Invalid messages array');
@@ -133,7 +132,7 @@ export async function POST({ request, locals }) {
 					requestId: requestId,
 					status: ApiRequestStatus.COMPLETED,
 					conversationId: messageConversationId,
-					error: error
+					error: errorMessage
 				}
 			);
 			console.log('API Request created:', apiRequest);
@@ -338,7 +337,7 @@ export async function POST({ request, locals }) {
 						}
 					}
 				} catch (err) {
-					error = err;
+					errorMessage = err;
 					console.error(error);
 					try {
 						controller.enqueue(
@@ -346,8 +345,8 @@ export async function POST({ request, locals }) {
 								JSON.stringify({
 									type: 'error',
 									message:
-										error?.error?.error?.message ||
-										error?.message ||
+                                        errorMessage?.error?.error?.message ||
+										errorMessage?.message ||
 										'Unknown error occurred'
 								}) + '\n'
 							)
@@ -367,7 +366,7 @@ export async function POST({ request, locals }) {
 							thinkingChunks,
 							finalUsage,
 							wasAborted: clientDisconnected,
-							error,
+							error: errorMessage,
 							requestId,
 							messageConversationId,
 							originalConversationId: conversationId,

@@ -2,8 +2,7 @@ import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import type { Message, Model, Image, ChatGPTImage, GptTokenUsage } from '$lib/types.d';
 import { calculateGptVisionPricing, countTokens } from '$lib/tokenizer';
-import { createApiRequestEntry, createMessageAndApiRequestEntry } from '$lib/db/crud/apiRequest';
-import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
+import { retrieveUsersBalance } from '$lib/db/crud/balance';
 import {
 	ApiModel,
 	ApiProvider,
@@ -18,10 +17,7 @@ import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import {
 	createConversation,
-	updateConversation,
-	updateConversationLastMessage
 } from '$lib/db/crud/conversation';
-import { generateConversationTitle } from '$lib/utils/titleGenerator';
 import { isValidMessageArray } from '$lib/utils/typeGuards';
 import { getModelFromName } from '$lib/utils/modelConverter';
 import { finalizeResponse } from '$lib/utils/responseFinalizer';
@@ -45,7 +41,7 @@ export async function POST({ request, locals }) {
 		let gptImages: ChatGPTImage[] = [];
 		const user: User = await retrieveUserByEmail(session.user!.email);
 		let messageConversationId = conversationId;
-		let error: any;
+		let errorMessage: any;
 
 		if (!isValidMessageArray(rawMessages)) {
 			throw error(400, 'Invalid messages array');
@@ -272,7 +268,7 @@ export async function POST({ request, locals }) {
 						}
 					}
 				} catch (err) {
-					error = err;
+					errorMessage = err;
 					console.error(error);
 					try {
 						controller.enqueue(
@@ -280,8 +276,8 @@ export async function POST({ request, locals }) {
 								JSON.stringify({
 									type: 'error',
 									message:
-										error?.error?.error?.message ||
-										error?.message ||
+                                        errorMessage?.error?.error?.message ||
+										errorMessage?.message ||
 										'Unknown error occurred'
 								}) + '\n'
 							)
@@ -301,7 +297,7 @@ export async function POST({ request, locals }) {
 							thinkingChunks,
 							finalUsage,
 							wasAborted: clientDisconnected,
-							error,
+							error: errorMessage,
 							requestId,
 							messageConversationId,
 							originalConversationId: conversationId,

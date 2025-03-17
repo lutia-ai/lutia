@@ -2,19 +2,14 @@ import { error } from '@sveltejs/kit';
 import Anthropic from '@anthropic-ai/sdk';
 import type { Message, Model, Image, ClaudeImage, GptTokenUsage } from '$lib/types.d';
 import { calculateClaudeImageCost, countTokens } from '$lib/tokenizer';
-import { createMessageAndApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import { retrieveUsersBalance, updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
+import { retrieveUsersBalance } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
-import { ApiModel, ApiProvider, ApiRequestStatus, PaymentTier, type User } from '@prisma/client';
+import { ApiModel, ApiProvider, PaymentTier, type User } from '@prisma/client';
 import {
 	createConversation,
-	updateConversation,
-	updateConversationLastMessage
 } from '$lib/db/crud/conversation';
-import { generateConversationTitle } from '$lib/utils/titleGenerator';
-import { estimateTokenCount } from '$lib/utils/tokenCounter';
 import { getModelFromName } from '$lib/utils/modelConverter';
 import { isValidMessageArray } from '$lib/utils/typeGuards';
 import { finalizeResponse } from '$lib/utils/responseFinalizer';
@@ -38,7 +33,7 @@ export async function POST({ request, locals }) {
 		let claudeImages: ClaudeImage[] = [];
 		const user: User = await retrieveUserByEmail(session.user!.email);
 		let messageConversationId: string = conversationId;
-		let error: any;
+		let errorMessage: any;
 
 		if (!isValidMessageArray(rawMessages)) {
 			throw error(400, 'Invalid messages array');
@@ -287,7 +282,7 @@ export async function POST({ request, locals }) {
 						}
 					}
 				} catch (err) {
-					error = err;
+					errorMessage = err;
 					console.error(error);
 					try {
 						controller.enqueue(
@@ -295,8 +290,8 @@ export async function POST({ request, locals }) {
 								JSON.stringify({
 									type: 'error',
 									message:
-										error?.error?.error?.message ||
-										error?.message ||
+                                        errorMessage?.error?.error?.message ||
+                                        errorMessage?.message ||
 										'Unknown error occurred'
 								}) + '\n'
 							)
@@ -316,7 +311,7 @@ export async function POST({ request, locals }) {
 							thinkingChunks,
 							finalUsage,
 							wasAborted: clientDisconnected,
-							error,
+							error: errorMessage,
 							requestId,
 							messageConversationId,
 							originalConversationId: conversationId,
