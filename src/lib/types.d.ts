@@ -245,6 +245,6 @@ export interface CreateApiRequestData {
 	totalCost: number;
 	requestId: string;
 	status: ApiRequestStatus;
-	conversationId?: number;
+	conversationId?: string;
 	error?: string;
 }

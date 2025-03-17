@@ -21,6 +21,9 @@ import {
 	updateConversationLastMessage
 } from '$lib/db/crud/conversation.js';
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
+import { isValidMessageArray } from '$lib/utils/typeGuards';
+import { getModelFromName } from '$lib/utils/modelConverter';
+import { finalizeResponse } from '$lib/utils/responseFinalizer';
 
 export async function POST({ request, locals }) {
 	const requestId = crypto.randomUUID();
@@ -34,54 +37,33 @@ export async function POST({ request, locals }) {
 		const { plainTextPrompt, promptStr, modelStr, imagesStr, conversationId } =
 			await request.json();
 
-        let error: any;
-
-        if (!plainTextPrompt) {
-            throw error(400, 'Missing required parameter: plainTextPrompt');
-        }
-        
-        if (!promptStr) {
-            throw error(400, 'Missing required parameter: promptStr');
-        }
-        
-        if (!modelStr) {
-            throw error(400, 'Missing required parameter: modelStr');
-        }
-        
-        if (!imagesStr) {
-            throw error(400, 'Missing required parameter: imagesStr');
-        }
-        
-        // Now try to parse them
-        let plainText: string, model: Model, messages: Message[], images: Image[];
-        
-        try {
-            plainText = JSON.parse(plainTextPrompt);
-        } catch (e) {
-            throw error(400, 'Invalid plainTextPrompt: Unable to parse JSON');
-        }
-        
-        try {
-            model = JSON.parse(modelStr);
-        } catch (e) {
-            throw error(400, 'Invalid modelStr: Unable to parse JSON');
-        }
-        
-        try {
-            messages = JSON.parse(promptStr);
-        } catch (e) {
-            throw error(400, 'Invalid promptStr: Unable to parse JSON');
-        }
-        
-        try {
-            images = JSON.parse(imagesStr);
-        } catch (e) {
-            throw error(400, 'Invalid imagesStr: Unable to parse JSON');
-        }
+		const plainText: string = JSON.parse(plainTextPrompt);
+		const modelName: ApiModel = JSON.parse(modelStr);
+		const rawMessages: Message[] = JSON.parse(promptStr);
+		const images: Image[] = JSON.parse(imagesStr);
 		let gptImages: ChatGPTImage[] = [];
 		const openai = new OpenAI({ apiKey: env.VITE_OPENAI_API_KEY });
 		const user: User = await retrieveUserByEmail(session.user!.email);
 		let messageConversationId = conversationId;
+		let error: any;
+
+		if (!isValidMessageArray(rawMessages)) {
+			throw error(400, 'Invalid messages array');
+		}
+
+		let messages: Message[] = rawMessages;
+
+		// Convert the model name to full Model object
+		const model: Model | null = getModelFromName(modelName);
+
+		if (!model) {
+			// make sure model is not null
+			throw error(400, `Model ${modelName} not found`);
+		}
+
+		if (!plainText || !messages) {
+			throw error(400, `No prompt found`);
+		}
 
 		// Iterate through the messages array and remove empty assistant messages
 		for (let i = messages.length - 1; i >= 0; i--) {
@@ -219,7 +201,7 @@ export async function POST({ request, locals }) {
 			}
 		}
 
-        // Ensure first message has 'user' role by removing leading non-user messages
+		// Ensure first message has 'user' role by removing leading non-user messages
 		while (messages.length > 0 && messages[0].role !== 'user') {
 			messages.shift();
 		}
@@ -261,87 +243,6 @@ export async function POST({ request, locals }) {
 			console.error('Error creating stream:', err);
 			throw error(500, 'Error creating stream');
 		}
-
-		// Function to handle processing the complete response
-		const finalizeResponse = async (wasAborted = false) => {
-			try {
-				const thinkingResponse = thinkingChunks.join('');
-				const response = chunks.join('');
-
-				// Calculate tokens and costs
-				const inputTokens = finalUsage.prompt_tokens;
-				let outputTokens = finalUsage.completion_tokens;
-
-				if (wasAborted && response.length > 0) {
-					const outputGPTCount = await countTokens(
-						response + thinkingResponse,
-						model,
-						'output'
-					);
-					outputTokens = outputGPTCount.tokens;
-				}
-
-				const inputCost = (inputTokens * model.input_price) / 1000000;
-				const outputCost = (outputTokens * model.output_price) / 1000000;
-				const totalCost = inputCost + outputCost;
-
-				// Apply charges
-				if (user.payment_tier === PaymentTier.PayAsYouGo) {
-					await updateUserBalanceWithDeduction(user.id, totalCost);
-				}
-
-				// Determine status
-				const status = wasAborted
-					? ApiRequestStatus.ABORTED
-					: error
-						? ApiRequestStatus.FAILED
-						: ApiRequestStatus.COMPLETED;
-
-				// Create database records
-				const { message, apiRequest } = await createMessageAndApiRequestEntry(
-					{
-						prompt: plainText,
-						response: response,
-						pictures: images,
-						reasoning: thinkingResponse,
-						referencedMessageIds: []
-					},
-					{
-						userId: user.id,
-						apiProvider: ApiProvider.openAI,
-						apiModel: model.name,
-						inputTokens: inputTokens,
-						inputCost: inputCost,
-						outputTokens: outputTokens,
-						outputCost: outputCost,
-						totalCost: totalCost,
-						requestId: requestId,
-						status: status,
-						conversationId: messageConversationId,
-						error: error
-					}
-				);
-
-				// Only update conversation if we got a response
-				if (response.length > 0 && messageConversationId) {
-					await updateConversationLastMessage(messageConversationId);
-
-					// Generate title for new conversations
-					if (user.payment_tier === PaymentTier.Premium && !conversationId) {
-						try {
-							const title = await generateConversationTitle(plainText);
-							await updateConversation(messageConversationId, { title });
-						} catch (titleError) {
-							console.error('Error generating conversation title:', titleError);
-						}
-					}
-				}
-
-				console.log('API Request created:', apiRequest);
-			} catch (err) {
-				console.error('Error in finalizeResponse:', err);
-			}
-		};
 
 		// Create a special controller we can use to track abort state
 		const abortController = new AbortController();
@@ -456,7 +357,25 @@ export async function POST({ request, locals }) {
 						clientDisconnected = true;
 					}
 				} finally {
-					await finalizeResponse(clientDisconnected);
+					try {
+						await finalizeResponse({
+							user,
+							model,
+							plainText,
+							images,
+							chunks,
+							thinkingChunks,
+							finalUsage,
+							wasAborted: clientDisconnected,
+							error,
+							requestId,
+							messageConversationId,
+							originalConversationId: conversationId,
+							apiProvider: ApiProvider.openAI
+						});
+					} catch (err) {
+						console.error('Error in finalizeResponse:', err);
+					}
 					try {
 						controller.close();
 					} catch (closeError) {

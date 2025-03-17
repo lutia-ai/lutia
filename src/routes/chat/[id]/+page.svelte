@@ -423,7 +423,7 @@
 					body: JSON.stringify({
 						plainTextPrompt: JSON.stringify(plainText),
 						promptStr: JSON.stringify(fullPrompt),
-						modelStr: JSON.stringify(chosenModel),
+						modelStr: JSON.stringify(chosenModel.name),
 						imagesStr: JSON.stringify(imageArray),
 						...($chosenCompany === 'anthropic' ? { reasoningOn } : {}),
 						...(data.user.payment_tier === PaymentTier.Premium
@@ -524,14 +524,15 @@
 							} else if (data.type === 'request_info') {
 								// Update the URL without reloading the page
 								const url = new URL(window.location.href);
-								url.pathname = `/chat/${data.id}`;
+								url.pathname = `/chat/${data.conversation_id}`;
 
 								// This updates the URL without causing a page reload
 								pushState(url.toString(), {});
 								conversationId = data.conversation_id;
+								console.log('conversationId: ', conversationId);
 							} else if (data.type === 'error') {
 								console.error(data.message);
-                                errorPopup.showError(data.message, null, 5000, 'error');
+								errorPopup.showError(data.message, null, 5000, 'error');
 							}
 
 							chatHistory.update((history) =>
