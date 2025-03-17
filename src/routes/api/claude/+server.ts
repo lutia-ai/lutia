@@ -14,6 +14,7 @@ import {
 	updateConversationLastMessage
 } from '$lib/db/crud/conversation';
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
+import { estimateTokenCount } from '$lib/utils/tokenCounter';
 
 export async function POST({ request, locals }) {
 	const requestId = crypto.randomUUID();
@@ -163,13 +164,17 @@ export async function POST({ request, locals }) {
 				const inputTokens = finalUsage.prompt_tokens;
 				let outputTokens = finalUsage.completion_tokens;
 
-				if (wasAborted && response.length > 0) {
-					const outputGPTCount = await countTokens(
-						response + thinkingResponse,
-						model,
-						'output'
-					);
-					outputTokens = outputGPTCount.tokens;
+				if (!outputTokens) {
+					// const outputGPTCount = await countTokens(
+					// 	response + thinkingResponse,
+					// 	model,
+					// 	'output'
+					// );
+
+                    outputTokens = estimateTokenCount(response + thinkingResponse);
+					// outputTokens = outputGPTCount.tokens;
+
+                    console.log('outputTokens: ', outputTokens);
 				}
 
 				const inputCost = (inputTokens * model.input_price) / 1000000;
@@ -178,7 +183,11 @@ export async function POST({ request, locals }) {
 
 				// Apply charges
 				if (user.payment_tier === PaymentTier.PayAsYouGo) {
-					await updateUserBalanceWithDeduction(user.id, totalCost);
+                    try {
+                        await updateUserBalanceWithDeduction(user.id, totalCost);
+                    } catch (err) {
+                        console.error(err);
+                    }
 				}
 
 				// Determine status
