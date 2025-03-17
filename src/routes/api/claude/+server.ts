@@ -152,8 +152,12 @@ export async function POST({ request, locals }) {
 		// Function to handle processing the complete response
 		const finalizeResponse = async (wasAborted = false) => {
 			try {
+                console.log('wasAborted: ', wasAborted);
 				const thinkingResponse = thinkingChunks.join('');
 				const response = chunks.join('');
+
+                console.log('plainText: ', plainText);
+                console.log('response: ', response);
 
 				// Calculate tokens and costs
 				const inputTokens = finalUsage.prompt_tokens;
