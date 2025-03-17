@@ -37,10 +37,50 @@ export async function POST({ request, locals }) {
 		const { plainTextPrompt, promptStr, modelStr, imagesStr, conversationId } =
 			await request.json();
 
-		const plainText: string = JSON.parse(plainTextPrompt);
-		const model: Model = JSON.parse(modelStr);
-		let messages: Message[] = JSON.parse(promptStr);
-		const images: Image[] = JSON.parse(imagesStr);
+        let error: any;
+
+        if (!plainTextPrompt) {
+            throw error(400, 'Missing required parameter: plainTextPrompt');
+        }
+        
+        if (!promptStr) {
+            throw error(400, 'Missing required parameter: promptStr');
+        }
+        
+        if (!modelStr) {
+            throw error(400, 'Missing required parameter: modelStr');
+        }
+        
+        if (!imagesStr) {
+            throw error(400, 'Missing required parameter: imagesStr');
+        }
+        
+        // Now try to parse them
+        let plainText: string, model: Model, messages: Message[], images: Image[];
+        
+        try {
+            plainText = JSON.parse(plainTextPrompt);
+        } catch (e) {
+            throw error(400, 'Invalid plainTextPrompt: Unable to parse JSON');
+        }
+        
+        try {
+            model = JSON.parse(modelStr);
+        } catch (e) {
+            throw error(400, 'Invalid modelStr: Unable to parse JSON');
+        }
+        
+        try {
+            messages = JSON.parse(promptStr);
+        } catch (e) {
+            throw error(400, 'Invalid promptStr: Unable to parse JSON');
+        }
+        
+        try {
+            images = JSON.parse(imagesStr);
+        } catch (e) {
+            throw error(400, 'Invalid imagesStr: Unable to parse JSON');
+        }
 		let gptImages: ChatGPTImage[] = [];
 		const openai = new OpenAI({
 			apiKey: env.SECRET_DEEPSEEK_API_KEY,
@@ -48,7 +88,6 @@ export async function POST({ request, locals }) {
 		});
 		const user: User = await retrieveUserByEmail(session.user!.email);
 		let messageConversationId = conversationId;
-		let error: any;
 
 		// Filter out assistant messages with empty content (ie that are still streaming)
 		messages = messages.map((msg) => {
