@@ -10,7 +10,6 @@ import {
 	type Message as MessageEntity,
 	type User
 } from '@prisma/client';
-import { createMessage } from '$lib/db/crud/message';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';

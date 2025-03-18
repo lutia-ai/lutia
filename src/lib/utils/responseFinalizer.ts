@@ -5,6 +5,7 @@ import { updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { ApiProvider, ApiRequestStatus, PaymentTier, type User } from '@prisma/client';
 import { updateConversation, updateConversationLastMessage } from '$lib/db/crud/conversation';
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
+import { estimateTokenCount } from './tokenCounter';
 
 export interface FinalizationParams {
 	user: User;
@@ -45,9 +46,10 @@ export async function finalizeResponse({
 		const inputTokens = finalUsage.prompt_tokens;
 		let outputTokens = finalUsage.completion_tokens;
 
-		if (wasAborted && response.length > 0) {
-			const outputGPTCount = await countTokens(response + thinkingResponse, model, 'output');
-			outputTokens = outputGPTCount.tokens;
+		if (!outputTokens) {
+			// const outputGPTCount = await countTokens(response + thinkingResponse, model, 'output');
+			// outputTokens = outputGPTCount.tokens;
+            outputTokens = estimateTokenCount(response + thinkingResponse);
 		}
 
 		const inputCost = (inputTokens * model.input_price) / 1000000;
