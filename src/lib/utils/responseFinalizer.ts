@@ -49,7 +49,7 @@ export async function finalizeResponse({
 		if (!outputTokens) {
 			// const outputGPTCount = await countTokens(response + thinkingResponse, model, 'output');
 			// outputTokens = outputGPTCount.tokens;
-            outputTokens = estimateTokenCount(response + thinkingResponse);
+			outputTokens = estimateTokenCount(response + thinkingResponse);
 		}
 
 		const inputCost = (inputTokens * model.input_price) / 1000000;

@@ -10,7 +10,7 @@ import type {
 	PromptHelper
 } from '$lib/types';
 import { deserialize } from '$app/forms';
-import { isCodeComponent, isLlmChatComponent } from '$lib/typeGuards';
+import { isCodeComponent, isLlmChatComponent } from '$lib/utils/typeGuards';
 import { chatHistory, numberPrevMessages } from '$lib/stores';
 import type { ActionResult } from '@sveltejs/kit';
 import type { UserSettings } from '@prisma/client';

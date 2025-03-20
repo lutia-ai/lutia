@@ -1,7 +1,8 @@
 import { writable, type Writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import type { ChatComponent } from '$lib/types';
+import type { ChatComponent, Message, Model } from '$lib/types';
 import type { ApiProvider } from '@prisma/client';
+import { modelDictionary } from './modelDictionary';
 
 function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
 	// Create the store with the start value
@@ -27,6 +28,45 @@ function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
 
 // Persistent store for the chosenCompany setting
 export const chosenCompany = createPersistentStore<ApiProvider>('chosenCompany', 'anthropic');
+
+// Persistent store for the companySelection setting
+export const companySelection = createPersistentStore<ApiProvider[]>(
+	'companySelection',
+	Object.keys(modelDictionary) as ApiProvider[]
+);
+
+// Persistent store for the gptModelSelection setting
+export const gptModelSelection = createPersistentStore<Model[]>(
+	'gptModelSelection',
+	Object.values(modelDictionary['anthropic'].models)
+);
+
+// Persistent store for the chosenModel setting
+export const chosenModel = createPersistentStore<Model>(
+	'chosenModel',
+	modelDictionary.anthropic.models.claude37Sonnet
+);
+
+// Persistent store for the conversationId setting
+export const conversationId = createPersistentStore<string>('conversationId', 'new');
+
+// Persistent store for the fullPrompt setting
+export const fullPrompt = createPersistentStore<Message[] | string>('fullPrompt', '');
+
+// Persistent store for the contextWindowOpen setting
+export const contextWindowOpen = createPersistentStore<boolean>('contextWindowOpen', true);
+
+// Persistent store for the mobileSidebarOpen setting
+export const mobileSidebarOpen = createPersistentStore<boolean>('mobileSidebarOpen', false);
+
+// Persistent store for the isLargeScreen setting
+export const isLargeScreen = createPersistentStore<boolean>('isLargeScreen', true);
+
+// Persistent store for the isSettingsOpen setting
+export const isSettingsOpen = createPersistentStore<boolean>('isSettingsOpen', false);
+
+// Persistent store for the conversationsOpen setting
+export const conversationsOpen = createPersistentStore<boolean>('conversationsOpen', false);
 
 // Persistent store for the dark mode setting
 export const darkMode = createPersistentStore<boolean>('darkMode', false);

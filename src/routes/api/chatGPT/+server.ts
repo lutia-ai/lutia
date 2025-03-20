@@ -15,10 +15,7 @@ import {
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import {
-	createConversation,
-	updateConversationLastMessage
-} from '$lib/db/crud/conversation.js';
+import { createConversation, updateConversationLastMessage } from '$lib/db/crud/conversation.js';
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
 import { isValidMessageArray } from '$lib/utils/typeGuards';
 import { getModelFromName } from '$lib/utils/modelConverter';
@@ -180,8 +177,8 @@ export async function POST({ request, locals }) {
 		// const inputGPTCount = await countTokens(messages, model, 'input');
 		// const estimatedInputTokens = inputGPTCount.tokens + imageTokens;
 		// const estimatedInputCost = inputGPTCount.price + imageCost;
-        const estimatedInputTokens = estimateTokenCount(messages.toString()) + imageTokens;
-        const estimatedInputCost = ((estimatedInputTokens * model.input_price) / 1000000) + imageCost;
+		const estimatedInputTokens = estimateTokenCount(messages.toString()) + imageTokens;
+		const estimatedInputCost = (estimatedInputTokens * model.input_price) / 1000000 + imageCost;
 
 		// Create a new conversation only if:
 		// 1. User is premium AND
@@ -348,7 +345,7 @@ export async function POST({ request, locals }) {
 								JSON.stringify({
 									type: 'error',
 									message:
-                                        errorMessage?.error?.error?.message ||
+										errorMessage?.error?.error?.message ||
 										errorMessage?.message ||
 										'Unknown error occurred'
 								}) + '\n'

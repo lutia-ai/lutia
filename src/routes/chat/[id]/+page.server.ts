@@ -11,7 +11,7 @@ import {
 	saveUserCardDetails
 } from '$lib/stripe/stripeFunctions';
 import { updateUserSettings } from '$lib/db/crud/userSettings';
-import { PaymentTier, type Conversation, type UserSettings } from '@prisma/client';
+import { PaymentTier, type Conversation, type User, type UserSettings } from '@prisma/client';
 import {
 	retrieveConversationsByUserId,
 	retrieveApiRequestsByConversationId,
@@ -20,62 +20,67 @@ import {
 	updateConversation,
 	deleteConversation
 } from '$lib/db/crud/conversation';
+import type { UserWithSettings } from '$lib/types';
 
 interface ChatParams {
 	id: string;
 }
 
-export const load: PageServerLoad = async ({ locals, params }) => {
-	const session = await locals.auth();
+// Define an interface for the parent data
+interface ParentData {
+	user: UserWithSettings;
+	userImage: string | null;
+}
 
-	if (!session || !session.user || !session.user.email) {
+export const load: PageServerLoad = async ({ locals, params, parent }) => {
+	const session = await locals.auth();
+	if (!session?.user?.email) {
 		throw redirect(307, '/auth');
 	}
 
-	const user = await retrieveUserWithSettingsByEmail(session.user.email).catch((error) => {
-		console.error('Error retrieving user:', error);
-		throw redirect(307, '/auth?error=UserRetrievalError');
-	});
+	// Get parent data which includes the user
+	const parentData = await parent();
+	if ('user' in parentData && 'userImage' in parentData) {
+		const { user, userImage } = parentData as ParentData;
 
-	if (!user.email_verified) {
-		throw redirect(307, `/auth?error=CredentialsSignin&code=unverified_${session.user.email}`);
-	}
+		// Check if we have a valid conversation ID (not 'new')
+		const { id: conversationId } = params as ChatParams;
 
-	// Check if we have a valid conversation ID (not 'new')
-	const { id: conversationId } = params as ChatParams;
+		if (user.payment_tier === PaymentTier.Premium) {
+			if (conversationId && conversationId !== 'new') {
+				// Try to load the specific conversation
+				const conversation = await retrieveConversationById(conversationId);
 
-	if (user.payment_tier === PaymentTier.Premium) {
-		if (conversationId && conversationId !== 'new') {
-			// Try to load the specific conversation
-			const conversation = await retrieveConversationById(conversationId);
-
-			// Verify this conversation belongs to the current user
-			if (conversation && conversation.user_id === Number(session.user.id)) {
-				// Return conversation-specific API requests
-				return {
-					user,
-					userImage: session.user.image,
-					apiRequests: retrieveApiRequestsByConversationId(conversationId, true),
-					conversation
-				};
-			} else {
+				// Verify this conversation belongs to the current user
+				if (conversation && conversation.user_id === Number(session.user.id)) {
+					// Return conversation-specific API requests
+					return {
+						user,
+						userImage: session.user.image,
+						apiRequests: retrieveApiRequestsByConversationId(conversationId, true),
+						conversation
+					};
+				} else {
+				}
 			}
+
+			// return empty messages for all invalid conversations
+			return {
+				user,
+				userImage: session.user.image,
+				apiRequests: []
+			};
 		}
 
-		// return empty messages for all invalid conversations
+		// If no conversation ID or ID not valid, return all user's API requests
 		return {
 			user,
 			userImage: session.user.image,
-			apiRequests: []
+			apiRequests: retrieveApiRequestsWithMessage(Number(session.user.id), true)
 		};
+	} else {
+		throw new Error('Invalid parent data structure');
 	}
-
-	// If no conversation ID or ID not valid, return all user's API requests
-	return {
-		user,
-		userImage: session.user.image,
-		apiRequests: retrieveApiRequestsWithMessage(Number(session.user.id), true)
-	};
 };
 
 export const actions = {

@@ -1,13 +1,7 @@
 <script lang="ts">
-	import type { Message } from '$lib/types';
 	import { fly } from 'svelte/transition';
 	import Slider from './Slider.svelte';
-	import { chatHistory, numberPrevMessages } from '$lib/stores';
-	import { saveUserSettings } from '$lib/chatHistory';
-
-	// Props
-	export let contextWindowOpen: boolean;
-	export let fullPrompt: Message[] | string;
+	import { chatHistory, numberPrevMessages, fullPrompt, contextWindowOpen } from '$lib/stores';
 
 	// Format the content for display
 	function formatContent(content: string | Object[]): string {
@@ -17,11 +11,6 @@
 			return JSON.stringify(content, null, 2);
 		}
 	}
-
-	// // handles the save user settings from the slider change
-	// function handleSaveSettings() {
-	// 	saveUserSettings(user.user_settings!);
-	// }
 
 	// Determine role style classes and icons
 	function getRoleDetails(role: string) {
@@ -61,7 +50,7 @@
 >
 	<div class="header">
 		<h2>Context Window</h2>
-		<button class="close-button" on:click|stopPropagation={() => (contextWindowOpen = false)}>
+		<button class="close-button" on:click|stopPropagation={() => contextWindowOpen.set(false)}>
 			×
 		</button>
 	</div>
@@ -94,7 +83,7 @@
 	</div>
 
 	<div class="context-container">
-		{#if typeof fullPrompt === 'string'}
+		{#if typeof $fullPrompt === 'string'}
 			<!-- Add proper formatting for the string case -->
 			<div class="message-item user-message">
 				<div class="message-header">
@@ -107,7 +96,7 @@
 				</div>
 			</div>
 		{:else}
-			{#each fullPrompt as message, index}
+			{#each $fullPrompt as message, index}
 				{@const roleDetails = getRoleDetails(message.role)}
 				<div class="message-item {roleDetails.className}">
 					<div class="message-header">
@@ -115,7 +104,7 @@
 						<span class="role-label">{message.role}</span>
 						<span class="message-number">
 							{message.role === 'user'
-								? index === fullPrompt.length - 1
+								? index === $fullPrompt.length - 1
 									? 'Current prompt'
 									: `Prompt ${Math.floor(index / 2) + 1}`
 								: `Response ${Math.floor(index / 2) + 1}`}

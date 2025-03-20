@@ -12,9 +12,7 @@ import { retrieveUsersBalance } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import {
-	createConversation,
-} from '$lib/db/crud/conversation.js';
+import { createConversation } from '$lib/db/crud/conversation.js';
 import { isValidMessageArray } from '$lib/utils/typeGuards';
 import { getModelFromName } from '$lib/utils/modelConverter';
 import { finalizeResponse } from '$lib/utils/responseFinalizer';
@@ -254,7 +252,7 @@ export async function POST({ request, locals }) {
 								JSON.stringify({
 									type: 'error',
 									message:
-                                        errorMessage?.error?.error?.message ||
+										errorMessage?.error?.error?.message ||
 										errorMessage?.message ||
 										'Unknown error occurred'
 								}) + '\n'

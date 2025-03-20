@@ -4,12 +4,10 @@
 	import { deserialize } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
 	import type { Conversation } from '@prisma/client';
-	import { goto, pushState, replaceState } from '$app/navigation';
 	import EditIcon from './icons/EditIcon.svelte';
 	import BinIcon from './icons/BinIcon.svelte';
-
-	// Two-way binding for the conversationsOpen state
-	export let conversationsOpen: boolean;
+	import { conversationsOpen } from '$lib/stores';
+	import { goto } from '$app/navigation';
 
 	let conversations: Conversation[] = [];
 	let loading = true;
@@ -209,6 +207,10 @@
 		}
 	}
 
+	function navigateToConversation(id: string) {
+		goto(`/chat/${id}`);
+	}
+
 	onMount(async () => {
 		try {
 			await getUsersConversations(true);
@@ -238,7 +240,7 @@
 >
 	<div class="header">
 		<h2>Chat history</h2>
-		<button class="close-button" on:click={() => (conversationsOpen = false)}> × </button>
+		<button class="close-button" on:click={() => conversationsOpen.set(false)}> × </button>
 	</div>
 
 	<div class="conversations-container" on:scroll={handleScroll}>
@@ -282,6 +284,8 @@
 										role="button"
 										tabindex="0"
 										href="/chat/{conversation.id}"
+										on:click|preventDefault={() =>
+											navigateToConversation(conversation.id)}
 									>
 										<div class="conversation-title">
 											{conversation.title || 'Untitled conversation'}
@@ -494,7 +498,7 @@
 					font-weight: 500;
 					color: var(--text-color-light);
 					margin-top: 15px;
-
+					background-color: var(--bg-color-conversations);
 					position: sticky;
 					top: 0;
 					z-index: 1;

@@ -9,7 +9,17 @@
 		chatHistory,
 		numberPrevMessages,
 		chosenCompany,
-		isContextWindowAuto
+		isContextWindowAuto,
+		chosenModel,
+		fullPrompt,
+		isLargeScreen,
+		isSettingsOpen,
+		conversationsOpen,
+		companySelection,
+		gptModelSelection,
+		conversationId,
+		contextWindowOpen,
+		mobileSidebarOpen
 	} from '$lib/stores.ts';
 	import type {
 		Message,
@@ -22,7 +32,6 @@
 		SerializedApiRequest,
 		ReasoningComponent
 	} from '$lib/types';
-	import { isCodeComponent, isLlmChatComponent, isUserChatComponent } from '$lib/typeGuards';
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 	import {
@@ -31,8 +40,11 @@
 		countTokens,
 		roundToTwoSignificantDigits
 	} from '$lib/tokenizer.ts';
-	import Sidebar from '$lib/components/Sidebar.svelte';
-	import MobileSidebar from '$lib/components/MobileSidebar.svelte';
+	import {
+		isCodeComponent,
+		isLlmChatComponent,
+		isUserChatComponent
+	} from '$lib/utils/typeGuards';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import StarsIcon from '$lib/components/icons/StarsIcon.svelte';
@@ -46,7 +58,6 @@
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
-	import BurgerIcon from '$lib/components/icons/BurgerIcon.svelte';
 	import {
 		changeTabWidth,
 		closeAllTabWidths,
@@ -59,22 +70,19 @@
 	import { page } from '$app/stores';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
 	import { fade, fly } from 'svelte/transition';
-	import { browser } from '$app/environment';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
 	import DeepSeekIcon from '$lib/components/icons/DeepSeekIcon.svelte';
 	import PlusIcon from '$lib/components/icons/PlusIcon.svelte';
 	import HoverTag from '$lib/components/HoverTag.svelte';
 	import BrainIcon from '$lib/components/icons/BrainIcon.svelte';
 	import WarningIcon from '$lib/components/icons/WarningIcon.svelte';
-	import { pushState } from '$app/navigation';
-	import SettingsComponent from '$lib/components/settings/Settings.svelte';
+	import { afterNavigate, pushState } from '$app/navigation';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 
 	export let data;
 
 	let errorPopup: ErrorPopup;
 	let prompt: string;
-	let fullPrompt: Message[] | string;
 	let input_tokens: number = 0;
 	let input_price: number = 0;
 	let mounted: boolean = false;
@@ -82,34 +90,15 @@
 	let promptBar: HTMLDivElement;
 	let promptBarHeight: number = 0;
 	let scrollAnimationFrame: number | null = null;
-	let isSettingsOpen: boolean = false;
 	let isDragging: boolean = false;
-	let conversationsOpen: boolean = false;
-	let contextWindowOpen: boolean = false;
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
-	let windowWidth = browser ? window.innerWidth : 0;
-	let isLargeScreen = windowWidth > 810;
-	let mobileSidebarOpen = false;
 	let showModelSearch = false;
 	let searchQuery = '';
 	let filteredModels: { company: ApiProvider; model: Model; formattedName: string }[] = [];
 	let selectedModelIndex: number | null = 0;
 	let modelSearchItems: HTMLDivElement[] = [];
 	let reasoningOn: boolean = false;
-	let conversationId: string;
-
-	$: {
-		if ($isContextWindowAuto) {
-			contextWindowOpen = false;
-		}
-	}
-
-	let companySelection: ApiProvider[] = Object.keys(modelDictionary) as ApiProvider[];
-	companySelection = companySelection.filter((c) => c !== $chosenCompany);
-
-	let gptModelSelection: Model[] = Object.values(modelDictionary[$chosenCompany].models);
-	let chosenModel = gptModelSelection[0];
 
 	const markedKatexOptions = markedKatex({
 		throwOnError: false,
@@ -128,21 +117,27 @@
 	// Generates the fullPrompt and counts input tokens when the prompt changes
 	$: if (prompt || prompt === '' || $numberPrevMessages || imagePreview || $isContextWindowAuto) {
 		if (mounted) {
-			fullPrompt = sanitizeHtml(prompt);
+			fullPrompt.set(sanitizeHtml(prompt));
 			if ($numberPrevMessages > 0) {
-				fullPrompt = generateFullPrompt(
-					prompt,
-					$chatHistory,
-					$numberPrevMessages,
-					chosenModel,
-					false,
-					$isContextWindowAuto
+				fullPrompt.set(
+					generateFullPrompt(
+						prompt,
+						$chatHistory,
+						$numberPrevMessages,
+						$chosenModel,
+						false,
+						$isContextWindowAuto
+					)
 				);
-				if (fullPrompt.length === 1 && fullPrompt[0].content.length === 0) {
-					fullPrompt = prompt;
+				if (
+					Array.isArray($fullPrompt) &&
+					$fullPrompt.length === 1 &&
+					$fullPrompt[0].content.length === 0
+				) {
+					fullPrompt.set(prompt);
 				}
 			}
-			handleCountTokens(fullPrompt, chosenModel);
+			handleCountTokens($fullPrompt);
 		}
 	}
 
@@ -220,19 +215,13 @@
 		});
 	}
 
-	const handleResize = () => {
-		windowWidth = window.innerWidth;
-		isLargeScreen = windowWidth > 810;
-		if (isLargeScreen) mobileSidebarOpen = false;
-	};
-
-	async function handleCountTokens(fullPrompt: Message[] | string, chosenModel: Model) {
-		if (chosenModel.generatesImages || fullPrompt === '<br>') {
+	async function handleCountTokens(fullPrompt: Message[] | string) {
+		if ($chosenModel.generatesImages || fullPrompt === '<br>') {
 			input_tokens = 0;
 			input_price = 0;
 			return;
 		}
-		const result = await countTokens(fullPrompt, chosenModel);
+		const result = await countTokens(fullPrompt, $chosenModel);
 		let imageCost = 0;
 		let imageTokens = 0;
 		for (const image of imagePreview) {
@@ -240,7 +229,7 @@
 			if ($chosenCompany === 'openAI') {
 				imgResult = calculateGptVisionPricing(image.width, image.height);
 			} else if ($chosenCompany === 'anthropic' || $chosenCompany === 'google') {
-				imgResult = calculateClaudeImageCost(image.width, image.height, chosenModel);
+				imgResult = calculateClaudeImageCost(image.width, image.height, $chosenModel);
 			}
 			imageCost += imgResult.price;
 			imageTokens += imgResult.tokens;
@@ -305,16 +294,16 @@
 	// Updates the chosen company and resets the model selection based on the new company.
 	function selectCompany(company: ApiProvider) {
 		chosenCompany.set(company);
-		companySelection = Object.keys(modelDictionary) as ApiProvider[];
-		companySelection = companySelection.filter((c) => c !== company);
-		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
-		chosenModel = gptModelSelection[0];
+		companySelection.set(Object.keys(modelDictionary) as ApiProvider[]);
+		companySelection.set($companySelection.filter((c) => c !== company));
+		gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
+		chosenModel.set($gptModelSelection[0]);
 	}
 
 	// Updates the chosen model and resets the model selection list.
 	function selectModel(model: Model) {
-		chosenModel = model;
-		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
+		chosenModel.set(model);
+		gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
 	}
 
 	async function submitPrompt(): Promise<void> {
@@ -322,10 +311,10 @@
 			return;
 		}
 		const plainText = prompt;
-		const imageArray = chosenModel.handlesImages ? imagePreview : [];
+		const imageArray = $chosenModel.handlesImages ? imagePreview : [];
 		prompt = '';
-		imagePreview = chosenModel.handlesImages ? [] : imagePreview;
-		handleCountTokens(prompt, chosenModel);
+		imagePreview = $chosenModel.handlesImages ? [] : imagePreview;
+		handleCountTokens(prompt);
 		if (plainText.trim()) {
 			let userPrompt: UserChat = {
 				by: 'user',
@@ -355,7 +344,7 @@
 			chatHistory.update((history) => [
 				...history,
 				{
-					by: chosenModel.name,
+					by: $chosenModel.name,
 					text: '',
 					input_cost: 0,
 					output_cost: 0,
@@ -372,15 +361,15 @@
 					plainText,
 					$chatHistory,
 					$numberPrevMessages,
-					chosenModel,
+					$chosenModel,
 					true,
 					$isContextWindowAuto
 				);
 				// console.log(fullPrompt);
 
 				// Get conversationId from slug parameter
-				if (!conversationId || conversationId === 'new') {
-					conversationId = $page.params.id;
+				if (!$conversationId || $conversationId === 'new') {
+					conversationId.set($page.params.id);
 				}
 
 				// UUID validation function
@@ -392,7 +381,7 @@
 
 				// Only include conversationId if it's a valid UUID and user is premium
 				const validConversationId =
-					conversationId && isValidUUID(conversationId) ? conversationId : undefined;
+					$conversationId && isValidUUID($conversationId) ? $conversationId : undefined;
 
 				let uri: string;
 				switch ($chosenCompany) {
@@ -423,7 +412,7 @@
 					body: JSON.stringify({
 						plainTextPrompt: JSON.stringify(plainText),
 						promptStr: JSON.stringify(fullPrompt),
-						modelStr: JSON.stringify(chosenModel.name),
+						modelStr: JSON.stringify($chosenModel.name),
 						imagesStr: JSON.stringify(imageArray),
 						...($chosenCompany === 'anthropic' ? { reasoningOn } : {}),
 						...(data.user.payment_tier === PaymentTier.Premium
@@ -457,7 +446,7 @@
 				let inputPrice: number = 0;
 				let outputPrice: number = 0;
 
-				if (chosenModel.generatesImages) {
+				if ($chosenModel.generatesImages) {
 					const data = await response.json();
 					const base64ImageData = data.image;
 					outputPrice = data.outputPrice;
@@ -528,8 +517,7 @@
 
 								// This updates the URL without causing a page reload
 								pushState(url.toString(), {});
-								conversationId = data.conversation_id;
-								console.log('conversationId: ', conversationId);
+								conversationId.set(data.conversation_id);
 							} else if (data.type === 'error') {
 								console.error(data.message);
 								errorPopup.showError(data.message, null, 5000, 'error');
@@ -561,7 +549,7 @@
 					if ($chosenCompany === 'openAI') {
 						result = calculateGptVisionPricing(image.width, image.height);
 					} else {
-						result = calculateClaudeImageCost(image.width, image.height, chosenModel);
+						result = calculateClaudeImageCost(image.width, image.height, $chosenModel);
 					}
 					imageCost += result.price;
 					imageTokens += result.tokens;
@@ -771,6 +759,20 @@
 		}
 	}
 
+	afterNavigate(async ({ from, to }) => {
+		// Only reload if we've actually changed conversations
+		if (to && from?.url.pathname !== to.url.pathname) {
+			const apiRequests = (await data.apiRequests) as SerializedApiRequest[];
+			chatHistory.set(loadChatHistory(apiRequests));
+
+			// Reset other state as needed
+			await tick();
+			setTimeout(() => {
+				scrollToBottom();
+			}, 100);
+		}
+	});
+
 	onMount(async () => {
 		const successParam = $page.url.searchParams.get('success');
 		if (successParam && errorPopup) {
@@ -788,8 +790,6 @@
 		}
 		// Wait for DOM update after setting chat history
 		await tick();
-
-		window.addEventListener('resize', handleResize);
 
 		// Add a small delay to ensure content is fully rendered
 		setTimeout(() => {
@@ -824,71 +824,10 @@
 
 <ErrorPopup bind:this={errorPopup} />
 
-<div class="main" class:settings-open={isSettingsOpen}>
-	{#await data.apiRequests}
-		<div />
-	{:then}
-		{#if mounted}
-			<div transition:fade={{ duration: 300, delay: 0 }}>
-				{#if isLargeScreen}
-					<Sidebar
-						{companySelection}
-						{gptModelSelection}
-						bind:chosenModel
-						bind:isSettingsOpen
-						bind:conversationsOpen
-						bind:contextWindowOpen
-						user={data.user}
-						userImage={data.userImage}
-						{fullPrompt}
-						bind:conversationId
-					/>
-				{:else if !mobileSidebarOpen}
-					<div class="floating-sidebar">
-						<div
-							class="burger-icon"
-							transition:fly={{
-								delay: 150,
-								duration: 300,
-								x: -250 // 'x' or 'y'
-							}}
-							role="button"
-							tabindex="0"
-							on:click|stopPropagation={() => {
-								mobileSidebarOpen = true;
-							}}
-							on:keydown|stopPropagation={(e) => {
-								if (e.key === 'Enter') {
-									mobileSidebarOpen = true;
-								}
-							}}
-						>
-							<BurgerIcon color="var(--text-color)" strokeWidth="1" />
-						</div>
-					</div>
-				{/if}
-				<MobileSidebar
-					{companySelection}
-					{gptModelSelection}
-					bind:chosenModel
-					bind:isSettingsOpen
-					bind:mobileSidebarOpen
-					bind:conversationsOpen
-					bind:contextWindowOpen
-					user={data.user}
-					userImage={data.userImage}
-					{fullPrompt}
-				/>
-				{#if isSettingsOpen}
-					<SettingsComponent bind:isOpen={isSettingsOpen} bind:user={data.user} />
-				{/if}
-			</div>
-		{/if}
-	{/await}
-
+<div class="main" class:settings-open={$isSettingsOpen}>
 	<div
 		class="body"
-		class:shifted={conversationsOpen || contextWindowOpen}
+		class:shifted={$conversationsOpen || $contextWindowOpen}
 		role="region"
 		on:dragover|preventDefault={(event) => {
 			event.preventDefault;
@@ -1250,20 +1189,20 @@
 		<div
 			class="prompt-bar-wrapper"
 			style="
-                transform: {mobileSidebarOpen
+                transform: {$mobileSidebarOpen
 				? 'translateX(calc(-50% + 20px))'
-				: (conversationsOpen || contextWindowOpen) && isLargeScreen
+				: ($conversationsOpen || $contextWindowOpen) && $isLargeScreen
 					? 'translateX(calc(-50% + 180px))'
 					: ''};
-                padding: {mobileSidebarOpen ? '0 30px 0 50px' : ''};
-                width: {(conversationsOpen || contextWindowOpen) &&
-			!mobileSidebarOpen &&
-			isLargeScreen
+                padding: {$mobileSidebarOpen ? '0 30px 0 50px' : ''};
+                width: {($conversationsOpen || $contextWindowOpen) &&
+			!$mobileSidebarOpen &&
+			$isLargeScreen
 				? 'calc(100% - 310px)'
 				: ''};
             "
 		>
-			<div class="prompt-bar" class:shifted={conversationsOpen || contextWindowOpen}>
+			<div class="prompt-bar" class:shifted={$conversationsOpen || $contextWindowOpen}>
 				{#if imagePreview.length > 0 || isDragging}
 					<div
 						class="image-viewer"
@@ -1274,11 +1213,11 @@
 							handleFileSelect(event);
 						}}
 						style="
-                            background: {chosenModel.handlesImages ? '' : 'rgba(255,50,50,0.25)'}
+                            background: {$chosenModel.handlesImages ? '' : 'rgba(255,50,50,0.25)'}
                         "
 					>
 						{#if !isDragging}
-							{#if !chosenModel.handlesImages}
+							{#if !$chosenModel.handlesImages}
 								<div class="warning">
 									<div class="icon">
 										<WarningIcon
@@ -1426,7 +1365,6 @@
 					on:paste={handlePaste}
 				/>
 				<div class="prompt-bar-buttons-container">
-					<!-- {#if chosenModel.handlesImages} -->
 					<div class="left">
 						<div
 							class="plus-icon button"
@@ -1453,20 +1391,20 @@
 							<HoverTag text="Add image" position="top" />
 						</div>
 						<div
-							class="{(chosenModel.reasons && !chosenModel.extendedThinking) ||
-							(reasoningOn && chosenModel.extendedThinking)
+							class="{($chosenModel.reasons && !$chosenModel.extendedThinking) ||
+							(reasoningOn && $chosenModel.extendedThinking)
 								? 'selected'
 								: ''} reason-button"
 							role="button"
 							tabindex="0"
 							on:click={() => {
-								if (chosenModel.extendedThinking) {
+								if ($chosenModel.extendedThinking) {
 									reasoningOn = !reasoningOn;
 								}
 							}}
 							on:keydown|stopPropagation={(e) => {
 								if (e.key === 'Enter') {
-									if (chosenModel.extendedThinking) {
+									if ($chosenModel.extendedThinking) {
 										reasoningOn = !reasoningOn;
 									}
 								}
@@ -1474,15 +1412,16 @@
 						>
 							<div class="brain-icon">
 								<BrainIcon
-									color={(chosenModel.reasons && !chosenModel.extendedThinking) ||
-									(reasoningOn && chosenModel.extendedThinking)
+									color={($chosenModel.reasons &&
+										!$chosenModel.extendedThinking) ||
+									(reasoningOn && $chosenModel.extendedThinking)
 										? '#16a1f9'
 										: 'var(--text-color-light)'}
 								/>
 							</div>
 							<p>Reason</p>
 							<HoverTag
-								text={chosenModel.reasons
+								text={$chosenModel.reasons
 									? 'Thinks before responding'
 									: "Selected model doesn't support reasoning"}
 								position="top"
@@ -1512,7 +1451,6 @@
 							<HoverTag text={'Customise your context window'} position="top" />
 						</div>
 					</div>
-					<!-- {/if} -->
 					<div class="right">
 						<div
 							class="button submit-container"
@@ -1664,34 +1602,11 @@
 		min-width: 450px;
 		font-family: 'Albert Sans', sans-serif;
 
-		.floating-sidebar {
-			position: fixed;
-			display: flex;
-			flex-direction: column;
-			// height: 100%; // if height is 100% then floating sidebar covers buttons
-			z-index: 10001;
-			width: 65px;
-			padding-top: 5px;
-			z-index: 10000;
-
-			.burger-icon {
-				margin: 0 auto;
-				padding: 0 11px;
-				background: var(--bg-color);
-				border-radius: 25%;
-				cursor: pointer;
-				width: 53px;
-				height: 53px;
-				box-sizing: border-box;
-			}
-		}
-
 		.body {
 			position: relative;
 			display: flex;
 			flex-direction: column;
 			min-height: 90vh;
-			// margin-left: 65px;
 			transition: margin-left 0.3s ease;
 
 			&.shifted {

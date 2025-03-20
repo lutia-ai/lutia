@@ -3,19 +3,24 @@
 	import { page } from '$app/stores';
 	import { signIn } from '@auth/sveltekit/client';
 	import {
-		numberPrevMessages,
 		darkMode,
 		showPricing,
 		showLegacyModels,
 		chosenCompany,
 		chatHistory,
-		isContextWindowAuto
+		isContextWindowAuto,
+		chosenModel,
+		isSettingsOpen,
+		conversationsOpen,
+		companySelection,
+		gptModelSelection,
+		conversationId,
+		contextWindowOpen
 	} from '$lib/stores.ts';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
-	import type { Message, Model, UserWithSettings } from '$lib/types';
+	import type { Model, UserWithSettings } from '$lib/types';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
 
-	import Slider from '$lib/components/Slider.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
@@ -30,20 +35,10 @@
 	import LightningReasoningIcon from './icons/LightningReasoningIcon.svelte';
 	import CreateIcon from './icons/CreateIcon.svelte';
 	import ConversationsIcon from './icons/ConversationsIcon.svelte';
-	import ConversationsSideBar from './ConversationsSideBar.svelte';
 	import { goto } from '$app/navigation';
-	import ContextWindowSideBar from './ContextWindowSideBar.svelte';
 
-	export let companySelection: ApiProvider[];
-	export let gptModelSelection: Model[];
-	export let chosenModel: Model;
-	export let isSettingsOpen: boolean;
 	export let user: UserWithSettings; // controls if the menu is always open
 	export let userImage;
-	export let conversationsOpen: boolean = false; // Add two-way binding for conversations sidebar
-	export let contextWindowOpen: boolean = false;
-	export let fullPrompt: Message[] | string;
-	export let conversationId: string;
 
 	// Controls the visibility of the model dropdown.
 	let modelDropdownOpen: boolean = false;
@@ -69,16 +64,16 @@
 	// Updates the chosen company and resets the model selection based on the new company.
 	function selectCompany(company: ApiProvider) {
 		chosenCompany.set(company);
-		companySelection = Object.keys(modelDictionary) as ApiProvider[];
-		companySelection = companySelection.filter((c) => c !== company);
-		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
-		chosenModel = gptModelSelection[0];
+		companySelection.set(Object.keys(modelDictionary) as ApiProvider[]);
+		companySelection.set($companySelection.filter((c) => c !== company));
+		gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
+		chosenModel.set($gptModelSelection[0]);
 	}
 
 	// Updates the chosen model and resets the model selection list.
 	function selectModel(model: Model) {
-		chosenModel = model;
-		gptModelSelection = Object.values(modelDictionary[$chosenCompany].models);
+		chosenModel.set(model);
+		gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
 	}
 </script>
 
@@ -89,12 +84,7 @@
 	}}
 />
 
-{#if conversationsOpen}
-	<ConversationsSideBar bind:conversationsOpen />
-{:else if contextWindowOpen}
-	<ContextWindowSideBar bind:contextWindowOpen {fullPrompt} />
-{/if}
-<div class="sidebar" class:shifted={conversationsOpen || contextWindowOpen}>
+<div class="sidebar" class:shifted={$conversationsOpen || $contextWindowOpen}>
 	<div class="company-and-llm-container">
 		<div
 			class="company-container"
@@ -125,7 +115,7 @@
 				>
 					<svelte:component this={modelLogos[$chosenCompany].logo} />
 				</div>
-				{#each companySelection as company, index}
+				{#each $companySelection as company, index}
 					{#if companyDropdownOpen}
 						<div
 							role="button"
@@ -170,7 +160,7 @@
 					background: {modelDropdownOpen ? 'var(--bg-color-light)' : ''};
 				"
 			>
-				<p class="chosen-model-p">{formatModelEnumToReadable(chosenModel.name)}</p>
+				<p class="chosen-model-p">{formatModelEnumToReadable($chosenModel.name)}</p>
 				<div class="dropdown-icon">
 					<DropdownIcon color="var(--text-color)" />
 				</div>
@@ -186,7 +176,7 @@
 					on:click|stopPropagation
 					on:keydown|stopPropagation
 				>
-					{#each gptModelSelection as model}
+					{#each $gptModelSelection as model}
 						{#if !model.legacy || $showLegacyModels}
 							<div
 								class="llm-options"
@@ -258,7 +248,7 @@
 										class="selected-container"
 										style="margin-left: {model.handlesImages ? '0' : 'auto'}"
 									>
-										{#if chosenModel.name === model.name}
+										{#if $chosenModel.name === model.name}
 											<div class="selected">
 												<TickIcon color="var(--bg-color)" strokeWidth={3} />
 											</div>
@@ -292,6 +282,37 @@
 	</div>
 
 	<div class="settings-container">
+		{#if user.payment_tier === PaymentTier.Premium}
+			<div class="settings-wrapper">
+				<div
+					class="settings-icon"
+					role="button"
+					tabindex="0"
+					on:click|stopPropagation={() => {
+						conversationsOpen.set(!$conversationsOpen);
+						if ($conversationsOpen) {
+							contextWindowOpen.set(false);
+							settingsOpen = false;
+						}
+					}}
+					on:keydown|stopPropagation={(e) => {
+						if (e.key === 'Enter') {
+							conversationsOpen.set(!$conversationsOpen);
+							if ($conversationsOpen) {
+								contextWindowOpen.set(false);
+								settingsOpen = false;
+							}
+						}
+					}}
+					style="padding: 8px;"
+				>
+					<div style="transform: scale(1.2);">
+						<ConversationsIcon color="var(--text-color-light)" />
+					</div>
+					<p class="tag">View history</p>
+				</div>
+			</div>
+		{/if}
 		<!-- context window button -->
 		{#if (!$isContextWindowAuto && showContextWindowButton && user.payment_tier === PaymentTier.PayAsYouGo) || !$isContextWindowAuto}
 			<div class="settings-wrapper">
@@ -300,18 +321,18 @@
 					role="button"
 					tabindex="0"
 					on:click|stopPropagation={() => {
-						contextWindowOpen = !contextWindowOpen;
-						if (contextWindowOpen) {
+						contextWindowOpen.set(!$contextWindowOpen);
+						if ($contextWindowOpen) {
 							settingsOpen = false;
-							conversationsOpen = false;
+							conversationsOpen.set(false);
 						}
 					}}
 					on:keydown|stopPropagation={(e) => {
 						if (e.key === 'Enter') {
-							contextWindowOpen = !contextWindowOpen;
-							if (contextWindowOpen) {
+							contextWindowOpen.set(!$contextWindowOpen);
+							if ($contextWindowOpen) {
 								settingsOpen = false;
-								conversationsOpen = false;
+								conversationsOpen.set(false);
 							}
 						}
 					}}
@@ -328,43 +349,14 @@
 					role="button"
 					tabindex="0"
 					on:click|stopPropagation={() => {
-						conversationsOpen = !conversationsOpen;
-						if (conversationsOpen) {
-							contextWindowOpen = false;
-							settingsOpen = false;
-						}
-					}}
-					on:keydown|stopPropagation={(e) => {
-						if (e.key === 'Enter') {
-							conversationsOpen = !conversationsOpen;
-							if (conversationsOpen) {
-								contextWindowOpen = false;
-								settingsOpen = false;
-							}
-						}
-					}}
-					style="padding: 8px;"
-				>
-					<div style="transform: scale(1.2);">
-						<ConversationsIcon color="var(--text-color-light)" />
-					</div>
-					<p class="tag">View history</p>
-				</div>
-			</div>
-			<div class="settings-wrapper">
-				<div
-					class="settings-icon"
-					role="button"
-					tabindex="0"
-					on:click|stopPropagation={() => {
 						chatHistory.set([]);
-						conversationId = 'new';
+						conversationId.set('new');
 						goto('/chat/new', { replaceState: true });
 					}}
 					on:keydown|stopPropagation={(e) => {
 						if (e.key === 'Enter') {
 							chatHistory.set([]);
-							conversationId = 'new';
+							conversationId.set('new');
 							goto('/chat/new', { replaceState: true });
 						}
 					}}
@@ -416,16 +408,16 @@
 				tabindex="0"
 				on:click|stopPropagation={() => {
 					if ($page.data.user) {
-						isSettingsOpen = true;
-						contextWindowOpen = false;
+						isSettingsOpen.set(true);
+						contextWindowOpen.set(false);
 					} else {
 						signIn('google');
 					}
 				}}
 				on:keydown={(e) => {
 					if (e.key === 'Enter') {
-						isSettingsOpen = true;
-						contextWindowOpen = false;
+						isSettingsOpen.set(true);
+						contextWindowOpen.set(false);
 					}
 				}}
 				style="
