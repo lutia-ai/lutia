@@ -21,6 +21,7 @@ import {
 import { isValidMessageArray } from '$lib/utils/typeGuards';
 import { getModelFromName } from '$lib/utils/modelConverter';
 import { finalizeResponse } from '$lib/utils/responseFinalizer';
+import { estimateTokenCount } from '$lib/utils/tokenCounter';
 
 export async function POST({ request, locals }) {
 	const requestId = crypto.randomUUID();
@@ -77,23 +78,6 @@ export async function POST({ request, locals }) {
 			baseURL: 'https://api.x.ai/v1'
 		});
 
-		if (user.payment_tier === PaymentTier.PayAsYouGo) {
-			const inputGPTCount = await countTokens(messages, model, 'input');
-			let imageCost = 0;
-			let imageTokens = 0;
-			for (const image of images) {
-				const result = calculateGptVisionPricing(image.width, image.height);
-				imageCost += result.price;
-				imageTokens += result.tokens;
-			}
-
-			const inputCost = inputGPTCount.price + imageCost;
-			let balance = await retrieveUsersBalance(Number(session.user.id));
-			if (balance - inputCost <= 0.1) {
-				throw new InsufficientBalanceError();
-			}
-		}
-
 		if (images.length > 0) {
 			const textObject = {
 				type: 'text',
@@ -117,9 +101,12 @@ export async function POST({ request, locals }) {
 			imageTokens += result.tokens;
 		}
 
-		const inputGPTCount = await countTokens(messages, model, 'input');
-		const estimatedInputTokens = inputGPTCount.tokens + imageTokens;
-		const estimatedInputCost = inputGPTCount.price + imageCost;
+		// const inputGPTCount = await countTokens(messages, model, 'input');
+		// const estimatedInputTokens = inputGPTCount.tokens + imageTokens;
+		// const estimatedInputCost = inputGPTCount.price + imageCost;
+
+        const estimatedInputTokens = estimateTokenCount(messages.toString()) + imageTokens;
+        const estimatedInputCost = ((estimatedInputTokens * model.input_price) / 1000000) + imageCost;
 
 		// Create a new conversation only if:
 		// 1. User is premium AND
