@@ -145,7 +145,9 @@ export async function POST({ request, locals }) {
 					throw new InsufficientBalanceError();
 				}
 			} catch (err) {
-				console.error('Error retrieving users balance');
+				if (!(err instanceof InsufficientBalanceError)) {
+					console.error('Error retrieving users balance');
+				}
 				throw err;
 			}
 		}

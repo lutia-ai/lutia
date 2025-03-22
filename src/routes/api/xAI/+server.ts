@@ -42,8 +42,6 @@ export async function POST({ request, locals }) {
 		let messageConversationId = conversationId;
 		let errorMessage: any;
 
-		console.log('user: ', user);
-
 		if (!isValidMessageArray(rawMessages)) {
 			throw error(400, 'Invalid messages array');
 		}
@@ -147,7 +145,9 @@ export async function POST({ request, locals }) {
 					throw new InsufficientBalanceError();
 				}
 			} catch (err) {
-				console.error('Error retrieving users balance');
+				if (!(err instanceof InsufficientBalanceError)) {
+					console.error('Error retrieving users balance');
+				}
 				throw err;
 			}
 		}
