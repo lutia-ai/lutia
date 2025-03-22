@@ -12,6 +12,7 @@
 		conversationsOpen,
 		isContextWindowAuto,
 		isLargeScreen,
+		isSettingsOpen,
 		mobileSidebarOpen
 	} from '$lib/stores';
 	import { onMount } from 'svelte';
@@ -23,7 +24,6 @@
 	companySelection.set($companySelection.filter((c) => c !== $chosenCompany));
 
 	let windowWidth = browser ? window.innerWidth : 0;
-	let isSettingsOpen: boolean = false;
 
 	$: if ($isContextWindowAuto) {
 		contextWindowOpen.set(false);
@@ -75,8 +75,8 @@
 			</div>
 		{/if}
 		<MobileSidebar user={data.user} userImage={data.userImage} />
-		{#if isSettingsOpen}
-			<SettingsComponent bind:isOpen={isSettingsOpen} bind:user={data.user} />
+		{#if $isSettingsOpen}
+			<SettingsComponent bind:user={data.user} />
 		{/if}
 	</div>
 	<slot />

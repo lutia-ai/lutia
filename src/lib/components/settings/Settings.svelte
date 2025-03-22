@@ -9,8 +9,8 @@
 	import UsageSettingsPage from '$lib/components/settings/UsageSettingsPage.svelte';
 	import type { ComponentType } from 'svelte';
 	import type { UserWithSettings } from '$lib/types';
+	import { isSettingsOpen } from '$lib/stores';
 
-	export let isOpen: boolean;
 	export let user: UserWithSettings;
 
 	interface TabProps {
@@ -54,7 +54,7 @@
 	<div class="settings-panel">
 		<div class="title-container">
 			<h1>Settings</h1>
-			<button on:click={() => (isOpen = false)}>
+			<button on:click={() => (isSettingsOpen.set(false))}>
 				<CrossIcon color="var(--text-color)" />
 			</button>
 		</div>
