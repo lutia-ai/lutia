@@ -76,6 +76,10 @@ export async function POST({ request, locals }) {
 			throw error(400, 'conversationId must be a string if provided');
 		}
 
+        if (!user.email_verified) {
+            throw error(400, 'Email not verified');
+        }
+
 		// Extract system message and ensure non-empty content in messages
 		let systemMessage = null;
 
