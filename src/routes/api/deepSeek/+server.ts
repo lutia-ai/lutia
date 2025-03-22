@@ -65,25 +65,25 @@ export async function POST({ request, locals }) {
 			throw error(400, `No prompt found`);
 		}
 
-        if (typeof plainText !== 'string') {
-            throw error(400, 'plainText must be a string');
-        }
+		if (typeof plainText !== 'string') {
+			throw error(400, 'plainText must be a string');
+		}
 
-        if (typeof modelName !== 'string') {
-            throw error(400, 'modelStr must be a string');
-        }
+		if (typeof modelName !== 'string') {
+			throw error(400, 'modelStr must be a string');
+		}
 
-        if (!Array.isArray(rawMessages)) {
-            throw error(400, 'promptStr must be an array of messages');
-        }
+		if (!Array.isArray(rawMessages)) {
+			throw error(400, 'promptStr must be an array of messages');
+		}
 
-        if (!Array.isArray(images)) {
-            throw error(400, 'imagesStr must be an array of images');
-        }
+		if (!Array.isArray(images)) {
+			throw error(400, 'imagesStr must be an array of images');
+		}
 
-        if (conversationId !== undefined && typeof conversationId !== 'string') {
-            throw error(400, 'conversationId must be a string if provided');
-        }
+		if (conversationId !== undefined && typeof conversationId !== 'string') {
+			throw error(400, 'conversationId must be a string if provided');
+		}
 
 		// Filter out assistant messages with empty content (ie that are still streaming)
 		messages = messages.map((msg) => {
