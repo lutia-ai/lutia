@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { deserialize } from '$app/forms';
 	import { signIn } from '@auth/sveltekit/client';
-	import { darkMode, numberPrevMessages } from '$lib/stores.ts';
+	import { darkMode, isSettingsOpen, numberPrevMessages } from '$lib/stores.ts';
 	import { get } from 'svelte/store';
 	import { signOut } from '@auth/sveltekit/client';
 
@@ -174,10 +174,12 @@
 		role="button"
 		tabindex="0"
 		on:click|stopPropagation={() => {
+            isSettingsOpen.set(false);
 			signOut();
 		}}
 		on:keydown|stopPropagation={(e) => {
 			if (e.key === 'Enter') {
+                isSettingsOpen.set(false);
 				signOut();
 			}
 		}}
