@@ -148,56 +148,6 @@
 			<Switch bind:on={companyDropdownOpen} />
 		</div>
 	</div>
-	<!-- {#if user.payment_tier === PaymentTier.PayAsYouGo}
-		<div
-			class="setting"
-			role="button"
-			tabindex="0"
-			on:click|stopPropagation={() => {
-				showContextWindowButton = !showContextWindowButton;
-			}}
-			on:keydown|stopPropagation={(e) => {
-				if (e.key === 'Enter') {
-					showContextWindowButton = !showContextWindowButton;
-				}
-			}}
-		>
-			<div class="icon-container">
-				<ContextWindowIcon color="var(--text-color-light)" />
-			</div>
-			<p>Show Context window button</p>
-			<div class="switch-wrapper">
-				<Switch bind:on={showContextWindowButton} />
-			</div>
-		</div>
-		<h1>Context window</h1>
-		<h2>
-			The context window adjusts how many of your previous messages will get sent with your
-			prompt.<br /><br />
-			The more previous messages you include, the more memory the AI will have of your conversation,
-			but the higher the cost of the message.
-		</h2>
-		<div class="context setting">
-			<div class="icon-container">
-				<ContextWindowIcon color="var(--text-color-light)" />
-			</div>
-			<p style="font-weight: 600;">Shortcut:</p>
-			<p style="font-weight: 600;">CTRL + [0-9]</p>
-		</div>
-		<div class="slider-container">
-			<p>0</p>
-			<Slider
-				value={$numberPrevMessages}
-				on:change={(e) => {
-					if (e.detail.value !== $numberPrevMessages) {
-						numberPrevMessages.set(e.detail.value);
-						handleSaveSettings();
-					}
-				}}
-			/>
-			<p>max</p>
-		</div>
-	{/if} -->
 	<h1>Account</h1>
 	{#if user.oauth !== 'google'}
 		<div
@@ -257,13 +207,6 @@
 		h4 {
 			margin: 35px 35px 0 35px;
 			font-size: 16px;
-		}
-
-		h2 {
-			margin: 0px 35px;
-			font-size: 16px;
-			font-weight: 300;
-			color: var(--text-color-light);
 		}
 
 		.setting {
