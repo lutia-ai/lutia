@@ -42,6 +42,8 @@ export async function POST({ request, locals }) {
 		let messageConversationId = conversationId;
 		let errorMessage: any;
 
+        console.log(user);
+
 		if (!isValidMessageArray(rawMessages)) {
 			throw error(400, 'Invalid messages array');
 		}
