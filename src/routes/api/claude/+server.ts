@@ -371,10 +371,11 @@ export async function POST({ request, locals }) {
 			}
 		});
 	} catch (err) {
+        console.error('Error:', err);
 		if (err instanceof InsufficientBalanceError) {
+
 			throw error(500, err.message);
 		}
-		console.error('Error:', err);
 		throw error(500, 'An error occurred while processing your request');
 	}
 }
