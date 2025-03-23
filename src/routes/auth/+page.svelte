@@ -4,7 +4,7 @@
 </script>
 
 <script lang="ts">
-    import { env } from '$env/dynamic/public';
+	import { env } from '$env/dynamic/public';
 	import { page } from '$app/stores';
 	import { signIn } from '@auth/sveltekit/client';
 	import { fade } from 'svelte/transition';
@@ -92,12 +92,12 @@
 	// Function to log a user in
 	async function logIn() {
 		const formDataTemp = new FormData(formData);
-        const token = formDataTemp.get('recaptchaToken') as string;
+		const token = formDataTemp.get('recaptchaToken') as string;
 
 		await signIn('credentials', {
 			email: (formDataTemp.get('email') as string).toLowerCase(),
 			password: formDataTemp.get('password') as string,
-            recaptchaToken: token,
+			recaptchaToken: token,
 			callbackUrl: '/'
 		});
 	}
@@ -107,53 +107,57 @@
 		const formDataTemp = new FormData(formData);
 		formDataTemp.set('email', (formDataTemp.get('email') as string).toLowerCase());
 
-        grecaptcha.ready(function() {
-            grecaptcha.execute(env.PUBLIC_RECAPTCHA_KEY, {action: 'submit'}).then(async function(token: string) {
-                formDataTemp.set('recaptchaToken', token);
-                const response = await fetch(`?/register`, {
-                    method: 'POST',
-                    body: formDataTemp
-                });
-        
-                const result: ActionResult = deserialize(await response.text());
-        
-                if (result.type === 'success' && result.data) {
-                    const formDataTemp = new FormData(formData);
-                    signIn('credentials', {
-                        email: formDataTemp.get('email') as string,
-                        password: formDataTemp.get('password') as string,
-                        callbackUrl: '/'
-                    });
-                } else if (result.type === 'failure' && result.data) {
-                    errorPopup.showError(result.data.message);
-                }
-            });
-        });
+		grecaptcha.ready(function () {
+			grecaptcha.execute(env.PUBLIC_RECAPTCHA_KEY, { action: 'submit' }).then(async function (
+				token: string
+			) {
+				formDataTemp.set('recaptchaToken', token);
+				const response = await fetch(`?/register`, {
+					method: 'POST',
+					body: formDataTemp
+				});
+
+				const result: ActionResult = deserialize(await response.text());
+
+				if (result.type === 'success' && result.data) {
+					const formDataTemp = new FormData(formData);
+					signIn('credentials', {
+						email: formDataTemp.get('email') as string,
+						password: formDataTemp.get('password') as string,
+						callbackUrl: '/'
+					});
+				} else if (result.type === 'failure' && result.data) {
+					errorPopup.showError(result.data.message);
+				}
+			});
+		});
 	}
 
-    async function handleVerifyEmailToken() {
+	async function handleVerifyEmailToken() {
 		const data = new FormData();
 		data.append('email', verifyEmail.toLowerCase());
 		data.append('emailToken', emailTokenArray.join(''));
 
-        grecaptcha.ready(function() {
-            grecaptcha.execute(env.PUBLIC_RECAPTCHA_KEY, {action: 'submit'}).then(async function(token: string) {
-                data.set('recaptchaToken', token);
-                const response = await fetch(`?/verifyEmailToken`, {
-                    method: 'POST',
-                    body: data
-                });
+		grecaptcha.ready(function () {
+			grecaptcha.execute(env.PUBLIC_RECAPTCHA_KEY, { action: 'submit' }).then(async function (
+				token: string
+			) {
+				data.set('recaptchaToken', token);
+				const response = await fetch(`?/verifyEmailToken`, {
+					method: 'POST',
+					body: data
+				});
 
-                const result: ActionResult = deserialize(await response.text());
+				const result: ActionResult = deserialize(await response.text());
 
-                if (result.type === 'success' && result.data) {
-                    errorPopup.showError(result.data.message, null, 5000, 'success');
-                    goto('/');
-                } else if (result.type === 'failure' && result.data) {
-                    errorPopup.showError(result.data.message);
-                }
-            });
-        });
+				if (result.type === 'success' && result.data) {
+					errorPopup.showError(result.data.message, null, 5000, 'success');
+					goto('/');
+				} else if (result.type === 'failure' && result.data) {
+					errorPopup.showError(result.data.message);
+				}
+			});
+		});
 	}
 
 	// Function to check for special characters
@@ -193,12 +197,13 @@
 			}
 		}
 	}
-
 </script>
 
 <svelte:head>
 	<title>Signup & Login | Lutia</title>
-    <script src="https://www.google.com/recaptcha/api.js?render={env.PUBLIC_RECAPTCHA_KEY}"></script>
+	<script
+		src="https://www.google.com/recaptcha/api.js?render={env.PUBLIC_RECAPTCHA_KEY}"
+	></script>
 </svelte:head>
 
 <ErrorPopup bind:this={errorPopup} />

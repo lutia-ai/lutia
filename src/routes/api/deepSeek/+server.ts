@@ -85,9 +85,9 @@ export async function POST({ request, locals }) {
 			throw error(400, 'conversationId must be a string if provided');
 		}
 
-        if (!user.email_verified) {
-            throw error(400, 'Email not verified');
-        }
+		if (!user.email_verified) {
+			throw error(400, 'Email not verified');
+		}
 
 		// Filter out assistant messages with empty content (ie that are still streaming)
 		messages = messages.map((msg) => {

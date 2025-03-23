@@ -16,20 +16,20 @@ const darkModeHandler: Handle = async ({ event, resolve }) => {
 };
 
 const IPHandler: Handle = async ({ event, resolve }) => {
-    // Extract client IP from X-Forwarded-For header
-    const forwardedFor = event.request.headers.get('X-Forwarded-For');
-    const clientIP = forwardedFor ? forwardedFor.split(',')[0].trim() : 'Unknown';
-    
-    // Log the request with IP
-    console.log({
-        timestamp: new Date().toISOString(),
-        ip: clientIP,
-        url: event.url.pathname,
-        method: event.request.method
-    });
-    
-    // Continue with the request
-    return await resolve(event);
+	// Extract client IP from X-Forwarded-For header
+	const forwardedFor = event.request.headers.get('X-Forwarded-For');
+	const clientIP = forwardedFor ? forwardedFor.split(',')[0].trim() : 'Unknown';
+
+	// Log the request with IP
+	console.log({
+		timestamp: new Date().toISOString(),
+		ip: clientIP,
+		url: event.url.pathname,
+		method: event.request.method
+	});
+
+	// Continue with the request
+	return await resolve(event);
 };
 // Export the sequence of handlers
 export const handle = sequence(darkModeHandler, IPHandler, authHandler);

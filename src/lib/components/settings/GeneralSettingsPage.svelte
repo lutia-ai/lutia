@@ -174,12 +174,12 @@
 		role="button"
 		tabindex="0"
 		on:click|stopPropagation={() => {
-            isSettingsOpen.set(false);
+			isSettingsOpen.set(false);
 			signOut();
 		}}
 		on:keydown|stopPropagation={(e) => {
 			if (e.key === 'Enter') {
-                isSettingsOpen.set(false);
+				isSettingsOpen.set(false);
 				signOut();
 			}
 		}}

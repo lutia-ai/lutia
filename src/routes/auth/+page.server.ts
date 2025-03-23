@@ -37,7 +37,7 @@ export const actions = {
 		const name = data.get('name');
 		const password = data.get('password');
 		const confirmPassword = data.get('confirmPassword');
-        const recaptchaToken = data.get('recaptchaToken') as string;
+		const recaptchaToken = data.get('recaptchaToken') as string;
 
 		if (typeof email !== 'string' || !email) {
 			return fail(400, { message: 'Email is required' });
@@ -67,11 +67,11 @@ export const actions = {
 			return fail(400, { message: 'Password must contain a number' });
 		}
 
-        // Verify reCAPTCHA
-        const recaptchaValid = await verifyRecaptcha(recaptchaToken);
-        if (!recaptchaValid) {
-            return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
-        }
+		// Verify reCAPTCHA
+		const recaptchaValid = await verifyRecaptcha(recaptchaToken);
+		if (!recaptchaValid) {
+			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
+		}
 
 		try {
 			try {
@@ -109,7 +109,7 @@ export const actions = {
 		const data = await request.formData();
 		const email = data.get('email');
 		const emailToken = data.get('emailToken');
-        const recaptchaToken = data.get('recaptchaToken') as string;
+		const recaptchaToken = data.get('recaptchaToken') as string;
 
 		if (typeof email !== 'string' || !email) {
 			return fail(400, { message: 'Email is required' });
@@ -119,11 +119,11 @@ export const actions = {
 			return fail(400, { message: 'emailToken is missing' });
 		}
 
-        // Verify reCAPTCHA
-        const recaptchaValid = await verifyRecaptcha(recaptchaToken);
-        if (!recaptchaValid) {
-            return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
-        }
+		// Verify reCAPTCHA
+		const recaptchaValid = await verifyRecaptcha(recaptchaToken);
+		if (!recaptchaValid) {
+			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
+		}
 
 		try {
 			const user = await retrieveUserByEmail(email);

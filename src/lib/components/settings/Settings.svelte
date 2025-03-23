@@ -54,7 +54,7 @@
 	<div class="settings-panel">
 		<div class="title-container">
 			<h1>Settings</h1>
-			<button on:click={() => (isSettingsOpen.set(false))}>
+			<button on:click={() => isSettingsOpen.set(false)}>
 				<CrossIcon color="var(--text-color)" />
 			</button>
 		</div>

@@ -34,7 +34,7 @@ export async function POST({ request, locals }) {
 		let messageConversationId: string = conversationId;
 		let errorMessage: any;
 
-        console.log('user: ', user);
+		console.log('user: ', user);
 
 		if (!isValidMessageArray(rawMessages)) {
 			throw error(400, 'Invalid messages array');
@@ -78,9 +78,9 @@ export async function POST({ request, locals }) {
 			throw error(400, 'conversationId must be a string if provided');
 		}
 
-        if (!user.email_verified) {
-            throw error(400, 'Email not verified');
-        }
+		if (!user.email_verified) {
+			throw error(400, 'Email not verified');
+		}
 
 		// Extract system message and ensure non-empty content in messages
 		let systemMessage = null;
@@ -371,9 +371,8 @@ export async function POST({ request, locals }) {
 			}
 		});
 	} catch (err) {
-        console.error('Error:', err);
+		console.error('Error:', err);
 		if (err instanceof InsufficientBalanceError) {
-
 			throw error(500, err.message);
 		}
 		throw error(500, 'An error occurred while processing your request');

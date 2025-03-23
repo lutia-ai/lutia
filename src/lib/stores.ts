@@ -5,42 +5,45 @@ import type { ApiProvider } from '@prisma/client';
 import { modelDictionary } from './modelDictionary';
 
 function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
-    // Create the store with the start value
-    const store = writable(startValue);
+	// Create the store with the start value
+	const store = writable(startValue);
 
-    if (browser) {
-        // Check if the value exists in localStorage
-        const storedValue = localStorage.getItem(key);
-        
-        // If a value is stored, use it to initialize the store
-        if (storedValue !== null) {
-            try {
-                const parsedValue = JSON.parse(storedValue);
-                // Check if our special null marker is used (for undefined values)
-                if (parsedValue === null && storedValue === "null" &&
-                        (startValue === undefined || typeof startValue === "undefined")) {
-                    store.set(undefined as unknown as T);
-                } else {
-                    store.set(parsedValue as T);
-                }
-            } catch (e) {
-                console.error(`Error parsing stored value for ${key}:`, e);
-                store.set(startValue);
-            }
-        }
+	if (browser) {
+		// Check if the value exists in localStorage
+		const storedValue = localStorage.getItem(key);
 
-        // Subscribe to the store and update localStorage when it changes
-        store.subscribe((value) => {
-            if (value === undefined) {
-                // Store null as a marker for undefined
-                localStorage.setItem(key, "null");
-            } else {
-                localStorage.setItem(key, JSON.stringify(value));
-            }
-        });
-    }
-    
-    return store;
+		// If a value is stored, use it to initialize the store
+		if (storedValue !== null) {
+			try {
+				const parsedValue = JSON.parse(storedValue);
+				// Check if our special null marker is used (for undefined values)
+				if (
+					parsedValue === null &&
+					storedValue === 'null' &&
+					(startValue === undefined || typeof startValue === 'undefined')
+				) {
+					store.set(undefined as unknown as T);
+				} else {
+					store.set(parsedValue as T);
+				}
+			} catch (e) {
+				console.error(`Error parsing stored value for ${key}:`, e);
+				store.set(startValue);
+			}
+		}
+
+		// Subscribe to the store and update localStorage when it changes
+		store.subscribe((value) => {
+			if (value === undefined) {
+				// Store null as a marker for undefined
+				localStorage.setItem(key, 'null');
+			} else {
+				localStorage.setItem(key, JSON.stringify(value));
+			}
+		});
+	}
+
+	return store;
 }
 
 // Persistent store for the chosenCompany setting
