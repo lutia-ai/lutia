@@ -246,29 +246,42 @@
 	}
 
 	function handlePaste(event: ClipboardEvent): void {
-		event.preventDefault();
-		if (!event.clipboardData) return;
-
-		const text = event.clipboardData.getData('text/plain');
-
-		// Preserve line breaks and handle HTML entities
-		const formattedText = text
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.split('\n')
-			.map((line) => {
-				// Replace leading spaces with non-breaking spaces
-				// Match all spaces at the beginning of the line
-				return line.replace(/^(\s+)/, (match) => {
-					// Replace each space with a non-breaking space
-					return '&nbsp;'.repeat(match.length);
-				});
-			})
-			.join('<br>');
-
-		document.execCommand('insertHTML', false, formattedText);
-	}
+        event.preventDefault();
+        if (!event.clipboardData) return;
+            
+        const text = event.clipboardData.getData('text/plain');
+            
+        // Use a single regex pass instead of multiple replacements
+        let formattedText = text
+            .replace(/[&<>]/g, char => {
+                switch (char) {
+                    case '&': return '&amp;';
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    default: return char;
+                }
+            });
+            
+        // Process line breaks and leading spaces with larger indentation
+        formattedText = formattedText.replace(/^[ \t]+|(\n)[ \t]+/g, (match, newline) => {
+            // Calculate how many indentation units we need
+            const spaces = match.length;
+            if (match.startsWith('\n')) {
+                // For lines starting with newline, preserve the newline and add indentation
+                return newline + '&nbsp;'.repeat(spaces * 4); // Multiplying by 4 for larger indentation
+            }
+            // For leading spaces, just add indentation
+            return '&nbsp;'.repeat(spaces * 4); // Multiplying by 4 for larger indentation
+        });
+            
+        // Replace all tabs with multiple spaces for better visibility
+        formattedText = formattedText.replace(/\t/g, '&nbsp;'.repeat(4)); // 4 spaces per tab
+            
+        // Replace all newlines with <br> in a single operation
+        formattedText = formattedText.replace(/\n/g, '<br>');
+            
+        document.execCommand('insertHTML', false, formattedText);
+    }
 
 	function copyToClipboard(text: string): Promise<void> {
 		return new Promise((resolve, reject) => {
