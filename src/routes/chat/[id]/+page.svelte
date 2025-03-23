@@ -200,7 +200,14 @@
 		selectCompany(company);
 		selectModel(model);
 		showModelSearch = false;
-		prompt = prompt.replace(/@.*$/, '').trim();
+
+		// Instead of replacing from the first @ to the end, only replace from the last @
+		const lastAtIndex = prompt.lastIndexOf('@');
+		if (lastAtIndex !== -1) {
+			// Keep everything before the last @
+			prompt = prompt.substring(0, lastAtIndex);
+		}
+
 		requestAnimationFrame(() => {
 			promptBar.focus();
 			// Set cursor to end of content
