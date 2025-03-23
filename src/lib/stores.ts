@@ -5,25 +5,42 @@ import type { ApiProvider } from '@prisma/client';
 import { modelDictionary } from './modelDictionary';
 
 function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
-	// Create the store with the start value
-	const store = writable(startValue);
+    // Create the store with the start value
+    const store = writable(startValue);
 
-	if (browser) {
-		// Check if the value exists in localStorage
-		const storedValue = localStorage.getItem(key);
+    if (browser) {
+        // Check if the value exists in localStorage
+        const storedValue = localStorage.getItem(key);
+        
+        // If a value is stored, use it to initialize the store
+        if (storedValue !== null) {
+            try {
+                const parsedValue = JSON.parse(storedValue);
+                // Check if our special null marker is used (for undefined values)
+                if (parsedValue === null && storedValue === "null" &&
+                        (startValue === undefined || typeof startValue === "undefined")) {
+                    store.set(undefined as unknown as T);
+                } else {
+                    store.set(parsedValue as T);
+                }
+            } catch (e) {
+                console.error(`Error parsing stored value for ${key}:`, e);
+                store.set(startValue);
+            }
+        }
 
-		// If a value is stored, use it to initialize the store
-		if (storedValue !== null) {
-			store.set(JSON.parse(storedValue) as T);
-		}
-
-		// Subscribe to the store and update localStorage when it changes
-		store.subscribe((value) => {
-			localStorage.setItem(key, JSON.stringify(value));
-		});
-	}
-
-	return store;
+        // Subscribe to the store and update localStorage when it changes
+        store.subscribe((value) => {
+            if (value === undefined) {
+                // Store null as a marker for undefined
+                localStorage.setItem(key, "null");
+            } else {
+                localStorage.setItem(key, JSON.stringify(value));
+            }
+        });
+    }
+    
+    return store;
 }
 
 // Persistent store for the chosenCompany setting
@@ -48,7 +65,7 @@ export const chosenModel = createPersistentStore<Model>(
 );
 
 // Persistent store for the conversationId setting
-export const conversationId = createPersistentStore<string>('conversationId', 'new');
+export const conversationId = createPersistentStore<string | undefined>('conversationId', 'new');
 
 // Persistent store for the fullPrompt setting
 export const fullPrompt = createPersistentStore<Message[] | string>('fullPrompt', '');
