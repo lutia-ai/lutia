@@ -2361,6 +2361,20 @@
 						margin: 5px 0;
 						width: 100%;
 						box-sizing: border-box;
+
+                        /* Webkit browsers (Chrome, Safari, etc.) */
+                        &::-webkit-scrollbar {
+                            width: 8px;  /* adjust width as needed */
+                        }
+                        
+                        &::-webkit-scrollbar-track {
+                            background-color: transparent !important;
+                        }
+                        
+                        &::-webkit-scrollbar-thumb {
+                            background-color: rgba(0, 0, 0, 0.2);  /* semi-transparent thumb */
+                            border-radius: 4px;
+                        }
 					}
 
 					.prompt-bar-buttons-container {
