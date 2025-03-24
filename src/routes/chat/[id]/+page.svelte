@@ -2031,10 +2031,30 @@
 				}
 			}
 
+            .code-container > div {
+                /* Scrollbar styling for the nested div */
+                &::-webkit-scrollbar {
+                    width: 8px;
+                }
+                
+                &::-webkit-scrollbar-track {
+                    background-color: transparent !important;
+                }
+                
+                &::-webkit-scrollbar-thumb {
+                    background-color: rgba(0, 0, 0, 0.2);
+                    border-radius: 4px;
+                }
+                
+                
+                scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+            }
+            
 			.code-container {
 				padding-bottom: 10px;
 				border-radius: 10px;
 				margin: 20px 0;
+
 
 				.code-header {
 					display: flex;
