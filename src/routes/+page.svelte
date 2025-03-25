@@ -836,6 +836,25 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 				font-style: normal;
 				z-index: 10;
 			}
+
+            .cta-button {
+                background-color: #1d60c2;
+                color: #fff;
+                padding: 1rem 2rem;
+                border: none;
+                border-radius: 5px;
+                text-decoration: none;
+                font-size: 1rem;
+                transition: background-color 0.3s;
+                cursor: pointer;
+                margin-top: 40px;
+                z-index: 10;
+                transition: outline 0.3s ease-in-out;
+
+                &:hover {
+                    outline: 7px solid var(--bg-color-light);
+                }
+            }
 		}
 	}
 
@@ -1284,6 +1303,13 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 	}
 
 	@media (max-width: 610px) {
+        .cta-button {
+            font-size: 30px;
+            &:hover {
+                outline: 7px solid var(--text-color-light);
+            }
+        }
+        
 		.llm-container {
 			.llm-chat {
 				display: none;
