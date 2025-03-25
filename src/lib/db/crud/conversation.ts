@@ -216,7 +216,6 @@ export async function retrieveApiRequestsByConversationId(
 				request_timestamp: 'asc'
 			}
 		});
-
 		return serialize ? apiRequests.map(serializeApiRequest) : apiRequests;
 	} catch (error) {
 		console.error('Error retrieving API requests for conversation:', error);

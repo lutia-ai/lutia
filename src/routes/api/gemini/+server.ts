@@ -15,7 +15,7 @@ import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { createConversation } from '$lib/db/crud/conversation.js';
 import { isValidMessageArray } from '$lib/utils/typeGuards';
 import { getModelFromName } from '$lib/utils/modelConverter';
-import { finalizeResponse } from '$lib/utils/responseFinalizer';
+import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
 
 export async function POST({ request, locals }) {
 	const requestId = crypto.randomUUID();
@@ -26,8 +26,14 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const { plainTextPrompt, promptStr, modelStr, imagesStr, conversationId } =
-			await request.json();
+		const {
+			plainTextPrompt,
+			promptStr,
+			modelStr,
+			imagesStr,
+			conversationId,
+			regenerateMessageId
+		} = await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
 		let rawMessages: Message[] = JSON.parse(promptStr);
@@ -79,6 +85,16 @@ export async function POST({ request, locals }) {
 		if (!user.email_verified) {
 			throw error(400, 'Email not verified');
 		}
+
+		// Extract unique message IDs from your messages array
+		const referencedMessageIds: number[] = [
+			...new Set(
+				messages
+					.filter((msg) => msg.message_id !== null && msg.message_id !== undefined)
+					.map((msg) => msg.message_id)
+					.filter((id): id is number => id !== undefined)
+			)
+		];
 
 		// Iterate through the messages array and remove empty assistant messages
 		for (let i = messages.length - 1; i >= 0; i--) {
@@ -188,7 +204,7 @@ export async function POST({ request, locals }) {
 		let clientDisconnected = false;
 
 		request.signal.addEventListener('abort', () => {
-			console.log('Client disconnected prematurely');
+			console.error('Client disconnected prematurely');
 			clientDisconnected = true;
 			abortController.abort();
 
@@ -223,7 +239,7 @@ export async function POST({ request, locals }) {
 									)
 								);
 							} catch (err) {
-								console.log('Client already disconnected (first chunk)');
+								console.error('Client already disconnected (first chunk)');
 								clientDisconnected = true;
 								break;
 							}
@@ -240,7 +256,7 @@ export async function POST({ request, locals }) {
 									)
 								);
 							} catch (err) {
-								console.log('Client already disconnected (content)');
+								console.error('Client already disconnected (content)');
 								clientDisconnected = true;
 								break;
 							}
@@ -266,7 +282,7 @@ export async function POST({ request, locals }) {
 							)
 						);
 					} catch (err) {
-						console.log('Client already disconnected (chunk.usage)');
+						console.error('Client already disconnected (chunk.usage)');
 						clientDisconnected = true;
 					}
 				} catch (err) {
@@ -285,33 +301,65 @@ export async function POST({ request, locals }) {
 							)
 						);
 					} catch (controllerError) {
-						console.log('Failed to send error: client disconnected');
+						console.error('Failed to send error: client disconnected');
 						clientDisconnected = true;
 					}
 				} finally {
 					try {
-						await finalizeResponse({
-							user,
-							model,
-							plainText,
-							images,
-							chunks,
-							thinkingChunks,
-							finalUsage,
-							wasAborted: clientDisconnected,
-							error: errorMessage,
-							requestId,
-							messageConversationId,
-							originalConversationId: conversationId,
-							apiProvider: ApiProvider.google
-						});
+						if (!regenerateMessageId) {
+							const { message, apiRequest } = await finalizeResponse({
+								user,
+								model,
+								plainText,
+								images,
+								chunks,
+								thinkingChunks,
+								finalUsage,
+								wasAborted: clientDisconnected,
+								error: errorMessage,
+								requestId,
+								messageConversationId,
+								originalConversationId: conversationId,
+								apiProvider: ApiProvider.google,
+								referencedMessageIds
+							});
+							controller.enqueue(
+								textEncoder.encode(
+									JSON.stringify({
+										type: 'message_id',
+										message_id: message.id
+									}) + '\n'
+								)
+							);
+						} else {
+							// New path for regenerating a response to an existing message
+							const { message, apiRequest } = await updateExistingMessageAndRequest({
+								messageId: regenerateMessageId,
+								user,
+								model,
+								chunks,
+								thinkingChunks,
+								finalUsage,
+								wasAborted: clientDisconnected,
+								error: errorMessage
+							});
+
+							controller.enqueue(
+								textEncoder.encode(
+									JSON.stringify({
+										type: 'message_id',
+										message_id: message.id
+									}) + '\n'
+								)
+							);
+						}
 					} catch (err) {
 						console.error('Error in finalizeResponse:', err);
 					}
 					try {
 						controller.close();
 					} catch (closeError) {
-						console.log('Controller already closed');
+						console.error('Controller already closed');
 					}
 				}
 			}

@@ -191,6 +191,74 @@ export async function retrieveApiRequestsWithMessage(
 	}
 }
 
+/**
+ * Retrieves an API request with its associated message by message ID,
+ * including any messages referenced by this message
+ * @param messageId The ID of the message associated with the API request
+ * @param userId Optional user ID for authorization (only returns the request if it belongs to this user)
+ * @param serialize Whether to serialize the response
+ * @returns The API request with message and referenced messages or null if not found
+ */
+export async function retrieveApiRequestByMessageId(
+	messageId: number,
+	userId?: number,
+	serialize: boolean = false
+): Promise<ApiRequest | SerializedApiRequest | null> {
+	try {
+		const whereCondition: any = {
+			message_id: messageId
+		};
+
+		// If userId is provided, add it to the where condition for authorization
+		if (userId !== undefined) {
+			whereCondition.user_id = userId;
+		}
+
+		const apiRequest = await prisma.apiRequest.findFirst({
+			where: whereCondition,
+			include: {
+				message: {
+					include: {
+						referencedMessages: {
+							select: {
+								// All fields except pictures
+								id: true,
+								prompt: true,
+								response: true,
+								reasoning: true,
+								created_at: true,
+								referencedMessages: true,
+								referencedBy: true
+							}
+						},
+						referencedBy: {
+							select: {
+								// All fields except pictures
+								id: true,
+								prompt: true,
+								response: true,
+								reasoning: true,
+								created_at: true,
+								referencedMessages: true,
+								referencedBy: true
+							}
+						}
+					}
+				}
+			}
+		});
+
+		if (!apiRequest) {
+			return null;
+		}
+
+		return serialize ? serializeApiRequest(apiRequest) : apiRequest;
+	} catch (error) {
+		console.error('Error retrieving API request by message ID:', error);
+		throw error;
+	}
+}
+
 export async function retrieveUserRequestsInDateRange(
 	userId: number,
 	startDate: Date,

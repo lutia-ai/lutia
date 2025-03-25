@@ -65,6 +65,7 @@
 		handleKeyboardShortcut,
 		loadChatHistory,
 		parseMessageContent,
+		regenerateMessage,
 		sanitizeLLmContent
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
@@ -78,6 +79,7 @@
 	import WarningIcon from '$lib/components/icons/WarningIcon.svelte';
 	import { afterNavigate, pushState } from '$app/navigation';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
+	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
 
 	export let data;
 
@@ -246,42 +248,45 @@
 	}
 
 	function handlePaste(event: ClipboardEvent): void {
-        event.preventDefault();
-        if (!event.clipboardData) return;
-            
-        const text = event.clipboardData.getData('text/plain');
-            
-        // Use a single regex pass instead of multiple replacements
-        let formattedText = text
-            .replace(/[&<>]/g, char => {
-                switch (char) {
-                    case '&': return '&amp;';
-                    case '<': return '&lt;';
-                    case '>': return '&gt;';
-                    default: return char;
-                }
-            });
-            
-        // Process line breaks and leading spaces with larger indentation
-        formattedText = formattedText.replace(/^[ \t]+|(\n)[ \t]+/g, (match, newline) => {
-            // Calculate how many indentation units we need
-            const spaces = match.length;
-            if (match.startsWith('\n')) {
-                // For lines starting with newline, preserve the newline and add indentation
-                return newline + '&nbsp;'.repeat(spaces * 4); // Multiplying by 4 for larger indentation
-            }
-            // For leading spaces, just add indentation
-            return '&nbsp;'.repeat(spaces * 4); // Multiplying by 4 for larger indentation
-        });
-            
-        // Replace all tabs with multiple spaces for better visibility
-        formattedText = formattedText.replace(/\t/g, '&nbsp;'.repeat(4)); // 4 spaces per tab
-            
-        // Replace all newlines with <br> in a single operation
-        formattedText = formattedText.replace(/\n/g, '<br>');
-            
-        document.execCommand('insertHTML', false, formattedText);
-    }
+		event.preventDefault();
+		if (!event.clipboardData) return;
+
+		const text = event.clipboardData.getData('text/plain');
+
+		// Use a single regex pass instead of multiple replacements
+		let formattedText = text.replace(/[&<>]/g, (char) => {
+			switch (char) {
+				case '&':
+					return '&amp;';
+				case '<':
+					return '&lt;';
+				case '>':
+					return '&gt;';
+				default:
+					return char;
+			}
+		});
+
+		// Process line breaks and leading spaces with larger indentation
+		formattedText = formattedText.replace(/^[ \t]+|(\n)[ \t]+/g, (match, newline) => {
+			// Calculate how many indentation units we need
+			const spaces = match.length;
+			if (match.startsWith('\n')) {
+				// For lines starting with newline, preserve the newline and add indentation
+				return newline + '&nbsp;'.repeat(spaces * 4); // Multiplying by 4 for larger indentation
+			}
+			// For leading spaces, just add indentation
+			return '&nbsp;'.repeat(spaces * 4); // Multiplying by 4 for larger indentation
+		});
+
+		// Replace all tabs with multiple spaces for better visibility
+		formattedText = formattedText.replace(/\t/g, '&nbsp;'.repeat(4)); // 4 spaces per tab
+
+		// Replace all newlines with <br> in a single operation
+		formattedText = formattedText.replace(/\n/g, '<br>');
+
+		document.execCommand('insertHTML', false, formattedText);
+	}
 
 	function copyToClipboard(text: string): Promise<void> {
 		return new Promise((resolve, reject) => {
@@ -503,6 +508,7 @@
 				let reasoningText = '';
 				let responseComponents: Component[] = [];
 				let reasoningComponent: ReasoningComponent;
+				let message_id: number;
 
 				while (true) {
 					const { value, done } = await reader.read();
@@ -538,6 +544,8 @@
 								// This updates the URL without causing a page reload
 								pushState(url.toString(), {});
 								conversationId.set(data.conversation_id);
+							} else if (data.type === 'message_id') {
+								message_id = data.message_id;
 							} else if (data.type === 'error') {
 								console.error(data.message);
 								errorPopup.showError(data.message, null, 5000, 'error');
@@ -545,12 +553,23 @@
 
 							chatHistory.update((history) =>
 								history.map((msg, index) =>
+									index === currentChatIndex - 1
+										? {
+												...msg,
+												message_id: message_id
+											}
+										: msg
+								)
+							);
+							chatHistory.update((history) =>
+								history.map((msg, index) =>
 									index === currentChatIndex
 										? {
 												...msg,
 												text: responseText,
 												components: responseComponents,
-												reasoning: reasoningComponent
+												reasoning: reasoningComponent,
+												message_id: message_id
 											}
 										: msg
 								)
@@ -1144,7 +1163,11 @@
 															color="var(--text-color-light)"
 														/>
 													{/if}
-													<p>{chat.copied ? 'copied' : 'copy'}</p>
+													<HoverTag
+														text={chat.copied ? 'copied' : 'copy'}
+														position="bottom"
+														distance={12}
+													/>
 												</div>
 												<div
 													class="toolbar-item"
@@ -1154,11 +1177,17 @@
 														chat.price_open = true;
 													}}
 													on:keydown|stopPropagation={(e) => {
-														chat.price_open = true;
+														if (e.key === 'Enter') {
+															chat.price_open = true;
+														}
 													}}
 												>
 													<DollarIcon color="var(--text-color-light)" />
-													<p>Price</p>
+													<HoverTag
+														text={'View cost'}
+														position="bottom"
+														distance={12}
+													/>
 													{#if chat.price_open}
 														<div class="price-open-container">
 															<div class="price-record">
@@ -1189,9 +1218,36 @@
 														</div>
 													{/if}
 												</div>
-												<div class="toolbar-item">
-													<StarsIcon color="var(--text-color-light)" />
-													<p>{formatModelEnumToReadable(chat.by)}</p>
+												<div
+													class="toolbar-item refresh-button"
+													role="button"
+													tabindex="0"
+													on:click|stopPropagation={async () => {
+														await regenerateMessage(
+															chat.message_id ?? 0
+														);
+													}}
+													on:keydown|stopPropagation={async (e) => {
+														if (e.key === 'Enter') {
+															await regenerateMessage(
+																chat.message_id ?? 0
+															);
+														}
+													}}
+												>
+													<div class="icon">
+														<RefreshIcon
+															color="var(--text-color-light)"
+														/>
+													</div>
+													<span class="model-name"
+														>{formatModelEnumToReadable(chat.by)}</span
+													>
+													<HoverTag
+														text={'Regenerate response'}
+														position="bottom"
+														distance={12}
+													/>
 												</div>
 											</div>
 										{/if}
@@ -1850,10 +1906,10 @@
 						padding: 3px 0px;
 						box-sizing: border-box;
 
-						// Add minimum height when loading
-						&:has(.gpt-loading-dot) {
-							min-height: 80vh;
-						}
+						// // Add minimum height when loading
+						// &:has(.gpt-loading-dot) {
+						// 	min-height: 80vh;
+						// }
 
 						&:hover {
 							.chat-toolbar-container {
@@ -1987,6 +2043,47 @@
 									}
 								}
 							}
+
+							.toolbar-item.refresh-button {
+								position: relative;
+								display: flex;
+								width: auto;
+								transition: all 0s ease-in-out;
+
+								.icon {
+									margin-right: auto;
+								}
+
+								/* Initially only show the icon */
+								.model-name {
+									position: relative;
+									max-width: 0;
+									opacity: 0;
+									white-space: nowrap;
+									overflow: hidden;
+									transition: all 0.5s ease-out;
+									margin-left: 0;
+								}
+
+								/* On hover, expand to show model name */
+								&:hover {
+									background: var(--bg-color-light);
+									width: auto;
+									padding-right: 10px;
+
+									.model-name {
+										max-width: 100%; /* adjust based on your longest model name */
+										opacity: 1;
+										margin-left: 10px;
+									}
+								}
+							}
+
+							.chat-toolbar-container {
+								/* Your existing styles */
+								transition: all 0.3s ease-in-out;
+								/* other styles */
+							}
 						}
 
 						.image-container {
@@ -2031,30 +2128,28 @@
 				}
 			}
 
-            .code-container > div {
-                /* Scrollbar styling for the nested div */
-                &::-webkit-scrollbar {
-                    width: 8px;
-                }
-                
-                &::-webkit-scrollbar-track {
-                    background-color: transparent !important;
-                }
-                
-                &::-webkit-scrollbar-thumb {
-                    background-color: rgba(0, 0, 0, 0.2);
-                    border-radius: 4px;
-                }
-                
-                
-                scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-            }
-            
+			.code-container > div {
+				/* Scrollbar styling for the nested div */
+				&::-webkit-scrollbar {
+					width: 8px;
+				}
+
+				&::-webkit-scrollbar-track {
+					background-color: transparent !important;
+				}
+
+				&::-webkit-scrollbar-thumb {
+					background-color: rgba(0, 0, 0, 0.2);
+					border-radius: 4px;
+				}
+
+				scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+			}
+
 			.code-container {
 				padding-bottom: 10px;
 				border-radius: 10px;
 				margin: 20px 0;
-
 
 				.code-header {
 					display: flex;
@@ -2382,19 +2477,19 @@
 						width: 100%;
 						box-sizing: border-box;
 
-                        /* Webkit browsers (Chrome, Safari, etc.) */
-                        &::-webkit-scrollbar {
-                            width: 8px;  /* adjust width as needed */
-                        }
-                        
-                        &::-webkit-scrollbar-track {
-                            background-color: transparent !important;
-                        }
-                        
-                        &::-webkit-scrollbar-thumb {
-                            background-color: rgba(0, 0, 0, 0.2);  /* semi-transparent thumb */
-                            border-radius: 4px;
-                        }
+						/* Webkit browsers (Chrome, Safari, etc.) */
+						&::-webkit-scrollbar {
+							width: 8px; /* adjust width as needed */
+						}
+
+						&::-webkit-scrollbar-track {
+							background-color: transparent !important;
+						}
+
+						&::-webkit-scrollbar-thumb {
+							background-color: rgba(0, 0, 0, 0.2); /* semi-transparent thumb */
+							border-radius: 4px;
+						}
 					}
 
 					.prompt-bar-buttons-container {

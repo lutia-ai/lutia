@@ -44,7 +44,7 @@ export function sanitizeHtml(html: string): string {
 
 export function generateFullPrompt(
 	prompt: string,
-	currentHistory: { by: string; text: string }[],
+	currentHistory: { message_id?: number; by: string; text: string }[],
 	numberPrevMessages: number,
 	chosenModel: Model,
 	ignoreLastTwo: boolean = true,
@@ -53,7 +53,7 @@ export function generateFullPrompt(
 	const fullPrompt: Message[] = [];
 
 	if (currentHistory.length > 0) {
-		let prevMessages: { by: string; text: string }[] = [];
+		let prevMessages: { message_id?: number; by: string; text: string }[] = [];
 
 		// Automatic context window sizing based on token budget
 		if (isContextWindowAuto) {
@@ -69,7 +69,7 @@ export function generateFullPrompt(
 				: Math.max(0, currentHistory.length - 1);
 
 			// Work backwards through history until we hit token limit
-			const messagesToInclude: { by: string; text: string }[] = [];
+			const messagesToInclude: { message_id?: number; by: string; text: string }[] = [];
 			let tokenCount = estimateTokens(prompt);
 
 			for (let i = startIndex; i >= 0; i--) {
@@ -100,8 +100,9 @@ export function generateFullPrompt(
 		}
 
 		// Add selected messages to the prompt
-		for (const { by, text } of prevMessages) {
+		for (const { message_id, by, text } of prevMessages) {
 			fullPrompt.push({
+				message_id: message_id,
 				role: by === 'user' ? 'user' : 'assistant',
 				content: sanitizeHtml(text).trim()
 			});

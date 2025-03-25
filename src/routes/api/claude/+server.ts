@@ -10,7 +10,7 @@ import { ApiModel, ApiProvider, PaymentTier, type User } from '@prisma/client';
 import { createConversation } from '$lib/db/crud/conversation';
 import { getModelFromName } from '$lib/utils/modelConverter';
 import { isValidMessageArray } from '$lib/utils/typeGuards';
-import { finalizeResponse } from '$lib/utils/responseFinalizer';
+import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
 import { estimateTokenCount } from '$lib/utils/tokenCounter';
 
 export async function POST({ request, locals }) {
@@ -22,8 +22,15 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const { plainTextPrompt, promptStr, modelStr, imagesStr, reasoningOn, conversationId } =
-			await request.json();
+		const {
+			plainTextPrompt,
+			promptStr,
+			modelStr,
+			imagesStr,
+			reasoningOn,
+			conversationId,
+			regenerateMessageId
+		} = await request.json();
 
 		const plainText: string = JSON.parse(plainTextPrompt);
 		const modelName: ApiModel = JSON.parse(modelStr);
@@ -33,8 +40,6 @@ export async function POST({ request, locals }) {
 		const user: User = await retrieveUserByEmail(session.user!.email);
 		let messageConversationId: string = conversationId;
 		let errorMessage: any;
-
-		console.log('user: ', user);
 
 		if (!isValidMessageArray(rawMessages)) {
 			throw error(400, 'Invalid messages array');
@@ -84,6 +89,16 @@ export async function POST({ request, locals }) {
 
 		// Extract system message and ensure non-empty content in messages
 		let systemMessage = null;
+
+		// Extract unique message IDs from your messages array
+		const referencedMessageIds: number[] = [
+			...new Set(
+				messages
+					.filter((msg) => msg.message_id !== null && msg.message_id !== undefined)
+					.map((msg) => msg.message_id)
+					.filter((id): id is number => id !== undefined)
+			)
+		];
 
 		// Iterate through the messages array and remove empty assistant messages
 		for (let i = messages.length - 1; i >= 0; i--) {
@@ -177,12 +192,14 @@ export async function POST({ request, locals }) {
 		let stream;
 
 		try {
+			// Clean messages by removing message_id fields
+			const cleanedMessages = messages.map(({ message_id, ...rest }) => rest);
 			const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
 			stream = await client.messages.stream({
 				// Include system parameter only if we have a system message
 				...(systemMessage !== null ? { system: systemMessage } : {}),
 				// @ts-ignore
-				messages: messages,
+				messages: cleanedMessages,
 				model: model.param,
 				max_tokens: max_tokens,
 				...(reasoningOn && model.reasons
@@ -207,7 +224,7 @@ export async function POST({ request, locals }) {
 		let clientDisconnected = false;
 
 		request.signal.addEventListener('abort', () => {
-			console.log('Client disconnected prematurely');
+			console.error('Client disconnected prematurely');
 			clientDisconnected = true;
 			abortController.abort();
 
@@ -240,7 +257,7 @@ export async function POST({ request, locals }) {
 									)
 								);
 							} catch (err) {
-								console.log('Client already disconnected (message_start)');
+								console.error('Client already disconnected (message_start)');
 								clientDisconnected = true;
 								break;
 							}
@@ -267,7 +284,7 @@ export async function POST({ request, locals }) {
 									)
 								);
 							} catch (err) {
-								console.log('Client already disconnected (message_delta)');
+								console.error('Client already disconnected (message_delta)');
 								clientDisconnected = true;
 								break;
 							}
@@ -286,7 +303,7 @@ export async function POST({ request, locals }) {
 										)
 									);
 								} catch (err) {
-									console.log('Client already disconnected (thinking_delta)');
+									console.error('Client already disconnected (thinking_delta)');
 									clientDisconnected = true;
 									break;
 								}
@@ -304,7 +321,7 @@ export async function POST({ request, locals }) {
 											)
 										);
 									} catch (err) {
-										console.log('Client already disconnected (text_delta)');
+										console.error('Client already disconnected (text_delta)');
 										clientDisconnected = true;
 										break;
 									}
@@ -330,33 +347,65 @@ export async function POST({ request, locals }) {
 							)
 						);
 					} catch (controllerError) {
-						console.log('Failed to send error: client disconnected');
+						console.error('Failed to send error: client disconnected');
 						clientDisconnected = true;
 					}
 				} finally {
 					try {
-						await finalizeResponse({
-							user,
-							model,
-							plainText,
-							images,
-							chunks,
-							thinkingChunks,
-							finalUsage,
-							wasAborted: clientDisconnected,
-							error: errorMessage,
-							requestId,
-							messageConversationId,
-							originalConversationId: conversationId,
-							apiProvider: ApiProvider.anthropic
-						});
+						if (!regenerateMessageId) {
+							const { message, apiRequest } = await finalizeResponse({
+								user,
+								model,
+								plainText,
+								images,
+								chunks,
+								thinkingChunks,
+								finalUsage,
+								wasAborted: clientDisconnected,
+								error: errorMessage,
+								requestId,
+								messageConversationId,
+								originalConversationId: conversationId,
+								apiProvider: ApiProvider.anthropic,
+								referencedMessageIds
+							});
+							controller.enqueue(
+								textEncoder.encode(
+									JSON.stringify({
+										type: 'message_id',
+										message_id: message.id
+									}) + '\n'
+								)
+							);
+						} else {
+							// New path for regenerating a response to an existing message
+							const { message, apiRequest } = await updateExistingMessageAndRequest({
+								messageId: regenerateMessageId,
+								user,
+								model,
+								chunks,
+								thinkingChunks,
+								finalUsage,
+								wasAborted: clientDisconnected,
+								error: errorMessage
+							});
+
+							controller.enqueue(
+								textEncoder.encode(
+									JSON.stringify({
+										type: 'message_id',
+										message_id: message.id
+									}) + '\n'
+								)
+							);
+						}
 					} catch (err) {
 						console.error('Error in finalizeResponse:', err);
 					}
 					try {
 						controller.close();
 					} catch (closeError) {
-						console.log('Controller already closed');
+						console.error('Controller already closed');
 					}
 				}
 			}

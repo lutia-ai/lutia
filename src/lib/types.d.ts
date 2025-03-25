@@ -23,6 +23,7 @@ export type ReasoningComponent = {
 export type Component = CodeComponent | TextComponent | Image | ReasoningComponent;
 
 export type LlmChat = {
+	message_id?: number;
 	by: string;
 	text: string;
 	input_cost: number;
@@ -35,6 +36,7 @@ export type LlmChat = {
 };
 
 export type UserChat = {
+	message_id?: number;
 	by: string;
 	text: string;
 	image?: Image[];
@@ -80,6 +82,7 @@ export type ChatCompletionMessageParam = {
 };
 
 export type Message = {
+	message_id?: number;
 	role: 'user' | 'assistant' | 'developer' | 'system';
 	content: string | Object[];
 };
@@ -122,6 +125,7 @@ type SerializedMessage = {
 	response: string;
 	reasoning: string;
 	pictures: Image[];
+	referencedMessages: SerializedMessage[];
 };
 
 type SerializedApiRequest = {
@@ -135,6 +139,7 @@ type SerializedApiRequest = {
 	outputCost: string;
 	totalCost: string;
 	message: SerializedMessage | null;
+	conversationId: string | null;
 };
 
 type User = {
@@ -181,6 +186,17 @@ declare global {
 type ApiRequestWithMessage = Prisma.ApiRequestGetPayload<{
 	include: {
 		message: true;
+	};
+}>;
+
+type ApiRequestWithReferencedMessage = Prisma.ApiRequestGetPayload<{
+	include: {
+		message: {
+			include: {
+				referencedMessages: true;
+				referencedBy: true; // Optional: include if you want messages that reference this one
+			};
+		};
 	};
 }>;
 

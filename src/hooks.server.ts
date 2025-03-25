@@ -21,12 +21,12 @@ const IPHandler: Handle = async ({ event, resolve }) => {
 	const clientIP = forwardedFor ? forwardedFor.split(',')[0].trim() : 'Unknown';
 
 	// Log the request with IP
-	console.log({
-		timestamp: new Date().toISOString(),
-		ip: clientIP,
-		url: event.url.pathname,
-		method: event.request.method
-	});
+	// console.log({
+	// 	timestamp: new Date().toISOString(),
+	// 	ip: clientIP,
+	// 	url: event.url.pathname,
+	// 	method: event.request.method
+	// });
 
 	// Continue with the request
 	return await resolve(event);

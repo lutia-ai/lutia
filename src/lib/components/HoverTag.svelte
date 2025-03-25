@@ -1,9 +1,10 @@
 <script lang="ts">
 	export let text: string;
 	export let position: 'top' | 'right' | 'bottom' | 'left' = 'top';
+	export let distance: number = 8;
 </script>
 
-<div class="hover-tag-container {position}">
+<div class="hover-tag-container {position}" style="--distance: {distance}px">
 	<div class="hover-tag">
 		{text}
 		<div class="arrow"></div>
@@ -66,11 +67,10 @@
 	}
 
 	/* Position-specific styles */
-
 	.top {
 		bottom: 100%;
 		left: 50%;
-		transform: translateX(-50%) translateY(-8px);
+		transform: translateX(-50%) translateY(calc(-1 * var(--distance)));
 	}
 
 	.top .arrow {
@@ -84,7 +84,7 @@
 	.right {
 		left: 100%;
 		top: 50%;
-		transform: translateY(-50%) translateX(8px);
+		transform: translateY(-50%) translateX(var(--distance));
 	}
 
 	.right .arrow {
@@ -98,7 +98,7 @@
 	.bottom {
 		top: 100%;
 		left: 50%;
-		transform: translateX(-50%) translateY(8px);
+		transform: translateX(-50%) translateY(var(--distance));
 	}
 
 	.bottom .arrow {
@@ -112,7 +112,7 @@
 	.left {
 		right: 100%;
 		top: 50%;
-		transform: translateY(-50%) translateX(-8px);
+		transform: translateY(-50%) translateX(calc(-1 * var(--distance)));
 	}
 
 	.left .arrow {

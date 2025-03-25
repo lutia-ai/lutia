@@ -1,6 +1,9 @@
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from '../../$types';
-import { retrieveApiRequestsWithMessage } from '$lib/db/crud/apiRequest';
+import {
+	retrieveApiRequestByMessageId,
+	retrieveApiRequestsWithMessage
+} from '$lib/db/crud/apiRequest';
 import { deleteAllUserMessagesWithoutAConversation } from '$lib/db/crud/message';
 import { retrieveUserByEmail, retrieveUserWithSettingsByEmail } from '$lib/db/crud/user';
 import { retrieveUsersBalance, updateUserBalanceWithIncrement } from '$lib/db/crud/balance';
@@ -347,6 +350,34 @@ export const actions = {
 				type: 'success',
 				message: 'Conversation deleted successfully'
 			};
+		} catch (error) {
+			console.error('Error deleting conversation:', error);
+			return fail(500, { message: 'Failed to delete conversation' });
+		}
+	},
+	fetchMessageAndApiRequest: async ({ request, locals }) => {
+		// Get the authenticated user
+		const session = await locals.auth();
+		if (!session || !session.user) {
+			throw redirect(307, '/auth');
+		}
+
+		try {
+			const userId = Number(session.user.id);
+			const formData = await request.formData();
+			const messageId = Number(formData.get('messageId'));
+
+			// Validate inputs
+			if (!messageId) {
+				return fail(400, { message: 'messageId is required' });
+			}
+
+			const apiRequestWithMessage = await retrieveApiRequestByMessageId(
+				messageId,
+				userId,
+				true
+			);
+			return apiRequestWithMessage;
 		} catch (error) {
 			console.error('Error deleting conversation:', error);
 			return fail(500, { message: 'Failed to delete conversation' });
