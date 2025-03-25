@@ -758,6 +758,21 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 </div>
 
 <style lang="scss">
+	::-webkit-scrollbar {
+		width: 10px;
+	}
+
+	/* Scrollbar handle */
+	::-webkit-scrollbar-thumb {
+		background-color: #888;
+		border-radius: 6px;
+	}
+
+	/* Scrollbar track background */
+	::-webkit-scrollbar-track {
+		background-color: transparent;
+	}
+
 	$bgColor: lightgrey;
 	$textHoverColor: white;
 	$debug: false;
@@ -837,24 +852,24 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 				z-index: 10;
 			}
 
-            .cta-button {
-                background-color: #1d60c2;
-                color: #fff;
-                padding: 1rem 2rem;
-                border: none;
-                border-radius: 5px;
-                text-decoration: none;
-                font-size: 1rem;
-                transition: background-color 0.3s;
-                cursor: pointer;
-                margin-top: 40px;
-                z-index: 10;
-                transition: outline 0.3s ease-in-out;
+			.cta-button {
+				background-color: #1d60c2;
+				color: #fff;
+				padding: 1rem 2rem;
+				border: none;
+				border-radius: 5px;
+				text-decoration: none;
+				font-size: 1rem;
+				transition: background-color 0.3s;
+				cursor: pointer;
+				margin-top: 40px;
+				z-index: 10;
+				transition: outline 0.3s ease-in-out;
 
-                &:hover {
-                    outline: 7px solid var(--bg-color-light);
-                }
-            }
+				&:hover {
+					outline: 7px solid var(--bg-color-light);
+				}
+			}
 		}
 	}
 
@@ -1303,13 +1318,13 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 	}
 
 	@media (max-width: 610px) {
-        .cta-button {
-            font-size: 30px;
-            &:hover {
-                outline: 7px solid var(--text-color-light);
-            }
-        }
-        
+		.cta-button {
+			font-size: 30px;
+			&:hover {
+				outline: 7px solid var(--text-color-light);
+			}
+		}
+
 		.llm-container {
 			.llm-chat {
 				display: none;
