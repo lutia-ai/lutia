@@ -58,6 +58,7 @@
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
+	import ImageViewer from '$lib/components/ImageViewer.svelte';
 	import {
 		changeTabWidth,
 		closeAllTabWidths,
@@ -80,6 +81,18 @@
 	import { afterNavigate, pushState } from '$app/navigation';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
+
+	// Add state for image viewer
+	let viewerImage = '';
+	let viewerAlt = '';
+	let showImageViewer = false;
+
+	// Function to open image viewer
+	function openImageViewer(src: string, altText: string = 'Image') {
+		viewerImage = src;
+		viewerAlt = altText;
+		showImageViewer = true;
+	}
 
 	export let data;
 
@@ -862,6 +875,7 @@
 />
 
 <ErrorPopup bind:this={errorPopup} />
+<ImageViewer src={viewerImage} alt={viewerAlt} bind:show={showImageViewer} />
 
 <div class="main" class:settings-open={$isSettingsOpen}>
 	<div
@@ -902,7 +916,13 @@
 								{#if chat.image}
 									<div class="user-images">
 										{#each chat.image as image}
-											<div class="user-image-container">
+											<div 
+												class="user-image-container"
+												on:click={() => openImageViewer(image.data, 'User uploaded image')}
+												on:keydown={(e) => e.key === 'Enter' && openImageViewer(image.data, 'User uploaded image')}
+												role="button"
+												tabindex="0"
+											>
 												<img src={image.data} alt="user file" />
 											</div>
 										{/each}
@@ -1122,7 +1142,13 @@
 													</div>
 												</div>
 											{:else if component.type === 'image'}
-												<div class="image-container">
+												<div 
+													class="image-container"
+													on:click={() => openImageViewer(component.data, 'AI generated image')}
+													on:keydown={(e) => e.key === 'Enter' && openImageViewer(component.data, 'AI generated image')}
+													role="button"
+													tabindex="0"
+												>
 													<img src={component.data} alt="AI generated" />
 												</div>
 											{/if}
@@ -1306,17 +1332,24 @@
 							{/if}
 							{#each imagePreview as image, index}
 								<div class="image-container">
-									<img src={image.data} alt="Uploaded file" />
+									<img 
+										src={image.data} 
+										alt="Uploaded file" 
+										on:click|stopPropagation={() => openImageViewer(image.data, 'Uploaded image')}
+										on:keydown|stopPropagation={(e) => e.key === 'Enter' && openImageViewer(image.data, 'Uploaded image')}
+										role="button"
+										tabindex="0"
+									/>
 									<div
 										class="close-button"
 										role="button"
 										tabindex="0"
-										on:click={() => {
+										on:click|stopPropagation={() => {
 											imagePreview = imagePreview.filter(
 												(_, i) => i !== index
 											);
 										}}
-										on:keydown={(event) => {
+										on:keydown|stopPropagation={(event) => {
 											if (event.key === 'Enter') {
 												imagePreview = imagePreview.filter(
 													(_, i) => i !== index
@@ -1822,9 +1855,16 @@
 							width: 100%;
 							// height: 100%;
 							margin-left: auto;
+							cursor: pointer;
+							transition: transform 0.2s ease, box-shadow 0.2s ease;
 
 							&:only-child {
 								grid-column: 2;
+							}
+
+							&:hover {
+								transform: scale(1.02);
+								box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 							}
 
 							img {
@@ -2092,6 +2132,12 @@
 							height: 100%;
 							border-radius: 5px;
 							overflow: hidden;
+							cursor: pointer;
+							transition: transform 0.2s ease;
+
+							&:hover {
+								transform: scale(1.02);
+							}
 
 							img {
 								width: 100%;
@@ -2254,6 +2300,7 @@
 				bottom: 0%;
 				transform: translateX(calc(-50% + 30px));
 				width: 100%;
+                min-width: 340px;
 				background: var(--bg-color);
 				z-index: 1000;
 				display: flex;
@@ -2328,9 +2375,12 @@
 							border-radius: 12px;
 							overflow: hidden;
 							box-sizing: border-box;
+							cursor: pointer;
+							transition: transform 0.2s ease;
 
 							&:hover {
 								outline: 1px solid var(--text-color);
+								transform: scale(1.02);
 
 								.close-button {
 									opacity: 1;
@@ -2342,6 +2392,7 @@
 								width: 100%;
 								height: 100%;
 								object-fit: contain;
+								cursor: pointer;
 							}
 
 							.close-button {
