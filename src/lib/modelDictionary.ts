@@ -284,7 +284,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 1,
-                reasons: true,
+                reasons: false,
 				generatesImages: false,
 				description: 'Fast and versatile performance',
 				max_input_per_request: 15000
