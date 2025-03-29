@@ -46,8 +46,8 @@
 		isUserChatComponent
 	} from '$lib/utils/typeGuards';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
+	import NotificationPopup from '$lib/components/NotificationPopup.svelte';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
-	import StarsIcon from '$lib/components/icons/StarsIcon.svelte';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
@@ -97,6 +97,7 @@
 	export let data;
 
 	let errorPopup: ErrorPopup;
+	let notificationPopup: NotificationPopup;
 	let prompt: string;
 	let input_tokens: number = 0;
 	let input_price: number = 0;
@@ -774,35 +775,141 @@
 		if (files && files.length > 0) {
 			const newPreviews: Image[] = [];
 			let processedFiles = 0;
+			let largeImageResized = false;
 
 			for (const file of files) {
 				const reader = new FileReader();
 
-				reader.onload = (e: ProgressEvent<FileReader>) => {
-					if (e.target?.result) {
-						const img = new Image();
-						img.onload = () => {
-							newPreviews.push({
-								type: 'image',
-								data: e.target!.result as string,
-								media_type: file.type,
-								width: img.width,
-								height: img.height
-							});
+				// Check if file is too large (2MB limit)
+				const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+				
+				if (file.size > MAX_FILE_SIZE) {
+					// File is too large, we'll need to resize it
+					largeImageResized = true;
+					resizeImage(file, (resizedBlob) => {
+						const resizedReader = new FileReader();
+						resizedReader.onload = (e: ProgressEvent<FileReader>) => {
+							if (e.target?.result) {
+								const img = new Image();
+								img.onload = () => {
+									newPreviews.push({
+										type: 'image',
+										data: e.target!.result as string,
+										media_type: 'image/jpeg', // Resized to JPEG
+										width: img.width,
+										height: img.height
+									});
 
-							processedFiles++;
-							// If all files have been processed, update the imagePreview array
-							if (processedFiles === files.length) {
-								imagePreview = [...imagePreview, ...newPreviews];
-								fileInput.value = '';
+									processedFiles++;
+									// If all files have been processed, update the imagePreview array
+									if (processedFiles === files.length) {
+										imagePreview = [...imagePreview, ...newPreviews];
+										fileInput.value = '';
+										
+										// Show notification only if at least one image was resized
+										if (largeImageResized) {
+                                            notificationPopup.showNotification(
+                                                "Image resized",
+                                                "Large image(s) were automatically resized to stay under the 2MB limit",
+                                                5000,
+                                                "info"
+                                            );
+										}
+									}
+								};
+								img.src = e.target.result as string;
 							}
 						};
-						img.src = e.target.result as string;
-					}
-				};
-				reader.readAsDataURL(file);
+						resizedReader.readAsDataURL(resizedBlob);
+					});
+				} else {
+					// File is within size limits, process normally
+					reader.onload = (e: ProgressEvent<FileReader>) => {
+						if (e.target?.result) {
+							const img = new Image();
+							img.onload = () => {
+								newPreviews.push({
+									type: 'image',
+									data: e.target!.result as string,
+									media_type: file.type,
+									width: img.width,
+									height: img.height
+								});
+
+								processedFiles++;
+								// If all files have been processed, update the imagePreview array
+								if (processedFiles === files.length) {
+									imagePreview = [...imagePreview, ...newPreviews];
+									fileInput.value = '';
+									
+									// Show notification only if at least one image was resized
+									if (largeImageResized) {
+                                        notificationPopup.showNotification(
+                                            "Image resized",
+                                            "Large image(s) were automatically resized to stay under the 2MB limit",
+                                            5000,
+                                            "info"
+                                        );
+									}
+								}
+							};
+							img.src = e.target.result as string;
+						}
+					};
+					reader.readAsDataURL(file);
+				}
 			}
 		}
+	}
+
+	// Function to resize images that are too large
+	function resizeImage(file: File, callback: (blob: Blob) => void): void {
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			if (e.target?.result) {
+				const img = new Image();
+				img.onload = () => {
+					// Create a canvas to resize the image
+					const canvas = document.createElement('canvas');
+					let { width, height } = img;
+					
+					// Calculate the new dimensions while maintaining aspect ratio
+					// Start with the original dimensions and step down until size is acceptable
+					let quality = 0.7; // Initial JPEG quality
+					let blob: Blob | null = null;
+					
+					const scaleAndCheck = (scaleFactor: number) => {
+						const newWidth = width * scaleFactor;
+						const newHeight = height * scaleFactor;
+						
+						canvas.width = newWidth;
+						canvas.height = newHeight;
+						
+						const ctx = canvas.getContext('2d');
+						if (ctx) {
+							ctx.drawImage(img, 0, 0, newWidth, newHeight);
+							canvas.toBlob((result) => {
+								if (result) {
+									blob = result;
+									if (result.size <= 2 * 1024 * 1024 || scaleFactor < 0.1) {
+										// Either we're under the limit or we've scaled down too much
+										callback(result);
+									} else {
+										// Still too big, scale down further
+										scaleAndCheck(scaleFactor * 0.8);
+									}
+								}
+							}, 'image/jpeg', quality);
+						}
+					};
+					
+					// Start with 80% of original size
+					scaleAndCheck(0.8);
+				};
+				img.src = e.target.result as string;
+			}
+		};
+		reader.readAsDataURL(file);
 	}
 
 	$: if (promptBarHeight) {
@@ -846,7 +953,7 @@
 		// Add a small delay to ensure content is fully rendered
 		setTimeout(() => {
 			scrollToBottom();
-		}, 100);
+		}, 100);		
 		mounted = true;
 	});
 </script>
@@ -875,6 +982,7 @@
 />
 
 <ErrorPopup bind:this={errorPopup} />
+<NotificationPopup bind:this={notificationPopup} />
 <ImageViewer src={viewerImage} alt={viewerAlt} bind:show={showImageViewer} />
 
 <div class="main" class:settings-open={$isSettingsOpen}>

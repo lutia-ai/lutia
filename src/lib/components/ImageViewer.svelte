@@ -67,7 +67,7 @@
 </div>
 {/if}
 
-<style>
+<style lang="scss">
     .image-viewer-overlay {
         position: fixed;
         top: 0;
@@ -116,11 +116,12 @@
         justify-content: center;
         cursor: pointer;
         transition: background 0.2s;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
     }
 
-    button:hover {
-        background: rgba(0, 0, 0, 0.7);
-    }
 
     .non-clickable-container {
         position: absolute;
