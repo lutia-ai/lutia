@@ -259,6 +259,21 @@ export const modelDictionary: ModelDictionary = {
 	},
 	google: {
 		models: {
+            gemini25Pro: {
+				name: 'Gemini_2_5_Pro',
+				param: 'gemini-2.5-pro-exp-03-25',
+				legacy: false,
+				input_price: 0.1 * 1.1,
+				output_price: 0.4 * 1.1,
+				context_window: 1048576, // max input cost $0.1048576
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 1,
+                reasons: true,
+				generatesImages: false,
+				description: 'State of the art reasoning model',
+				max_input_per_request: 15000
+			},
 			gemini20Flash: {
 				name: 'Gemini_2_0_Flash',
 				param: 'gemini-2.0-flash',
@@ -269,6 +284,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 1,
+                reasons: true,
 				generatesImages: false,
 				description: 'Fast and versatile performance',
 				max_input_per_request: 15000
