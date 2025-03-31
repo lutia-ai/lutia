@@ -192,7 +192,7 @@
 					fontSize: '18px',
 					fontSmoothing: 'antialiased',
 					':-webkit-autofill': {
-						color: '#fce883'
+						color: '#000000'
 					},
 					'::placeholder': {
 						color: 'gray'
