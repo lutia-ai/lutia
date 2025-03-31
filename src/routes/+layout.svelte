@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { darkMode } from '$lib/stores.ts';
+	import { darkMode, isSettingsOpen, bodyScrollLocked } from '$lib/stores.ts';
 	import { onMount } from 'svelte';
 	import '@fontsource-variable/raleway';
 	import Analytics from '$lib/components/Analytics.svelte';
@@ -28,8 +28,29 @@
 		}
 	}
 
+	// Prevent scrolling when a modal is open
+	function preventBodyScroll(isLocked: boolean) {
+		if (browser) {
+			if (isLocked) {
+				document.body.style.overflow = 'hidden';
+			} else {
+				document.body.style.overflow = '';
+			}
+		}
+	}
+
 	darkMode.subscribe((value) => {
 		setColorScheme(value);
+	});
+
+	// Listen for modal state changes and update the bodyScrollLocked store
+	isSettingsOpen.subscribe((isOpen) => {
+		bodyScrollLocked.set(isOpen);
+	});
+
+	// Central listener for body scroll locking
+	bodyScrollLocked.subscribe((isLocked) => {
+		preventBodyScroll(isLocked);
 	});
 
 	onMount(() => {

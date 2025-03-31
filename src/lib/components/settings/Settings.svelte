@@ -9,7 +9,8 @@
 	import UsageSettingsPage from '$lib/components/settings/UsageSettingsPage.svelte';
 	import type { ComponentType } from 'svelte';
 	import type { UserWithSettings } from '$lib/types';
-	import { isSettingsOpen } from '$lib/stores';
+	import { isSettingsOpen, bodyScrollLocked } from '$lib/stores';
+	import { onMount, onDestroy } from 'svelte';
 
 	export let user: UserWithSettings;
 
@@ -46,6 +47,20 @@
 	];
 
 	let selectedTab = settingsTabs[0];
+
+	function closeSettings() {
+		isSettingsOpen.set(false);
+	}
+
+	// Set scroll lock when component mounts
+	onMount(() => {
+		bodyScrollLocked.set(true);
+	});
+
+	// Release scroll lock when component is destroyed
+	onDestroy(() => {
+		bodyScrollLocked.set(false);
+	});
 </script>
 
 <!-- <svelte:window use:wheel={{ isOpen }} /> -->
@@ -54,7 +69,7 @@
 	<div class="settings-panel">
 		<div class="title-container">
 			<h1>Settings</h1>
-			<button on:click={() => isSettingsOpen.set(false)}>
+			<button on:click={closeSettings}>
 				<CrossIcon color="var(--text-color)" />
 			</button>
 		</div>

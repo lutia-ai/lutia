@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { fade, scale } from 'svelte/transition';
+	import { onMount, onDestroy } from 'svelte';
+	import { bodyScrollLocked } from '$lib/stores';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import DownloadIcon from '$lib/components/icons/DownloadIcon.svelte';
 
@@ -28,6 +30,20 @@
 			closeViewer();
 		}
 	}
+
+	// Watch for changes to the show property and update the bodyScrollLocked store
+	$: {
+		if (typeof document !== 'undefined') {
+			bodyScrollLocked.set(show);
+		}
+	}
+
+	// Ensure body scrolling is restored when component is destroyed
+	onDestroy(() => {
+		if (typeof document !== 'undefined' && show) {
+			bodyScrollLocked.set(false);
+		}
+	});
 </script>
 
 <svelte:window on:keydown={handleKeydown} />

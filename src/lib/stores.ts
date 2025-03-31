@@ -105,3 +105,6 @@ export const showLegacyModels = createPersistentStore<boolean>('showLegacyModels
 
 // Persistent store for controlling if the context window is set to automatic or manual
 export const isContextWindowAuto = createPersistentStore<boolean>('isContextWindowAuto', true);
+
+// Store for controlling body scroll lock
+export const bodyScrollLocked = writable<boolean>(false);
