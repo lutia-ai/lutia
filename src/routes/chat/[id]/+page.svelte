@@ -116,6 +116,8 @@
 	let modelSearchItems: HTMLDivElement[] = [];
 	let reasoningOn: boolean = false;
 
+	gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
+
 	const markedKatexOptions = markedKatex({
 		throwOnError: false,
 		displayMode: true,
@@ -782,7 +784,7 @@
 
 				// Check if file is too large (2MB limit)
 				const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
-				
+
 				if (file.size > MAX_FILE_SIZE) {
 					// File is too large, we'll need to resize it
 					largeImageResized = true;
@@ -805,15 +807,15 @@
 									if (processedFiles === files.length) {
 										imagePreview = [...imagePreview, ...newPreviews];
 										fileInput.value = '';
-										
+
 										// Show notification only if at least one image was resized
 										if (largeImageResized) {
-                                            notificationPopup.showNotification(
-                                                "Image resized",
-                                                "Large image(s) were automatically resized to stay under the 2MB limit",
-                                                5000,
-                                                "info"
-                                            );
+											notificationPopup.showNotification(
+												'Image resized',
+												'Large image(s) were automatically resized to stay under the 2MB limit',
+												5000,
+												'info'
+											);
 										}
 									}
 								};
@@ -841,15 +843,15 @@
 								if (processedFiles === files.length) {
 									imagePreview = [...imagePreview, ...newPreviews];
 									fileInput.value = '';
-									
+
 									// Show notification only if at least one image was resized
 									if (largeImageResized) {
-                                        notificationPopup.showNotification(
-                                            "Image resized",
-                                            "Large image(s) were automatically resized to stay under the 2MB limit",
-                                            5000,
-                                            "info"
-                                        );
+										notificationPopup.showNotification(
+											'Image resized',
+											'Large image(s) were automatically resized to stay under the 2MB limit',
+											5000,
+											'info'
+										);
 									}
 								}
 							};
@@ -872,37 +874,41 @@
 					// Create a canvas to resize the image
 					const canvas = document.createElement('canvas');
 					let { width, height } = img;
-					
+
 					// Calculate the new dimensions while maintaining aspect ratio
 					// Start with the original dimensions and step down until size is acceptable
 					let quality = 0.7; // Initial JPEG quality
 					let blob: Blob | null = null;
-					
+
 					const scaleAndCheck = (scaleFactor: number) => {
 						const newWidth = width * scaleFactor;
 						const newHeight = height * scaleFactor;
-						
+
 						canvas.width = newWidth;
 						canvas.height = newHeight;
-						
+
 						const ctx = canvas.getContext('2d');
 						if (ctx) {
 							ctx.drawImage(img, 0, 0, newWidth, newHeight);
-							canvas.toBlob((result) => {
-								if (result) {
-									blob = result;
-									if (result.size <= 2 * 1024 * 1024 || scaleFactor < 0.1) {
-										// Either we're under the limit or we've scaled down too much
-										callback(result);
-									} else {
-										// Still too big, scale down further
-										scaleAndCheck(scaleFactor * 0.8);
+							canvas.toBlob(
+								(result) => {
+									if (result) {
+										blob = result;
+										if (result.size <= 2 * 1024 * 1024 || scaleFactor < 0.1) {
+											// Either we're under the limit or we've scaled down too much
+											callback(result);
+										} else {
+											// Still too big, scale down further
+											scaleAndCheck(scaleFactor * 0.8);
+										}
 									}
-								}
-							}, 'image/jpeg', quality);
+								},
+								'image/jpeg',
+								quality
+							);
 						}
 					};
-					
+
 					// Start with 80% of original size
 					scaleAndCheck(0.8);
 				};
@@ -953,7 +959,7 @@
 		// Add a small delay to ensure content is fully rendered
 		setTimeout(() => {
 			scrollToBottom();
-		}, 100);		
+		}, 100);
 		mounted = true;
 	});
 </script>
@@ -1024,10 +1030,19 @@
 								{#if chat.image}
 									<div class="user-images">
 										{#each chat.image as image}
-											<div 
+											<div
 												class="user-image-container"
-												on:click={() => openImageViewer(image.data, 'User uploaded image')}
-												on:keydown={(e) => e.key === 'Enter' && openImageViewer(image.data, 'User uploaded image')}
+												on:click={() =>
+													openImageViewer(
+														image.data,
+														'User uploaded image'
+													)}
+												on:keydown={(e) =>
+													e.key === 'Enter' &&
+													openImageViewer(
+														image.data,
+														'User uploaded image'
+													)}
 												role="button"
 												tabindex="0"
 											>
@@ -1250,10 +1265,19 @@
 													</div>
 												</div>
 											{:else if component.type === 'image'}
-												<div 
+												<div
 													class="image-container"
-													on:click={() => openImageViewer(component.data, 'AI generated image')}
-													on:keydown={(e) => e.key === 'Enter' && openImageViewer(component.data, 'AI generated image')}
+													on:click={() =>
+														openImageViewer(
+															component.data,
+															'AI generated image'
+														)}
+													on:keydown={(e) =>
+														e.key === 'Enter' &&
+														openImageViewer(
+															component.data,
+															'AI generated image'
+														)}
 													role="button"
 													tabindex="0"
 												>
@@ -1440,14 +1464,17 @@
 							{/if}
 							{#each imagePreview as image, index}
 								<div class="image-container">
-									<img 
-										src={image.data} 
-										alt="Uploaded file" 
-										on:click|stopPropagation={() => openImageViewer(image.data, 'Uploaded image')}
-										on:keydown|stopPropagation={(e) => e.key === 'Enter' && openImageViewer(image.data, 'Uploaded image')}
-										role="button"
-										tabindex="0"
-									/>
+									<button
+										class="image-button"
+										on:click|stopPropagation={() =>
+											openImageViewer(image.data, 'Uploaded image')}
+										on:keydown|stopPropagation={(e) =>
+											e.key === 'Enter' &&
+											openImageViewer(image.data, 'Uploaded image')}
+										aria-label="View uploaded image"
+									>
+										<img src={image.data} alt="Uploaded file" />
+									</button>
 									<div
 										class="close-button"
 										role="button"
@@ -1964,7 +1991,9 @@
 							// height: 100%;
 							margin-left: auto;
 							cursor: pointer;
-							transition: transform 0.2s ease, box-shadow 0.2s ease;
+							transition:
+								transform 0.2s ease,
+								box-shadow 0.2s ease;
 
 							&:only-child {
 								grid-column: 2;
@@ -2408,7 +2437,7 @@
 				bottom: 0%;
 				transform: translateX(calc(-50% + 30px));
 				width: 100%;
-                min-width: 340px;
+				min-width: 340px;
 				background: var(--bg-color);
 				z-index: 1000;
 				display: flex;
@@ -2918,5 +2947,16 @@
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent; /* Makes text fill color transparent */
 		animation: gradient-animation 25s ease infinite; /* Animation */
+	}
+
+	.image-button {
+		background: none;
+		border: none;
+		padding: 0;
+		margin: 0;
+		cursor: pointer;
+		display: block;
+		width: 100%;
+		height: 100%;
 	}
 </style>
