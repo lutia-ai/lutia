@@ -9,7 +9,7 @@
 		type StripeElements,
 		type StripeCardElement
 	} from '@stripe/stripe-js';
-	import type { CardDetails, UserWithSettings } from '$lib/types';
+	import type { CardDetails, UserWithSettings, TransactionRecord } from '$lib/types';
 	import { env } from '$env/dynamic/public';
 	import Topup from '$lib/components/icons/Topup.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
@@ -29,6 +29,7 @@
 	let addCreditAmount: number;
 	let addCreditOpen: boolean = false;
 	let cardDetails: CardDetails | undefined;
+	let transactions: TransactionRecord[] = [];
 	let stripe: Stripe | null = null;
 	let elements: StripeElements | null = null;
 	let card: StripeCardElement | null = null;
@@ -51,6 +52,7 @@
 			if (result.type === 'success' && result.data) {
 				userBalance = result.data.balance;
 				cardDetails = result.data.cardDetails;
+				transactions = result.data.transactions || [];
 			} else if (result.type === 'failure' && result.data) {
 				console.error('Failed to fetch account details');
 			}
@@ -164,6 +166,17 @@
 		return `${month.toString().padStart(2, '0')}/${year.toString().slice(-2)}`;
 	}
 
+	function formatDate(date: Date) {
+		const d = new Date(date);
+		return d.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	}
+
 	onMount(async () => {
 		await getUsersBillingDetails();
 		stripe = await loadStripe(env.PUBLIC_STRIPE_API_KEY);
@@ -172,8 +185,8 @@
 			disableLink: true,
 			style: {
 				base: {
-					iconColor: $darkMode ? '#fff' : 'black',
-					color: $darkMode ? '#fff' : 'black',
+					iconColor: 'black',
+					color: 'black',
 					fontWeight: '500',
 					fontFamily: 'Roboto, Open Sans, Segoe UI, sans-serif',
 					fontSize: '18px',
@@ -182,7 +195,7 @@
 						color: '#fce883'
 					},
 					'::placeholder': {
-						color: $darkMode ? '#fff' : 'black'
+						color: 'gray'
 					}
 				},
 				invalid: {
@@ -411,18 +424,46 @@
 			</div>
 		{/if}
 	</div>
+	<!-- Transaction history section -->
+	<div class="transaction-history">
+		<h1>Transaction History</h1>
+		<div class="transaction-container {loading ? 'shimmerBG' : 'container-bg'}">
+			{#if !loading && transactions.length > 0}
+				<table>
+					<thead>
+						<tr>
+							<th>Date</th>
+							<th>Description</th>
+							<th>Amount</th>
+							<th>Status</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each transactions as transaction}
+							<tr>
+								<td>{formatDate(transaction.date)}</td>
+								<td>{transaction.description}</td>
+								<td>${transaction.amount.toFixed(2)}</td>
+								<td class="status {transaction.status}">{transaction.status}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{:else if !loading}
+				<p class="no-transactions">No transactions found</p>
+			{/if}
+		</div>
+	</div>
 </div>
 
 <!-- svelte-ignore css-unused-selector -->
 <style lang="scss">
 	.billing-body {
-		padding: 20px 0 20px 35px;
+		padding: 20px 10px 20px 20px;
 		position: relative;
 		width: 100%;
 		height: 100%;
 		overflow-y: scroll !important;
-		// padding: 0 20px;
-		// padding-bottom: 40px;
 		box-sizing: border-box;
 
 		h1,
@@ -815,6 +856,72 @@
 
 				&:hover {
 					background-color: #c61818;
+				}
+			}
+		}
+
+		.transaction-history {
+			margin: 20px 0;
+
+			h1 {
+				font-size: 20px;
+				font-weight: 400;
+				color: var(--text-color-light-opacity);
+				margin: 0;
+			}
+
+			.transaction-container {
+				padding: 20px;
+				border-radius: 4px;
+				margin: 20px 0;
+				min-height: 100px;
+
+				table {
+					width: 100%;
+					border-collapse: collapse;
+
+					th {
+						text-align: left;
+						padding: 10px;
+						border-bottom: 1px solid var(--bg-color-light);
+						color: var(--text-color-light);
+						font-weight: 600;
+						background-color: var(--bg-color-light-opacity-alt);
+					}
+
+					td {
+						padding: 12px 10px;
+						border-bottom: 1px solid var(--bg-color-light-opacity);
+						color: var(--text-color-light);
+						font-weight: 400;
+					}
+
+					tr:last-child td {
+						border-bottom: none;
+					}
+
+					.status {
+						text-transform: capitalize;
+
+						&.succeeded {
+							color: #4caf50;
+						}
+
+						&.failed,
+						&.canceled {
+							color: #d31a1a;
+						}
+
+						&.processing {
+							color: #f39c12;
+						}
+					}
+				}
+
+				.no-transactions {
+					text-align: center;
+					color: var(--text-color-light-opacity);
+					padding: 30px 0;
 				}
 			}
 		}

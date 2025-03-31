@@ -11,7 +11,8 @@ import {
 	chargeUserCard,
 	deleteUserCardDetails,
 	getStripeCardDetails,
-	saveUserCardDetails
+	saveUserCardDetails,
+	getUserTransactionHistory
 } from '$lib/stripe/stripeFunctions';
 import { updateUserSettings } from '$lib/db/crud/userSettings';
 import { PaymentTier, type Conversation, type User, type UserSettings } from '@prisma/client';
@@ -110,17 +111,20 @@ export const actions = {
 
 		let balance;
 		let cardDetails;
+		let transactions;
 		try {
 			const user = await retrieveUserByEmail(session.user.email!);
 			balance = await retrieveUsersBalance(Number(userId));
 			cardDetails = await getStripeCardDetails(user.stripe_id!);
+			transactions = await getUserTransactionHistory(user.stripe_id!);
 		} catch (err) {
 			throw err;
 		}
 
 		return {
 			balance,
-			cardDetails
+			cardDetails,
+			transactions
 		};
 	},
 	getUsersConversations: async ({ locals }) => {

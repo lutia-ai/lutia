@@ -1,4 +1,4 @@
-import type { CardDetails, ChargeResult } from '$lib/types';
+import type { CardDetails, ChargeResult, TransactionRecord } from '$lib/types';
 import stripe from '$lib/stripe/stripe.config';
 import type Stripe from 'stripe';
 
@@ -132,4 +132,30 @@ export async function chargeUserCard(
 		success: true,
 		chargeId: paymentIntent.id
 	};
+}
+
+export async function getUserTransactionHistory(customerId: string): Promise<TransactionRecord[]> {
+	try {
+		// Get payment intent history for the customer
+		const paymentIntents = await stripe.paymentIntents.list({
+			customer: customerId,
+			limit: 20 // Limit to the most recent 20 transactions
+		});
+
+		// Transform payment intents into TransactionRecord format
+		const transactions: TransactionRecord[] = paymentIntents.data
+			.filter((intent) => intent.status === 'succeeded') // Only include successful payments
+			.map((intent) => ({
+				id: intent.id,
+				amount: intent.amount / 100, // Convert from cents to dollars
+				date: new Date(intent.created * 1000), // Convert from Unix timestamp to Date
+				description: intent.description || 'Balance top-up',
+				status: intent.status
+			}));
+
+		return transactions;
+	} catch (error) {
+		console.error('Error retrieving transaction history:', error);
+		throw error;
+	}
 }

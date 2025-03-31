@@ -225,6 +225,14 @@ export type ChargeResult = {
 	error?: string;
 };
 
+export type TransactionRecord = {
+	id: string;
+	amount: number;
+	date: Date;
+	description: string;
+	status: string;
+};
+
 export type PromptHelper = {
 	prompt: string;
 	icon: IconType;
