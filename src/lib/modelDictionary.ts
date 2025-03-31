@@ -306,7 +306,7 @@ export const modelDictionary: ModelDictionary = {
 			gemini15Pro: {
 				name: 'Gemini_1_5_Pro',
 				param: 'gemini-1.5-pro',
-				legacy: false,
+				legacy: true,
 				input_price: 3.5 * 1.1,
 				output_price: 10.5 * 1.1,
 				input_price_large: 7, // Price increases for prompts 128k or longer
