@@ -63,13 +63,16 @@
 		"katex": "^0.16.21",
 		"layercake": "^8.3.4",
 		"llamaai": "^1.0.4",
+		"mammoth": "^1.9.0",
 		"marked": "^13.0.2",
 		"marked-katex-extension": "^5.1.4",
 		"node-mailjet": "^6.0.6",
 		"openai": "^4.52.0",
+		"pdf.js-extract": "^0.2.1",
 		"pg": "^8.12.0",
 		"prisma": "^6.3.1",
 		"reflect-metadata": "^0.2.2",
-		"svelte-highlight": "^7.7.0"
+		"svelte-highlight": "^7.7.0",
+		"xlsx": "^0.18.5"
 	}
 }

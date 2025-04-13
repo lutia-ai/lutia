@@ -1529,12 +1529,12 @@
 							<input
 								bind:this={fileInput}
 								type="file"
-								accept="image/jpeg,image/png,image/webp,.txt,.py,.js,.html,.css,.json,.md,.svelte,.tsx,.jsx,.ts,.java,.c,.cpp,.cs,.go,.rb,.php,.swift,.kt"
+								accept="image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.txt,.py,.js,.html,.css,.json,.md,.svelte,.tsx,.jsx,.ts,.java,.c,.cpp,.cs,.go,.rb,.php,.swift,.kt"
 								style="display: none;"
 								on:change={handleFileSelect}
 								multiple={$chosenCompany !== 'google'}
 							/>
-							<HoverTag text="Add images or code files" position="top" />
+							<HoverTag text="Add images, PDFs, or code files" position="top" />
 						</div>
 						<div
 							class="{($chosenModel.reasons && !$chosenModel.extendedThinking) ||

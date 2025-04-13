@@ -131,13 +131,13 @@
 						<span class="file-meta">{fileSize} KB • {lineCount} lines</span>
 					</div>
 					<div class="file-viewer-controls">
-						<button
+						<!-- <button
 							class="button download-button"
 							on:click|stopPropagation={downloadFile}
 							title="Download file"
 						>
 							<DownloadIcon color="var(--text-color)" />
-						</button>
+						</button> -->
 						<button
 							class="button close-button"
 							on:click|stopPropagation={closeViewer}
@@ -166,7 +166,10 @@
 						</div>
 					{:else}
 						<div class="plaintext-content">
-							<pre><code>{content}</code></pre>
+							<pre
+								style="width: 95%; white-space: pre-wrap; word-break: break-word;"><code
+									>{content}</code
+								></pre>
 						</div>
 					{/if}
 				</div>
@@ -229,6 +232,7 @@
 	.file-info {
 		display: flex;
 		flex-direction: column;
+		gap: 4px;
 	}
 
 	.filename {

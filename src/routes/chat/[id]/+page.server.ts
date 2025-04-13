@@ -386,5 +386,167 @@ export const actions = {
 			console.error('Error deleting conversation:', error);
 			return fail(500, { message: 'Failed to delete conversation' });
 		}
+	},
+	extractPdfText: async ({ request }) => {
+		try {
+			const formData = await request.formData();
+			const file = formData.get('file') as File;
+
+			if (!file || !file.name.endsWith('.pdf')) {
+				return fail(400, { message: 'Invalid or missing PDF file' });
+			}
+
+			// Import PDF extraction library
+			const { PDFExtract } = await import('pdf.js-extract');
+			const pdfExtract = new PDFExtract();
+
+			// Convert file to buffer
+			const arrayBuffer = await file.arrayBuffer();
+			const buffer = Buffer.from(arrayBuffer);
+
+			// Extract text from PDF
+			const data = await pdfExtract.extractBuffer(buffer, {});
+
+			// Process each page with line break detection
+			const extractedText = data.pages
+				.map((page) => {
+					// Sort content by y position (top to bottom) then x position (left to right)
+					const sortedContent = [...page.content].sort((a, b) => {
+						// Use a threshold to determine if items are on the same line
+						const LINE_THRESHOLD = 2; // pixels
+						if (Math.abs(a.y - b.y) <= LINE_THRESHOLD) {
+							return a.x - b.x; // Same line, sort by x position
+						}
+						return a.y - b.y; // Different lines, sort by y position
+					});
+
+					let currentLine = -1;
+					let lineText = '';
+					const lines: string[] = [];
+
+					// Group text by lines based on y-position
+					sortedContent.forEach((item) => {
+						if (currentLine === -1) {
+							// First item
+							currentLine = item.y;
+							lineText = item.str;
+						} else if (Math.abs(item.y - currentLine) <= 2) {
+							// Same line - add space only if needed (avoid double spaces)
+							if (lineText && item.str) {
+								// Check if we need a space between words
+								const lastChar = lineText[lineText.length - 1];
+								const nextChar = item.str[0];
+								const needsSpace = !(/\s$/.test(lineText) || /^\s/.test(item.str));
+
+								lineText += needsSpace ? ' ' + item.str : item.str;
+							} else {
+								lineText += item.str;
+							}
+						} else {
+							// New line
+							lines.push(lineText);
+							currentLine = item.y;
+							lineText = item.str;
+						}
+					});
+
+					// Add the last line
+					if (lineText) {
+						lines.push(lineText);
+					}
+
+					return lines.join('\n');
+				})
+				.join('\n\n'); // Double newline between pages
+
+			return {
+				success: true,
+				extractedText
+			};
+		} catch (error) {
+			console.error('Error extracting PDF text:', error);
+			return fail(500, {
+				message: error instanceof Error ? error.message : 'PDF extraction failed'
+			});
+		}
+	},
+	extractOfficeText: async ({ request }) => {
+		try {
+			const formData = await request.formData();
+			const file = formData.get('file') as File;
+
+			if (!file) {
+				return fail(400, { message: 'Invalid or missing file' });
+			}
+
+			const filename = file.name;
+			const extension = filename.split('.').pop()?.toLowerCase();
+
+			// Convert file to buffer
+			const arrayBuffer = await file.arrayBuffer();
+			const buffer = Buffer.from(arrayBuffer);
+
+			let extractedText = '';
+
+			// Process based on file type
+			if (['doc', 'docx'].includes(extension || '')) {
+				// Word documents
+				const mammoth = await import('mammoth');
+				const result = await mammoth.extractRawText({ buffer });
+				extractedText = result.value;
+			} else if (['xls', 'xlsx'].includes(extension || '')) {
+				// Excel spreadsheets
+				const XLSX = await import('xlsx');
+				const workbook = XLSX.read(buffer);
+
+				// Extract text from all sheets
+				extractedText = Object.keys(workbook.Sheets)
+					.map((sheetName) => {
+						const sheet = workbook.Sheets[sheetName];
+						// Convert sheet to JSON and then to text
+						const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+						// Create a header with sheet name
+						let sheetText = `## ${sheetName} ##\n\n`;
+
+						// Convert JSON data to readable text
+						if (jsonData.length > 0) {
+							// Get columns from first row
+							const columns = Object.keys(jsonData[0] as object);
+
+							// Add data rows
+							jsonData.forEach((row) => {
+								const typedRow = row as Record<string, unknown>;
+								columns.forEach((col) => {
+									const cellValue = typedRow[col];
+									if (cellValue !== undefined) {
+										sheetText += `${col}: ${cellValue}\n`;
+									}
+								});
+								sheetText += '\n'; // Add line between rows
+							});
+						}
+
+						return sheetText;
+					})
+					.join('\n---\n\n'); // Separator between sheets
+			} else if (['ppt', 'pptx'].includes(extension || '')) {
+				// Handle PowerPoint files - limited support
+				extractedText = `[Limited text extraction for PowerPoint: ${filename}]`;
+			} else {
+				return fail(400, { message: 'Unsupported file type' });
+			}
+
+			return {
+				success: true,
+				extractedText
+			};
+		} catch (error) {
+			console.error('Error extracting Office document text:', error);
+			return fail(500, {
+				message:
+					error instanceof Error ? error.message : 'Office document extraction failed'
+			});
+		}
 	}
 } satisfies Actions;

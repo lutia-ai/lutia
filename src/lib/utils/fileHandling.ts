@@ -1,4 +1,6 @@
 import type { FileAttachment, Image } from '$lib/types';
+import type { ActionResult } from '@sveltejs/kit';
+import { deserialize } from '$app/forms';
 
 // Function to extract text content from file
 export async function extractFileContent(file: File): Promise<string> {
@@ -39,19 +41,63 @@ export async function extractFileContent(file: File): Promise<string> {
 	}
 	// PDF files
 	else if (fileType === 'application/pdf' || extension === 'pdf') {
-		// Note: PDF text extraction requires a library like pdf.js
-		// This is a placeholder - implement with appropriate PDF library
-		return `[PDF Text Extraction Placeholder for: ${file.name}]`;
+		// For PDFs, we'll use the server-side extraction
+		try {
+			// Create a FormData object and append the file
+			const formData = new FormData();
+			formData.append('file', file);
+
+			// Send the file to the server for processing
+			const response = await fetch('/chat/new?/extractPdfText', {
+				method: 'POST',
+				body: formData
+			});
+
+			const result: ActionResult = deserialize(await response.text());
+
+			if (result.type === 'success' && result.data) {
+				return result.data.extractedText;
+			} else if (result.type === 'failure' && result.data) {
+				throw new Error(result.data.message || 'PDF extraction failed');
+			}
+		} catch (error) {
+			console.error('Error extracting PDF text:', error);
+			return `[Error extracting text from PDF: ${file.name}]`;
+		}
 	}
 	// Office documents
 	else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(extension)) {
-		// Office documents require specific libraries for parsing
-		return `[Office Document Text Extraction Placeholder for: ${file.name}]`;
+		// For Office docs, we'll use the server-side extraction
+		try {
+			// Create a FormData object and append the file
+			const formData = new FormData();
+			formData.append('file', file);
+
+			// Send the file to the server for processing
+			const response = await fetch('/chat/new?/extractOfficeText', {
+				method: 'POST',
+				body: formData
+			});
+
+			const result: ActionResult = deserialize(await response.text());
+
+			if (result.type === 'success' && result.data) {
+				return result.data.extractedText;
+			} else if (result.type === 'failure' && result.data) {
+				throw new Error(result.data.message || 'Office document extraction failed');
+			}
+		} catch (error) {
+			console.error('Error extracting Office document text:', error);
+			return `[Error extracting text from ${file.name}]`;
+		}
 	}
 	// Default case
 	else {
 		return `[Unable to extract text from ${file.name}]`;
 	}
+
+	// This ensures all code paths return a value
+	return `[No text extracted from ${file.name}]`;
 }
 
 // Function to get file icon based on extension
