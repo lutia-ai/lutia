@@ -93,13 +93,14 @@
 	import {
 		getFileIcon,
 		getFileIconColor,
-		scrollCursorIntoView
+		scrollCursorIntoView,
+		processFileSelect,
+		formatFilesForPrompt,
+		addFilesToMessage
 	} from '$lib/utils/fileHandling.js';
-	import { processFileSelect } from '$lib/utils/fileHandling';
 
 	export let data;
 
-	// Add state for image viewer
 	let viewerImage = '';
 	let viewerAlt = '';
 	let showImageViewer = false;
@@ -171,7 +172,25 @@
 					fullPrompt.set(prompt);
 				}
 			}
-			handleCountTokens($fullPrompt);
+
+			// For token counting, create a temporary prompt that includes file attachments
+			if (fileAttachments.length > 0) {
+				let tokenCountPrompt = $fullPrompt;
+
+				// If fullPrompt is a string, prepend the formatted files
+				if (typeof tokenCountPrompt === 'string') {
+					tokenCountPrompt =
+						formatFilesForPrompt(fileAttachments) + '\n\n' + tokenCountPrompt;
+				}
+				// If fullPrompt is an array of messages, add files to the last message
+				else if (Array.isArray(tokenCountPrompt) && tokenCountPrompt.length > 0) {
+					tokenCountPrompt = addFilesToMessage(tokenCountPrompt, fileAttachments);
+				}
+
+				handleCountTokens(tokenCountPrompt);
+			} else {
+				handleCountTokens($fullPrompt);
+			}
 		}
 	}
 

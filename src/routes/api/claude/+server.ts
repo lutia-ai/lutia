@@ -1,25 +1,13 @@
 import { error } from '@sveltejs/kit';
 import Anthropic from '@anthropic-ai/sdk';
-import type {
-	Message,
-	Model,
-	Image,
-	ClaudeImage,
-	GptTokenUsage,
-	FileAttachment
-} from '$lib/types.d';
-import { calculateClaudeImageCost } from '$lib/tokenizer';
+import type { ClaudeImage } from '$lib/types.d';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import { retrieveUsersBalance } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
-import { ApiModel, ApiProvider, PaymentTier, type User } from '@prisma/client';
-import { createConversation } from '$lib/db/crud/conversation';
-import { getModelFromName } from '$lib/utils/modelConverter';
-import { isValidMessageArray } from '$lib/utils/typeGuards';
+import { ApiProvider } from '@prisma/client';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
-import { estimateTokenCount } from '$lib/utils/tokenCounter';
 import { validateApiRequest, type ApiRequestData } from '$lib/utils/apiRequestValidator';
+import { addFilesToMessage } from '$lib/utils/fileHandling';
 
 export async function POST({ request, locals }) {
 	const requestId = crypto.randomUUID();
@@ -51,17 +39,17 @@ export async function POST({ request, locals }) {
 			files,
 			messageConversationId,
 			referencedMessageIds,
-			estimatedInputTokens,
 			finalUsage
 		} = validatedData;
 
-		// Process images for Claude format
+		// Process files and images
+		let processedMessages = [...messages];
 		let claudeImages: ClaudeImage[] = [];
 
 		if (images.length > 0) {
 			const textObject = {
 				type: 'text',
-				text: messages[messages.length - 1].content
+				text: processedMessages[processedMessages.length - 1].content
 			};
 			claudeImages = images.map((image) => ({
 				type: 'image',
@@ -71,41 +59,10 @@ export async function POST({ request, locals }) {
 					data: image.data.split(',')[1]
 				}
 			}));
-			messages[messages.length - 1].content = [textObject, ...claudeImages];
+			processedMessages[processedMessages.length - 1].content = [textObject, ...claudeImages];
 		}
 
-		// Process files
-		if (files.length > 0) {
-			// Format files with <file></file> delimiters instead of stringifying
-			const formattedFiles = files
-				.map((file) => {
-					return `<file>\nfilename: ${file.filename}\nfile_extension: ${file.file_extension}\nsize: ${file.size}\ntype: ${file.media_type}\ncontent: ${file.data}\n</file>`;
-				})
-				.join('\n\n');
-
-			// If content is a string, prepend the formatted files
-			if (typeof messages[messages.length - 1].content === 'string') {
-				messages[messages.length - 1].content =
-					formattedFiles + '\n\n' + messages[messages.length - 1].content;
-			}
-			// If content is already an array (e.g., after image processing)
-			else if (Array.isArray(messages[messages.length - 1].content)) {
-				// Find the text object and prepend to its text property
-				for (let i = 0; i < messages[messages.length - 1].content.length; i++) {
-					const item = messages[messages.length - 1].content[i] as any;
-					if (item && item.type === 'text' && typeof item.text === 'string') {
-						item.text = formattedFiles + '\n\n' + item.text;
-						break;
-					}
-				}
-			}
-		}
-
-		// Log information about the files for debugging
-		console.log(
-			`Processing ${files.length} files:`,
-			files.map((f) => f.filename)
-		);
+		if (files.length > 0) processedMessages = addFilesToMessage(processedMessages, files);
 
 		const chunks: string[] = [];
 		const thinkingChunks: string[] = [];
@@ -118,11 +75,13 @@ export async function POST({ request, locals }) {
 
 		try {
 			// Clean messages by removing message_id fields
-			const cleanedMessages = messages.map(({ message_id, ...rest }) => rest);
+			const cleanedMessages = processedMessages.map(({ message_id, ...rest }) => rest);
 			const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
 			stream = await client.messages.stream({
 				// Include system parameter only if we have a system message
-				...(messages[0].role === 'system' ? { system: messages[0].content } : {}),
+				...(processedMessages[0].role === 'system'
+					? { system: processedMessages[0].content }
+					: {}),
 				// @ts-ignore
 				messages: cleanedMessages,
 				model: model.param,

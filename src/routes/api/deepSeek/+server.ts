@@ -1,24 +1,12 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
-import type { Message, Model, Image, ChatGPTImage, GptTokenUsage } from '$lib/types.d';
-import { calculateGptVisionPricing, countTokens } from '$lib/tokenizer';
-import { retrieveUsersBalance } from '$lib/db/crud/balance';
-import {
-	ApiModel,
-	ApiProvider,
-	PaymentTier,
-	type Message as MessageEntity,
-	type User
-} from '@prisma/client';
+import { ApiProvider } from '@prisma/client';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import { createConversation } from '$lib/db/crud/conversation';
-import { isValidMessageArray } from '$lib/utils/typeGuards';
-import { getModelFromName } from '$lib/utils/modelConverter';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
-import { estimateTokenCount } from '$lib/utils/tokenCounter';
 import { validateApiRequest, type ApiRequestData } from '$lib/utils/apiRequestValidator';
+import { addFilesToMessage } from '$lib/utils/fileHandling';
 
 export async function POST({ request, locals }) {
 	const requestId = crypto.randomUUID();
@@ -27,9 +15,6 @@ export async function POST({ request, locals }) {
 	if (!session || !session.user || !session.user.email) {
 		throw error(401, 'Forbidden');
 	}
-
-	// Create a requestData object conditionally based on what might be defined
-	const requestData: Record<string, any> = {};
 
 	try {
 		// Parse the request body
@@ -56,48 +41,24 @@ export async function POST({ request, locals }) {
 			finalUsage
 		} = validatedData;
 
-		// Process images for OpenAI format
-		let gptImages: ChatGPTImage[] = [];
+		// Process images and files
+		let processedMessages = [...messages];
 
 		if (images.length > 0) {
 			const textObject = {
 				type: 'text',
-				text: messages[messages.length - 1].content
+				text: processedMessages[processedMessages.length - 1].content
 			};
-			gptImages = images.map((image) => ({
+			const gptImages = images.map((image) => ({
 				type: 'image_url',
 				image_url: {
 					url: image.data
 				}
 			}));
-			messages[messages.length - 1].content = [textObject, ...gptImages];
+			processedMessages[processedMessages.length - 1].content = [textObject, ...gptImages];
 		}
-		// Process files
-		if (files.length > 0) {
-			// Format files with <file></file> delimiters instead of stringifying
-			const formattedFiles = files
-				.map((file) => {
-					return `<file>\nfilename: ${file.filename}\nfile_extension: ${file.file_extension}\nsize: ${file.size}\ntype: ${file.media_type}\ncontent: ${file.data}\n</file>`;
-				})
-				.join('\n\n');
 
-			// If content is a string, prepend the formatted files
-			if (typeof messages[messages.length - 1].content === 'string') {
-				messages[messages.length - 1].content =
-					formattedFiles + '\n\n' + messages[messages.length - 1].content;
-			}
-			// If content is already an array (e.g., after image processing)
-			else if (Array.isArray(messages[messages.length - 1].content)) {
-				// Find the text object and prepend to its text property
-				for (let i = 0; i < messages[messages.length - 1].content.length; i++) {
-					const item = messages[messages.length - 1].content[i] as any;
-					if (item && item.type === 'text' && typeof item.text === 'string') {
-						item.text = formattedFiles + '\n\n' + item.text;
-						break;
-					}
-				}
-			}
-		}
+		if (files.length > 0) processedMessages = addFilesToMessage(processedMessages, files);
 
 		// Initialize the DeepSeek client
 		const openai = new OpenAI({
@@ -112,7 +73,7 @@ export async function POST({ request, locals }) {
 
 		try {
 			// Clean messages by removing message_id fields
-			const cleanedMessages = messages.map(({ message_id, ...rest }) => rest);
+			const cleanedMessages = processedMessages.map(({ message_id, ...rest }) => rest);
 			stream = await openai.chat.completions.create({
 				model: model.param,
 				// @ts-ignore

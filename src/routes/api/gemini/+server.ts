@@ -1,12 +1,12 @@
 import { error } from '@sveltejs/kit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { GeminiImage } from '$lib/types.d';
 import { ApiProvider } from '@prisma/client';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
 import { validateApiRequest, type ApiRequestData } from '$lib/utils/apiRequestValidator';
+import { addFilesToMessage } from '$lib/utils/fileHandling';
 
 export async function POST({ request, locals }) {
 	const requestId = crypto.randomUUID();
@@ -41,48 +41,30 @@ export async function POST({ request, locals }) {
 			finalUsage
 		} = validatedData;
 
-		// Process images for Gemini format
-		let geminiImage: GeminiImage | undefined = undefined;
+		// Process images and files
+		let processedMessages = [...messages];
+		let geminiImage: any;
 
 		if (images.length > 0) {
-			geminiImage = {
-				inlineData: {
-					data: images[0].data.split(',')[1],
-					mimeType: images[0].media_type
-				}
-			};
-		}
-
-		// Process files
-		if (files.length > 0) {
-			// Format files with <file></file> delimiters instead of stringifying
-			const formattedFiles = files
-				.map((file) => {
-					return `<file>\nfilename: ${file.filename}\nfile_extension: ${file.file_extension}\nsize: ${file.size}\ntype: ${file.media_type}\ncontent: ${file.data}\n</file>`;
-				})
-				.join('\n\n');
-
-			// If content is a string, prepend the formatted files
-			if (typeof messages[messages.length - 1].content === 'string') {
-				messages[messages.length - 1].content =
-					formattedFiles + '\n\n' + messages[messages.length - 1].content;
-			}
-			// If content is already an array (e.g., after image processing)
-			else if (Array.isArray(messages[messages.length - 1].content)) {
-				// Find the text object and prepend to its text property
-				for (let i = 0; i < messages[messages.length - 1].content.length; i++) {
-					const item = messages[messages.length - 1].content[i] as any;
-					if (item && item.type === 'text' && typeof item.text === 'string') {
-						item.text = formattedFiles + '\n\n' + item.text;
-						break;
+			// For Gemini, we need to handle it differently since we'll pass the image separately
+			if (images.length > 0) {
+				const image = images[0]; // Only first image is supported in Gemini
+				// Extract the base64 data from the data URL
+				const base64Data = image.data.split(',')[1];
+				geminiImage = {
+					inlineData: {
+						data: base64Data,
+						mimeType: image.media_type
 					}
-				}
+				};
 			}
 		}
+
+		if (files.length > 0) processedMessages = addFilesToMessage(processedMessages, files);
 
 		// Convert messages to Gemini format
 		const prompt = {
-			contents: messages.map((message) => ({
+			contents: processedMessages.map((message) => ({
 				role: message.role === 'user' ? message.role : 'model',
 				parts: [{ text: message.content }]
 			}))

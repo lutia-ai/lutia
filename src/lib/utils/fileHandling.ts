@@ -474,3 +474,54 @@ export function scrollCursorIntoView(element: HTMLElement): void {
 export function focusAtEnd(element: HTMLElement): void {
 	return scrollCursorIntoView(element);
 }
+
+/**
+ * Formats file attachments with <file></file> delimiters for LLM API requests
+ * @param files Array of FileAttachment objects to format
+ * @returns Formatted string with file contents
+ */
+export function formatFilesForPrompt(files: FileAttachment[]): string {
+	if (!files || files.length === 0) return '';
+
+	return files
+		.map((file) => {
+			return `<file>\nfilename: ${file.filename}\nfile_extension: ${file.file_extension}\nsize: ${file.size}\ntype: ${file.media_type}\ncontent: ${file.data}\n</file>`;
+		})
+		.join('\n\n');
+}
+
+/**
+ * Adds formatted file attachments to the last message in an array of messages
+ * @param messages Array of messages
+ * @param files Array of file attachments to add
+ * @returns The modified messages array with files added to the last message
+ */
+export function addFilesToMessage(messages: any[], files: FileAttachment[]): any[] {
+	if (!files || files.length === 0 || !messages || messages.length === 0) {
+		return messages;
+	}
+
+	// Create a deep copy to avoid modifying the original
+	const messagesCopy = JSON.parse(JSON.stringify(messages));
+	const lastMessageIndex = messagesCopy.length - 1;
+	const formattedFiles = formatFilesForPrompt(files);
+
+	// If content is a string, prepend the formatted files
+	if (typeof messagesCopy[lastMessageIndex].content === 'string') {
+		messagesCopy[lastMessageIndex].content =
+			formattedFiles + '\n\n' + messagesCopy[lastMessageIndex].content;
+	}
+	// If content is already an array (e.g., after image processing)
+	else if (Array.isArray(messagesCopy[lastMessageIndex].content)) {
+		// Find the text object and prepend to its text property
+		for (let i = 0; i < messagesCopy[lastMessageIndex].content.length; i++) {
+			const item = messagesCopy[lastMessageIndex].content[i];
+			if (item && item.type === 'text' && typeof item.text === 'string') {
+				item.text = formattedFiles + '\n\n' + item.text;
+				break;
+			}
+		}
+	}
+
+	return messagesCopy;
+}
