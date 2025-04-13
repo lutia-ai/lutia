@@ -1,5 +1,4 @@
-import type { GptTokenUsage, Image, Model } from '$lib/types.d';
-import { countTokens } from '$lib/tokenizer';
+import type { GptTokenUsage, Image, Model, FileAttachment } from '$lib/types.d';
 import { createMessageAndApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { ApiProvider, ApiRequestStatus, PaymentTier, type User } from '@prisma/client';
@@ -13,6 +12,7 @@ export interface FinalizationParams {
 	model: Model;
 	plainText: string;
 	images: Image[];
+	files: FileAttachment[];
 	chunks: string[];
 	thinkingChunks: string[];
 	finalUsage: GptTokenUsage;
@@ -30,6 +30,7 @@ export async function finalizeResponse({
 	model,
 	plainText,
 	images,
+	files,
 	chunks,
 	thinkingChunks,
 	finalUsage,
@@ -77,6 +78,7 @@ export async function finalizeResponse({
 				prompt: plainText,
 				response: response,
 				pictures: images,
+				files: files,
 				reasoning: thinkingResponse,
 				referencedMessageIds: referencedMessageIds
 			},
@@ -128,6 +130,7 @@ export interface RegenerationParams {
 	finalUsage: GptTokenUsage;
 	wasAborted: boolean;
 	error: any;
+	files?: FileAttachment[];
 }
 
 export async function updateExistingMessageAndRequest({
@@ -138,7 +141,8 @@ export async function updateExistingMessageAndRequest({
 	thinkingChunks,
 	finalUsage,
 	wasAborted = false,
-	error = null
+	error = null,
+	files
 }: RegenerationParams) {
 	try {
 		// Combine the chunks into response text
@@ -192,7 +196,9 @@ export async function updateExistingMessageAndRequest({
 			where: { id: Number(messageId) },
 			data: {
 				response: response,
-				reasoning: thinkingResponse
+				reasoning: thinkingResponse,
+				// Add files if they exist
+				...(files ? { files: files } : {})
 				// Note: not updating the prompt field as it remains the same
 			}
 		});

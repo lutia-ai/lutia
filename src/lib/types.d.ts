@@ -39,7 +39,7 @@ export type UserChat = {
 	message_id?: number;
 	by: string;
 	text: string;
-	image?: Image[];
+	attachments?: Attachment[];
 };
 
 export type ChatComponent = LlmChat | UserChat;
@@ -96,6 +96,17 @@ export type Image = {
 	ai?: boolean;
 };
 
+export type FileAttachment = {
+	type: 'file';
+	data: string;
+	media_type: string;
+	filename: string;
+	file_extension: string;
+	size: number;
+};
+
+export type Attachment = Image | FileAttachment;
+
 export type ChatGPTImage = {
 	type: 'image_url';
 	image_url: {
@@ -125,6 +136,7 @@ type SerializedMessage = {
 	response: string;
 	reasoning: string;
 	pictures: Image[];
+	files: FileAttachment[];
 	referencedMessages: SerializedMessage[];
 };
 
@@ -254,6 +266,7 @@ export interface CreateMessageData {
 	prompt: string;
 	response: string;
 	pictures: Image[];
+	files: FileAttachment[];
 	reasoning?: string;
 	referencedMessageIds?: number[];
 }

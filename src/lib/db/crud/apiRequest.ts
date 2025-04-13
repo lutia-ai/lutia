@@ -98,6 +98,7 @@ export async function createMessageAndApiRequestEntry(
 					prompt: messageData.prompt,
 					response: messageData.response,
 					pictures: messageData.pictures,
+					files: messageData.files,
 					reasoning: messageData.reasoning,
 					referencedMessages: {
 						// Connect any referenced messages if they exist

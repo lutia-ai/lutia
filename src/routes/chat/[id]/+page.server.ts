@@ -5,7 +5,7 @@ import {
 	retrieveApiRequestsWithMessage
 } from '$lib/db/crud/apiRequest';
 import { deleteAllUserMessagesWithoutAConversation } from '$lib/db/crud/message';
-import { retrieveUserByEmail, retrieveUserWithSettingsByEmail } from '$lib/db/crud/user';
+import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { retrieveUsersBalance, updateUserBalanceWithIncrement } from '$lib/db/crud/balance';
 import {
 	chargeUserCard,

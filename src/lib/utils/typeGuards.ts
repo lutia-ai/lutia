@@ -1,3 +1,4 @@
+import { modelDictionary } from '$lib/modelDictionary';
 import type {
 	Message,
 	ChatComponent,
@@ -5,7 +6,9 @@ import type {
 	TextComponent,
 	Component,
 	LlmChat,
-	UserChat
+	UserChat,
+	ModelDictionary,
+	Model
 } from '$lib/types';
 
 export function isCodeComponent(component: Component): component is CodeComponent {
@@ -59,4 +62,35 @@ export function isValidMessageArray(data: any): data is Message[] {
 		if (!isValidMessage(item)) return false;
 	}
 	return true;
+}
+
+// Helper function to check if a model belongs to a specific company
+export function isModelByCompany(company: keyof ModelDictionary, modelName: string): boolean {
+	return Object.values(modelDictionary[company].models).some(
+		(model) => (model as Model).name === modelName
+	);
+}
+
+export function isModelAnthropic(modelName: string): boolean {
+	return isModelByCompany('anthropic', modelName);
+}
+
+export function isModelOpenAI(modelName: string): boolean {
+	return isModelByCompany('openAI', modelName);
+}
+
+export function isModelGoogle(modelName: string): boolean {
+	return isModelByCompany('google', modelName);
+}
+
+export function isModelMeta(modelName: string): boolean {
+	return isModelByCompany('meta', modelName);
+}
+
+export function isModelXAI(modelName: string): boolean {
+	return isModelByCompany('xAI', modelName);
+}
+
+export function isModelDeepSeek(modelName: string): boolean {
+	return isModelByCompany('deepSeek', modelName);
 }

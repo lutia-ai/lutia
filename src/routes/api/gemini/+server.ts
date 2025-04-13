@@ -1,21 +1,12 @@
 import { error } from '@sveltejs/kit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { Message, Model, Image, GeminiImage, GptTokenUsage } from '$lib/types.d';
-import {
-	ApiModel,
-	ApiProvider,
-	PaymentTier,
-	type Message as MessageEntity,
-	type User
-} from '@prisma/client';
-import { retrieveUsersBalance } from '$lib/db/crud/balance';
+import type { GeminiImage } from '$lib/types.d';
+import { ApiProvider } from '@prisma/client';
 import { InsufficientBalanceError } from '$lib/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import { createConversation } from '$lib/db/crud/conversation.js';
-import { isValidMessageArray } from '$lib/utils/typeGuards';
-import { getModelFromName } from '$lib/utils/modelConverter';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
+import { validateApiRequest, type ApiRequestData } from '$lib/utils/apiRequestValidator';
 
 export async function POST({ request, locals }) {
 	const requestId = crypto.randomUUID();
@@ -26,94 +17,32 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const {
-			plainTextPrompt,
-			promptStr,
-			modelStr,
-			imagesStr,
-			conversationId,
-			regenerateMessageId
-		} = await request.json();
-
-		const plainText: string = JSON.parse(plainTextPrompt);
-		let rawMessages: Message[] = JSON.parse(promptStr);
-		const modelName: ApiModel = JSON.parse(modelStr);
-		const images: Image[] = JSON.parse(imagesStr);
-		let geminiImage: GeminiImage | undefined = undefined;
-		const user: User = await retrieveUserByEmail(session.user!.email);
-		let messageConversationId = conversationId;
+		// Parse the request body
+		const requestBody = await request.json();
+		const user = await retrieveUserByEmail(session.user!.email);
+		const regenerateMessageId = requestBody.regenerateMessageId;
 		let errorMessage: any;
 
-		if (!isValidMessageArray(rawMessages)) {
-			throw error(400, 'Invalid messages array');
-		}
+		// Validate the request using our shared validator
+		const validatedData = await validateApiRequest(
+			requestBody as ApiRequestData,
+			user,
+			ApiProvider.google
+		);
 
-		let messages: Message[] = rawMessages;
+		const {
+			plainText,
+			messages,
+			model,
+			images,
+			files,
+			messageConversationId,
+			referencedMessageIds,
+			finalUsage
+		} = validatedData;
 
-		// Convert the model name to full Model object
-		const model: Model | null = getModelFromName(modelName);
-
-		if (!model) {
-			// make sure model is not null
-			throw error(400, `Model ${modelName} not found`);
-		}
-
-		if (!plainText || !messages) {
-			throw error(400, `No prompt found`);
-		}
-
-		if (typeof plainText !== 'string') {
-			throw error(400, 'plainText must be a string');
-		}
-
-		if (typeof modelName !== 'string') {
-			throw error(400, 'modelStr must be a string');
-		}
-
-		if (!Array.isArray(rawMessages)) {
-			throw error(400, 'promptStr must be an array of messages');
-		}
-
-		if (!Array.isArray(images)) {
-			throw error(400, 'imagesStr must be an array of images');
-		}
-
-		if (conversationId !== undefined && typeof conversationId !== 'string') {
-			throw error(400, 'conversationId must be a string if provided');
-		}
-
-		if (!user.email_verified) {
-			throw error(400, 'Email not verified');
-		}
-
-		// Extract unique message IDs from your messages array
-		const referencedMessageIds: number[] = [
-			...new Set(
-				messages
-					.filter((msg) => msg.message_id !== null && msg.message_id !== undefined)
-					.map((msg) => msg.message_id)
-					.filter((id): id is number => id !== undefined)
-			)
-		];
-
-		// Iterate through the messages array and remove empty assistant messages
-		for (let i = messages.length - 1; i >= 0; i--) {
-			const msg = messages[i];
-			if (
-				msg.role === 'assistant' &&
-				(msg.content === undefined || msg.content === null || msg.content === '')
-			) {
-				// Remove empty assistant messages
-				messages.splice(i, 1);
-			}
-		}
-
-		const prompt = {
-			contents: messages.map((message) => ({
-				role: message.role === 'user' ? message.role : 'model',
-				parts: [{ text: message.content }]
-			}))
-		};
+		// Process images for Gemini format
+		let geminiImage: GeminiImage | undefined = undefined;
 
 		if (images.length > 0) {
 			geminiImage = {
@@ -124,60 +53,56 @@ export async function POST({ request, locals }) {
 			};
 		}
 
+		// Process files
+		if (files.length > 0) {
+			// Format files with <file></file> delimiters instead of stringifying
+			const formattedFiles = files
+				.map((file) => {
+					return `<file>\nfilename: ${file.filename}\nfile_extension: ${file.file_extension}\nsize: ${file.size}\ntype: ${file.media_type}\ncontent: ${file.data}\n</file>`;
+				})
+				.join('\n\n');
+
+			// If content is a string, prepend the formatted files
+			if (typeof messages[messages.length - 1].content === 'string') {
+				messages[messages.length - 1].content =
+					formattedFiles + '\n\n' + messages[messages.length - 1].content;
+			}
+			// If content is already an array (e.g., after image processing)
+			else if (Array.isArray(messages[messages.length - 1].content)) {
+				// Find the text object and prepend to its text property
+				for (let i = 0; i < messages[messages.length - 1].content.length; i++) {
+					const item = messages[messages.length - 1].content[i] as any;
+					if (item && item.type === 'text' && typeof item.text === 'string') {
+						item.text = formattedFiles + '\n\n' + item.text;
+						break;
+					}
+				}
+			}
+		}
+
+		// Convert messages to Gemini format
+		const prompt = {
+			contents: messages.map((message) => ({
+				role: message.role === 'user' ? message.role : 'model',
+				parts: [{ text: message.content }]
+			}))
+		};
+
 		const genAI = new GoogleGenerativeAI(env.VITE_GOOGLE_GEMINI_API_KEY);
 		const genAIModel = genAI.getGenerativeModel({ model: model.param });
 
 		let inputCountResult: { totalTokens: number };
-		let inputCost: number = 0;
 
 		if (geminiImage) {
 			inputCountResult = await genAIModel.countTokens([JSON.stringify(prompt), geminiImage]);
-			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
 		} else {
 			// @ts-ignore
 			inputCountResult = await genAIModel.countTokens(prompt);
-			inputCost = (inputCountResult.totalTokens / 1000000) * model.input_price;
-		}
-
-		// Create a new conversation only if:
-		// 1. User is premium AND
-		// 2. No existing conversationId was provided
-		if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
-			const conversation = await createConversation(user.id, 'New chat');
-			messageConversationId = conversation.id;
-		}
-
-		if (user.payment_tier === PaymentTier.PayAsYouGo) {
-			try {
-				let balance = await retrieveUsersBalance(Number(session.user.id));
-				if (balance - inputCost <= 0.1) {
-					throw new InsufficientBalanceError();
-				}
-			} catch (err) {
-				if (!(err instanceof InsufficientBalanceError)) {
-					console.error('Error retrieving users balance');
-				}
-				throw err;
-			}
-		}
-
-		// Ensure first message has 'user' role by removing leading non-user messages
-		while (messages.length > 0 && messages[0].role !== 'user') {
-			messages.shift();
-		}
-
-		// If no user messages remain, throw error
-		if (messages.length === 0) {
-			throw error(400, 'No user messages found. The first message must use the user role.');
 		}
 
 		const chunks: string[] = [];
 		const thinkingChunks: string[] = [];
-		let finalUsage: GptTokenUsage | null = {
-			prompt_tokens: inputCountResult.totalTokens,
-			completion_tokens: 0,
-			total_tokens: 0
-		};
+		finalUsage.prompt_tokens = inputCountResult.totalTokens;
 		let stream;
 		let isFirstChunk = true;
 
@@ -224,7 +149,9 @@ export async function POST({ request, locals }) {
 							break;
 						}
 
-						const content = (chunk as any).candidates[0].content.parts[0].text;
+						// Check if the response has the expected structure
+						const candidate = (chunk as any).candidates?.[0];
+						const content = candidate?.content?.parts?.[0]?.text || '';
 
 						if (isFirstChunk) {
 							isFirstChunk = false;
@@ -312,6 +239,7 @@ export async function POST({ request, locals }) {
 								model,
 								plainText,
 								images,
+								files,
 								chunks,
 								thinkingChunks,
 								finalUsage,
@@ -319,7 +247,7 @@ export async function POST({ request, locals }) {
 								error: errorMessage,
 								requestId,
 								messageConversationId,
-								originalConversationId: conversationId,
+								originalConversationId: requestBody.conversationId,
 								apiProvider: ApiProvider.google,
 								referencedMessageIds
 							});
@@ -341,7 +269,8 @@ export async function POST({ request, locals }) {
 								thinkingChunks,
 								finalUsage,
 								wasAborted: clientDisconnected,
-								error: errorMessage
+								error: errorMessage,
+								files
 							});
 
 							controller.enqueue(

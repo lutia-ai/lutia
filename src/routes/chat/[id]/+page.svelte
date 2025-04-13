@@ -5,6 +5,7 @@
 	import markedKatex from 'marked-katex-extension';
 	import 'katex/dist/katex.min.css';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
+	import atomOneLight from 'svelte-highlight/styles/atom-one-light';
 	import {
 		chatHistory,
 		numberPrevMessages,
@@ -19,18 +20,18 @@
 		gptModelSelection,
 		conversationId,
 		contextWindowOpen,
-		mobileSidebarOpen
+		mobileSidebarOpen,
+		darkMode
 	} from '$lib/stores.ts';
 	import type {
 		Message,
 		Image,
 		Model,
 		UserChat,
-		ChatComponent,
-		ModelDictionary,
 		Component,
 		SerializedApiRequest,
-		ReasoningComponent
+		ReasoningComponent,
+		FileAttachment
 	} from '$lib/types';
 	import { sanitizeHtml, generateFullPrompt } from '$lib/promptFunctions.ts';
 	import { modelDictionary } from '$lib/modelDictionary.ts';
@@ -41,8 +42,12 @@
 		roundToTwoSignificantDigits
 	} from '$lib/tokenizer.ts';
 	import {
-		isCodeComponent,
 		isLlmChatComponent,
+		isModelAnthropic,
+		isModelDeepSeek,
+		isModelGoogle,
+		isModelOpenAI,
+		isModelXAI,
 		isUserChatComponent
 	} from '$lib/utils/typeGuards';
 	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
@@ -59,19 +64,23 @@
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import ImageIcon from '$lib/components/icons/ImageIcon.svelte';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
+	import FileViewer from '$lib/components/FileViewer.svelte';
 	import {
 		changeTabWidth,
 		closeAllTabWidths,
+		copyToClipboard,
 		formatModelEnumToReadable,
 		handleKeyboardShortcut,
 		loadChatHistory,
 		parseMessageContent,
 		regenerateMessage,
-		sanitizeLLmContent
+		sanitizeLLmContent,
+		saveUserSettings,
+		updateChatHistoryToCopiedState
 	} from '$lib/chatHistory.js';
 	import { page } from '$app/stores';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
-	import { fade, fly } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
 	import DeepSeekIcon from '$lib/components/icons/DeepSeekIcon.svelte';
 	import PlusIcon from '$lib/components/icons/PlusIcon.svelte';
@@ -81,21 +90,19 @@
 	import { afterNavigate, pushState } from '$app/navigation';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
+	import {
+		getFileIcon,
+		getFileIconColor,
+		scrollCursorIntoView
+	} from '$lib/utils/fileHandling.js';
+	import { processFileSelect } from '$lib/utils/fileHandling';
+
+	export let data;
 
 	// Add state for image viewer
 	let viewerImage = '';
 	let viewerAlt = '';
 	let showImageViewer = false;
-
-	// Function to open image viewer
-	function openImageViewer(src: string, altText: string = 'Image') {
-		viewerImage = src;
-		viewerAlt = altText;
-		showImageViewer = true;
-	}
-
-	export let data;
-
 	let errorPopup: ErrorPopup;
 	let notificationPopup: NotificationPopup;
 	let prompt: string;
@@ -109,12 +116,20 @@
 	let isDragging: boolean = false;
 	let fileInput: HTMLInputElement;
 	let imagePreview: Image[] = [];
+	let fileAttachments: FileAttachment[] = [];
 	let showModelSearch = false;
 	let searchQuery = '';
 	let filteredModels: { company: ApiProvider; model: Model; formattedName: string }[] = [];
 	let selectedModelIndex: number | null = 0;
 	let modelSearchItems: HTMLDivElement[] = [];
 	let reasoningOn: boolean = false;
+	let isScrollingProgrammatically = false;
+	let lastScrollPos = 0;
+
+	// File viewer state
+	let showFileViewer = false;
+	let currentFileContent = '';
+	let currentFileName = '';
 
 	gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
 
@@ -122,18 +137,19 @@
 		throwOnError: false,
 		displayMode: true,
 		output: 'html'
-		// delimiters: [
-		//     { left: '$$', right: '$$', display: false },  // Block math with $$
-		//     { left: '$', right: '$', display: false },   // Inline math with $
-		//     { left: '\[', right: '\]', display: true },  // Block math with \[ \]
-		//     { left: '\(', right: '\)', display: true }  // Inline math with \( \)
-		// ]
 	});
 
 	marked.use(markedKatexOptions);
 
 	// Generates the fullPrompt and counts input tokens when the prompt changes
-	$: if (prompt || prompt === '' || $numberPrevMessages || imagePreview || $isContextWindowAuto) {
+	$: if (
+		prompt ||
+		prompt === '' ||
+		$numberPrevMessages ||
+		imagePreview ||
+		fileAttachments ||
+		$isContextWindowAuto
+	) {
 		if (mounted) {
 			fullPrompt.set(sanitizeHtml(prompt));
 			if ($numberPrevMessages > 0) {
@@ -157,6 +173,26 @@
 			}
 			handleCountTokens($fullPrompt);
 		}
+	}
+
+	$: if (promptBarHeight) {
+		if (isAtBottom()) {
+			scrollToBottom();
+		}
+	}
+
+	// Function to open image viewer
+	function openImageViewer(src: string, alt: string) {
+		viewerImage = src;
+		viewerAlt = alt;
+		showImageViewer = true;
+	}
+
+	// Function to open the file viewer
+	function openFileViewer(content: string, filename: string) {
+		currentFileContent = content;
+		currentFileName = filename;
+		showFileViewer = true;
 	}
 
 	function handleInput(event: Event & { currentTarget: EventTarget & HTMLDivElement }) {
@@ -263,7 +299,7 @@
 		input_price = result.price + imageCost;
 	}
 
-	function handlePaste(event: ClipboardEvent): void {
+	function handlePaste(event: ClipboardEvent): string | undefined {
 		event.preventDefault();
 		if (!event.clipboardData) return;
 
@@ -301,35 +337,7 @@
 		// Replace all newlines with <br> in a single operation
 		formattedText = formattedText.replace(/\n/g, '<br>');
 
-		document.execCommand('insertHTML', false, formattedText);
-	}
-
-	function copyToClipboard(text: string): Promise<void> {
-		return new Promise((resolve, reject) => {
-			if (navigator.clipboard) {
-				navigator.clipboard
-					.writeText(text)
-					.then(resolve)
-					.catch((err) => {
-						console.error('Failed to copy text:', err);
-						reject(err);
-					});
-			} else {
-				const textArea = document.createElement('textarea');
-				textArea.value = text;
-				document.body.appendChild(textArea);
-				textArea.select();
-				try {
-					document.execCommand('copy');
-					resolve();
-				} catch (err) {
-					console.error('Failed to copy text:', err);
-					reject(err);
-				} finally {
-					document.body.removeChild(textArea);
-				}
-			}
-		});
+		return formattedText;
 	}
 
 	// Updates the chosen company and resets the model selection based on the new company.
@@ -353,14 +361,17 @@
 		}
 		const plainText = prompt;
 		const imageArray = $chosenModel.handlesImages ? imagePreview : [];
+		const fileArray = fileAttachments;
+		console.log(fileArray);
 		prompt = '';
 		imagePreview = $chosenModel.handlesImages ? [] : imagePreview;
+		fileAttachments = [];
 		handleCountTokens(prompt);
 		if (plainText.trim()) {
 			let userPrompt: UserChat = {
 				by: 'user',
 				text: plainText.trim(),
-				image: imageArray
+				attachments: [...imageArray, ...fileArray]
 			};
 
 			// Add user's message to chat history
@@ -455,6 +466,7 @@
 						promptStr: JSON.stringify(fullPrompt),
 						modelStr: JSON.stringify($chosenModel.name),
 						imagesStr: JSON.stringify(imageArray),
+						filesStr: JSON.stringify(fileArray),
 						...($chosenCompany === 'anthropic' ? { reasoningOn } : {}),
 						...(data.user.payment_tier === PaymentTier.Premium
 							? { conversationId: validConversationId }
@@ -645,71 +657,6 @@
 		}
 	}
 
-	export function updateChatHistoryToCopiedState(
-		chatIndex: number,
-		componentIndex: number
-	): void {
-		chatHistory.update((history) => {
-			const newHistory: ChatComponent[] = [...history];
-			if (isLlmChatComponent(newHistory[chatIndex])) {
-				if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
-					newHistory[chatIndex].components[componentIndex].copied = true;
-				} else {
-					newHistory[chatIndex].copied = true;
-				}
-			}
-			return newHistory;
-		});
-
-		setTimeout(() => {
-			chatHistory.update((history) => {
-				const newHistory: ChatComponent[] = [...history];
-				if (isLlmChatComponent(newHistory[chatIndex])) {
-					if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
-						newHistory[chatIndex].components[componentIndex].copied = false;
-					} else {
-						newHistory[chatIndex].copied = false;
-					}
-				}
-				return newHistory;
-			});
-		}, 3000);
-	}
-
-	// Helper function to check if a model belongs to a specific company
-	function isModelByCompany(company: keyof ModelDictionary, modelName: string): boolean {
-		return Object.values(modelDictionary[company].models).some(
-			(model) => (model as Model).name === modelName
-		);
-	}
-
-	function isModelAnthropic(modelName: string): boolean {
-		return isModelByCompany('anthropic', modelName);
-	}
-
-	function isModelOpenAI(modelName: string): boolean {
-		return isModelByCompany('openAI', modelName);
-	}
-
-	function isModelGoogle(modelName: string): boolean {
-		return isModelByCompany('google', modelName);
-	}
-
-	function isModelMeta(modelName: string): boolean {
-		return isModelByCompany('meta', modelName);
-	}
-
-	function isModelXAI(modelName: string): boolean {
-		return isModelByCompany('xAI', modelName);
-	}
-
-	function isModelDeepSeek(modelName: string): boolean {
-		return isModelByCompany('deepSeek', modelName);
-	}
-
-	let isScrollingProgrammatically = false;
-	let lastScrollPos = 0;
-
 	function scrollToBottom() {
 		// Cancel any ongoing animation frame
 		if (scrollAnimationFrame !== null) {
@@ -766,162 +713,21 @@
 	}
 
 	function handleFileSelect(event: Event | any): void {
-		let files;
 		if (isDragging) {
 			isDragging = false;
-			files = event.dataTransfer.files;
-		} else {
-			const target = event.target as HTMLInputElement;
-			files = target.files;
 		}
-		if (files && files.length > 0) {
-			const newPreviews: Image[] = [];
-			let processedFiles = 0;
-			let largeImageResized = false;
 
-			for (const file of files) {
-				const reader = new FileReader();
-
-				// Check if file is too large (2MB limit)
-				const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
-
-				if (file.size > MAX_FILE_SIZE) {
-					// File is too large, we'll need to resize it
-					largeImageResized = true;
-					resizeImage(file, (resizedBlob) => {
-						const resizedReader = new FileReader();
-						resizedReader.onload = (e: ProgressEvent<FileReader>) => {
-							if (e.target?.result) {
-								const img = new Image();
-								img.onload = () => {
-									newPreviews.push({
-										type: 'image',
-										data: e.target!.result as string,
-										media_type: 'image/jpeg', // Resized to JPEG
-										width: img.width,
-										height: img.height
-									});
-
-									processedFiles++;
-									// If all files have been processed, update the imagePreview array
-									if (processedFiles === files.length) {
-										imagePreview = [...imagePreview, ...newPreviews];
-										fileInput.value = '';
-
-										// Show notification only if at least one image was resized
-										if (largeImageResized) {
-											notificationPopup.showNotification(
-												'Image resized',
-												'Large image(s) were automatically resized to stay under the 2MB limit',
-												5000,
-												'info'
-											);
-										}
-									}
-								};
-								img.src = e.target.result as string;
-							}
-						};
-						resizedReader.readAsDataURL(resizedBlob);
-					});
-				} else {
-					// File is within size limits, process normally
-					reader.onload = (e: ProgressEvent<FileReader>) => {
-						if (e.target?.result) {
-							const img = new Image();
-							img.onload = () => {
-								newPreviews.push({
-									type: 'image',
-									data: e.target!.result as string,
-									media_type: file.type,
-									width: img.width,
-									height: img.height
-								});
-
-								processedFiles++;
-								// If all files have been processed, update the imagePreview array
-								if (processedFiles === files.length) {
-									imagePreview = [...imagePreview, ...newPreviews];
-									fileInput.value = '';
-
-									// Show notification only if at least one image was resized
-									if (largeImageResized) {
-										notificationPopup.showNotification(
-											'Image resized',
-											'Large image(s) were automatically resized to stay under the 2MB limit',
-											5000,
-											'info'
-										);
-									}
-								}
-							};
-							img.src = e.target.result as string;
-						}
-					};
-					reader.readAsDataURL(file);
-				}
+		processFileSelect(
+			event,
+			(newPreviews, newAttachments) => {
+				imagePreview = [...imagePreview, ...newPreviews];
+				fileAttachments = [...fileAttachments, ...newAttachments];
+				if (fileInput) fileInput.value = '';
+			},
+			(title, message, duration, type) => {
+				notificationPopup.showNotification(title, message, duration, type);
 			}
-		}
-	}
-
-	// Function to resize images that are too large
-	function resizeImage(file: File, callback: (blob: Blob) => void): void {
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			if (e.target?.result) {
-				const img = new Image();
-				img.onload = () => {
-					// Create a canvas to resize the image
-					const canvas = document.createElement('canvas');
-					let { width, height } = img;
-
-					// Calculate the new dimensions while maintaining aspect ratio
-					// Start with the original dimensions and step down until size is acceptable
-					let quality = 0.7; // Initial JPEG quality
-					let blob: Blob | null = null;
-
-					const scaleAndCheck = (scaleFactor: number) => {
-						const newWidth = width * scaleFactor;
-						const newHeight = height * scaleFactor;
-
-						canvas.width = newWidth;
-						canvas.height = newHeight;
-
-						const ctx = canvas.getContext('2d');
-						if (ctx) {
-							ctx.drawImage(img, 0, 0, newWidth, newHeight);
-							canvas.toBlob(
-								(result) => {
-									if (result) {
-										blob = result;
-										if (result.size <= 2 * 1024 * 1024 || scaleFactor < 0.1) {
-											// Either we're under the limit or we've scaled down too much
-											callback(result);
-										} else {
-											// Still too big, scale down further
-											scaleAndCheck(scaleFactor * 0.8);
-										}
-									}
-								},
-								'image/jpeg',
-								quality
-							);
-						}
-					};
-
-					// Start with 80% of original size
-					scaleAndCheck(0.8);
-				};
-				img.src = e.target.result as string;
-			}
-		};
-		reader.readAsDataURL(file);
-	}
-
-	$: if (promptBarHeight) {
-		if (isAtBottom()) {
-			scrollToBottom();
-		}
+		);
 	}
 
 	afterNavigate(async ({ from, to }) => {
@@ -965,7 +771,7 @@
 </script>
 
 <svelte:head>
-	{@html synthMidnightTerminalDark}
+	{@html $darkMode ? synthMidnightTerminalDark : atomOneLight}
 	<title>Chat | Lutia</title>
 </svelte:head>
 
@@ -980,7 +786,10 @@
 	on:scroll={() => {
 		handleScroll();
 	}}
-	on:keydown={(e) => handleKeyboardShortcut(e, data.user.user_settings)}
+	on:keydown={(e) => {
+		handleKeyboardShortcut(e);
+		saveUserSettings(data.user.user_settings ?? {});
+	}}
 	on:dragover|preventDefault={(event) => {
 		event.preventDefault;
 		isDragging = true;
@@ -990,6 +799,7 @@
 <ErrorPopup bind:this={errorPopup} />
 <NotificationPopup bind:this={notificationPopup} />
 <ImageViewer src={viewerImage} alt={viewerAlt} bind:show={showImageViewer} />
+<FileViewer content={currentFileContent} filename={currentFileName} bind:show={showFileViewer} />
 
 <div class="main" class:settings-open={$isSettingsOpen}>
 	<div
@@ -1027,9 +837,9 @@
 					{#each $chatHistory as chat, chatIndex}
 						{#if isUserChatComponent(chat) && chat.by === 'user'}
 							<div class="user-chat-wrapper">
-								{#if chat.image}
+								{#if chat.attachments && chat.attachments.length > 0}
 									<div class="user-images">
-										{#each chat.image as image}
+										{#each chat.attachments.filter((att) => att.type === 'image') as image}
 											<div
 												class="user-image-container"
 												on:click={() =>
@@ -1046,7 +856,35 @@
 												role="button"
 												tabindex="0"
 											>
-												<img src={image.data} alt="user file" />
+												<img src={image.data} alt="User uploaded" />
+											</div>
+										{/each}
+										{#each chat.attachments.filter((att) => att.type === 'file') as file}
+											<div
+												class="user-file-container"
+												role="button"
+												tabindex="0"
+												on:click={() =>
+													openFileViewer(file.data, file.filename)}
+												on:keydown={(e) =>
+													e.key === 'Enter' &&
+													openFileViewer(file.data, file.filename)}
+											>
+												<div class="file-info">
+													<div
+														class="file-icon"
+														style="background: {getFileIconColor(
+															file.file_extension
+														)}"
+													>
+														<span class="file-type"
+															>{getFileIcon(
+																file.file_extension
+															)}</span
+														>
+													</div>
+													<span class="file-name">{file.filename}</span>
+												</div>
 											</div>
 										{/each}
 									</div>
@@ -1254,7 +1092,9 @@
 														>
 															<LineNumbers
 																{highlighted}
-																--line-number-color="rgba(255, 255, 255, 0.3)"
+																--line-number-color={$darkMode
+																	? 'rgba(255, 255, 255, 0.3)'
+																	: 'rgba(0, 0, 0, 0.3)'}
 																--border-color="rgba(255, 255, 255, 0.1)"
 																--padding-left="1em"
 																--padding-right="1em"
@@ -1437,7 +1277,7 @@
             "
 		>
 			<div class="prompt-bar" class:shifted={$conversationsOpen || $contextWindowOpen}>
-				{#if imagePreview.length > 0 || isDragging}
+				{#if imagePreview.length > 0 || fileAttachments.length > 0 || isDragging}
 					<div
 						class="image-viewer"
 						role="region"
@@ -1446,12 +1286,23 @@
 							event.preventDefault();
 							handleFileSelect(event);
 						}}
+						on:dragenter={() => {
+							isDragging = true;
+						}}
+						on:dragleave={(e) => {
+							// Only set isDragging to false if we're leaving the container (not entering a child)
+							if (e.currentTarget === e.target) {
+								isDragging = false;
+							}
+						}}
 						style="
-                            background: {$chosenModel.handlesImages ? '' : 'rgba(255,50,50,0.25)'}
+                            background: {$chosenModel.handlesImages || imagePreview.length === 0
+							? ''
+							: 'rgba(255,50,50,0.25)'}
                         "
 					>
 						{#if !isDragging}
-							{#if !$chosenModel.handlesImages}
+							{#if !$chosenModel.handlesImages && imagePreview.length > 0}
 								<div class="warning">
 									<div class="icon">
 										<WarningIcon
@@ -1496,14 +1347,59 @@
 									</div>
 								</div>
 							{/each}
+							{#each fileAttachments as file, index}
+								<div class="file-container">
+									<div
+										class="file-info"
+										role="button"
+										tabindex="0"
+										on:click|stopPropagation={() =>
+											openFileViewer(file.data, file.filename)}
+										on:keydown|stopPropagation={(e) =>
+											e.key === 'Enter' &&
+											openFileViewer(file.data, file.filename)}
+									>
+										<div
+											class="file-icon"
+											style="background: {getFileIconColor(
+												file.file_extension
+											)}"
+										>
+											<span class="file-type"
+												>{getFileIcon(file.file_extension)}</span
+											>
+										</div>
+										<span class="file-name">{file.filename}</span>
+									</div>
+									<div
+										class="close-button"
+										role="button"
+										tabindex="0"
+										on:click|stopPropagation={() => {
+											fileAttachments = fileAttachments.filter(
+												(_, i) => i !== index
+											);
+										}}
+										on:keydown|stopPropagation={(event) => {
+											if (event.key === 'Enter') {
+												fileAttachments = fileAttachments.filter(
+													(_, i) => i !== index
+												);
+											}
+										}}
+									>
+										<CrossIcon color="var(--text-color-light)" />
+									</div>
+								</div>
+							{/each}
 						{:else}
 							<div class="image-drop-container">
 								<div class="image-icon">
 									<ImageIcon color="var(--text-color)" />
 								</div>
 								<div class="text-container">
-									<h1>Drop images here</h1>
-									<p>Max 5 files per chat</p>
+									<h1>Drop files here</h1>
+									<p>Images, PDFs, and text files are supported</p>
 								</div>
 							</div>
 						{/if}
@@ -1606,7 +1502,13 @@
 							}
 						}
 					}}
-					on:paste={handlePaste}
+					on:paste={async (event) => {
+						const formattedText = handlePaste(event);
+						if (formattedText) {
+							document.execCommand('insertHTML', false, formattedText);
+							scrollCursorIntoView(promptBar);
+						}
+					}}
 				/>
 				<div class="prompt-bar-buttons-container">
 					<div class="left">
@@ -1627,12 +1529,12 @@
 							<input
 								bind:this={fileInput}
 								type="file"
-								accept="image/jpeg,image/png,image/webp"
+								accept="image/jpeg,image/png,image/webp,.txt,.py,.js,.html,.css,.json,.md,.svelte,.tsx,.jsx,.ts,.java,.c,.cpp,.cs,.go,.rb,.php,.swift,.kt"
 								style="display: none;"
 								on:change={handleFileSelect}
 								multiple={$chosenCompany !== 'google'}
 							/>
-							<HoverTag text="Add image" position="top" />
+							<HoverTag text="Add images or code files" position="top" />
 						</div>
 						<div
 							class="{($chosenModel.reasons && !$chosenModel.extendedThinking) ||
@@ -1988,7 +1890,6 @@
 							max-width: 200px;
 							max-height: 200px;
 							width: 100%;
-							// height: 100%;
 							margin-left: auto;
 							cursor: pointer;
 							transition:
@@ -2000,8 +1901,8 @@
 							}
 
 							&:hover {
-								transform: scale(1.02);
-								box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+								transform: translateY(-2px);
+								box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
 							}
 
 							img {
@@ -2082,11 +1983,6 @@
 						width: calc(100% - 50px);
 						padding: 3px 0px;
 						box-sizing: border-box;
-
-						// // Add minimum height when loading
-						// &:has(.gpt-loading-dot) {
-						// 	min-height: 80vh;
-						// }
 
 						&:hover {
 							.chat-toolbar-container {
@@ -2267,13 +2163,13 @@
 							position: relative;
 							width: 100%;
 							height: 100%;
-							border-radius: 5px;
+							border-radius: 10px;
 							overflow: hidden;
 							cursor: pointer;
 							transition: transform 0.2s ease;
 
 							&:hover {
-								transform: scale(1.02);
+								transform: translateY(-2px);
 							}
 
 							img {
@@ -2330,9 +2226,12 @@
 			}
 
 			.code-container {
-				padding-bottom: 10px;
+				// padding-bottom: 10px;
 				border-radius: 10px;
 				margin: 20px 0;
+				border-width: 0.5px;
+				border-color: var(--bg-color-light);
+				border-style: solid;
 
 				.code-header {
 					display: flex;
@@ -2516,8 +2415,8 @@
 							transition: transform 0.2s ease;
 
 							&:hover {
+								transform: translateY(-2px);
 								outline: 1px solid var(--text-color);
-								transform: scale(1.02);
 
 								.close-button {
 									opacity: 1;
@@ -2531,22 +2430,111 @@
 								object-fit: contain;
 								cursor: pointer;
 							}
+						}
 
-							.close-button {
+						.close-button {
+							position: absolute;
+							top: 6px;
+							right: 6px;
+							width: 18px;
+							height: 18px;
+							border-radius: 50%;
+							cursor: pointer;
+							display: flex;
+							align-items: center;
+							justify-content: center;
+							background: rgba(255, 255, 255, 0.2);
+							backdrop-filter: blur(2px);
+							opacity: 0;
+							transition:
+								background 0.2s ease,
+								opacity 0.2s ease;
+
+							&:hover {
+								background: rgba(255, 81, 81, 0.8);
+							}
+						}
+
+						.file-container {
+							position: relative;
+							display: flex;
+							justify-content: space-between;
+							align-items: center;
+							padding: 8px 10px;
+							width: 160px;
+							height: 100%;
+							background-color: var(--bg-color);
+							border-radius: 10px;
+							border: 1px solid rgba(0, 0, 0, 0.1);
+							// margin-right: 10px;
+							box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+							transition:
+								transform 0.2s ease,
+								box-shadow 0.2s ease;
+							overflow: hidden;
+							cursor: pointer;
+							box-sizing: border-box;
+
+							&:after {
+								content: '';
 								position: absolute;
-								top: 4px;
-								left: 4px;
-								width: 20px;
-								height: 20px;
-								border-radius: 50%;
-								cursor: pointer;
-								box-sizing: border-box;
-								background: var(--bg-color-light);
-								opacity: 0;
-								outline: 1px solid var(--text-color);
+								top: 0;
+								left: 0;
+								width: 100%;
+								height: 100%;
+								background: linear-gradient(
+									to bottom,
+									rgba(255, 255, 255, 0.05),
+									transparent
+								);
+								pointer-events: none;
+							}
 
-								&:hover {
-									background: rgb(255, 81, 81);
+							&:hover {
+								transform: translateY(-2px);
+								box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+								border-color: rgba(29, 96, 194, 0.4);
+
+								.close-button {
+									opacity: 1;
+								}
+							}
+
+							.file-info {
+								display: flex;
+								flex-direction: column;
+								align-items: center;
+								justify-content: center;
+								gap: 8px;
+								flex: 1;
+								overflow: hidden;
+
+								.file-icon {
+									width: 40px;
+									height: 40px;
+									display: flex;
+									align-items: center;
+									justify-content: center;
+									border-radius: 6px;
+									background: linear-gradient(135deg, #1d60c2, #3a7bd5);
+									box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+									.file-type {
+										font-size: 12px;
+										font-weight: bold;
+										color: white;
+										letter-spacing: 0.5px;
+									}
+								}
+
+								.file-name {
+									font-size: 11px;
+									white-space: nowrap;
+									overflow: hidden;
+									text-overflow: ellipsis;
+									max-width: 130px;
+									text-align: center;
+									color: var(--text-color);
 								}
 							}
 						}
@@ -2554,17 +2542,32 @@
 						.image-drop-container {
 							height: 100%;
 							width: 100%;
-							border: 3px dashed var(--text-color-light);
+							border: 2px dashed rgba(255, 255, 255, 0.2);
 							border-radius: inherit;
 							display: flex;
 							box-sizing: border-box;
 							gap: 20px;
 							background: var(--bg-color-light);
+							transition: all 0.3s ease;
+							animation: pulse 2s infinite;
+
+							@keyframes pulse {
+								0% {
+									border-color: rgba(255, 255, 255, 0.2);
+								}
+								50% {
+									border-color: rgba(29, 96, 194, 0.4);
+								}
+								100% {
+									border-color: rgba(255, 255, 255, 0.2);
+								}
+							}
 
 							.image-icon {
 								margin: auto 0 auto auto;
 								width: 40px;
 								height: 40px;
+								opacity: 0.7;
 							}
 
 							.text-container {
@@ -2572,24 +2575,17 @@
 								gap: 5px;
 								display: flex;
 								flex-direction: column;
-
-								h1,
-								p {
-									text-align: center;
-									margin: 0;
-									width: max-content;
-								}
-
 								h1 {
-									font-size: 24px;
-									font-weight: 400;
+									font-size: 18px;
+									font-weight: 600;
 									color: var(--text-color);
+									margin: 0px;
 								}
-
 								p {
 									font-size: 14px;
 									font-weight: 300;
 									color: var(--text-color-light);
+									margin: 0px;
 								}
 							}
 						}
@@ -2945,6 +2941,7 @@
 		background: linear-gradient(270deg, #1d60c2, #e91e63, #9c27b0, #1d60c2);
 		background-size: 400%; /* To ensure smooth animation */
 		-webkit-background-clip: text;
+		background-clip: text;
 		-webkit-text-fill-color: transparent; /* Makes text fill color transparent */
 		animation: gradient-animation 25s ease infinite; /* Animation */
 	}
@@ -2958,5 +2955,74 @@
 		display: block;
 		width: 100%;
 		height: 100%;
+	}
+
+	.user-file-container {
+		position: relative;
+		display: inline-flex;
+		margin-right: 10px;
+		margin-left: auto;
+		margin-bottom: 10px;
+		border-radius: 8px;
+		padding: 8px 12px;
+		background-color: rgba(29, 96, 194, 0.08);
+		border: 1px solid rgba(29, 96, 194, 0.2);
+		// max-width: 160px;
+		align-items: center;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease;
+		overflow: hidden;
+		cursor: pointer;
+
+		&:after {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent);
+			pointer-events: none;
+		}
+
+		&:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 3px 5px rgba(0, 0, 0, 0.08);
+		}
+
+		.file-info {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.file-icon {
+				width: 28px;
+				height: 28px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border-radius: 5px;
+				background: linear-gradient(135deg, #1d60c2, #3a7bd5);
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+				.file-type {
+					font-size: 10px;
+					font-weight: bold;
+					color: white;
+					letter-spacing: 0.5px;
+				}
+			}
+
+			.file-name {
+				font-size: 11px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				max-width: 100px;
+				color: var(--text-color);
+			}
+		}
 	}
 </style>

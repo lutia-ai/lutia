@@ -101,6 +101,7 @@ model Message {
   prompt             String
   response           String
   pictures           Json?
+  files              Json?
   reasoning          String?
   referencedMessages Message[]   @relation("MessageReferences")
   referencedBy       Message[]   @relation("MessageReferences")

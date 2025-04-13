@@ -1,7 +1,14 @@
 import { error } from '@sveltejs/kit';
 import Anthropic from '@anthropic-ai/sdk';
-import type { Message, Model, Image, ClaudeImage, GptTokenUsage } from '$lib/types.d';
-import { calculateClaudeImageCost, countTokens } from '$lib/tokenizer';
+import type {
+	Message,
+	Model,
+	Image,
+	ClaudeImage,
+	GptTokenUsage,
+	FileAttachment
+} from '$lib/types.d';
+import { calculateClaudeImageCost } from '$lib/tokenizer';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { retrieveUsersBalance } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
@@ -12,6 +19,7 @@ import { getModelFromName } from '$lib/utils/modelConverter';
 import { isValidMessageArray } from '$lib/utils/typeGuards';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
 import { estimateTokenCount } from '$lib/utils/tokenCounter';
+import { validateApiRequest, type ApiRequestData } from '$lib/utils/apiRequestValidator';
 
 export async function POST({ request, locals }) {
 	const requestId = crypto.randomUUID();
@@ -22,98 +30,33 @@ export async function POST({ request, locals }) {
 	}
 
 	try {
-		const {
-			plainTextPrompt,
-			promptStr,
-			modelStr,
-			imagesStr,
-			reasoningOn,
-			conversationId,
-			regenerateMessageId
-		} = await request.json();
-
-		const plainText: string = JSON.parse(plainTextPrompt);
-		const modelName: ApiModel = JSON.parse(modelStr);
-		const rawMessages: Message[] = JSON.parse(promptStr);
-		const images: Image[] = JSON.parse(imagesStr);
-		let claudeImages: ClaudeImage[] = [];
-		const user: User = await retrieveUserByEmail(session.user!.email);
-		let messageConversationId: string = conversationId;
+		// Parse the request body
+		const requestBody = await request.json();
+		const user = await retrieveUserByEmail(session.user!.email);
+		const regenerateMessageId = requestBody.regenerateMessageId;
 		let errorMessage: any;
 
-		if (!isValidMessageArray(rawMessages)) {
-			throw error(400, 'Invalid messages array');
-		}
+		// Validate the request using our shared validator
+		const validatedData = await validateApiRequest(
+			requestBody as ApiRequestData,
+			user,
+			ApiProvider.anthropic
+		);
 
-		let messages: Message[] = rawMessages;
+		const {
+			plainText,
+			messages,
+			model,
+			images,
+			files,
+			messageConversationId,
+			referencedMessageIds,
+			estimatedInputTokens,
+			finalUsage
+		} = validatedData;
 
-		// Convert the model name to full Model object
-		const model: Model | null = getModelFromName(modelName);
-
-		if (!model) {
-			// make sure model is not null
-			throw error(400, `Model ${modelName} not found`);
-		}
-
-		if (!plainText || !messages) {
-			throw error(400, `No prompt found`);
-		}
-
-		if (typeof plainText !== 'string') {
-			throw error(400, 'plainText must be a string');
-		}
-
-		if (typeof modelName !== 'string') {
-			throw error(400, 'modelStr must be a string');
-		}
-
-		if (!Array.isArray(rawMessages)) {
-			throw error(400, 'promptStr must be an array of messages');
-		}
-
-		if (!Array.isArray(images)) {
-			throw error(400, 'imagesStr must be an array of images');
-		}
-
-		if (typeof reasoningOn !== 'boolean') {
-			throw error(400, 'reasoningOn must be a boolean');
-		}
-
-		if (conversationId !== undefined && typeof conversationId !== 'string') {
-			throw error(400, 'conversationId must be a string if provided');
-		}
-
-		if (!user.email_verified) {
-			throw error(400, 'Email not verified');
-		}
-
-		// Extract system message and ensure non-empty content in messages
-		let systemMessage = null;
-
-		// Extract unique message IDs from your messages array
-		const referencedMessageIds: number[] = [
-			...new Set(
-				messages
-					.filter((msg) => msg.message_id !== null && msg.message_id !== undefined)
-					.map((msg) => msg.message_id)
-					.filter((id): id is number => id !== undefined)
-			)
-		];
-
-		// Iterate through the messages array and remove empty assistant messages
-		for (let i = messages.length - 1; i >= 0; i--) {
-			const msg = messages[i];
-			if (msg.role === 'system') {
-				// Extract system message
-				systemMessage = msg.content || '';
-			} else if (
-				msg.role === 'assistant' &&
-				(msg.content === undefined || msg.content === null || msg.content === '')
-			) {
-				// Remove empty assistant messages
-				messages.splice(i, 1);
-			}
-		}
+		// Process images for Claude format
+		let claudeImages: ClaudeImage[] = [];
 
 		if (images.length > 0) {
 			const textObject = {
@@ -131,65 +74,47 @@ export async function POST({ request, locals }) {
 			messages[messages.length - 1].content = [textObject, ...claudeImages];
 		}
 
-		let imageCost = 0;
-		let imageTokens = 0;
+		// Process files
+		if (files.length > 0) {
+			// Format files with <file></file> delimiters instead of stringifying
+			const formattedFiles = files
+				.map((file) => {
+					return `<file>\nfilename: ${file.filename}\nfile_extension: ${file.file_extension}\nsize: ${file.size}\ntype: ${file.media_type}\ncontent: ${file.data}\n</file>`;
+				})
+				.join('\n\n');
 
-		for (const image of images) {
-			const result = calculateClaudeImageCost(image.width, image.height, model);
-			imageCost += result.price;
-			imageTokens += result.tokens;
-		}
-
-		// const inputGPTCount = await countTokens(messages, model, 'input');
-		// const estimatedInputTokens = inputGPTCount.tokens + imageTokens;
-		// const estimatedInputCost = inputGPTCount.price + imageCost;
-		const estimatedInputTokens = estimateTokenCount(messages.toString()) + imageTokens;
-		const estimatedInputCost = (estimatedInputTokens * model.input_price) / 1000000 + imageCost;
-
-		// Create a new conversation only if:
-		// 1. User is premium AND
-		// 2. No existing conversationId was provided
-		if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
-			const conversation = await createConversation(user.id, 'New chat');
-			messageConversationId = conversation.id;
-		}
-
-		if (user.payment_tier === PaymentTier.PayAsYouGo) {
-			try {
-				let balance = await retrieveUsersBalance(Number(session.user.id));
-				if (balance - estimatedInputCost <= 0.1) {
-					throw new InsufficientBalanceError();
+			// If content is a string, prepend the formatted files
+			if (typeof messages[messages.length - 1].content === 'string') {
+				messages[messages.length - 1].content =
+					formattedFiles + '\n\n' + messages[messages.length - 1].content;
+			}
+			// If content is already an array (e.g., after image processing)
+			else if (Array.isArray(messages[messages.length - 1].content)) {
+				// Find the text object and prepend to its text property
+				for (let i = 0; i < messages[messages.length - 1].content.length; i++) {
+					const item = messages[messages.length - 1].content[i] as any;
+					if (item && item.type === 'text' && typeof item.text === 'string') {
+						item.text = formattedFiles + '\n\n' + item.text;
+						break;
+					}
 				}
-			} catch (err) {
-				if (!(err instanceof InsufficientBalanceError)) {
-					console.error('Error retrieving users balance');
-				}
-				throw err;
 			}
 		}
 
-		// Ensure first message has 'user' role by removing leading non-user messages
-		while (messages.length > 0 && messages[0].role !== 'user') {
-			messages.shift();
-		}
-
-		// If no user messages remain, throw error
-		if (messages.length === 0) {
-			throw error(400, 'No user messages found. The first message must use the user role.');
-		}
-
-		const budget_tokens = 16000;
-		const max_tokens =
-			reasoningOn && model.reasons ? model.max_tokens! + budget_tokens : model.max_tokens!;
+		// Log information about the files for debugging
+		console.log(
+			`Processing ${files.length} files:`,
+			files.map((f) => f.filename)
+		);
 
 		const chunks: string[] = [];
 		const thinkingChunks: string[] = [];
-		let finalUsage: GptTokenUsage | null = {
-			prompt_tokens: estimatedInputTokens,
-			completion_tokens: 0,
-			total_tokens: 0
-		};
 		let stream;
+
+		const reasoningOn = requestBody.reasoningOn;
+		const budget_tokens = 16000;
+		const max_tokens =
+			reasoningOn && model.reasons ? model.max_tokens! + budget_tokens : model.max_tokens!;
 
 		try {
 			// Clean messages by removing message_id fields
@@ -197,7 +122,7 @@ export async function POST({ request, locals }) {
 			const client = new Anthropic({ apiKey: env.VITE_ANTHROPIC_API_KEY });
 			stream = await client.messages.stream({
 				// Include system parameter only if we have a system message
-				...(systemMessage !== null ? { system: systemMessage } : {}),
+				...(messages[0].role === 'system' ? { system: messages[0].content } : {}),
 				// @ts-ignore
 				messages: cleanedMessages,
 				model: model.param,
@@ -358,6 +283,7 @@ export async function POST({ request, locals }) {
 								model,
 								plainText,
 								images,
+								files,
 								chunks,
 								thinkingChunks,
 								finalUsage,
@@ -365,7 +291,7 @@ export async function POST({ request, locals }) {
 								error: errorMessage,
 								requestId,
 								messageConversationId,
-								originalConversationId: conversationId,
+								originalConversationId: requestBody.conversationId,
 								apiProvider: ApiProvider.anthropic,
 								referencedMessageIds
 							});
@@ -387,7 +313,8 @@ export async function POST({ request, locals }) {
 								thinkingChunks,
 								finalUsage,
 								wasAborted: clientDisconnected,
-								error: errorMessage
+								error: errorMessage,
+								files
 							});
 
 							controller.enqueue(

@@ -72,11 +72,11 @@
 			<img {src} {alt} />
 
 			<div class="image-viewer-controls">
-				<button class="button close-button" on:click={closeViewer}>
-					<CrossIcon color="white" />
-				</button>
 				<button class="button download-button" on:click={downloadImage}>
 					<DownloadIcon color="white" />
+				</button>
+				<button class="button close-button" on:click={closeViewer}>
+					<CrossIcon color="white" />
 				</button>
 			</div>
 		</div>

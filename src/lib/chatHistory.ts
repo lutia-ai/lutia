@@ -6,13 +6,12 @@ import type {
 	UserChat,
 	Image,
 	ApiRequestWithMessage,
-	PromptHelpers,
-	PromptHelper,
-	ApiRequestWithReferencedMessage,
 	Message as ChatMessage,
 	SerializedMessage,
-	ReasoningComponent
-} from '$lib/types';
+	ReasoningComponent,
+	FileAttachment,
+	Attachment
+} from '$lib/types.d';
 import { deserialize } from '$app/forms';
 import { isCodeComponent, isLlmChatComponent } from '$lib/utils/typeGuards';
 import { chatHistory, numberPrevMessages } from '$lib/stores';
@@ -30,6 +29,7 @@ function serializeMessage(message: any): SerializedMessage {
 		response: message.response,
 		reasoning: message.reasoning || '',
 		pictures: Array.isArray(message.pictures) ? (message.pictures as Image[]) : [],
+		files: Array.isArray(message.files) ? (message.files as FileAttachment[]) : [],
 		// Add these fields for referenced messages
 		referencedMessages: Array.isArray(message.referencedMessages)
 			? message.referencedMessages.map((msg: Message) => ({
@@ -37,7 +37,8 @@ function serializeMessage(message: any): SerializedMessage {
 					prompt: msg.prompt,
 					response: msg.response,
 					reasoning: msg.reasoning || '',
-					pictures: Array.isArray(msg.pictures) ? (msg.pictures as Image[]) : []
+					pictures: Array.isArray(msg.pictures) ? (msg.pictures as Image[]) : [],
+					files: Array.isArray(msg.files) ? (msg.files as FileAttachment[]) : []
 				}))
 			: []
 	};
@@ -98,19 +99,31 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 		return llmChat;
 	});
 
-	const userChats: UserChat[] = apiRequests.map(
-		(apiRequest): UserChat => ({
+	const userChats: UserChat[] = apiRequests.map((apiRequest): UserChat => {
+		// Combine pictures and files into a single attachments array
+		const attachments: Attachment[] = [];
+
+		// Add pictures if they exist and are not AI-generated
+		if (
+			apiRequest.message?.pictures &&
+			apiRequest.message?.pictures.length > 0 &&
+			!apiRequest.message?.pictures[0].ai
+		) {
+			attachments.push(...apiRequest.message.pictures);
+		}
+
+		// Add files if they exist
+		if (apiRequest.message?.files && apiRequest.message?.files.length > 0) {
+			attachments.push(...apiRequest.message.files);
+		}
+
+		return {
 			message_id: apiRequest.message?.id,
 			by: 'user',
 			text: apiRequest.message?.prompt || 'No prompt available',
-			image:
-				apiRequest.message?.pictures &&
-				apiRequest.message?.pictures.length > 0 &&
-				!apiRequest.message?.pictures[0].ai
-					? apiRequest.message.pictures
-					: []
-		})
-	);
+			attachments: attachments
+		};
+	});
 
 	// Interleave user and LLM messages
 	chatComponents = chatComponents.flatMap((chat, index) => [userChats[index], chat]);
@@ -618,10 +631,12 @@ export function formatModelEnumToReadable(enumValue: string): string {
 	return readable;
 }
 
-export function handleKeyboardShortcut(
-	event: KeyboardEvent,
-	userSettings: Partial<UserSettings> | null
-) {
+/**
+ * Handles keyboard shortcuts for context window adjustment
+ * Responds to Ctrl+[0-9] to set the number of previous messages in the context window
+ * @param event - The keyboard event to process
+ */
+export function handleKeyboardShortcut(event: KeyboardEvent) {
 	// Check if Ctrl key is pressed
 	if (event.ctrlKey) {
 		// Get the pressed number key (0-9)
@@ -631,7 +646,6 @@ export function handleKeyboardShortcut(
 		if (!isNaN(num) && num >= 0 && num <= 9 && get(numberPrevMessages) !== num) {
 			// Update numberPrevMessages
 			numberPrevMessages.set(num);
-			saveUserSettings(userSettings ?? {});
 
 			// Prevent default behavior (e.g., browser shortcuts)
 			event.preventDefault();
@@ -639,6 +653,12 @@ export function handleKeyboardShortcut(
 	}
 }
 
+/**
+ * Saves user settings to the server via form submission
+ * Serializes the settings object and sends as a POST request
+ * @param userSettings - Partial user settings object to save
+ * @returns Promise that resolves when the save operation completes
+ */
 export async function saveUserSettings(userSettings: Partial<UserSettings>) {
 	try {
 		const body = new FormData();
@@ -659,18 +679,58 @@ export async function saveUserSettings(userSettings: Partial<UserSettings>) {
 	}
 }
 
-export function getRandomPrompts(promptHelpers: PromptHelpers): {
-	createImage: PromptHelper;
-	compose: PromptHelper;
-	question: PromptHelper;
-} {
-	const getRandomItem = <T>(array: T[]): T => {
-		return array[Math.floor(Math.random() * array.length)];
-	};
+export function updateChatHistoryToCopiedState(chatIndex: number, componentIndex: number): void {
+	chatHistory.update((history) => {
+		const newHistory: ChatComponent[] = [...history];
+		if (isLlmChatComponent(newHistory[chatIndex])) {
+			if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
+				newHistory[chatIndex].components[componentIndex].copied = true;
+			} else {
+				newHistory[chatIndex].copied = true;
+			}
+		}
+		return newHistory;
+	});
 
-	return {
-		createImage: getRandomItem(promptHelpers.createImage),
-		compose: getRandomItem(promptHelpers.compose),
-		question: getRandomItem(promptHelpers.question)
-	};
+	setTimeout(() => {
+		chatHistory.update((history) => {
+			const newHistory: ChatComponent[] = [...history];
+			if (isLlmChatComponent(newHistory[chatIndex])) {
+				if (isCodeComponent(newHistory[chatIndex].components[componentIndex])) {
+					newHistory[chatIndex].components[componentIndex].copied = false;
+				} else {
+					newHistory[chatIndex].copied = false;
+				}
+			}
+			return newHistory;
+		});
+	}, 3000);
+}
+
+export function copyToClipboard(text: string): Promise<void> {
+	return new Promise((resolve, reject) => {
+		if (navigator.clipboard) {
+			navigator.clipboard
+				.writeText(text)
+				.then(resolve)
+				.catch((err) => {
+					console.error('Failed to copy text:', err);
+					reject(err);
+				});
+		} else {
+			const textArea = document.createElement('textarea');
+			textArea.value = text;
+			document.body.appendChild(textArea);
+			textArea.select();
+			try {
+				document.execCommand('copy');
+				resolve();
+			} catch (err) {
+				console.error('Failed to copy text:', err);
+				reject(err);
+			} finally {
+				document.body.removeChild(textArea);
+			}
+		}
+	});
 }
