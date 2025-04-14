@@ -92,7 +92,7 @@
 					<span class="message-number">Current prompt</span>
 				</div>
 				<div class="message-content">
-					<pre>{fullPrompt}</pre>
+					<pre>{$fullPrompt}</pre>
 				</div>
 			</div>
 		{:else}
@@ -121,9 +121,7 @@
 	<div class="footer">
 		<div class="token-info">
 			<span>
-				Context window: {Array.isArray(fullPrompt)
-					? fullPrompt.filter((message) => message.role === 'assistant').length
-					: 0}
+				Context window: {$numberPrevMessages}
 			</span>
 		</div>
 	</div>
