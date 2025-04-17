@@ -471,9 +471,7 @@
 						imagesStr: JSON.stringify(imageArray),
 						filesStr: JSON.stringify(fileArray),
 						...($chosenCompany === 'anthropic' ? { reasoningOn } : {}),
-						...(data.user.payment_tier === PaymentTier.Premium
-							? { conversationId: validConversationId }
-							: {})
+						conversationId: validConversationId
 					})
 				});
 
