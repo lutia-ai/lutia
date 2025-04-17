@@ -3,10 +3,80 @@ import type { ModelDictionary } from './types.d';
 export const modelDictionary: ModelDictionary = {
 	openAI: {
 		models: {
+            gpt41: {
+                name: 'GPT_4_1',
+				param: 'gpt-4.1',
+				legacy: false,
+				input_price: 2 * 1.1,
+				output_price: 8 * 1.1,
+				context_window: 1047576,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 0,
+				reasons: false,
+				description: 'Flagship GPT model for complex tasks',
+				max_input_per_request: 10000 // How many tokens can be inputted per request when not custom context window
+            },
+            gpt41mini: {
+                name: 'GPT_4_1_mini',
+				param: 'gpt-4.1-mini',
+				legacy: false,
+				input_price: 0.4 * 1.1,
+				output_price: 1.6 * 1.1,
+				context_window: 1047576,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 0,
+				reasons: false,
+				description: 'Balanced for intelligence, speed, and cost',
+				max_input_per_request: 12000 // How many tokens can be inputted per request when not custom context window
+            },
+            gpt41nano: {
+                name: 'GPT_4_1_nano',
+				param: 'gpt-4.1-nano',
+				legacy: false,
+				input_price: 0.1 * 1.1,
+				output_price: 0.4 * 1.1,
+				context_window: 1047576,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 0,
+				reasons: false,
+				description: 'Fastest, most cost-effective GPT 4.1 model',
+				max_input_per_request: 15000 // How many tokens can be inputted per request when not custom context window
+            },
+            o4mini: {
+                name: 'GPT_o4_mini',
+				param: 'o4-mini',
+				legacy: false,
+				input_price: 1.1 * 1.1,
+				output_price: 4.4 * 1.1,
+				context_window: 200000,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 0,
+				reasons: true,
+				description: 'Faster, more affordable reasoning model',
+				max_input_per_request: 10000
+            },
+            // o3: {
+			// 	name: 'GPT_o3',
+			// 	param: 'o3',
+			// 	legacy: false,
+			// 	input_price: 10 * 1.1,
+			// 	output_price: 40 * 1.1,
+			// 	context_window: 200000,
+			// 	hub: 'Xenova/gpt-4o',
+			// 	handlesImages: true,
+			// 	maxImages: 0,
+			// 	reasons: true,
+			// 	description: 'OpenAI\'s most powerful reasoning model',
+			// 	max_input_per_request: 3000
+			// },
 			o3mini: {
 				name: 'GPT_o3_mini',
 				param: 'o3-mini',
-				legacy: false,
+				legacy: true,
 				input_price: 1.1 * 1.1,
 				output_price: 4.4 * 1.1,
 				context_window: 128000, // max input cost $0.1408
@@ -17,6 +87,20 @@ export const modelDictionary: ModelDictionary = {
 				description: 'Fast, flexible reasoning model',
 				max_input_per_request: 10000
 			},
+            // o1pro: {
+			// 	name: 'GPT_o1_pro',
+			// 	param: 'o1-pro',
+			// 	legacy: false,
+			// 	input_price: 150 * 1.1,
+			// 	output_price: 600 * 1.1,
+			// 	context_window: 128000, // max input cost $1.92
+			// 	hub: 'Xenova/gpt-4o',
+			// 	handlesImages: true,
+			// 	maxImages: 5,
+			// 	reasons: true,
+			// 	description: 'Version of o1 with more compute for better responses',
+			// 	max_input_per_request: 3000
+			// },
 			o1: {
 				name: 'GPT_o1',
 				param: 'o1',
@@ -29,20 +113,6 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 5,
 				reasons: true,
 				description: 'High intelligence reasoning model',
-				max_input_per_request: 3000
-			},
-			o1preview: {
-				name: 'GPT_o1_preview',
-				param: 'o1-preview',
-				legacy: true,
-				input_price: 15 * 1.1,
-				output_price: 60 * 1.1,
-				context_window: 128000, // max input cost $1.92
-				hub: 'Xenova/gpt-4o',
-				handlesImages: false,
-				maxImages: 0,
-				reasons: true,
-				description: 'Preview version of o1',
 				max_input_per_request: 3000
 			},
 			o1mini: {
@@ -62,7 +132,7 @@ export const modelDictionary: ModelDictionary = {
 			gpt45preview: {
 				name: 'GPT_4_5_preview',
 				param: 'gpt-4.5-preview',
-				legacy: false,
+				legacy: true,
 				input_price: 75 * 1.1,
 				output_price: 150 * 1.1,
 				context_window: 128000, // max input cost $9.60
@@ -76,7 +146,7 @@ export const modelDictionary: ModelDictionary = {
 			gpt4o: {
 				name: 'GPT_4o',
 				param: 'gpt-4o',
-				legacy: false,
+				legacy: true,
 				input_price: 2.5 * 1.1,
 				output_price: 10 * 1.1,
 				context_window: 128000, // max input cost $0.32
@@ -90,7 +160,7 @@ export const modelDictionary: ModelDictionary = {
 			gpt4mini: {
 				name: 'GPT_4o_mini',
 				param: 'gpt-4o-mini',
-				legacy: false,
+				legacy: true,
 				input_price: 0.15 * 1.1,
 				output_price: 0.6 * 1.1,
 				context_window: 128000, // max input cost $0.0192
@@ -164,8 +234,8 @@ export const modelDictionary: ModelDictionary = {
 				legacy: false,
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
-				context_window: 200000, // max input spend $0.6
-				max_tokens: 8192,
+				context_window: 200000,
+				max_tokens: 8192, // this refers to output tokens
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
 				maxImages: 5,
@@ -173,7 +243,7 @@ export const modelDictionary: ModelDictionary = {
 				reasons: true,
 				extendedThinking: true,
 				description: 'Smartest model with extended thinking',
-				max_input_per_request: 5000
+				max_input_per_request: 8000
 			},
 			claude35Sonnet: {
 				name: 'Claude_3_5_Sonnet',
@@ -181,7 +251,7 @@ export const modelDictionary: ModelDictionary = {
 				legacy: true,
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
-				context_window: 200000, // max input spend $0.6
+				context_window: 200000,
 				max_tokens: 8192,
 				hub: 'Xenova/claude-tokenizer',
 				handlesImages: true,
@@ -189,7 +259,7 @@ export const modelDictionary: ModelDictionary = {
 				generatesImages: false,
 				reasons: false,
 				description: 'Highest level of intelligence and capability',
-				max_input_per_request: 5000
+				max_input_per_request: 8000
 			},
 			claude35Haiku: {
 				name: 'Claude_3_5_Haiku',
@@ -263,8 +333,10 @@ export const modelDictionary: ModelDictionary = {
 				name: 'Gemini_2_5_Pro',
 				param: 'gemini-2.5-pro-exp-03-25',
 				legacy: false,
-				input_price: 0.1 * 1.1,
-				output_price: 0.4 * 1.1,
+				input_price: 1.25 * 1.1,
+				output_price: 10 * 1.1,
+                input_price_large: 2.5 * 1.1, // Price increases for prompts 200k or longer
+				output_price_large: 15 * 1.1, // Price increases for prompts 200k or longer
 				context_window: 1048576, // max input cost $0.1048576
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
@@ -301,7 +373,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 1,
 				generatesImages: false,
 				description: 'Cost efficient and low latency',
-				max_input_per_request: 15000
+				max_input_per_request: 20000
 			},
 			gemini15Pro: {
 				name: 'Gemini_1_5_Pro',
@@ -352,6 +424,36 @@ export const modelDictionary: ModelDictionary = {
 	},
 	xAI: {
 		models: {
+            grok3beta: {
+				name: 'Grok_3_beta',
+				param: 'grok-3-beta',
+				legacy: false,
+				input_price: 3 * 1.1,
+				output_price: 15 * 1.1,
+				context_window: 131072, // max input cost $0.262144
+				hub: 'Xenova/gpt-4o',
+				handlesImages: false,
+				maxImages: 0,
+				reasons: false,
+				generatesImages: false,
+				description: 'Flaghsip model that excels at complex tasks',
+				max_input_per_request: 5000
+			},
+            grok3mini: {
+				name: 'Grok_3_mini',
+				param: 'grok-3-mini-beta',
+				legacy: false,
+				input_price: 0.3 * 1.1,
+				output_price: 0.5 * 1.1,
+				context_window: 131072, // max input cost $0.262144
+				hub: 'Xenova/gpt-4o',
+				handlesImages: false,
+				maxImages: 0,
+				reasons: true,
+				generatesImages: false,
+				description: 'Unfiltered intelligence, blazing speed',
+				max_input_per_request: 10000
+			},
 			grok2: {
 				name: 'Grok_2',
 				param: 'grok-2-1212',
@@ -362,6 +464,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
+				reasons: false,
 				generatesImages: false,
 				description: 'Unfiltered intelligence, blazing speed',
 				max_input_per_request: 5000
@@ -372,10 +475,11 @@ export const modelDictionary: ModelDictionary = {
 				legacy: false,
 				input_price: 2 * 1.1,
 				output_price: 10 * 1.1,
-				context_window: 32768, // max input cost $0.065536
+				context_window: 8192, // max input cost $0.065536
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
 				maxImages: 5,
+				reasons: false,
 				generatesImages: false,
 				description: 'Unfiltered intelligence with image-understanding',
 				max_input_per_request: 5000
@@ -390,6 +494,7 @@ export const modelDictionary: ModelDictionary = {
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
 				maxImages: 0,
+				reasons: false,
 				generatesImages: false,
 				description: '',
 				max_input_per_request: 3000
