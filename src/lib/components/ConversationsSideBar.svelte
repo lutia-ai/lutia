@@ -4,10 +4,13 @@
 	import { deserialize } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
 	import type { Conversation } from '@prisma/client';
+	import { PaymentTier } from '@prisma/client';
 	import EditIcon from './icons/EditIcon.svelte';
 	import BinIcon from './icons/BinIcon.svelte';
 	import { conversationsOpen } from '$lib/stores';
 	import { goto } from '$app/navigation';
+
+	export let paymentTier: PaymentTier; // User with payment tier
 
 	let conversations: Conversation[] = [];
 	let loading = true;
@@ -16,6 +19,7 @@
 	const pageSize = 20;
 	let hasMore = true;
 	let loadingMore = false;
+	let totalConversations = 0;
 	let groupedConversations: { [key: string]: Conversation[] } = {};
 	let editInputRef: HTMLInputElement | null = null;
 
@@ -55,8 +59,9 @@
 			const result: ActionResult = deserialize(await response.text());
 
 			if (result.type === 'success' && result.data) {
-				const newConversations = result.data.conversations;
-				hasMore = newConversations.length === pageSize;
+				const newConversations = result.data.data.conversations;
+				hasMore = result.data.data.hasMore;
+				totalConversations = result.data.data.total;
 
 				if (page === 1) {
 					conversations = newConversations;
@@ -99,21 +104,25 @@
 			Older: []
 		};
 
-		conversations.forEach((conversation) => {
-			const conversationDate = new Date(conversation.updated_at || conversation.created_at);
+		if (conversations && Array.isArray(conversations)) {
+			conversations.forEach((conversation) => {
+				const conversationDate = new Date(
+					conversation.updated_at || conversation.created_at
+				);
 
-			if (conversationDate >= today) {
-				groups['Today'].push(conversation);
-			} else if (conversationDate >= yesterday) {
-				groups['Yesterday'].push(conversation);
-			} else if (conversationDate >= last7Days) {
-				groups['Previous 7 Days'].push(conversation);
-			} else if (conversationDate >= last30Days) {
-				groups['Previous 30 Days'].push(conversation);
-			} else {
-				groups['Older'].push(conversation);
-			}
-		});
+				if (conversationDate >= today) {
+					groups['Today'].push(conversation);
+				} else if (conversationDate >= yesterday) {
+					groups['Yesterday'].push(conversation);
+				} else if (conversationDate >= last7Days) {
+					groups['Previous 7 Days'].push(conversation);
+				} else if (conversationDate >= last30Days) {
+					groups['Previous 30 Days'].push(conversation);
+				} else {
+					groups['Older'].push(conversation);
+				}
+			});
+		}
 
 		// Filter out empty groups
 		groupedConversations = Object.fromEntries(
@@ -250,14 +259,22 @@
 			</div>
 		{:else if error}
 			<div class="error">
-				<p>Error loading conversations</p>
-				<button on:click={() => window.location.reload()}>Retry</button>
+				<p>Error loading conversations: {error.message}</p>
 			</div>
 		{:else if conversations.length === 0}
-			<div class="empty-state">
-				<p>No conversations found</p>
+			<div class="empty">
+				<p>No conversations yet</p>
 			</div>
 		{:else}
+			{#if paymentTier === PaymentTier.PayAsYouGo && totalConversations >= 30}
+				<div class="limit-warning">
+					<p>You've reached the 30 conversation limit for Pay-As-You-Go users.</p>
+					<p>
+						When creating a new conversation, your oldest conversation will be
+						automatically deleted.
+					</p>
+				</div>
+			{/if}
 			<!-- Grouped conversations by date -->
 			{#each Object.entries(groupedConversations) as [timeGroup, groupConvos] (timeGroup)}
 				<div class="time-group">
@@ -460,7 +477,7 @@
 
 			.loading,
 			.error,
-			.empty-state,
+			.empty,
 			.loading-more {
 				display: flex;
 				flex-direction: column;
@@ -480,6 +497,23 @@
 
 					&:hover {
 						background: var(--bg-color-light-alt);
+					}
+				}
+			}
+
+			.limit-warning {
+				padding: 12px 16px;
+				background-color: rgba(255, 87, 87, 0.1);
+				border-left: 3px solid var(--error-color);
+				margin: 8px;
+
+				p {
+					font-size: 12px;
+					color: var(--text-color);
+					margin: 4px 0;
+
+					&:first-child {
+						font-weight: 600;
 					}
 				}
 			}

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import BurgerIcon from '$lib/components/icons/BurgerIcon.svelte';
-	import MobileSidebar from '$lib/components/MobileSidebar.svelte';
 	import SettingsComponent from '$lib/components/settings/Settings.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { fade, fly } from 'svelte/transition';
@@ -18,8 +17,11 @@
 	import { onMount } from 'svelte';
 	import ConversationsSideBar from '$lib/components/ConversationsSideBar.svelte';
 	import ContextWindowSideBar from '$lib/components/ContextWindowSideBar.svelte';
+	import type { UserWithSettings } from '$lib/types.js';
 
 	export let data;
+
+	let user: UserWithSettings = data.user;
 
 	companySelection.set($companySelection.filter((c) => c !== $chosenCompany));
 
@@ -44,13 +46,11 @@
 <main>
 	<div transition:fade={{ duration: 300, delay: 0 }}>
 		{#if $conversationsOpen}
-			<ConversationsSideBar />
+			<ConversationsSideBar paymentTier={data.user.payment_tier} />
 		{:else if $contextWindowOpen}
 			<ContextWindowSideBar />
 		{/if}
-		{#if $isLargeScreen}
-			<Sidebar user={data.user} userImage={data.userImage} />
-		{:else if !$mobileSidebarOpen}
+		{#if !$mobileSidebarOpen && !$isLargeScreen}
 			<div class="floating-sidebar">
 				<div
 					class="burger-icon"
@@ -74,15 +74,19 @@
 				</div>
 			</div>
 		{/if}
-		<MobileSidebar user={data.user} userImage={data.userImage} />
+		<Sidebar {user} userImage={data.userImage} isMobile={!$isLargeScreen} />
 		{#if $isSettingsOpen}
-			<SettingsComponent bind:user={data.user} />
+			<SettingsComponent bind:user />
 		{/if}
 	</div>
 	<slot />
 </main>
 
 <style lang="scss">
+	* {
+		-webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+	}
+
 	.floating-sidebar {
 		position: fixed;
 		display: flex;

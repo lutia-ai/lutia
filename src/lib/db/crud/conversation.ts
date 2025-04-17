@@ -1,4 +1,5 @@
 import type { Conversation, ApiRequest } from '@prisma/client';
+import { PaymentTier } from '@prisma/client';
 import type { ApiRequestWithMessage, SerializedApiRequest } from '$lib/types';
 import prisma from '$lib/prisma';
 import { serializeApiRequest } from '$lib/chatHistory';
@@ -44,6 +45,77 @@ export async function retrieveConversationsByUserId(userId: number): Promise<Con
 		return conversations;
 	} catch (error) {
 		console.error('Error retrieving conversations for user:', error);
+		throw error;
+	}
+}
+
+/**
+ * Retrieve conversations for a user with pagination and payment tier limits
+ */
+export async function retrieveConversationsByUserIdPaginated(
+	userId: number,
+	page: number = 1,
+	pageSize: number = 20,
+	paymentTier: PaymentTier
+): Promise<{ conversations: Conversation[]; hasMore: boolean; total: number }> {
+	try {
+		const skip = (page - 1) * pageSize;
+		const take = pageSize;
+
+		console.log(
+			`Paginated conversations request - userId: ${userId}, page: ${page}, pageSize: ${pageSize}, paymentTier: ${paymentTier}`
+		);
+
+		// For PayAsYouGo users, limit to 30 conversations max
+		const maxConversations = paymentTier === PaymentTier.PayAsYouGo ? 30 : undefined;
+
+		// Get total count for the user
+		const total = await prisma.conversation.count({
+			where: {
+				user_id: userId
+			}
+		});
+
+		console.log(`Total conversations for user: ${total}`);
+
+		// For PayAsYouGo users, if they have more than 30 conversations,
+		// we'll only return the 30 most recent ones
+		const conversations = await prisma.conversation.findMany({
+			where: {
+				user_id: userId
+			},
+			orderBy: {
+				last_message: 'desc'
+			},
+			skip,
+			take:
+				maxConversations && total > maxConversations
+					? Math.min(take, maxConversations - skip)
+					: take
+		});
+
+		console.log(`Retrieved ${conversations.length} conversations`);
+
+		// Calculate if there are more conversations to load
+		const hasMore =
+			paymentTier === PaymentTier.PayAsYouGo
+				? skip + conversations.length < Math.min(total, maxConversations ?? total)
+				: skip + conversations.length < total;
+
+		console.log(
+			`hasMore: ${hasMore}, skip: ${skip}, length: ${conversations.length}, total: ${total}`
+		);
+
+		return {
+			conversations,
+			hasMore,
+			total:
+				paymentTier === PaymentTier.PayAsYouGo
+					? Math.min(total, maxConversations ?? total)
+					: total
+		};
+	} catch (error) {
+		console.error('Error retrieving paginated conversations for user:', error);
 		throw error;
 	}
 }
@@ -238,6 +310,52 @@ export async function updateConversationLastMessage(conversationId: string): Pro
 		});
 	} catch (error) {
 		console.error('Error updating conversation last message timestamp:', error);
+		throw error;
+	}
+}
+
+/**
+ * Find and delete the oldest conversation for a user
+ */
+export async function deleteOldestConversation(userId: number): Promise<void> {
+	try {
+		// Find the oldest conversation based on updated_at
+		const oldestConversation = await prisma.conversation.findFirst({
+			where: {
+				user_id: userId
+			},
+			orderBy: {
+				updated_at: 'asc'
+			}
+		});
+
+		console.log(`Oldest conversation: ${oldestConversation?.id}`);
+		console.log(`Oldest conversation: ${oldestConversation?.title}`);
+
+		if (oldestConversation) {
+			// Delete the conversation using the existing deleteConversation function
+			await deleteConversation(oldestConversation.id);
+		}
+	} catch (error) {
+		console.error('Error deleting oldest conversation:', error);
+		throw error;
+	}
+}
+
+/**
+ * Count the number of conversations for a user
+ */
+export async function countUserConversations(userId: number): Promise<number> {
+	try {
+		const count = await prisma.conversation.count({
+			where: {
+				user_id: userId
+			}
+		});
+
+		return count;
+	} catch (error) {
+		console.error('Error counting user conversations:', error);
 		throw error;
 	}
 }

@@ -78,7 +78,7 @@ export async function POST({ request, locals }) {
 			const cleanedMessages = processedMessages.map(({ message_id, ...rest }) => rest);
 			stream = await openai.chat.completions.create({
 				model: model.param,
-				...(model.reasons && { reasoning_effort: "high" }),
+				...(model.reasons && { reasoning_effort: 'high' }),
 				// @ts-ignore
 				messages: cleanedMessages,
 				stream: true,
@@ -163,12 +163,12 @@ export async function POST({ request, locals }) {
 								break;
 							}
 						}
-                        
-                        const content = chunk.choices[0]?.delta?.content || '';
+
+						const content = chunk.choices[0]?.delta?.content || '';
 						// @ts-ignore
 						const reasoningContent = chunk.choices[0]?.delta?.reasoning_content || '';
-						
-                        if (reasoningContent) {
+
+						if (reasoningContent) {
 							try {
 								thinkingChunks.push(reasoningContent);
 								controller.enqueue(

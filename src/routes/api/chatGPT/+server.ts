@@ -62,6 +62,8 @@ export async function POST({ request, locals }) {
 		// Process images and files together with messages
 		let processedMessages = [...messages];
 
+		console.log('messageConversationId', messageConversationId);
+
 		if (images.length > 0) {
 			// Convert the last message content to GPT-4 Vision format
 			if (typeof processedMessages[processedMessages.length - 1].content === 'string') {

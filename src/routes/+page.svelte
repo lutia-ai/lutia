@@ -1293,6 +1293,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 		background: linear-gradient(270deg, #1d60c2, #e91e63, #9c27b0, #1d60c2);
 		background-size: 400%; /* To ensure smooth animation */
 		-webkit-background-clip: text;
+		background-clip: text;
 		-webkit-text-fill-color: transparent; /* Makes text fill color transparent */
 		animation: gradient-animation 25s ease infinite; /* Animation */
 	}

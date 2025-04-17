@@ -6,16 +6,13 @@
 	import { signOut } from '@auth/sveltekit/client';
 
 	import MoonIcon from '$lib/components/icons/MoonIcon.svelte';
-	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import type { UserWithSettings } from '$lib/types';
 	import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
-	import Slider from '$lib/components/Slider.svelte';
 	import MouseCircleIcon from '../icons/MouseCircleIcon.svelte';
 	import { saveUserSettings } from '$lib/chatHistory';
-	import { PaymentTier } from '@prisma/client';
 
 	export let user: UserWithSettings;
 

@@ -1,8 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { retrieveUserWithSettingsByEmail } from '$lib/db/crud/user';
-import { goto } from '$app/navigation';
-import { PaymentTier } from '@prisma/client';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth();
@@ -23,8 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	if (user) {
-		// if the user is authenticated & premium member then redirect to the chat new page
-		if (user.payment_tier == PaymentTier.Premium) throw redirect(307, '/chat/new');
-		else throw redirect(307, '/chat/c');
+		// Redirect all authenticated users to the new chat page
+		throw redirect(307, '/chat/new');
 	}
 };

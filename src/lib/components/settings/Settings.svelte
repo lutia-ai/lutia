@@ -100,7 +100,13 @@
 				{/each}
 			</div>
 			<div class="settings-page">
-				<svelte:component this={selectedTab.window} {...selectedTab.props} />
+				<svelte:component
+					this={selectedTab.window}
+					bind:user
+					{...Object.fromEntries(
+						Object.entries(selectedTab.props).filter(([key]) => key !== 'user')
+					)}
+				/>
 			</div>
 		</div>
 	</div>

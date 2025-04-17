@@ -2,13 +2,17 @@ import { error } from '@sveltejs/kit';
 import type { Message, Model, Image, FileAttachment, GptTokenUsage } from '$lib/types.d';
 import { isValidMessageArray } from './typeGuards';
 import { getModelFromName } from './modelConverter';
-import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { ApiModel, ApiProvider, PaymentTier, type User } from '@prisma/client';
 import { retrieveUsersBalance } from '$lib/db/crud/balance';
 import { InsufficientBalanceError } from '$lib/customErrors';
-import { createConversation } from '$lib/db/crud/conversation';
+import {
+	createConversation,
+	deleteOldestConversation,
+	countUserConversations
+} from '$lib/db/crud/conversation';
 import { calculateGptVisionPricing, calculateClaudeImageCost } from '$lib/tokenizer';
 import { estimateTokenCount } from './tokenCounter';
+import { generateConversationTitle } from './titleGenerator';
 
 /**
  * Interface for the request data that needs validation
@@ -100,7 +104,7 @@ export async function validateApiRequest(
 		const rawMessages: Message[] = JSON.parse(promptStr);
 		const images: Image[] = JSON.parse(imagesStr || '[]');
 		const files: FileAttachment[] = JSON.parse(filesStr || '[]');
-		let messageConversationId: string | undefined = conversationId;
+		const messageConversationId = requestData.conversationId || null;
 
 		// Validate message array
 		if (!isValidMessageArray(rawMessages)) {
@@ -201,12 +205,28 @@ export async function validateApiRequest(
 		const estimatedInputTokens = estimateTokenCount(messages.toString()) + imageTokens;
 		const estimatedInputCost = (estimatedInputTokens * model.input_price) / 1000000 + imageCost;
 
-		// Create a new conversation only if:
-		// 1. User is premium AND
-		// 2. No existing conversationId was provided
-		if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
-			const conversation = await createConversation(user.id, 'New chat');
-			messageConversationId = conversation.id;
+		// Create a new conversation if no existing conversationId was provided
+		let finalConversationId: string | undefined = messageConversationId
+			? (messageConversationId as string)
+			: undefined;
+		if (!messageConversationId) {
+			if (user.payment_tier === PaymentTier.Premium) {
+				// Premium users always get a new conversation
+				const conversation = await createConversation(user.id, 'New Chat');
+				finalConversationId = conversation.id;
+			} else if (user.payment_tier === PaymentTier.PayAsYouGo) {
+				// For PayAsYouGo users, check if they've reached the 30 conversation limit
+				const conversationCount = await countUserConversations(user.id);
+
+				if (conversationCount >= 30) {
+					// If they've reached the limit, delete the oldest conversation and create a new one
+					await deleteOldestConversation(user.id);
+				}
+
+				// Create a new conversation
+				const conversation = await createConversation(user.id, 'New Chat');
+				finalConversationId = conversation.id;
+			}
 		}
 
 		// Check user balance for pay-as-you-go users
@@ -254,7 +274,7 @@ export async function validateApiRequest(
 			images,
 			files,
 			user,
-			messageConversationId,
+			messageConversationId: finalConversationId,
 			referencedMessageIds,
 			estimatedInputTokens,
 			estimatedInputCost,

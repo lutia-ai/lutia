@@ -25,6 +25,7 @@ import {
 	deleteConversation
 } from '$lib/db/crud/conversation';
 import type { UserWithSettings } from '$lib/types';
+import { retrieveConversationsByUserIdPaginated } from '$lib/db/crud/conversation';
 
 interface ChatParams {
 	id: string;
@@ -50,37 +51,28 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 		// Check if we have a valid conversation ID (not 'new')
 		const { id: conversationId } = params as ChatParams;
 
-		if (user.payment_tier === PaymentTier.Premium) {
-			if (conversationId && conversationId !== 'new') {
-				// Try to load the specific conversation
-				const conversation = await retrieveConversationById(conversationId);
+		// For both Premium and PayAsYouGo users, allow loading specific conversations
+		if (conversationId && conversationId !== 'new') {
+			// Try to load the specific conversation
+			const conversation = await retrieveConversationById(conversationId);
 
-				// Verify this conversation belongs to the current user
-				if (conversation && conversation.user_id === Number(session.user.id)) {
-					// Return conversation-specific API requests
-					return {
-						user,
-						userImage: session.user.image,
-						apiRequests: retrieveApiRequestsByConversationId(conversationId, true),
-						conversation
-					};
-				} else {
-				}
+			// Verify this conversation belongs to the current user
+			if (conversation && conversation.user_id === Number(session.user.id)) {
+				// Return conversation-specific API requests
+				return {
+					user,
+					userImage: session.user.image,
+					apiRequests: retrieveApiRequestsByConversationId(conversationId, true),
+					conversation
+				};
 			}
-
-			// return empty messages for all invalid conversations
-			return {
-				user,
-				userImage: session.user.image,
-				apiRequests: []
-			};
 		}
 
-		// If no conversation ID or ID not valid, return all user's API requests
+		// For new conversations or invalid ID, return no messages
 		return {
 			user,
 			userImage: session.user.image,
-			apiRequests: retrieveApiRequestsWithMessage(Number(session.user.id), true)
+			apiRequests: []
 		};
 	} else {
 		throw new Error('Invalid parent data structure');
@@ -127,26 +119,47 @@ export const actions = {
 			transactions
 		};
 	},
-	getUsersConversations: async ({ locals }) => {
+	getUsersConversations: async ({ request, locals }) => {
 		const session = await locals.auth();
 
 		if (!session || !session.user) {
 			throw redirect(307, '/auth');
 		}
-		const userId = session.user.id;
+		const userId = Number(session.user.id);
+		const formData = await request.formData();
+		const page = Number(formData.get('page')) || 1;
+		const pageSize = Number(formData.get('pageSize')) || 20;
 
-		// let balance;
-		// let cardDetails;
-		let conversations: Conversation[];
 		try {
-			conversations = await retrieveConversationsByUserId(Number(userId));
-		} catch (err) {
-			throw err;
-		}
+			console.log(
+				`Getting conversations for user ID ${userId}, page ${page}, pageSize ${pageSize}`
+			);
+			const user = await retrieveUserByEmail(session.user.email!);
+			console.log(`User payment tier: ${user.payment_tier}`);
 
-		return {
-			conversations
-		};
+			const { conversations, hasMore, total } = await retrieveConversationsByUserIdPaginated(
+				userId,
+				page,
+				pageSize,
+				user.payment_tier
+			);
+
+			console.log(
+				`Retrieved ${conversations.length} conversations, hasMore: ${hasMore}, total: ${total}`
+			);
+
+			return {
+				type: 'success',
+				data: {
+					conversations,
+					hasMore,
+					total
+				}
+			};
+		} catch (err) {
+			console.error('Error fetching conversations:', err);
+			return fail(500, { message: 'Failed to fetch conversations' });
+		}
 	},
 	saveUsersCardDetails: async ({ request, locals }) => {
 		const session = await locals.auth();

@@ -3,8 +3,8 @@ import type { ModelDictionary } from './types.d';
 export const modelDictionary: ModelDictionary = {
 	openAI: {
 		models: {
-            gpt41: {
-                name: 'GPT_4_1',
+			gpt41: {
+				name: 'GPT_4_1',
 				param: 'gpt-4.1',
 				legacy: false,
 				input_price: 2 * 1.1,
@@ -16,9 +16,9 @@ export const modelDictionary: ModelDictionary = {
 				reasons: false,
 				description: 'Flagship GPT model for complex tasks',
 				max_input_per_request: 10000 // How many tokens can be inputted per request when not custom context window
-            },
-            gpt41mini: {
-                name: 'GPT_4_1_mini',
+			},
+			gpt41mini: {
+				name: 'GPT_4_1_mini',
 				param: 'gpt-4.1-mini',
 				legacy: false,
 				input_price: 0.4 * 1.1,
@@ -30,9 +30,9 @@ export const modelDictionary: ModelDictionary = {
 				reasons: false,
 				description: 'Balanced for intelligence, speed, and cost',
 				max_input_per_request: 12000 // How many tokens can be inputted per request when not custom context window
-            },
-            gpt41nano: {
-                name: 'GPT_4_1_nano',
+			},
+			gpt41nano: {
+				name: 'GPT_4_1_nano',
 				param: 'gpt-4.1-nano',
 				legacy: false,
 				input_price: 0.1 * 1.1,
@@ -44,9 +44,9 @@ export const modelDictionary: ModelDictionary = {
 				reasons: false,
 				description: 'Fastest, most cost-effective GPT 4.1 model',
 				max_input_per_request: 15000 // How many tokens can be inputted per request when not custom context window
-            },
-            o4mini: {
-                name: 'GPT_o4_mini',
+			},
+			o4mini: {
+				name: 'GPT_o4_mini',
 				param: 'o4-mini',
 				legacy: false,
 				input_price: 1.1 * 1.1,
@@ -58,8 +58,8 @@ export const modelDictionary: ModelDictionary = {
 				reasons: true,
 				description: 'Faster, more affordable reasoning model',
 				max_input_per_request: 10000
-            },
-            // o3: {
+			},
+			// o3: {
 			// 	name: 'GPT_o3',
 			// 	param: 'o3',
 			// 	legacy: false,
@@ -87,7 +87,7 @@ export const modelDictionary: ModelDictionary = {
 				description: 'Fast, flexible reasoning model',
 				max_input_per_request: 10000
 			},
-            // o1pro: {
+			// o1pro: {
 			// 	name: 'GPT_o1_pro',
 			// 	param: 'o1-pro',
 			// 	legacy: false,
@@ -335,7 +335,7 @@ export const modelDictionary: ModelDictionary = {
 				legacy: false,
 				input_price: 1.25 * 1.1,
 				output_price: 10 * 1.1,
-                input_price_large: 2.5 * 1.1, // Price increases for prompts 200k or longer
+				input_price_large: 2.5 * 1.1, // Price increases for prompts 200k or longer
 				output_price_large: 15 * 1.1, // Price increases for prompts 200k or longer
 				context_window: 1048576, // max input cost $0.1048576
 				hub: 'Xenova/gpt-4o',
@@ -424,7 +424,7 @@ export const modelDictionary: ModelDictionary = {
 	},
 	xAI: {
 		models: {
-            grok3beta: {
+			grok3beta: {
 				name: 'Grok_3_beta',
 				param: 'grok-3-beta',
 				legacy: false,
@@ -439,7 +439,7 @@ export const modelDictionary: ModelDictionary = {
 				description: 'Flaghsip model that excels at complex tasks',
 				max_input_per_request: 5000
 			},
-            grok3mini: {
+			grok3mini: {
 				name: 'Grok_3_mini',
 				param: 'grok-3-mini-beta',
 				legacy: false,

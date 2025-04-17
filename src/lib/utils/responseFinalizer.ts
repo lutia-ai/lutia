@@ -51,8 +51,6 @@ export async function finalizeResponse({
 		let outputTokens = finalUsage.completion_tokens;
 
 		if (!outputTokens) {
-			// const outputGPTCount = await countTokens(response + thinkingResponse, model, 'output');
-			// outputTokens = outputGPTCount.tokens;
 			outputTokens = estimateTokenCount(response + thinkingResponse);
 		}
 
@@ -103,7 +101,7 @@ export async function finalizeResponse({
 			await updateConversationLastMessage(messageConversationId);
 
 			// Generate title for new conversations
-			if (user.payment_tier === PaymentTier.Premium && !originalConversationId) {
+			if (!originalConversationId) {
 				try {
 					const title = await generateConversationTitle(plainText);
 					await updateConversation(messageConversationId, { title });

@@ -98,6 +98,7 @@
 		formatFilesForPrompt,
 		addFilesToMessage
 	} from '$lib/utils/fileHandling.js';
+	import { selectCompany, selectModel } from '$lib/utils/modelSelectionUtils';
 
 	export let data;
 
@@ -221,8 +222,6 @@
 		// Function to check if @ is valid (at start, after newline, or after whitespace)
 		const isValidAtPosition = (str: string, atIndex: number): boolean => {
 			if (atIndex === 0) return true; // @ at start
-			const charBefore = str.charAt(atIndex - 1);
-			// return charBefore === '\n' || charBefore === ' '; // @ after newline or space
 			return true;
 		};
 
@@ -357,21 +356,6 @@
 		formattedText = formattedText.replace(/\n/g, '<br>');
 
 		return formattedText;
-	}
-
-	// Updates the chosen company and resets the model selection based on the new company.
-	function selectCompany(company: ApiProvider) {
-		chosenCompany.set(company);
-		companySelection.set(Object.keys(modelDictionary) as ApiProvider[]);
-		companySelection.set($companySelection.filter((c) => c !== company));
-		gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
-		chosenModel.set($gptModelSelection[0]);
-	}
-
-	// Updates the chosen model and resets the model selection list.
-	function selectModel(model: Model) {
-		chosenModel.set(model);
-		gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
 	}
 
 	async function submitPrompt(): Promise<void> {
