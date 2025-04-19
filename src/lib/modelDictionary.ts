@@ -440,7 +440,7 @@ export const modelDictionary: ModelDictionary = {
 				max_input_per_request: 5000
 			},
 			grok3mini: {
-				name: 'Grok_3_mini',
+				name: 'Grok_3_mini_beta',
 				param: 'grok-3-mini-beta',
 				legacy: false,
 				input_price: 0.3 * 1.1,
