@@ -1,5 +1,7 @@
 import DOMPurify from 'dompurify';
-import type { Message, Image, Model } from '$lib/types';
+import type { Message, Image, Model, ChatComponent, FileAttachment } from '$lib/types';
+import { addFilesToMessage } from '$lib/utils/fileHandling';
+import { isUserChatComponent } from '$lib/utils/typeGuards';
 
 export function sanitizeHtml(html: string): string {
 	let sanitizedHtml = DOMPurify.sanitize(html, {
@@ -44,7 +46,7 @@ export function sanitizeHtml(html: string): string {
 
 export function generateFullPrompt(
 	prompt: string,
-	currentHistory: { message_id?: number; by: string; text: string }[],
+	currentHistory: ChatComponent[],
 	numberPrevMessages: number,
 	chosenModel: Model,
 	ignoreLastTwo: boolean = true,
@@ -53,7 +55,7 @@ export function generateFullPrompt(
 	const fullPrompt: Message[] = [];
 
 	if (currentHistory.length > 0) {
-		let prevMessages: { message_id?: number; by: string; text: string }[] = [];
+		let prevMessages: ChatComponent[] = [];
 
 		// Automatic context window sizing based on token budget
 		if (isContextWindowAuto) {
@@ -69,7 +71,7 @@ export function generateFullPrompt(
 				: Math.max(0, currentHistory.length - 1);
 
 			// Work backwards through history until we hit token limit
-			const messagesToInclude: { message_id?: number; by: string; text: string }[] = [];
+			const messagesToInclude: ChatComponent[] = [];
 			let tokenCount = estimateTokens(prompt);
 
 			for (let i = startIndex; i >= 0; i--) {
@@ -100,12 +102,33 @@ export function generateFullPrompt(
 		}
 
 		// Add selected messages to the prompt
-		for (const { message_id, by, text } of prevMessages) {
-			fullPrompt.push({
-				message_id: message_id,
-				role: by === 'user' ? 'user' : 'assistant',
-				content: sanitizeHtml(text).trim()
-			});
+		for (const message of prevMessages) {
+			let formattedMessage: Message = {
+				message_id: message.message_id,
+				role: message.by === 'user' ? 'user' : 'assistant',
+				content: sanitizeHtml(message.text).trim()
+			};
+
+			// Add files to the message if they exist and it's a user message
+			if (
+				isUserChatComponent(message) &&
+				message.attachments &&
+				message.attachments.length > 0
+			) {
+				const files = message.attachments.filter(
+					(att) => att.type === 'file'
+				) as FileAttachment[];
+				if (files.length > 0) {
+					// Create a temporary array with just this message
+					const tempMessages = [formattedMessage];
+					// Add files to the message
+					const messagesWithFiles = addFilesToMessage(tempMessages, files);
+					// Update the message with files added
+					formattedMessage = messagesWithFiles[0];
+				}
+			}
+
+			fullPrompt.push(formattedMessage);
 		}
 	}
 

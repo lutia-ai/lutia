@@ -4,7 +4,7 @@
 	import { chatHistory, numberPrevMessages, fullPrompt, contextWindowOpen } from '$lib/stores';
 	import { marked } from 'marked';
 	import { formatModelEnumToReadable, sanitizeLLmContent } from '$lib/chatHistory';
-	import type { ChatComponent } from '$lib/types';
+	import type { ChatComponent, Attachment, FileAttachment, Image, Message } from '$lib/types';
 	import {
 		isModelAnthropic,
 		isModelOpenAI,
@@ -19,6 +19,32 @@
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
 	import DeepSeekIcon from '$lib/components/icons/DeepSeekIcon.svelte';
+	import FileViewer from './FileViewer.svelte';
+	import ImageViewer from './ImageViewer.svelte';
+	import { getFileIcon, getFileIconColor } from '$lib/utils/fileHandling.js';
+
+	// State for file and image viewers
+	let showFileViewer = false;
+	let currentFileContent = '';
+	let currentFileName = '';
+
+	let showImageViewer = false;
+	let viewerImage = '';
+	let viewerAlt = '';
+
+	// Function to open image viewer
+	function openImageViewer(src: string, alt: string) {
+		viewerImage = src;
+		viewerAlt = alt;
+		showImageViewer = true;
+	}
+
+	// Function to open the file viewer
+	function openFileViewer(content: string, filename: string) {
+		currentFileContent = content;
+		currentFileName = filename;
+		showFileViewer = true;
+	}
 
 	// Determine role style classes
 	function getRoleDetails(component: ChatComponent) {
@@ -43,7 +69,7 @@
 		Math.max(0, $chatHistory.length - $numberPrevMessages * 2)
 	);
 
-	// Get current prompt text
+	// Get current prompt text and attachments
 	$: currentPrompt =
 		typeof $fullPrompt === 'string'
 			? $fullPrompt
@@ -52,10 +78,6 @@
 				  $fullPrompt[$fullPrompt.length - 1].role === 'user'
 				? $fullPrompt[$fullPrompt.length - 1].content
 				: '';
-
-	// Include the current prompt when displaying the context window
-	// Always show current prompt even if empty
-	$: showCurrentPrompt = true;
 
 	// Function to get model name for a chat component
 	function getModelName(component: ChatComponent): string {
@@ -177,6 +199,46 @@
 					</span>
 				</div>
 				<div class="message-content">
+					{#if isUserChatComponent(message) && message.attachments && message.attachments.length > 0}
+						<div class="user-attachments">
+							<!-- {#each message.attachments.filter((att) => att.type === 'image') as image}
+								<div
+									class="user-image-container"
+									on:click={() => openImageViewer(image.data, 'User uploaded image')}
+									on:keydown={(e) => e.key === 'Enter' && openImageViewer(image.data, 'User uploaded image')}
+									role="button"
+									tabindex="0"
+								>
+									<img src={image.data} alt="User uploaded" />
+								</div>
+							{/each} -->
+							{#each message.attachments.filter((att) => att.type === 'file') as file}
+								<div
+									class="user-file-container"
+									role="button"
+									tabindex="0"
+									on:click={() => openFileViewer(file.data, file.filename)}
+									on:keydown={(e) =>
+										e.key === 'Enter' &&
+										openFileViewer(file.data, file.filename)}
+								>
+									<div class="file-info">
+										<div
+											class="file-icon"
+											style="background: {getFileIconColor(
+												file.file_extension
+											)}"
+										>
+											<span class="file-type"
+												>{getFileIcon(file.file_extension)}</span
+											>
+										</div>
+										<span class="file-name">{file.filename}</span>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
 					<p>
 						{@html marked(sanitizeLLmContent(message.text))}
 					</p>
@@ -184,20 +246,57 @@
 			</div>
 		{/each}
 
-		<!-- If there's a current prompt that's not in chatHistory yet, show it -->
-		{#if showCurrentPrompt}
-			<div class="message-item user-message">
-				<div class="message-header">
-					<span class="role-label">You</span>
-					<span class="message-number">Current prompt</span>
-				</div>
-				<div class="message-content">
-					<p>
-						{currentPrompt === '<br>' ? '' : currentPrompt}
-					</p>
-				</div>
+		<div class="message-item user-message">
+			<div class="message-header">
+				<!-- <span class="role-icon user-icon">👤</span> -->
+				<span class="role-label">You</span>
+				<span class="message-number">Current prompt</span>
 			</div>
-		{/if}
+			<div class="message-content">
+				<!-- {#if hasAttachments && attachments.length > 0}
+                    <div class="user-attachments">
+                        {#each attachments.filter((att) => att.type === 'image') as image}
+                            <div
+                                class="user-image-container"
+                                on:click={() => openImageViewer(image.data, 'User uploaded image')}
+                                on:keydown={(e) => e.key === 'Enter' && openImageViewer(image.data, 'User uploaded image')}
+                                role="button"
+                                tabindex="0"
+                            >
+                                <img src={image.data} alt="User uploaded" />
+                            </div>
+                        {/each}
+                        {#each attachments.filter((att) => att.type === 'file') as file}
+                            <div
+                                class="user-file-container"
+                                role="button"
+                                tabindex="0"
+                                on:click={() => openFileViewer(file.data, file.filename)}
+                                on:keydown={(e) => e.key === 'Enter' && openFileViewer(file.data, file.filename)}
+                            >
+                                <div class="file-info">
+                                    <div
+                                        class="file-icon"
+                                        style="background: {getFileIconColor(file.file_extension)}"
+                                    >
+                                        <span class="file-type">{getFileIcon(file.file_extension)}</span>
+                                    </div>
+                                    <span class="file-name">{file.filename}</span>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                {/if} -->
+				<p>
+					{#if typeof currentPrompt === 'string'}
+						{@html marked(sanitizeLLmContent(currentPrompt))}
+					{:else}
+						<!-- Handle non-string case -->
+						{String(currentPrompt)}
+					{/if}
+				</p>
+			</div>
+		</div>
 	</div>
 
 	<div class="footer">
@@ -210,6 +309,9 @@
 		</div>
 	</div>
 </div>
+
+<ImageViewer bind:show={showImageViewer} src={viewerImage} alt={viewerAlt} />
+<FileViewer bind:show={showFileViewer} content={currentFileContent} filename={currentFileName} />
 
 <style lang="scss">
 	:global(h1) {
@@ -578,6 +680,81 @@
 
 					.message-header {
 						background: rgba(217, 119, 6, 0.1);
+					}
+				}
+
+				.user-attachments {
+					display: flex;
+					flex-wrap: wrap;
+					gap: 8px;
+					margin-bottom: 10px;
+					width: 100%;
+				}
+
+				.user-image-container {
+					max-width: 100px;
+					max-height: 100px;
+					overflow: hidden;
+					border-radius: 4px;
+					cursor: pointer;
+
+					img {
+						width: 100%;
+						height: 100%;
+						object-fit: cover;
+					}
+				}
+
+				.user-file-container {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					padding: 6px 10px;
+					// background: var(--bg-color-light);
+					border-radius: 4px;
+					cursor: pointer;
+					width: 110px;
+					transition: all 0.2s ease-in-out;
+					border: 1px solid var(--bg-color-light);
+					box-shadow:
+						0 0 #0000,
+						0 0 #0000,
+						0 9px 9px 0px rgba(0, 0, 0, 0.01),
+						0 2px 5px 0px rgba(0, 0, 0, 0.06);
+
+					&:hover {
+						transform: translateY(-1px);
+					}
+
+					.file-info {
+						display: flex;
+						align-items: center;
+						gap: 8px;
+						max-width: 100%;
+						overflow: hidden;
+
+						.file-icon {
+							min-width: 24px;
+							height: 24px;
+							border-radius: 4px;
+							display: flex;
+							align-items: center;
+							justify-content: center;
+
+							.file-type {
+								font-size: 10px;
+								font-weight: 600;
+								color: white;
+							}
+						}
+
+						.file-name {
+							font-size: 12px;
+							white-space: nowrap;
+							overflow: hidden;
+							text-overflow: ellipsis;
+							max-width: 140px;
+						}
 					}
 				}
 			}
