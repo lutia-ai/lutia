@@ -451,13 +451,13 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 0,
 				reasons: true,
 				generatesImages: false,
-				description: 'Unfiltered intelligence, blazing speed',
+				description: 'A lightweight model that thinks before responding',
 				max_input_per_request: 10000
 			},
 			grok2: {
 				name: 'Grok_2',
 				param: 'grok-2-1212',
-				legacy: false,
+				legacy: true,
 				input_price: 2 * 1.1,
 				output_price: 10 * 1.1,
 				context_window: 131072, // max input cost $0.262144
