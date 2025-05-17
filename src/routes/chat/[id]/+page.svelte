@@ -16,8 +16,8 @@
 		SerializedApiRequest,
 	} from '$lib/types/types.js';
 	import { modelDictionary } from '$lib/models/modelDictionary';
-	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
-	import NotificationPopup from '$lib/components/NotificationPopup.svelte';
+	import ErrorPopup from '$lib/components/notifications/ErrorPopup.svelte';
+	import NotificationPopup from '$lib/components/notifications/NotificationPopup.svelte';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
 	import FileViewer from '$lib/components/FileViewer.svelte';
 	import {
