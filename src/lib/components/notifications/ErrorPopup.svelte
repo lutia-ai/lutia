@@ -10,11 +10,11 @@
 
 	onMount(() => {
 		if (message) {
-			showError(message, subMessage);
+			setVisibility(message, subMessage);
 		}
 	});
 
-	export function showError(
+	export function setVisibility(
 		msg: string,
 		subMsg: string | null = null,
 		duration: number = 5000,
