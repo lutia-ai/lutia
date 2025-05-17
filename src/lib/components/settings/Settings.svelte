@@ -8,7 +8,7 @@
 	import BillingSettingsPage from '$lib/components/settings/BillingSettingsPage.svelte';
 	import UsageSettingsPage from '$lib/components/settings/UsageSettingsPage.svelte';
 	import type { ComponentType } from 'svelte';
-	import type { UserWithSettings } from '$lib/types';
+	import type { UserWithSettings } from '$lib/types/types';
 	import { isSettingsOpen, bodyScrollLocked } from '$lib/stores';
 	import { onMount, onDestroy } from 'svelte';
 

@@ -245,17 +245,6 @@ export type TransactionRecord = {
 	status: string;
 };
 
-export type PromptHelper = {
-	prompt: string;
-	icon: IconType;
-};
-
-export type PromptHelpers = {
-	createImage: PromptHelper[];
-	compose: PromptHelper[];
-	question: PromptHelper[];
-};
-
 export interface GptTokenUsage {
 	prompt_tokens: number;
 	completion_tokens: number;

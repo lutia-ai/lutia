@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
-	import Slider from './Slider.svelte';
+	import Slider from '../Slider.svelte';
 	import { chatHistory, numberPrevMessages, fullPrompt, contextWindowOpen } from '$lib/stores';
 	import { marked } from 'marked';
-	import { formatModelEnumToReadable, sanitizeLLmContent } from '$lib/chatHistory';
-	import type { ChatComponent, Attachment, FileAttachment, Image, Message } from '$lib/types';
+	import { sanitizeLLmContent, processLinks } from '$lib/components/chat-history/utils/chatHistory';
+	import { formatModelEnumToReadable } from '$lib/models/modelUtils';
+	import type { ChatComponent, Attachment, FileAttachment, Image, Message } from '$lib/types/types';
 	import {
 		isModelAnthropic,
 		isModelOpenAI,
@@ -13,14 +14,14 @@
 		isModelDeepSeek,
 		isLlmChatComponent,
 		isUserChatComponent
-	} from '$lib/utils/typeGuards';
+	} from '$lib/types/typeGuards';
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
 	import DeepSeekIcon from '$lib/components/icons/DeepSeekIcon.svelte';
-	import FileViewer from './FileViewer.svelte';
-	import ImageViewer from './ImageViewer.svelte';
+	import FileViewer from '../FileViewer.svelte';
+	import ImageViewer from '../ImageViewer.svelte';
 	import { getFileIcon, getFileIconColor } from '$lib/utils/fileHandling.js';
 
 	// State for file and image viewers
@@ -240,7 +241,7 @@
 						</div>
 					{/if}
 					<p>
-						{@html marked(sanitizeLLmContent(message.text))}
+						{@html processLinks(marked(sanitizeLLmContent(message.text)))}
 					</p>
 				</div>
 			</div>
@@ -289,7 +290,7 @@
                 {/if} -->
 				<p>
 					{#if typeof currentPrompt === 'string'}
-						{@html marked(sanitizeLLmContent(currentPrompt))}
+						{@html processLinks(marked(sanitizeLLmContent(currentPrompt)))}
 					{:else}
 						<!-- Handle non-string case -->
 						{String(currentPrompt)}

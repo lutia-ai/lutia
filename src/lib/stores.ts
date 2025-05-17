@@ -1,8 +1,8 @@
-import { writable, type Writable } from 'svelte/store';
+import { writable, type Writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
-import type { ChatComponent, Message, Model } from '$lib/types';
+import type { ChatComponent, Message, Model } from '$lib/types/types';
 import type { ApiProvider } from '@prisma/client';
-import { modelDictionary } from './modelDictionary';
+import { modelDictionary } from './models/modelDictionary';
 
 function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
 	// Create the store with the start value
@@ -88,6 +88,9 @@ export const isSettingsOpen = createPersistentStore<boolean>('isSettingsOpen', f
 // Persistent store for the conversationsOpen setting
 export const conversationsOpen = createPersistentStore<boolean>('conversationsOpen', false);
 
+// Persistent store for the files sidebar open state
+export const filesSidebarOpen = createPersistentStore<boolean>('filesSidebarOpen', false);
+
 // Persistent store for the dark mode setting
 export const darkMode = createPersistentStore<boolean>('darkMode', false);
 
@@ -108,3 +111,14 @@ export const isContextWindowAuto = createPersistentStore<boolean>('isContextWind
 
 // Store for controlling body scroll lock
 export const bodyScrollLocked = writable<boolean>(false);
+
+// Store for controlling if the dragover event is triggered
+export const isDragging = writable<boolean>(false);
+
+// Derived store to check if any sidebar is open
+export const isSidebarOpen = derived(
+	[conversationsOpen, contextWindowOpen, filesSidebarOpen],
+	([$conversationsOpen, $contextWindowOpen, $filesSidebarOpen]) => {
+		return $conversationsOpen || $contextWindowOpen || $filesSidebarOpen;
+	}
+);

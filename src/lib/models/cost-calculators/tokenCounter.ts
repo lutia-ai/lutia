@@ -54,3 +54,13 @@ function countNonLatinCharRatio(text: string): number {
 
 	return nonLatinCount / totalChars;
 }
+
+
+export function roundToTwoSignificantDigits(num: number): string {
+	if (num === 0) return '0';
+
+	const magnitude = Math.floor(Math.log10(Math.abs(num)));
+	const scale = Math.pow(10, magnitude - 1);
+
+	return (Math.round(num / scale) * scale).toFixed(Math.max(0, -(magnitude - 1)));
+}

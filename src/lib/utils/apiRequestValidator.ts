@@ -1,18 +1,17 @@
 import { error } from '@sveltejs/kit';
-import type { Message, Model, Image, FileAttachment, GptTokenUsage } from '$lib/types.d';
-import { isValidMessageArray } from './typeGuards';
-import { getModelFromName } from './modelConverter';
+import type { Message, Model, Image, FileAttachment, GptTokenUsage } from '$lib/types/types';
+import { isValidMessageArray } from '../types/typeGuards';
+import { getModelFromName } from '$lib/models/modelUtils';
 import { ApiModel, ApiProvider, PaymentTier, type User } from '@prisma/client';
 import { retrieveUsersBalance } from '$lib/db/crud/balance';
-import { InsufficientBalanceError } from '$lib/customErrors';
+import { InsufficientBalanceError } from '$lib/types/customErrors';
 import {
 	createConversation,
 	deleteOldestConversation,
 	countUserConversations
 } from '$lib/db/crud/conversation';
-import { calculateGptVisionPricing, calculateClaudeImageCost } from '$lib/tokenizer';
-import { estimateTokenCount } from './tokenCounter';
-import { generateConversationTitle } from './titleGenerator';
+import { estimateTokenCount } from '../models/cost-calculators/tokenCounter';
+import { calculateImageCostByProvider } from '../models/cost-calculators/imageCalculator';
 
 /**
  * Interface for the request data that needs validation
@@ -49,31 +48,7 @@ export interface ValidatedApiRequestData {
 	imageCost: number;
 }
 
-/**
- * Calculate image cost based on the provider
- */
-function calculateImageCostByProvider(
-	images: Image[],
-	model: Model,
-	apiProvider: ApiProvider
-): { cost: number; tokens: number } {
-	let cost = 0;
-	let tokens = 0;
 
-	for (const image of images) {
-		let result;
-		if (apiProvider === ApiProvider.anthropic) {
-			result = calculateClaudeImageCost(image.width, image.height, model);
-		} else {
-			// OpenAI, xAI, DeepSeek all use the same pricing
-			result = calculateGptVisionPricing(image.width, image.height);
-		}
-		cost += result.price;
-		tokens += result.tokens;
-	}
-
-	return { cost, tokens };
-}
 
 /**
  * Validates and processes API request data for LLM endpoints

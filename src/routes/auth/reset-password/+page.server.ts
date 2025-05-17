@@ -1,9 +1,9 @@
 import { fail, type Actions } from '@sveltejs/kit';
 import { retrieveUserByEmail, updateUser } from '$lib/db/crud/user';
-import { UserNotFoundError } from '$lib/customErrors';
+import { UserNotFoundError } from '$lib/types/customErrors';
 import { generateLinkingToken } from '$lib/auth/utils';
 import { env } from '$env/dynamic/private';
-import { emailBody, sendEmail } from '$lib/email';
+import { emailBody, sendEmail } from '$lib/services/email';
 
 export const actions = {
 	resetPassword: async ({ request }) => {

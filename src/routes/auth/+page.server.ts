@@ -2,7 +2,7 @@ import bcryptjs from 'bcryptjs';
 import type { Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { retrieveUserByEmail, createUser, verifyUserEmailToken } from '$lib/db/crud/user';
-import { UserNotFoundError } from '$lib/customErrors';
+import { UserNotFoundError } from '$lib/types/customErrors';
 import { verifyRecaptcha } from '$lib/auth/recaptcha';
 
 export const actions = {

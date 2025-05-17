@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { formatModelEnumToReadable } from '$lib/chatHistory';
-	import { roundToTwoSignificantDigits } from '$lib/tokenizer';
+	import { roundToTwoSignificantDigits } from '$lib/models/cost-calculators/tokenCounter';
+	import { formatModelEnumToReadable } from '$lib/models/modelUtils';
+	
 
 	export let model: string;
 	export let cost: number;

@@ -1,12 +1,12 @@
 import bcryptjs from 'bcryptjs';
-import { DatabaseError, UnknownError, UserNotFoundError } from '$lib/customErrors';
-import type { UserUpdateFields, UserWithSettings } from '$lib/types';
-import stripe from '$lib/stripe/stripe.config';
+import { DatabaseError, UnknownError, UserNotFoundError } from '$lib/types/customErrors';
+import type { UserUpdateFields, UserWithSettings } from '$lib/types/types';
 import type { User } from '@prisma/client';
-import prisma from '$lib/prisma';
+import prisma from '$lib/db/prisma';
 import { generateRandomSixDigitNumber } from '$lib/auth/utils';
-import { sendEmail, verifyEmailBody } from '$lib/email';
+import { sendEmail, verifyEmailBody } from '$lib/services/email';
 import { createUserSettings } from '$lib/db/crud/userSettings';
+import stripe from '$lib/services/stripe/stripe.config';
 
 export async function createUser(
 	email: string,

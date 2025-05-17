@@ -1,4 +1,4 @@
-import type { ModelDictionary } from './types.d';
+import type { ModelDictionary } from '../types/types';
 
 export const modelDictionary: ModelDictionary = {
 	openAI: {

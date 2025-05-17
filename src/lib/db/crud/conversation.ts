@@ -1,8 +1,8 @@
 import type { Conversation, ApiRequest } from '@prisma/client';
 import { PaymentTier } from '@prisma/client';
-import type { ApiRequestWithMessage, SerializedApiRequest } from '$lib/types';
-import prisma from '$lib/prisma';
-import { serializeApiRequest } from '$lib/chatHistory';
+import type { ApiRequestWithMessage, SerializedApiRequest } from '$lib/types/types';
+import prisma from '$lib/db/prisma';
+import { serializeApiRequest } from '$lib/components/chat-history/utils/chatHistory';
 
 /**
  * Create a new conversation for a user

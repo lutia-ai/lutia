@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
 import Anthropic from '@anthropic-ai/sdk';
-import type { ClaudeImage } from '$lib/types.d';
+import type { ClaudeImage } from '$lib/types/types';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
-import { InsufficientBalanceError } from '$lib/customErrors';
+import { InsufficientBalanceError } from '$lib/types/customErrors';
 import { env } from '$env/dynamic/private';
 import { ApiProvider } from '@prisma/client';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';

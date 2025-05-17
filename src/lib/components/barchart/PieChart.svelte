@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Chart } from 'chart.js/auto';
-	import type { UsageObject, Company, UserWithSettings } from '$lib/types';
+	import type { UsageObject, Company, UserWithSettings } from '$lib/types/types';
 	import { capitalizeFirstLetter } from './utils';
 	import { PaymentTier } from '@prisma/client';
 

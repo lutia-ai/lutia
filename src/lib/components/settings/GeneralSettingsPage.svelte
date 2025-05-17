@@ -9,10 +9,10 @@
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
 	import Switch from '$lib/components/Switch.svelte';
-	import type { UserWithSettings } from '$lib/types';
+	import type { UserWithSettings } from '$lib/types/types';
 	import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
 	import MouseCircleIcon from '../icons/MouseCircleIcon.svelte';
-	import { saveUserSettings } from '$lib/chatHistory';
+	import { saveUserSettings } from '$lib/components/settings/utils/settingsUtils';
 
 	export let user: UserWithSettings;
 

@@ -193,7 +193,8 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		z-index: 100000;
+		z-index: 9999999 !important;
+		isolation: isolate;
 	}
 
 	.file-viewer-content {
@@ -209,6 +210,7 @@
 		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 		display: flex;
 		flex-direction: column;
+		isolation: isolate;
 	}
 
 	.non-clickable-container {
@@ -217,6 +219,8 @@
 		flex-direction: column;
 		flex: 1;
 		overflow: hidden;
+		position: relative;
+		z-index: 1000000 !important;
 	}
 
 	.file-header {

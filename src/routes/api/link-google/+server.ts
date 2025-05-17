@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import { retrieveUserByEmail, updateUser } from '$lib/db/crud/user';
-import { UserNotFoundError } from '$lib/customErrors';
+import { UserNotFoundError } from '$lib/types/customErrors';
 import { type User as UserEntity } from '@prisma/client';
 import { generateLinkingToken } from '$lib/auth/utils';
 

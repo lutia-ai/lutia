@@ -16,11 +16,12 @@
 		gptModelSelection,
 		conversationId,
 		contextWindowOpen,
-		mobileSidebarOpen
+		mobileSidebarOpen,
+		filesSidebarOpen
 	} from '$lib/stores.ts';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
-	import type { Model, UserWithSettings } from '$lib/types';
-	import { modelDictionary } from '$lib/modelDictionary.ts';
+	import type { Model, UserWithSettings } from '$lib/types/types';
+	import { modelDictionary } from '$lib/models/modelDictionary';
 
 	import Switch from '$lib/components/Switch.svelte';
 
@@ -28,13 +29,14 @@
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
-	import { modelLogos } from '$lib/modelLogos';
-	import { formatModelEnumToReadable } from '$lib/chatHistory';
-	import ImageIcon from './icons/ImageIcon.svelte';
-	import LightningIcon from './icons/LightningIcon.svelte';
-	import LightningReasoningIcon from './icons/LightningReasoningIcon.svelte';
-	import CreateIcon from './icons/CreateIcon.svelte';
-	import ConversationsIcon from './icons/ConversationsIcon.svelte';
+	import FileIcon from '$lib/components/icons/FileIcon.svelte';
+	import { modelLogos } from '$lib/models/modelLogos';
+	import { formatModelEnumToReadable } from '$lib/models/modelUtils';
+	import ImageIcon from '../icons/ImageIcon.svelte';
+	import LightningIcon from '../icons/LightningIcon.svelte';
+	import LightningReasoningIcon from '../icons/LightningReasoningIcon.svelte';
+	import CreateIcon from '../icons/CreateIcon.svelte';
+	import ConversationsIcon from '../icons/ConversationsIcon.svelte';
 	import { goto } from '$app/navigation';
 
 	export let user: UserWithSettings; // controls if the menu is always open
@@ -57,6 +59,17 @@
 
 	// Indicates whether an animation is currently rotating.
 	let isRotating: boolean = false;
+
+	// Check if there are files in the chat history
+	let hasFiles = false;
+
+	// Update hasFiles whenever chat history changes
+	$: {
+		hasFiles = $chatHistory.some(
+			(message) =>
+				'attachments' in message && message.attachments && message.attachments.length > 0
+		);
+	}
 
 	// handles if the company menu should be always open or open on hover
 	$: if (user.user_settings || !user.user_settings) {
@@ -95,7 +108,8 @@
 	<div class:sidebar-container={isMobile}>
 		<div
 			class="sidebar"
-			class:shifted={!isMobile && ($conversationsOpen || $contextWindowOpen)}
+			class:shifted={!isMobile &&
+				($conversationsOpen || $contextWindowOpen || $filesSidebarOpen)}
 			class:mobile={isMobile}
 			in:fly={isMobile ? { delay: 250, duration: 300, x: -250 } : undefined}
 		>
@@ -340,6 +354,7 @@
 							conversationsOpen.set(!$conversationsOpen);
 							if ($conversationsOpen) {
 								contextWindowOpen.set(false);
+								filesSidebarOpen.set(false);
 								settingsOpen = false;
 							}
 						}}
@@ -348,18 +363,54 @@
 								conversationsOpen.set(!$conversationsOpen);
 								if ($conversationsOpen) {
 									contextWindowOpen.set(false);
+									filesSidebarOpen.set(false);
 									settingsOpen = false;
 								}
 							}
 						}}
 						style="padding: 8px;"
 					>
-						<div style="transform: scale(1.2);">
+						<div style="transform: scale(1.1);">
 							<ConversationsIcon color="var(--text-color-light)" />
 						</div>
 						<p class="tag">View history</p>
 					</div>
 				</div>
+
+				{#if hasFiles}
+					<div class="settings-wrapper">
+						<div
+							class="settings-icon"
+							role="button"
+							tabindex="0"
+							on:click|stopPropagation={() => {
+								filesSidebarOpen.set(!$filesSidebarOpen);
+								if ($filesSidebarOpen) {
+									contextWindowOpen.set(false);
+									conversationsOpen.set(false);
+									settingsOpen = false;
+								}
+							}}
+							on:keydown|stopPropagation={(e) => {
+								if (e.key === 'Enter') {
+									filesSidebarOpen.set(!$filesSidebarOpen);
+									if ($filesSidebarOpen) {
+										contextWindowOpen.set(false);
+										conversationsOpen.set(false);
+										settingsOpen = false;
+									}
+								}
+							}}
+							style="padding: 8px;"
+						>
+							<div>
+								<FileIcon color="var(--text-color-light)" />
+							</div>
+							<p class="tag">Files in this chat</p>
+						</div>
+					</div>
+				{/if}
+
 				<!-- context window button -->
 				{#if (!$isContextWindowAuto && showContextWindowButton && user.payment_tier === PaymentTier.PayAsYouGo) || !$isContextWindowAuto}
 					<div class="settings-wrapper">
@@ -372,6 +423,7 @@
 								if ($contextWindowOpen) {
 									settingsOpen = false;
 									conversationsOpen.set(false);
+									filesSidebarOpen.set(false);
 								}
 							}}
 							on:keydown|stopPropagation={(e) => {
@@ -380,6 +432,7 @@
 									if ($contextWindowOpen) {
 										settingsOpen = false;
 										conversationsOpen.set(false);
+										filesSidebarOpen.set(false);
 									}
 								}
 							}}

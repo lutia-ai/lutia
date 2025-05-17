@@ -13,7 +13,7 @@ import {
 	getStripeCardDetails,
 	saveUserCardDetails,
 	getUserTransactionHistory
-} from '$lib/stripe/stripeFunctions';
+} from '$lib/services/stripe/stripeFunctions';
 import { updateUserSettings } from '$lib/db/crud/userSettings';
 import { PaymentTier, type Conversation, type User, type UserSettings } from '@prisma/client';
 import {
@@ -24,7 +24,7 @@ import {
 	updateConversation,
 	deleteConversation
 } from '$lib/db/crud/conversation';
-import type { UserWithSettings } from '$lib/types';
+import type { UserWithSettings } from '$lib/types/types';
 import { retrieveConversationsByUserIdPaginated } from '$lib/db/crud/conversation';
 
 interface ChatParams {

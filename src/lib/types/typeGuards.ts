@@ -1,4 +1,4 @@
-import { modelDictionary } from '$lib/modelDictionary';
+import { modelDictionary } from '$lib/models/modelDictionary';
 import type {
 	Message,
 	ChatComponent,
@@ -9,7 +9,7 @@ import type {
 	UserChat,
 	ModelDictionary,
 	Model
-} from '$lib/types';
+} from '$lib/types/types';
 
 export function isCodeComponent(component: Component): component is CodeComponent {
 	return component.type === 'code';

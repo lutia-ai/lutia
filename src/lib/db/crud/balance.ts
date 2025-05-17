@@ -1,6 +1,6 @@
-import { InsufficientBalanceError, UserNotFoundError } from '$lib/customErrors';
+import { InsufficientBalanceError, UserNotFoundError } from '$lib/types/customErrors';
 import type { PrismaClient } from '@prisma/client';
-import prisma from '$lib/prisma';
+import prisma from '$lib/db/prisma';
 
 export async function retrieveUsersBalance(userId: number): Promise<number> {
 	try {

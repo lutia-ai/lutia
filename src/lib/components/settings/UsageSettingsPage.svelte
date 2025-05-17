@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import StackedBarChart from '$lib/components/barchart/StackedBarChart.svelte';
-	import type { UsageObject, Company, UserWithSettings } from '$lib/types';
-	import { modelLogos } from '$lib/modelLogos';
+	import type { UsageObject, Company, UserWithSettings } from '$lib/types/types';
+	import { modelLogos } from '$lib/models/modelLogos';
 	import PieChart from '$lib/components/barchart/PieChart.svelte';
 	import { capitalizeFirstLetter } from '$lib/components/barchart/utils';
 	import { PaymentTier, type ApiModel, type ApiProvider } from '@prisma/client';

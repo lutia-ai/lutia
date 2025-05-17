@@ -5,8 +5,8 @@
 	import type { ActionResult } from '@sveltejs/kit';
 	import type { Conversation } from '@prisma/client';
 	import { PaymentTier } from '@prisma/client';
-	import EditIcon from './icons/EditIcon.svelte';
-	import BinIcon from './icons/BinIcon.svelte';
+	import EditIcon from '../icons/EditIcon.svelte';
+	import BinIcon from '../icons/BinIcon.svelte';
 	import { conversationsOpen } from '$lib/stores';
 	import { goto } from '$app/navigation';
 

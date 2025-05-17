@@ -1,5 +1,5 @@
 import type { Folder } from '@prisma/client';
-import prisma from '$lib/prisma';
+import prisma from '$lib/db/prisma';
 
 /**
  * Create a new folder for a user

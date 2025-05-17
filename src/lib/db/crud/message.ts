@@ -1,6 +1,6 @@
-import type { Image } from '$lib/types';
+import type { Image } from '$lib/types/types';
 import type { Message } from '@prisma/client';
-import prisma from '$lib/prisma';
+import prisma from '$lib/db/prisma';
 
 export async function createMessage(
 	prompt: string,
@@ -95,14 +95,35 @@ export async function deleteAllUserMessagesWithoutAConversation(userId: number):
 	}
 }
 
+/**
+ * Updates a message with the given ID
+ * @param id - The ID of the message to update
+ * @param updatedData - Partial data to update the message with
+ * @returns The updated message
+ */
 export async function updateMessage(
 	id: number,
-	updatedData: Partial<Omit<Message, 'id' | 'pictures'>> & { pictures?: Image[] }
+	updatedData: Partial<Omit<Message, 'id' | 'pictures' | 'files'>> & { 
+		pictures?: Image[];
+		files?: any;  
+	}
 ): Promise<Message> {
 	try {
+		// Create a new object with processed data for Prisma
+		const processedData: any = { ...updatedData };
+		
+		// Handle JSON fields explicitly
+		if (updatedData.pictures !== undefined) {
+			processedData.pictures = updatedData.pictures;
+		}
+		
+		if (updatedData.files !== undefined) {
+			processedData.files = updatedData.files;
+		}
+		
 		const updatedMessage = await prisma.message.update({
 			where: { id },
-			data: updatedData
+			data: processedData
 		});
 		console.log('Message updated successfully');
 		return updatedMessage;

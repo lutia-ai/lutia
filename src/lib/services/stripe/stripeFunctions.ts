@@ -1,5 +1,5 @@
-import type { CardDetails, ChargeResult, TransactionRecord } from '$lib/types';
-import stripe from '$lib/stripe/stripe.config';
+import type { CardDetails, ChargeResult, TransactionRecord } from '$lib/types/types';
+import stripe from '$lib/services/stripe/stripe.config';
 import type Stripe from 'stripe';
 
 export async function getStripeCardDetails(customerId: string): Promise<CardDetails | null> {

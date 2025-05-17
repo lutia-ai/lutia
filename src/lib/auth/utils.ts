@@ -5,10 +5,10 @@ import Google from '@auth/core/providers/google';
 import { env } from '$env/dynamic/private';
 import Credentials from '@auth/core/providers/credentials';
 import { retrieveUserByEmail, createUser, updateUser } from '$lib/db/crud/user';
-import { UserNotFoundError } from '$lib/customErrors';
+import { UserNotFoundError } from '$lib/types/customErrors';
 import type { User } from '@prisma/client';
 import crypto from 'crypto';
-import { sendEmail, verifyEmailBody } from '$lib/email';
+import { sendEmail, verifyEmailBody } from '$lib/services/email';
 
 let requestBody: any;
 

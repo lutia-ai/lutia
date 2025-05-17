@@ -1,8 +1,8 @@
 import { writable } from 'svelte/store';
-import type { Model } from '$lib/types';
+import type { Model } from '$lib/types/types';
 import type { ApiProvider } from '@prisma/client';
 import { chosenCompany, companySelection, gptModelSelection, chosenModel } from '$lib/stores';
-import { modelDictionary } from '$lib/modelDictionary';
+import { modelDictionary } from '$lib/models/modelDictionary';
 
 /**
  * Updates the chosen company and resets the model selection based on the new company.

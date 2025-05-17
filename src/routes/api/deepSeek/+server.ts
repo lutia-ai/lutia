@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import { ApiProvider } from '@prisma/client';
-import { InsufficientBalanceError } from '$lib/customErrors';
+import { InsufficientBalanceError } from '$lib/types/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';

@@ -1,15 +1,14 @@
 import { error } from '@sveltejs/kit';
 import OpenAI from 'openai';
-import type { Model, ChatGPTImage } from '$lib/types.d';
+import type { Model, ChatGPTImage } from '$lib/types/types';
 import { createMessageAndApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { ApiModel, ApiProvider, ApiRequestStatus, PaymentTier, type User } from '@prisma/client';
-import { InsufficientBalanceError } from '$lib/customErrors';
+import { InsufficientBalanceError } from '$lib/types/customErrors';
 import { env } from '$env/dynamic/private';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { createConversation, updateConversationLastMessage } from '$lib/db/crud/conversation.js';
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
-import { getModelFromName } from '$lib/utils/modelConverter';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
 import { validateApiRequest, type ApiRequestData } from '$lib/utils/apiRequestValidator';
 import { addFilesToMessage } from '$lib/utils/fileHandling';
@@ -29,19 +28,6 @@ export async function POST({ request, locals }) {
 		const regenerateMessageId = requestBody.regenerateMessageId;
 		let errorMessage: any;
 
-		// Get the model name for special handling of image generation models
-		const modelName: ApiModel = JSON.parse(requestBody.modelStr);
-		const model: Model | null = getModelFromName(modelName);
-
-		if (!model) {
-			throw error(400, `Model ${modelName} not found`);
-		}
-
-		// Special handling for image generation models (DALL-E)
-		if (model.generatesImages) {
-			return handleImageGeneration(requestBody, user, model, requestId);
-		}
-
 		// For regular text models, use the shared validator
 		const validatedData = await validateApiRequest(
 			requestBody as ApiRequestData,
@@ -52,12 +38,18 @@ export async function POST({ request, locals }) {
 		const {
 			plainText,
 			messages,
+			model,
 			images,
 			files,
 			messageConversationId,
 			referencedMessageIds,
 			finalUsage
 		} = validatedData;
+
+        // Special handling for image generation models (DALL-E)
+		if (model.generatesImages) {
+			return handleImageGeneration(requestBody, user, model, requestId);
+		}
 
 		// Process images and files together with messages
 		let processedMessages = [...messages];

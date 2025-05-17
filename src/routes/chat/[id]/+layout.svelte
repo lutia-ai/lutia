@@ -1,7 +1,7 @@
 <script lang="ts">
 	import BurgerIcon from '$lib/components/icons/BurgerIcon.svelte';
 	import SettingsComponent from '$lib/components/settings/Settings.svelte';
-	import Sidebar from '$lib/components/Sidebar.svelte';
+	import Sidebar from '$lib/components/sidebar/Sidebar.svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { browser } from '$app/environment';
 	import {
@@ -9,15 +9,17 @@
 		companySelection,
 		contextWindowOpen,
 		conversationsOpen,
+		filesSidebarOpen,
 		isContextWindowAuto,
 		isLargeScreen,
 		isSettingsOpen,
 		mobileSidebarOpen
 	} from '$lib/stores';
 	import { onMount } from 'svelte';
-	import ConversationsSideBar from '$lib/components/ConversationsSideBar.svelte';
-	import ContextWindowSideBar from '$lib/components/ContextWindowSideBar.svelte';
-	import type { UserWithSettings } from '$lib/types.js';
+	import ConversationsSideBar from '$lib/components/sidebar/ConversationsSideBar.svelte';
+	import ContextWindowSideBar from '$lib/components/sidebar/ContextWindowSideBar.svelte';
+	import FilesSideBar from '$lib/components/sidebar/FilesSideBar.svelte';
+	import type { UserWithSettings } from '$lib/types/types.js';
 
 	export let data;
 
@@ -63,10 +65,18 @@
 					tabindex="0"
 					on:click|stopPropagation={() => {
 						mobileSidebarOpen.set(true);
+						// Close any open sidebars
+						conversationsOpen.set(false);
+						contextWindowOpen.set(false);
+						filesSidebarOpen.set(false);
 					}}
 					on:keydown|stopPropagation={(e) => {
 						if (e.key === 'Enter') {
 							mobileSidebarOpen.set(true);
+							// Close any open sidebars
+							conversationsOpen.set(false);
+							contextWindowOpen.set(false);
+							filesSidebarOpen.set(false);
 						}
 					}}
 				>

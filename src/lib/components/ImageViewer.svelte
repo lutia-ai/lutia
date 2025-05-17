@@ -94,7 +94,8 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		z-index: 100000;
+		z-index: 9999999 !important;
+		isolation: isolate;
 	}
 
 	.image-viewer-content {
@@ -103,6 +104,7 @@
 		max-height: 90vh;
 		border-radius: 5px;
 		overflow: hidden;
+		isolation: isolate;
 	}
 
 	img {
@@ -118,7 +120,7 @@
 		right: 10px;
 		display: flex;
 		gap: 10px;
-		z-index: 100000000;
+		z-index: 10000000 !important;
 	}
 
 	.button {
@@ -144,7 +146,7 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		z-index: 10000000;
+		z-index: 1000000 !important;
 		border-radius: none;
 		background: none;
 	}

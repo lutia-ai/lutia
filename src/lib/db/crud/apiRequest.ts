@@ -5,16 +5,15 @@ import type {
 	ApiRequest,
 	ApiRequestStatus,
 	Message,
-	PrismaClient
 } from '@prisma/client';
 import type {
 	ApiRequestWithMessage,
 	CreateApiRequestData,
 	CreateMessageData,
 	SerializedApiRequest
-} from '$lib/types';
-import prisma from '$lib/prisma';
-import { serializeApiRequest } from '$lib/chatHistory';
+} from '$lib/types/types';
+import prisma from '$lib/db/prisma';
+import { serializeApiRequest } from '$lib/components/chat-history/utils/chatHistory';
 
 export async function createApiRequestEntry(
 	userId: number,

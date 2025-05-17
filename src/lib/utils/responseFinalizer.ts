@@ -1,11 +1,11 @@
-import type { GptTokenUsage, Image, Model, FileAttachment } from '$lib/types.d';
+import type { GptTokenUsage, Image, Model, FileAttachment } from '$lib/types/types';
 import { createMessageAndApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { ApiProvider, ApiRequestStatus, PaymentTier, type User } from '@prisma/client';
 import { updateConversation, updateConversationLastMessage } from '$lib/db/crud/conversation';
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
-import { estimateTokenCount } from './tokenCounter';
-import prisma from '$lib/prisma';
+import { estimateTokenCount } from '../models/cost-calculators/tokenCounter';
+import prisma from '$lib/db/prisma';
 
 export interface FinalizationParams {
 	user: User;

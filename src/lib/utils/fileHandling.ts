@@ -1,4 +1,4 @@
-import type { FileAttachment, Image } from '$lib/types';
+import type { FileAttachment, Image } from '$lib/types/types';
 import type { ActionResult } from '@sveltejs/kit';
 import { deserialize } from '$app/forms';
 

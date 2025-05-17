@@ -1,4 +1,4 @@
-import prisma from '$lib/prisma';
+import prisma from '$lib/db/prisma';
 import type { UserSettings } from '@prisma/client';
 
 export async function createUserSettings(userId: number) {

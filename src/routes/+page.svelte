@@ -11,9 +11,9 @@
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import CopyIcon from '$lib/components/icons/CopyIcon.svelte';
 	import { marked } from 'marked';
-	import { sanitizeLLmContent } from '$lib/chatHistory';
+	import { sanitizeLLmContent, processLinks } from '$lib/components/chat-history/utils/chatHistory';
 	import { spring } from 'svelte/motion';
-	import viewport from '$lib/userViewportAction';
+	import viewport from '$lib/utils/userViewportAction';
 	import DemoVideo1 from '$lib/videos/video1.mp4';
 	import DemoVideo2 from '$lib/videos/video2.mp4';
 	import DemoVideo3 from '$lib/videos/video3.mp4';
@@ -400,7 +400,7 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 				</div>
 				<div class="llm-chat">
 					<p class="content-paragraph" style="max-width: 600px;">
-						{@html marked(sanitizeLLmContent(displayText2))}
+						{@html processLinks(marked(sanitizeLLmContent(displayText2)))}
 					</p>
 				</div>
 			</div>
