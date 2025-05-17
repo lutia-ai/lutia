@@ -29,7 +29,7 @@
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import AttachmentIcon from '$lib/components/icons/AttachmentIcon.svelte';
-	import FileIcon from '$lib/components/icons/FileIcon.svelte';
+	// import FileIcon from '$lib/components/icons/FileIcon.svelte';
 	import { modelLogos } from '$lib/models/modelLogos';
 	import { formatModelEnumToReadable } from '$lib/models/modelUtils';
 	import ImageIcon from '../icons/ImageIcon.svelte';
@@ -377,7 +377,7 @@
 					</div>
 				</div>
 
-				{#if hasFiles}
+				<!-- {#if hasFiles}
 					<div class="settings-wrapper">
 						<div
 							class="settings-icon"
@@ -409,7 +409,7 @@
 							<p class="tag">Files in this chat</p>
 						</div>
 					</div>
-				{/if}
+				{/if} -->
 
 				<!-- context window button -->
 				{#if (!$isContextWindowAuto && showContextWindowButton && user.payment_tier === PaymentTier.PayAsYouGo) || !$isContextWindowAuto}
