@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { deserialize } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
-	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
+	import ErrorPopup from '$lib/components/notifications/ErrorPopup.svelte';
 	import { page } from '$app/stores';
 
 	let errorPopup: ErrorPopup;

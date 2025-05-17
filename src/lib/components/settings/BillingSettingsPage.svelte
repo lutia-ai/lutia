@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { darkMode } from '$lib/stores.ts';
 	import { deserialize } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
 	import {
@@ -13,7 +12,7 @@
 	import { env } from '$env/dynamic/public';
 	import Topup from '$lib/components/icons/Topup.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
-	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
+	import ErrorPopup from '$lib/components/notifications/ErrorPopup.svelte';
 	import Update from '$lib/components/icons/Update.svelte';
 	import CreditCard from '$lib/components/icons/CreditCard.svelte';
 	import BinIcon from '$lib/components/icons/BinIcon.svelte';
