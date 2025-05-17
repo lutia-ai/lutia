@@ -31,13 +31,13 @@ describe('ErrorPopup Component', () => {
         expect(visible).toBe(false);
     });
 
-    // Test showError method
-    it('should set visible to true when showError is called with a message', () => {
+    // Test setVisibility method
+    it('should set visible to true when setVisibility is called with a message', () => {
         const { component } = render(ErrorPopup);
         
-        // Get the showError method and call it
-        const instance = component as unknown as { showError: Function };
-        instance.showError('Test error message');
+        // Get the setVisibility method and call it
+        const instance = component as unknown as { setVisibility: Function };
+        instance.setVisibility('Test error message');
         
         // Access internal state 
         const visible = (component as any).$$.ctx.find((v: any) => typeof v === 'boolean');
@@ -49,12 +49,12 @@ describe('ErrorPopup Component', () => {
     });
 
     // Test rendering with submessage
-    it('should update subMessage when provided to showError', () => {
+    it('should update subMessage when provided to setVisibility', () => {
         const { component } = render(ErrorPopup);
         
-        // Get the showError method and call it with a submessage
-        const instance = component as unknown as { showError: Function };
-        instance.showError('Main error', 'Additional details');
+        // Get the setVisibility method and call it with a submessage
+        const instance = component as unknown as { setVisibility: Function };
+        instance.setVisibility('Main error', 'Additional details');
         
         // Check subMessage update
         const ctx = (component as any).$$.ctx;
@@ -66,9 +66,9 @@ describe('ErrorPopup Component', () => {
     it('should update color when specified as success', () => {
         const { component } = render(ErrorPopup);
         
-        // Get the showError method and call it with success color
-        const instance = component as unknown as { showError: Function };
-        instance.showError('Success message', null, 5000, 'success');
+        // Get the setVisibility method and call it with success color
+        const instance = component as unknown as { setVisibility: Function };
+        instance.setVisibility('Success message', null, 5000, 'success');
         
         // Check color update
         const ctx = (component as any).$$.ctx;
@@ -80,9 +80,9 @@ describe('ErrorPopup Component', () => {
     it('should use error color by default', () => {
         const { component } = render(ErrorPopup);
         
-        // Get the showError method and call it
-        const instance = component as unknown as { showError: Function };
-        instance.showError('Error message');
+        // Get the setVisibility method and call it
+        const instance = component as unknown as { setVisibility: Function };
+        instance.setVisibility('Error message');
         
         // Check color update
         const ctx = (component as any).$$.ctx;
@@ -94,9 +94,9 @@ describe('ErrorPopup Component', () => {
     it('should set visible to false after specified duration', async () => {
         const { component } = render(ErrorPopup);
         
-        // Call showError with a duration
-        const instance = component as unknown as { showError: Function };
-        instance.showError('Temporary message', null, 2000);
+        // Call setVisibility with a duration
+        const instance = component as unknown as { setVisibility: Function };
+        instance.setVisibility('Temporary message', null, 2000);
         
         // Should initially be visible
         let visible = (component as any).$$.ctx.find((v: any) => typeof v === 'boolean');
