@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte'
+	import { onMount, tick } from 'svelte';
 	import 'katex/dist/katex.min.css';
 	import synthMidnightTerminalDark from 'svelte-highlight/styles/synth-midnight-terminal-dark';
 	import atomOneLight from 'svelte-highlight/styles/atom-one-light';
@@ -12,9 +12,7 @@
 		darkMode,
 		isDragging
 	} from '$lib/stores.ts';
-	import type {
-		SerializedApiRequest,
-	} from '$lib/types/types.js';
+	import type { SerializedApiRequest } from '$lib/types/types.js';
 	import { modelDictionary } from '$lib/models/modelDictionary';
 	import ErrorPopup from '$lib/components/notifications/ErrorPopup.svelte';
 	import NotificationPopup from '$lib/components/notifications/NotificationPopup.svelte';
@@ -22,17 +20,20 @@
 	import FileViewer from '$lib/components/FileViewer.svelte';
 	import {
 		handleKeyboardShortcut,
-		loadChatHistory,
+		loadChatHistory
 	} from '$lib/components/chat-history/utils/chatHistory.js';
 	import { page } from '$app/stores';
 	import { fade } from 'svelte/transition';
 	import { afterNavigate } from '$app/navigation';
 	import PromptBar from '$lib/components/prompt-bar/PromptBar.svelte';
 	import ChatHistory from '$lib/components/chat-history/ChatHistory.svelte';
-	import { submitPrompt, scrollLastMessageIntoView } from '$lib/components/prompt-bar/utils/submitPrompt.js';
+	import {
+		submitPrompt,
+		scrollLastMessageIntoView
+	} from '$lib/components/prompt-bar/utils/submitPrompt.js';
 	import { closeAllTabWidths } from '$lib/components/chat-history/utils/codeContainerUtils.js';
 	import { saveUserSettings } from '$lib/components/settings/utils/settingsUtils.js';
-    
+
 	export let data;
 
 	let viewerImage = '';
@@ -74,20 +75,36 @@
 
 	// Refactored to handle submission from PromptBar component
 	async function handleSubmitPrompt(event: CustomEvent): Promise<void> {
-		const { prompt: plainText, images: imageArray, fileAttachments: fileArray, reasoningOn: reasoning } = event.detail;
-		
-        // Scroll to the last message
-        scrollLastMessageIntoView();
+		const {
+			prompt: plainText,
+			images: imageArray,
+			fileAttachments: fileArray,
+			reasoningOn: reasoning
+		} = event.detail;
+
+		// Scroll to the last message
+		scrollLastMessageIntoView();
 		// Use the new submitPrompt function
 		await submitPrompt(
 			plainText,
 			imageArray,
 			fileArray,
 			reasoning,
-			(message, subText, duration, type) => errorPopup.showError(message, subText, duration, type as 'error' | 'success' | undefined),
-			(title, message, duration, type) => notificationPopup.showNotification(title, message, duration, type as 'success' | 'info' | undefined)
+			(message, subText, duration, type) =>
+				errorPopup.showError(
+					message,
+					subText,
+					duration,
+					type as 'error' | 'success' | undefined
+				),
+			(title, message, duration, type) =>
+				notificationPopup.showNotification(
+					title,
+					message,
+					duration,
+					type as 'success' | 'info' | undefined
+				)
 		);
-		
 	}
 
 	// Function to handle notification from PromptBar
@@ -121,7 +138,7 @@
 		const id = $page.params.id;
 		const apiRequests = (await data.apiRequests) as SerializedApiRequest[];
 		chatHistory.set(loadChatHistory(apiRequests));
-		
+
 		// Wait for DOM update after setting chat history
 		await tick();
 
@@ -172,7 +189,7 @@
 		const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
 		const windowHeight = window.innerHeight;
 		const documentHeight = document.documentElement.scrollHeight;
-		
+
 		// Check if we're near the bottom (within 100px)
 		return documentHeight - (currentScrollPosition + windowHeight) < 100;
 	}
@@ -201,15 +218,8 @@
 <ImageViewer src={viewerImage} alt={viewerAlt} bind:show={showImageViewer} />
 <FileViewer content={currentFileContent} filename={currentFileName} bind:show={showFileViewer} />
 
-<div
-	class="main"
-	class:settings-open={$isSettingsOpen}
->
-	<div
-		class="body"
-		class:shifted={$isSidebarOpen}
-		role="region"
-	>
+<div class="main" class:settings-open={$isSettingsOpen}>
+	<div class="body" class:shifted={$isSidebarOpen} role="region">
 		{#await data.apiRequests}
 			{#if !mounted}
 				<div class="loading-container" transition:fade={{ duration: 300 }}>
@@ -218,11 +228,7 @@
 			{/if}
 		{:then}
 			{#if mounted}
-				<ChatHistory
-					openImageViewer={openImageViewer}
-					openFileViewer={openFileViewer}
-					promptBarHeight={promptBarHeight}
-				/>
+				<ChatHistory {openImageViewer} {openFileViewer} {promptBarHeight} />
 			{/if}
 		{:catch error}
 			<p>error loading: {error.message}</p>
@@ -233,7 +239,7 @@
 			on:submit={handleSubmitPrompt}
 			on:viewImage={({ detail }) => openImageViewer(detail.src, detail.alt)}
 			on:viewFile={({ detail }) => openFileViewer(detail.content, detail.filename)}
-			on:resize={(e) => promptBarHeight = e.detail.height}
+			on:resize={(e) => (promptBarHeight = e.detail.height)}
 			on:notification={handleNotification}
 		/>
 	</div>

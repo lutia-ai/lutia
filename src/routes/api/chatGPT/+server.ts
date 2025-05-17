@@ -46,7 +46,7 @@ export async function POST({ request, locals }) {
 			finalUsage
 		} = validatedData;
 
-        // Special handling for image generation models (DALL-E)
+		// Special handling for image generation models (DALL-E)
 		if (model.generatesImages) {
 			return handleImageGeneration(requestBody, user, model, requestId);
 		}

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { roundToTwoSignificantDigits } from '$lib/models/cost-calculators/tokenCounter';
 	import { formatModelEnumToReadable } from '$lib/models/modelUtils';
-	
 
 	export let model: string;
 	export let cost: number;

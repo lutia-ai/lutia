@@ -1,10 +1,15 @@
-import { deserialize } from "$app/forms";
-import { parseMessageContent } from "$lib/components/chat-history/utils/chatHistory";
-import { chatHistory } from "$lib/stores";
-import type { Component, ReasoningComponent, SerializedApiRequest, Message as ChatMessage } from "$lib/types/types";
-import { isLlmChatComponent } from "$lib/types/typeGuards";
-import { ApiProvider } from "@prisma/client";
-import type { ActionResult } from "@sveltejs/kit";
+import { deserialize } from '$app/forms';
+import { parseMessageContent } from '$lib/components/chat-history/utils/chatHistory';
+import { chatHistory } from '$lib/stores';
+import type {
+	Component,
+	ReasoningComponent,
+	SerializedApiRequest,
+	Message as ChatMessage
+} from '$lib/types/types';
+import { isLlmChatComponent } from '$lib/types/typeGuards';
+import { ApiProvider } from '@prisma/client';
+import type { ActionResult } from '@sveltejs/kit';
 
 export async function regenerateMessage(messageId: number) {
 	let originalComponent: Component[] = [];

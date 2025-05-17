@@ -103,24 +103,24 @@ export async function deleteAllUserMessagesWithoutAConversation(userId: number):
  */
 export async function updateMessage(
 	id: number,
-	updatedData: Partial<Omit<Message, 'id' | 'pictures' | 'files'>> & { 
+	updatedData: Partial<Omit<Message, 'id' | 'pictures' | 'files'>> & {
 		pictures?: Image[];
-		files?: any;  
+		files?: any;
 	}
 ): Promise<Message> {
 	try {
 		// Create a new object with processed data for Prisma
 		const processedData: any = { ...updatedData };
-		
+
 		// Handle JSON fields explicitly
 		if (updatedData.pictures !== undefined) {
 			processedData.pictures = updatedData.pictures;
 		}
-		
+
 		if (updatedData.files !== undefined) {
 			processedData.files = updatedData.files;
 		}
-		
+
 		const updatedMessage = await prisma.message.update({
 			where: { id },
 			data: processedData
