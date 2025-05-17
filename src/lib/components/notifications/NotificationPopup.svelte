@@ -3,7 +3,7 @@
 	import { onDestroy } from 'svelte';
 	import CheckIcon from '$lib/components/icons/TickIcon.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
-	import InfoIcon from './icons/InfoIcon.svelte';
+	import InfoIcon from '../icons/InfoIcon.svelte';
 
 	export let show = false;
 	export let message = '';

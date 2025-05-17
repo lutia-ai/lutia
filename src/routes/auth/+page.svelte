@@ -12,7 +12,7 @@
 	import GoogleIcon from '$lib/components/icons/GoogleBareIcon.svelte';
 	import { deserialize } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
-	import ErrorPopup from '$lib/components/ErrorPopup.svelte';
+	import ErrorPopup from '$lib/components/notifications/ErrorPopup.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import { goto } from '$app/navigation';
