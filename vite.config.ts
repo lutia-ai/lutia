@@ -23,7 +23,19 @@ const config: UserConfig = {
 		// Coverage configuration
 		coverage: {
 			reporter: ['text', 'json', 'html'],
-			exclude: ['src/__tests__/setupTest.ts']
+			exclude: [
+				'src/__tests__/**',
+				'src/**/*.d.ts',
+				'src/**/*.test.ts',
+				'src/**/*.spec.ts',
+				'src/**/*.test.svelte',
+				'src/**/*.spec.svelte',
+				'**/node_modules/**',
+				'**/dist/**',
+				'**/.svelte-kit/**',
+				'**/build/**'
+			],
+			include: ['src/**/*.{js,ts,svelte}']
 		}
 	}
 };
