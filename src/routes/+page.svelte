@@ -11,7 +11,10 @@
 	import DropdownIcon from '$lib/components/icons/DropdownIcon.svelte';
 	import CopyIcon from '$lib/components/icons/CopyIcon.svelte';
 	import { marked } from 'marked';
-	import { sanitizeLLmContent, processLinks } from '$lib/components/chat-history/utils/chatHistory';
+	import {
+		sanitizeLLmContent,
+		processLinks
+	} from '$lib/components/chat-history/utils/chatHistory';
 	import { spring } from 'svelte/motion';
 	import viewport from '$lib/utils/userViewportAction';
 	import DemoVideo1 from '$lib/videos/video1.mp4';

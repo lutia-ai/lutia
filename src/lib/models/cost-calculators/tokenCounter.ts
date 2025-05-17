@@ -55,7 +55,6 @@ function countNonLatinCharRatio(text: string): number {
 	return nonLatinCount / totalChars;
 }
 
-
 export function roundToTwoSignificantDigits(num: number): string {
 	if (num === 0) return '0';
 

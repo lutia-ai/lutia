@@ -1,6 +1,6 @@
-import { deserialize } from "$app/forms";
-import type { UserSettings } from "@prisma/client";
-import type { ActionResult } from "@sveltejs/kit";
+import { deserialize } from '$app/forms';
+import type { UserSettings } from '@prisma/client';
+import type { ActionResult } from '@sveltejs/kit';
 
 /**
  * Saves user settings to the server via form submission
