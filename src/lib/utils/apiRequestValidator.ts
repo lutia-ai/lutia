@@ -48,8 +48,6 @@ export interface ValidatedApiRequestData {
 	imageCost: number;
 }
 
-
-
 /**
  * Validates and processes API request data for LLM endpoints
  * @param request The request body parsed as JSON

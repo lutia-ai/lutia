@@ -1,6 +1,6 @@
-import type { Model } from "$lib/types/types";
-import type { ApiModel } from "@prisma/client";
-import { modelDictionary } from "$lib/models/modelDictionary";
+import type { Model } from '$lib/types/types';
+import type { ApiModel } from '@prisma/client';
+import { modelDictionary } from '$lib/models/modelDictionary';
 
 /**
  * Converts a model enum value to a human-readable format

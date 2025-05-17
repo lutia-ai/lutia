@@ -1,5 +1,5 @@
-import type { Model, Image } from "$lib/types/types";
-import { ApiProvider } from "@prisma/client";
+import type { Model, Image } from '$lib/types/types';
+import { ApiProvider } from '@prisma/client';
 
 /**
  * Calculate image cost based on the provider
@@ -26,7 +26,6 @@ export function calculateImageCostByProvider(
 
 	return { cost, tokens };
 }
-
 
 export function calculateGptVisionPricing(
 	width: number,

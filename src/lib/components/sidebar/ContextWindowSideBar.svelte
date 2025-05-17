@@ -3,9 +3,18 @@
 	import Slider from '../Slider.svelte';
 	import { chatHistory, numberPrevMessages, fullPrompt, contextWindowOpen } from '$lib/stores';
 	import { marked } from 'marked';
-	import { sanitizeLLmContent, processLinks } from '$lib/components/chat-history/utils/chatHistory';
+	import {
+		sanitizeLLmContent,
+		processLinks
+	} from '$lib/components/chat-history/utils/chatHistory';
 	import { formatModelEnumToReadable } from '$lib/models/modelUtils';
-	import type { ChatComponent, Attachment, FileAttachment, Image, Message } from '$lib/types/types';
+	import type {
+		ChatComponent,
+		Attachment,
+		FileAttachment,
+		Image,
+		Message
+	} from '$lib/types/types';
 	import {
 		isModelAnthropic,
 		isModelOpenAI,

@@ -317,15 +317,15 @@ export function sanitizeLLmContent(content: string) {
  */
 export function processLinks(html: string | Promise<string>): string | Promise<string> {
 	if (!html) return '';
-	
+
 	if (html instanceof Promise) {
-		return html.then(content => {
+		return html.then((content) => {
 			if (!content) return '';
 			// Add target="_blank" and rel="noopener noreferrer" to all links
 			return content.replace(/<a(.*?)>/g, '<a$1 target="_blank" rel="noopener noreferrer">');
 		});
 	}
-	
+
 	// Add target="_blank" and rel="noopener noreferrer" to all links
 	return html.replace(/<a(.*?)>/g, '<a$1 target="_blank" rel="noopener noreferrer">');
 }
@@ -351,4 +351,3 @@ export function handleKeyboardShortcut(event: KeyboardEvent) {
 		}
 	}
 }
-
