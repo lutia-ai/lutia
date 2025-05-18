@@ -19,12 +19,12 @@ const config: UserConfig = {
 		// Where to find test files
 		include: ['src/**/*.{test,spec}.{js,ts,svelte}'],
 		// Add custom matchers from jest-dom
-		setupFiles: ['./src/__tests__/setupTest.ts'],
+		setupFiles: ['./src/tests/setupTest.ts'],
 		// Coverage configuration
 		coverage: {
 			reporter: ['text', 'json', 'html'],
 			exclude: [
-				'src/__tests__/**',
+				'src/tests/**',
 				'src/**/*.d.ts',
 				'src/**/*.test.ts',
 				'src/**/*.spec.ts',
@@ -38,7 +38,7 @@ const config: UserConfig = {
 			include: ['src/**/*.{js,ts,svelte}']
 		},
 		// Silence console output during tests
-		silent: true,
+		silent: true
 	}
 };
 
