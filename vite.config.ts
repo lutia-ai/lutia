@@ -36,7 +36,9 @@ const config: UserConfig = {
 				'**/build/**'
 			],
 			include: ['src/**/*.{js,ts,svelte}']
-		}
+		},
+		// Silence console output during tests
+		silent: true,
 	}
 };
 
