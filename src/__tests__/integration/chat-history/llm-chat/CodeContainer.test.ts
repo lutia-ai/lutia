@@ -26,16 +26,19 @@ vi.mock('$lib/components/chat-history/utils/codeContainerUtils', () => ({
 // Import after mocks
 import { describe, it, expect, beforeEach } from 'vitest';
 import CodeContainer from '$lib/components/chat-history/llm-chat/CodeContainer.svelte';
-import { copyToClipboard, updateChatHistoryToCopiedState } from '$lib/components/chat-history/utils/copying';
+import {
+	copyToClipboard,
+	updateChatHistoryToCopiedState
+} from '$lib/components/chat-history/utils/copying';
 import { changeTabWidth } from '$lib/components/chat-history/utils/codeContainerUtils';
 
 describe('CodeContainer Component', () => {
 	const mockCode = 'function test() {\n  console.log("hello world");\n}';
 	const mockLanguage = 'javascript';
-	
+
 	beforeEach(() => {
 		vi.clearAllMocks();
-		
+
 		// Mock clipboard API
 		Object.assign(navigator, {
 			clipboard: {
@@ -79,7 +82,7 @@ describe('CodeContainer Component', () => {
 		// Find and click the copy button
 		const copyButton = container.querySelector('.copy-code-container');
 		expect(copyButton).not.toBeNull();
-		
+
 		if (copyButton) {
 			await fireEvent.click(copyButton);
 			expect(copyToClipboard).toHaveBeenCalledWith(mockCode);
@@ -98,7 +101,7 @@ describe('CodeContainer Component', () => {
 
 		const copyButton = container.querySelector('.copy-code-container');
 		expect(copyButton).not.toBeNull();
-		
+
 		if (copyButton) {
 			await fireEvent.click(copyButton);
 			expect(updateChatHistoryToCopiedState).toHaveBeenCalledWith(1, 2);
@@ -115,7 +118,7 @@ describe('CodeContainer Component', () => {
 
 		const copyButton = container.querySelector('.copy-code-container');
 		expect(copyButton).not.toBeNull();
-		
+
 		if (copyButton) {
 			await fireEvent.click(copyButton);
 			expect(container.textContent).toContain('copied');
@@ -134,16 +137,16 @@ describe('CodeContainer Component', () => {
 		// Open tab width dropdown
 		const tabWidthContainer = container.querySelector('.tab-width-container');
 		expect(tabWidthContainer).not.toBeNull();
-		
+
 		if (tabWidthContainer) {
 			await fireEvent.click(tabWidthContainer);
-			
+
 			// Find and click the 2-space tab width option
 			const tabWidthOptions = container.querySelectorAll('.tab-width-open-container div');
 			expect(tabWidthOptions.length).toBeGreaterThan(0);
-			
+
 			await fireEvent.click(tabWidthOptions[0]); // Click on the 2-space option
-			
+
 			expect(changeTabWidth).toHaveBeenCalledWith(mockCode, 2);
 		}
 	});

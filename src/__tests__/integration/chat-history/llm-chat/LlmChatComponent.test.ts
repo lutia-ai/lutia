@@ -11,7 +11,7 @@ vi.mock('$lib/stores', () => {
 			return () => {};
 		}
 	};
-	
+
 	return {
 		chatHistory: writableMock,
 		darkMode: {
@@ -239,7 +239,7 @@ describe('LlmChatComponent Integration Tests', () => {
 			by: 'Claude-3-Opus',
 			text: 'This message has price information',
 			input_cost: 0.05,
-			output_cost: 0.10,
+			output_cost: 0.1,
 			price_open: true,
 			copied: false,
 			loading: false,
@@ -269,7 +269,7 @@ describe('LlmChatComponent Integration Tests', () => {
 			by: 'Claude-3-Opus',
 			text: 'Click the price button',
 			input_cost: 0.05,
-			output_cost: 0.10,
+			output_cost: 0.1,
 			price_open: false,
 			copied: false,
 			loading: false,
@@ -291,11 +291,11 @@ describe('LlmChatComponent Integration Tests', () => {
 
 		// Price information should not be visible initially
 		expect(container.textContent).not.toContain('$0.05');
-		
+
 		// Find and click the price button - using the selector from ChatToolbar.svelte
 		const priceButton = container.querySelector('.toolbar-item:nth-child(2)');
 		expect(priceButton).not.toBeNull();
-		
+
 		if (priceButton) {
 			await fireEvent.click(priceButton);
 			// Price information should be visible after clicking
