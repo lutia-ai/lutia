@@ -91,8 +91,12 @@ export async function submitPrompt(
  * Prepares the conversation by setting the conversation ID from URL if needed
  */
 function prepareConversation(): void {
-	// Get conversationId from slug parameter if not set
-	if (!get(conversationId) || get(conversationId) === 'new') {
+	// If we're on the /chat/new route, always clear the conversationId
+	if (get(page).params.id === 'new') {
+		conversationId.set('new');
+	}
+	// Otherwise, set conversationId from slug parameter if not already set
+	else if (!get(conversationId) || get(conversationId) === 'new') {
 		conversationId.set(get(page).params.id);
 	}
 }
