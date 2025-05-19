@@ -1,6 +1,6 @@
 <script context="module" lang="ts">
 	import { extent, max } from 'd3-array';
-	import { stackOffsetNone, stackOffsetExpand } from 'd3-shape';
+	import { stackOffsetNone } from 'd3-shape';
 
 	import Rect from '$lib/components/barchart/Rect.svelte';
 
@@ -131,7 +131,7 @@
 
 <!-- TODO: Pass in top-level groupKey (or slice off of groupKeys) instead of using year directly -->
 <g class="column-group">
-	{#each chartData as item, i (`${item.data.date}-${item.key}`)}
+	{#each chartData as item}
 		<Rect
 			class="group-rect"
 			fill={$rGet(item.key)}

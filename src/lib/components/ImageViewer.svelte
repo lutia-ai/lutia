@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade, scale } from 'svelte/transition';
-	import { onMount, onDestroy } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { bodyScrollLocked } from '$lib/stores';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import DownloadIcon from '$lib/components/icons/DownloadIcon.svelte';

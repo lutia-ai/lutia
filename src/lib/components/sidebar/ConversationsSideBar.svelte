@@ -320,7 +320,7 @@
 								{#if activeMenuId === conversation.id}
 									<div class="dropdown-menu">
 										<button
-											on:click={(e) => {
+											on:click={() => {
 												newTitle = conversation.title;
 												editingConversation = conversation;
 												// The input won't exist yet in this tick, so we use setTimeout

@@ -13,7 +13,6 @@
 	};
 
 	let buttonActive = true;
-	let isLoading = false;
 
 	$: {
 		const errorParam = $page.url.searchParams.get('error');
@@ -34,7 +33,6 @@
 	// Function to register a new user
 	async function resetPassword() {
 		buttonActive = false;
-		isLoading = true;
 		document.body.style.cursor = 'wait';
 		const data = new FormData();
 		data.append('email', formData.email);
@@ -46,7 +44,6 @@
 
 		const result: ActionResult = deserialize(await response.text());
 		document.body.style.cursor = 'default';
-		isLoading = false;
 
 		if (result.type === 'success' && result.data) {
 			errorPopup.showError('Email sent successfully', null, 5000, 'success');

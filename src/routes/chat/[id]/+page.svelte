@@ -135,7 +135,6 @@
 				errorPopup.showError(message, null, 5000, 'success');
 			}
 		}
-		const id = $page.params.id;
 		const apiRequests = (await data.apiRequests) as SerializedApiRequest[];
 		chatHistory.set(loadChatHistory(apiRequests));
 

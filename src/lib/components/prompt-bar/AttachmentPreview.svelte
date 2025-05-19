@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import type { FileAttachment, Image } from '$lib/types/types';
-	import { getFileIcon } from '$lib/utils/fileHandling';
 	import ImageThumbnail from '$lib/components/prompt-bar/ImageThumbnail.svelte';
 	import FilePreview from '$lib/components/prompt-bar/FilePreview.svelte';
 	import { isDragging } from '$lib/stores';
@@ -106,7 +105,6 @@
 					{#each fileAttachments as file, index}
 						<FilePreview
 							name={file.filename}
-							size={file.size}
 							fileExtension={file.file_extension}
 							on:click={() => handleViewFile(file.data, file.filename)}
 							on:remove={() => handleRemoveFile(index)}

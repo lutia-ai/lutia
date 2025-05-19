@@ -27,8 +27,6 @@
 	let videoSwitch = 1;
 	let demoVideo = DemoVideo1;
 
-	let getStartedHovering = false;
-
 	$: if (videoSwitch) {
 		switch (videoSwitch) {
 			case 1:
@@ -642,8 +640,6 @@ Okay, how about a quick and easy One-Pan Lemon Herb Roasted Chicken and Veggies?
 			<div class="filling-border animated-background">
 				<a
 					class="filling-button"
-					on:mouseenter={() => (getStartedHovering = true)}
-					on:mouseleave={() => (getStartedHovering = false)}
 					style="
                     width: max-content; 
                     margin: 0 auto;

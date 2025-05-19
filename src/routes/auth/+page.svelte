@@ -18,7 +18,6 @@
 	import { goto } from '$app/navigation';
 	import EyeIcon from '$lib/components/icons/EyeIcon.svelte';
 	import EyeOffIcon from '$lib/components/icons/EyeOffIcon.svelte';
-	import { onMount } from 'svelte';
 
 	$: {
 		const errorParam = $page.url.searchParams.get('error');
@@ -30,7 +29,7 @@
 					"If you'd like to link your Google account, please sign in with your password first and then link your account in settings.";
 				errorPopup.showError(errorMessage, subMessage, 7000);
 			} else if (errorParam === 'CredentialsSignin' && codeParam?.startsWith('unverified_')) {
-				const [prefix, email] = codeParam.split('_', 2);
+				const [, email] = codeParam.split('_', 2);
 				verifyEmail = email;
 				const errorMessage = 'Please verify your email';
 				showVerifyEmail = true;
@@ -421,7 +420,7 @@
 				your registration.
 			</p>
 			<div class="email-token-container">
-				{#each emailTokenArray as number, index}
+				{#each emailTokenArray as _, index}
 					<input
 						class="input-box"
 						id="input-{index}"

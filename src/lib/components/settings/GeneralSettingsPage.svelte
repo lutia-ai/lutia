@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { deserialize } from '$app/forms';
 	import { signIn } from '@auth/sveltekit/client';
-	import { darkMode, isSettingsOpen, numberPrevMessages } from '$lib/stores.ts';
+	import { darkMode, isSettingsOpen } from '$lib/stores.ts';
 	import { get } from 'svelte/store';
 	import { signOut } from '@auth/sveltekit/client';
 
@@ -53,11 +52,6 @@
 	// Handles the toggle event from the Switch component.
 	function handleToggle(event: CustomEvent) {
 		toggleDarkMode(event.detail.on);
-	}
-
-	// handles the save user settings from the slider change
-	function handleSaveSettings() {
-		saveUserSettings(user.user_settings!);
 	}
 
 	async function linkGoogle() {

@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { getFileIconColor } from '$lib/utils/fileHandling';
 	import { createEventDispatcher } from 'svelte';
-	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
 	import { getFileIcon } from '$lib/utils/fileHandling';
 
 	// Props
 	export let name: string;
-	export let size: number;
 	export let fileExtension: string;
 
 	// Event dispatcher
@@ -14,9 +12,6 @@
 		click: void;
 		remove: void;
 	}>();
-
-	// Computed
-	$: formattedSize = formatFileSize(size);
 
 	// Event handlers
 	function handleClick() {
@@ -26,17 +21,6 @@
 	function handleRemove(event: Event) {
 		event.stopPropagation();
 		dispatch('remove');
-	}
-
-	// Utilities
-	function formatFileSize(bytes: number): string {
-		if (bytes === 0) return '0 Bytes';
-
-		const k = 1024;
-		const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-		return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 	}
 </script>
 

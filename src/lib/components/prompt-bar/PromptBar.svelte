@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import { type ApiProvider } from '@prisma/client';
-	import type { FileAttachment, Image, Message, Model, UserWithSettings } from '$lib/types/types';
+	import type { FileAttachment, Image, Model, UserWithSettings } from '$lib/types/types';
 	import {
 		chatHistory,
 		numberPrevMessages,

@@ -3,7 +3,6 @@
 	import { onDestroy } from 'svelte';
 	import { bodyScrollLocked, darkMode } from '$lib/stores';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';
-	import DownloadIcon from '$lib/components/icons/DownloadIcon.svelte';
 	import { HighlightAuto, LineNumbers } from 'svelte-highlight';
 
 	export let content: string;
@@ -17,17 +16,17 @@
 	}
 
 	// Function to download the file content
-	function downloadFile() {
-		const blob = new Blob([content], { type: 'text/plain' });
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = filename;
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-		URL.revokeObjectURL(url);
-	}
+	// function downloadFile() {
+	// 	const blob = new Blob([content], { type: 'text/plain' });
+	// 	const url = URL.createObjectURL(blob);
+	// 	const link = document.createElement('a');
+	// 	link.href = url;
+	// 	link.download = filename;
+	// 	document.body.appendChild(link);
+	// 	link.click();
+	// 	document.body.removeChild(link);
+	// 	URL.revokeObjectURL(url);
+	// }
 
 	// Close on escape key
 	function handleKeydown(event: KeyboardEvent) {

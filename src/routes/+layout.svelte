@@ -9,7 +9,7 @@
 
 	let darkModeOn: boolean = data.colorScheme === 'dark';
 
-	function checkColorScheme(event?: MediaQueryListEvent) {
+	function checkColorScheme() {
 		const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 		darkModeOn = prefersDarkScheme;
 		setColorScheme(prefersDarkScheme);

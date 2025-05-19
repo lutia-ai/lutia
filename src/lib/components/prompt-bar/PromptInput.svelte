@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { scrollCursorIntoView } from '$lib/utils/fileHandling';
 
 	// Props
 	export let prompt: string = '';

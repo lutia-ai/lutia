@@ -98,7 +98,7 @@
 	}
 
 	function processData(inputArray: PartialApiRequest[]): Record<string, UsageObject[]> {
-		const { startDate, endDate } = getCurrentMonthDates();
+		const { endDate } = getCurrentMonthDates();
 		const daysInMonth = endDate.getDate();
 
 		// Initialize the result object with empty arrays for each day

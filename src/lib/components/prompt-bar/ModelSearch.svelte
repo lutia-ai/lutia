@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { slide } from 'svelte/transition';
 	import { ApiProvider } from '@prisma/client';
 	import type { Model } from '$lib/types/types';
 	import {

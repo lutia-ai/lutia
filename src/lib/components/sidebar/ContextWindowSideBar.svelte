@@ -8,13 +8,7 @@
 		processLinks
 	} from '$lib/components/chat-history/utils/chatHistory';
 	import { formatModelEnumToReadable } from '$lib/models/modelUtils';
-	import type {
-		ChatComponent,
-		Attachment,
-		FileAttachment,
-		Image,
-		Message
-	} from '$lib/types/types';
+	import type { ChatComponent } from '$lib/types/types';
 	import {
 		isModelAnthropic,
 		isModelOpenAI,
@@ -41,13 +35,6 @@
 	let showImageViewer = false;
 	let viewerImage = '';
 	let viewerAlt = '';
-
-	// Function to open image viewer
-	function openImageViewer(src: string, alt: string) {
-		viewerImage = src;
-		viewerAlt = alt;
-		showImageViewer = true;
-	}
 
 	// Function to open the file viewer
 	function openFileViewer(content: string, filename: string) {

@@ -57,19 +57,16 @@
 	// Controls if the context window sidebar button shows.
 	let showContextWindowButton: boolean = user.user_settings?.show_context_window_button ?? true;
 
-	// Indicates whether an animation is currently rotating.
-	let isRotating: boolean = false;
+	// // Check if there are files in the chat history
+	// let hasFiles = false;
 
-	// Check if there are files in the chat history
-	let hasFiles = false;
-
-	// Update hasFiles whenever chat history changes
-	$: {
-		hasFiles = $chatHistory.some(
-			(message) =>
-				'attachments' in message && message.attachments && message.attachments.length > 0
-		);
-	}
+	// // Update hasFiles whenever chat history changes
+	// $: {
+	// 	hasFiles = $chatHistory.some(
+	// 		(message) =>
+	// 			'attachments' in message && message.attachments && message.attachments.length > 0
+	// 	);
+	// }
 
 	// handles if the company menu should be always open or open on hover
 	$: if (user.user_settings || !user.user_settings) {
