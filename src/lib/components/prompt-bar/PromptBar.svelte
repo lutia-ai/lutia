@@ -61,6 +61,8 @@
 	// Event dispatcher
 	const dispatch = createEventDispatcher();
 
+    $: console.log('isContextWindowAuto', $isContextWindowAuto);
+
 	// Reactive statements
 
 	// Generates the fullPrompt and counts input tokens when the prompt changes
@@ -130,13 +132,6 @@
 	// Compute prompt bar wrapper width
 	$: promptBarWrapperWidth =
 		$isSidebarOpen && !$mobileSidebarOpen && $isLargeScreen ? 'calc(100% - 310px)' : '';
-
-	// Set up
-	let mounted = false;
-
-	onMount(() => {
-		mounted = true;
-	});
 
 	// Function to handle input changes (for @ mentions)
 	function handleInput(event: CustomEvent<Event>) {
@@ -356,6 +351,12 @@
 			showModelSearch = true;
 		}
 	}
+
+    // Set up
+	let mounted = false;
+    onMount(() => {
+        mounted = true;
+    });
 </script>
 
 <div
@@ -366,7 +367,8 @@
 	bind:this={promptBarWrapperElement}
 >
 	<div
-		class="prompt-bar {$isContextWindowAuto || user.user_settings?.prompt_pricing_visible ? 'price-visible' : ''}"
+		class="prompt-bar"
+		class:price-visible={$isContextWindowAuto || user.user_settings?.prompt_pricing_visible}
 		bind:this={wrapperElement}
 	>
 		{#if imagePreview.length > 0 || fileAttachments.length > 0 || $isDragging}
