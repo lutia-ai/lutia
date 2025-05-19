@@ -61,7 +61,7 @@
 	// Event dispatcher
 	const dispatch = createEventDispatcher();
 
-    $: console.log('isContextWindowAuto', $isContextWindowAuto);
+	$: console.log('isContextWindowAuto', $isContextWindowAuto);
 
 	// Reactive statements
 
@@ -352,11 +352,11 @@
 		}
 	}
 
-    // Set up
+	// Set up
 	let mounted = false;
-    onMount(() => {
-        mounted = true;
-    });
+	onMount(() => {
+		mounted = true;
+	});
 </script>
 
 <div
