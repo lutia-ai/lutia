@@ -366,8 +366,7 @@
 	bind:this={promptBarWrapperElement}
 >
 	<div
-		class="prompt-bar"
-		class:price-visible={$isContextWindowAuto || user.user_settings?.prompt_pricing_visible}
+		class="prompt-bar {$isContextWindowAuto || user.user_settings?.prompt_pricing_visible ? 'price-visible' : ''}"
 		bind:this={wrapperElement}
 	>
 		{#if imagePreview.length > 0 || fileAttachments.length > 0 || $isDragging}
