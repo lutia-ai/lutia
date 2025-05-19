@@ -480,7 +480,7 @@
 	}
 
 	.price-visible {
-		margin-bottom: 20px;
+		margin-bottom: 20px !important;
 	}
 
 	@media (max-width: 810px) {
