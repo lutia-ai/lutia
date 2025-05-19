@@ -76,10 +76,24 @@ npm install
    Create a `.env` file in the root directory with the following variables:
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/lutia"
-STRIPE_SECRET_KEY="your_stripe_secret_key"
-STRIPE_PUBLISHABLE_KEY="your_stripe_publishable_key"
-# Add other required environment variables
+VITE_OPENAI_API_KEY=sk-openai-example-key-replace-with-your-actual-key
+VITE_ANTHROPIC_API_KEY=sk-ant-example-key-replace-with-your-actual-key
+VITE_GOOGLE_GEMINI_API_KEY=EXAMPLE_GOOGLE_GEMINI_KEY_123456
+VITE_LLAMA_API_KEY=llama-example-key-replace-with-actual
+SECRET_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+SECRET_GOOGLE_CLIENT_SECRET=example-google-client-secret
+SECRET_XAI_API_KEY=example-xai-key-replace-with-actual
+SECRET_DEEPSEEK_API_KEY=example-deepseek-key-replace-with-actual
+SECRET_AUTH=example_auth_secret_at_least_32_chars_long
+SECRET_RECAPTCHA_KEY=6LeXaMpLeReCaPtChaKeY123456
+PUBLIC_RECAPTCHA_KEY=6LeXaMpLeReCaPtChaKeY654321
+SECRET_STRIPE_API_KEY=sk_test_example_stripe_key_replace_with_actual
+PUBLIC_STRIPE_API_KEY=pk_test_example_stripe_key_replace_with_actual
+DATABASE_URL="postgresql://username:password@localhost:5432/lutia_db?schema=public"
+BODY_SIZE_LIMIT=Infinity
+BASE_URL="http://localhost:5173"
+MAILJET_SECRET_KEY=example_mailjet_secret_key_replace_with_actual
+MAILJET_API_KEY=example_mailjet_api_key_replace_with_actual
 ```
 
 4. Set up the database:
