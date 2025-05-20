@@ -368,7 +368,8 @@
 >
 	<div
 		class="prompt-bar"
-		class:price-visible={$isContextWindowAuto || user.user_settings?.prompt_pricing_visible}
+		class:token-counter-visible={$isContextWindowAuto ||
+			user.user_settings?.prompt_pricing_visible}
 		bind:this={wrapperElement}
 	>
 		{#if imagePreview.length > 0 || fileAttachments.length > 0 || $isDragging}
@@ -480,7 +481,7 @@
 		transition: margin 0.3s ease;
 	}
 
-	.price-visible {
+	.token-counter-visible {
 		margin-bottom: 20px !important;
 	}
 
