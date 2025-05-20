@@ -22,6 +22,9 @@ const mockChatHistoryUpdate = vi.hoisted(() =>
 
 const mockGet = vi.hoisted(() => vi.fn());
 
+// Create a mock page object we can reference later
+const mockPage = vi.hoisted(() => ({ subscribe: vi.fn() }));
+
 // Mock calculateImageCostByProvider function
 const mockCalculateImageCostByProvider = vi.hoisted(() =>
 	vi.fn(() => ({
@@ -52,10 +55,7 @@ vi.mock('svelte/store', () => ({
 }));
 
 vi.mock('$app/stores', () => ({
-	page: {
-		subscribe: vi.fn(),
-		params: { id: '12345' }
-	}
+	page: mockPage
 }));
 
 vi.mock('$app/navigation', () => ({
@@ -137,6 +137,7 @@ describe('submitPrompt', () => {
 			if (store === mockStores.conversationId) return '12345';
 			if (store === mockStores.isContextWindowAuto) return false;
 			if (store === mockStores.chatHistory) return mockChatHistoryArray;
+			if (store === mockPage) return { params: { id: '12345' } };
 			return null;
 		});
 
@@ -183,6 +184,9 @@ describe('submitPrompt', () => {
 	});
 
 	it('should handle image generation models differently', async () => {
+		// Clear any previous calls
+		vi.clearAllMocks();
+
 		// Set mock to return an image generation model
 		mockGet.mockImplementation((store) => {
 			if (store === mockStores.chosenModel) return modelDictionary.openAI.models.dalle3;
@@ -191,6 +195,7 @@ describe('submitPrompt', () => {
 			if (store === mockStores.conversationId) return '12345';
 			if (store === mockStores.isContextWindowAuto) return false;
 			if (store === mockStores.chatHistory) return mockChatHistoryArray;
+			if (store === mockPage) return { params: { id: '12345' } };
 			return null;
 		});
 
@@ -207,6 +212,12 @@ describe('submitPrompt', () => {
 			{ by: 'user', text: plainText, attachments: [] },
 			{ by: modelDictionary.openAI.models.dalle3.name, text: '', loading: true }
 		);
+
+		// Make sure fetch is available and configured to resolve
+		global.fetch = vi.fn().mockResolvedValue({
+			...mockResponse,
+			ok: true
+		});
 
 		await submitPrompt(plainText, [], [], false, mockErrorPopup, mockNotification);
 
