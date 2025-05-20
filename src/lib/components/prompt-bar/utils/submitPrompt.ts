@@ -136,36 +136,18 @@ async function makeApiRequest(
 		get(conversationId) && isValidUUID(get(conversationId)!) ? get(conversationId) : undefined;
 
 	// Determine API endpoint
-	let uri: string;
-	switch (get(chosenCompany)) {
-		case 'anthropic':
-			uri = '/api/claude';
-			break;
-		case 'openAI':
-			uri = '/api/chatGPT';
-			break;
-		case 'meta':
-			uri = '/api/llama';
-			break;
-		case 'xAI':
-			uri = '/api/xAI';
-			break;
-		case 'deepSeek':
-			uri = '/api/deepSeek';
-			break;
-		default:
-			uri = '/api/gemini';
-	}
-
+	let uri = '/api/llm';
+	
 	const requestBody: any = {
 		plainTextPrompt: JSON.stringify(plainText),
 		promptStr: JSON.stringify(fullPrompt),
 		modelStr: JSON.stringify(get(chosenModel).name),
 		imagesStr: JSON.stringify(imageArray),
-		filesStr: JSON.stringify(fileArray)
+		filesStr: JSON.stringify(fileArray),
+		provider: get(chosenCompany)
 	};
 
-	// Only add reasoning for Anthropic
+	// Only add reasoning for providers that support it
 	if (get(chosenCompany) === 'anthropic') {
 		requestBody.reasoningOn = reasoning;
 	}
@@ -175,6 +157,15 @@ async function makeApiRequest(
 		requestBody.conversationId = validConversationId;
 	}
 
+	console.log(`[Submit Prompt] Sending request to ${uri}`, {
+		company: get(chosenCompany),
+		model: get(chosenModel).name,
+		hasImages: imageArray.length > 0,
+		hasFiles: fileArray.length > 0,
+		conversationId: validConversationId,
+		reasoning: reasoning
+	});
+
 	const response = await fetch(uri, {
 		method: 'POST',
 		headers: {
@@ -182,11 +173,14 @@ async function makeApiRequest(
 		},
 		body: JSON.stringify(requestBody)
 	});
+	
+	console.log(`[Submit Prompt] Response status: ${response.status}`);
 
 	if (!response.ok) {
 		const errorData = await response.clone().json();
 		chatHistory.update((history) => history.slice(0, -2));
 
+		console.error(`[Submit Prompt] Error response:`, errorData);
 		if (errorData.message === 'Insufficient balance') {
 			throw new Error("Spending can't go below $0.10");
 		}

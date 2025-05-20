@@ -55,26 +55,7 @@ export async function regenerateMessage(messageId: number) {
 			throw new Error('Failed to fetch Api request with message data');
 		}
 
-		let uri: string;
-		switch (apiRequestWithMessage.apiProvider) {
-			case ApiProvider.anthropic:
-				uri = '/api/claude';
-				break;
-			case ApiProvider.openAI:
-				uri = '/api/chatGPT';
-				break;
-			case ApiProvider.meta:
-				uri = '/api/llama';
-				break;
-			case ApiProvider.xAI:
-				uri = '/api/xAI';
-				break;
-			case ApiProvider.deepSeek:
-				uri = '/api/deepSeek';
-				break;
-			default:
-				uri = '/api/gemini';
-		}
+		let uri = '/api/llm';
 
 		const reasoningOn = apiRequestWithMessage.message?.reasoning ? true : false;
 		// UUID validation function
@@ -142,6 +123,7 @@ export async function regenerateMessage(messageId: number) {
 				promptStr: JSON.stringify(fullPrompt),
 				modelStr: JSON.stringify(apiRequestWithMessage.apiModel),
 				imagesStr: JSON.stringify(apiRequestWithMessage.message?.pictures),
+				provider: apiRequestWithMessage.apiProvider,
 				...(apiRequestWithMessage.apiProvider === ApiProvider.anthropic
 					? { reasoningOn }
 					: {}),
