@@ -151,7 +151,7 @@ export async function regenerateMessage(messageId: number) {
 		});
 
 		if (!streamResponse.ok) {
-			const errorData = await response.clone().json();
+			const errorData = await streamResponse.clone().json();
 			// Clone the response so that we can safely read it as JSON
 			if (errorData.message === 'Insufficient balance') {
 				// errorPopup.showError(
