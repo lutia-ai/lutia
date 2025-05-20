@@ -186,7 +186,7 @@ describe('submitPrompt', () => {
 	it('should handle image generation models differently', async () => {
 		// Clear any previous calls
 		vi.clearAllMocks();
-		
+
 		// Set mock to return an image generation model
 		mockGet.mockImplementation((store) => {
 			if (store === mockStores.chosenModel) return modelDictionary.openAI.models.dalle3;
