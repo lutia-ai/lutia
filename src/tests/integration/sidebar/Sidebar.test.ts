@@ -1,8 +1,10 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, fireEvent } from '@testing-library/svelte';
 import type { UserWithSettings } from '$lib/types/types';
+import { PaymentTier } from '@prisma/client';
 
 // Define mocks with hoisted to make them available before module imports
 const mocks = vi.hoisted(() => {
@@ -108,16 +110,62 @@ vi.mock('$lib/stores', () => ({
 // Import component after all mocks are set up
 import Sidebar from '$lib/components/sidebar/Sidebar.svelte';
 
+const mockUser: UserWithSettings = {
+        id: 1,
+        name: 'Test User',
+        email: 'test@example.com',
+        password_hash: null,
+        oauth: null,
+        oauth_link_token: null,
+        reset_password_token: null,
+        reset_expiration: null,
+        email_verified: false,
+        email_code: null,
+        payment_tier: PaymentTier.PayAsYouGo,
+        premium_until: null,
+        stripe_id: null,
+        user_settings: {
+                id: 1,
+                user_id: 1,
+                company_menu_open: true,
+                prompt_pricing_visible: true,
+                show_context_window_button: true,
+                context_window: 4000
+        }
+};
+
 describe('Sidebar Component', () => {
-	it('should be defined', () => {
-		expect(Sidebar).toBeDefined();
-	});
+        beforeEach(() => {
+                vi.clearAllMocks();
+                document.body.innerHTML = '';
+                mocks.mockIsContextWindowAuto.set(false);
+        });
 
-	it('should be a constructor function', () => {
-		expect(typeof Sidebar).toBe('function');
-	});
+        afterEach(() => {
+                vi.restoreAllMocks();
+        });
 
-	it('should have a prototype', () => {
-		expect(Sidebar.prototype).toBeDefined();
-	});
+        it('toggles the context window when the button is clicked', async () => {
+                const { getByText } = render(Sidebar, { props: { user: mockUser } });
+
+                const contextButton = getByText('View context window').closest('.settings-icon');
+                await fireEvent.click(contextButton!);
+
+                expect(mocks.mockContextWindowOpen.set).toHaveBeenCalledWith(true);
+                expect(mocks.mockConversationsOpen.set).toHaveBeenCalledWith(false);
+                expect(mocks.mockFilesSidebarOpen.set).toHaveBeenCalledWith(false);
+        });
+
+        it('creates a new chat when clicking the new chat button', async () => {
+                const { getByText } = render(Sidebar, { props: { user: mockUser } });
+
+                const newChatButton = getByText('New chat').closest('.settings-icon');
+                await fireEvent.click(newChatButton!);
+
+                expect(mocks.mockChatHistory.set).toHaveBeenCalledWith([]);
+                expect(mocks.mockConversationId.set).toHaveBeenCalledWith('new');
+                expect(mocks.navigationMocks.goto).toHaveBeenCalledWith('/chat/new', {
+                        replaceState: true
+                });
+        });
 });
