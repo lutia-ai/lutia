@@ -146,7 +146,7 @@ describe('Sidebar Component', () => {
 	});
 
 	it('toggles the context window when the button is clicked', async () => {
-		const { getByText } = render(Sidebar, { props: { user: mockUser } });
+		const { getByText } = render(Sidebar, { props: { user: mockUser, userImage: null } });
 
 		const contextButton = getByText('View context window').closest('.settings-icon');
 		await fireEvent.click(contextButton!);
@@ -157,7 +157,7 @@ describe('Sidebar Component', () => {
 	});
 
 	it('creates a new chat when clicking the new chat button', async () => {
-		const { getByText } = render(Sidebar, { props: { user: mockUser } });
+		const { getByText } = render(Sidebar, { props: { user: mockUser, userImage: null } });
 
 		const newChatButton = getByText('New chat').closest('.settings-icon');
 		await fireEvent.click(newChatButton!);
