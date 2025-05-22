@@ -73,6 +73,34 @@ describe('Image Cost Calculator', () => {
 			expect(result.cost).toBeCloseTo(image1Result.price + image2Result.price);
 			expect(result.tokens).toBe(image1Result.tokens + image2Result.tokens);
 		});
+
+		it('should handle single image object correctly (non-array input)', () => {
+			// This test checks that the function properly handles when a single image is passed directly
+			// instead of in an array, which might happen from incorrectly formatted data
+			const singleImage = testImages[0];
+
+			// Test the function with a non-array input - should not throw error
+			const result = imageCalculator.calculateImageCostByProvider(
+				singleImage as any, // Cast to any to simulate the bug
+				mockModel,
+				ApiProvider.anthropic
+			);
+
+			// The function should still return a valid result
+			expect(result).toHaveProperty('cost');
+			expect(result).toHaveProperty('tokens');
+			expect(result.cost).toBeGreaterThan(0);
+			expect(result.tokens).toBeGreaterThan(0);
+
+			// Should match the cost of that single image
+			const expectedResult = imageCalculator.calculateClaudeImageCost(
+				singleImage.width,
+				singleImage.height,
+				mockModel
+			);
+			expect(result.cost).toBeCloseTo(expectedResult.price);
+			expect(result.tokens).toBe(expectedResult.tokens);
+		});
 	});
 
 	describe('calculateGptVisionPricing', () => {
