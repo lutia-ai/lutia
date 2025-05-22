@@ -22,6 +22,7 @@ export class DeepSeekProvider implements LLMProvider {
 	 * Process messages according to DeepSeek requirements
 	 */
 	processMessages(messages: any[], images: any[], files: any[]) {
+		console.log('[DeepSeek Provider] Processing messages');
 		let processedMessages = [...messages];
 
 		if (images.length > 0) {
@@ -53,9 +54,10 @@ export class DeepSeekProvider implements LLMProvider {
 		reasoningEnabled
 	}: {
 		model: Model;
-		messages: any[];
+		messages: any;
 		reasoningEnabled?: boolean;
 	}) {
+		console.log('[DeepSeek Provider] Creating completion stream');
 		const client = this.initializeClient();
 
 		return await client.chat.completions.create({
@@ -80,8 +82,15 @@ export class DeepSeekProvider implements LLMProvider {
 			onReasoning?: (content: string) => void;
 		}
 	) {
+		// Track if this is the first content chunk
+		const isFirstContentChunk = chunk.choices?.[0]?.index === 0;
 		const content = chunk.choices?.[0]?.delta?.content || '';
 		const reasoningContent = chunk.choices?.[0]?.delta?.reasoning_content || '';
+
+		// Call onFirstChunk for first message chunk
+		if (isFirstContentChunk || (!content && !reasoningContent && !chunk.usage)) {
+			callbacks.onFirstChunk(crypto.randomUUID(), '');
+		}
 
 		if (chunk.usage) {
 			const usage: UsageMetrics = {

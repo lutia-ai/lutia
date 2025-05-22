@@ -12,6 +12,7 @@ export class GeminiProvider implements LLMProvider {
 	private genAIModel: any;
 	private finalContent: string = '';
 	private inputTokens: number = 0;
+	private isFirstContent: boolean = true;
 
 	/**
 	 * Initialize the Gemini client
@@ -81,6 +82,9 @@ export class GeminiProvider implements LLMProvider {
 		const client = this.initializeClient();
 		this.genAIModel = client.getGenerativeModel({ model: model.param });
 
+		// Reset first content flag for each new stream
+		this.isFirstContent = true;
+
 		const { prompt, geminiImage } = messages;
 
 		// Count input tokens
@@ -103,18 +107,88 @@ export class GeminiProvider implements LLMProvider {
 
 		// Generate the stream
 		try {
-			let stream;
+			let streamResponse;
 			if (geminiImage) {
-				stream = await this.genAIModel.generateContentStream([
+				streamResponse = await this.genAIModel.generateContentStream([
 					JSON.stringify(prompt),
 					geminiImage
 				]);
 			} else {
-				stream = await this.genAIModel.generateContentStream(prompt);
+				streamResponse = await this.genAIModel.generateContentStream(prompt);
 			}
-			return stream;
+
+			// Create a normalized async iterator that works the same way regardless
+			// of whether we're using stream.stream or the direct stream
+			return this.normalizeGeminiStream(streamResponse);
 		} catch (err) {
 			console.error('[Gemini Provider] Error creating stream:', err);
+			throw err;
+		}
+	}
+
+	/**
+	 * Normalize the Gemini stream into a standardized async iterator
+	 * This handles differences between Gemini API versions
+	 */
+	private async *normalizeGeminiStream(streamResponse: any): AsyncGenerator<any> {
+		this.finalContent = ''; // Reset for this stream
+
+		try {
+			// Determine which stream property to use
+			const streamIterator = streamResponse.stream ? streamResponse.stream : streamResponse;
+
+			// Track if this is the last chunk
+			let isLastChunk = false;
+
+			// Iterate through the stream
+			for await (const chunk of streamIterator) {
+				// Check if this is the last chunk (some versions set this flag)
+				if (chunk.isLast) {
+					isLastChunk = true;
+				}
+
+				// Yield the chunk for processing
+				yield chunk;
+
+				// Accumulate content for token counting
+				const candidate = chunk.candidates?.[0];
+				const content = candidate?.content?.parts?.[0]?.text || '';
+				if (content) {
+					this.finalContent += content;
+				}
+			}
+
+			// After the stream ends, yield a final chunk with usage info
+			// This mimics the behavior of other providers like Claude
+			if (this.finalContent) {
+				try {
+					const outputCountResult = await this.genAIModel.countTokens(this.finalContent);
+					const outputTokens = outputCountResult.totalTokens;
+
+					// Create a synthetic "final" chunk with token usage
+					yield {
+						isLast: true,
+						usage: {
+							input_tokens: this.inputTokens,
+							output_tokens: outputTokens,
+							total_tokens: this.inputTokens + outputTokens
+						}
+					};
+				} catch (err) {
+					console.error('[Gemini Provider] Error counting output tokens:', err);
+					// Still provide a chunk with whatever token info we have
+					yield {
+						isLast: true,
+						usage: {
+							input_tokens: this.inputTokens,
+							output_tokens: 0,
+							total_tokens: this.inputTokens
+						}
+					};
+				}
+			}
+		} catch (err) {
+			console.error('[Gemini Provider] Error in normalized stream:', err);
 			throw err;
 		}
 	}
@@ -136,37 +210,34 @@ export class GeminiProvider implements LLMProvider {
 			const candidate = chunk.candidates?.[0];
 			const content = candidate?.content?.parts?.[0]?.text || '';
 
+			// Call onFirstChunk with the first chunk that has content
+			if (this.isFirstContent) {
+				this.isFirstContent = false;
+				callbacks.onFirstChunk(crypto.randomUUID(), '');
+				console.log('[Gemini Provider] First chunk sent');
+			}
+
 			if (content) {
-				this.finalContent += content;
 				callbacks.onContent(content);
 			}
 
-			// If this is the end of the stream (final chunk), calculate token usage
-			if (chunk.isLast) {
-				// We need to count output tokens at the end
-				this.genAIModel.countTokens(this.finalContent).then((outputCountResult: any) => {
-					const usage: UsageMetrics = {
-						prompt_tokens: this.inputTokens,
-						completion_tokens: outputCountResult.totalTokens,
-						total_tokens: this.inputTokens + outputCountResult.totalTokens
-					};
-					callbacks.onUsage(usage, {
-						input_price: 0.00000125,
-						output_price: 0.00000375
-					});
+			// If this is the end of the stream (final chunk with usage), report usage
+			if (chunk.isLast && chunk.usage) {
+				const usage: UsageMetrics = {
+					prompt_tokens: chunk.usage.input_tokens || this.inputTokens,
+					completion_tokens: chunk.usage.output_tokens || 0,
+					total_tokens: chunk.usage.total_tokens || this.inputTokens
+				};
+
+				callbacks.onUsage(usage, {
+					input_price: 0.00000125,
+					output_price: 0.00000375
 				});
 
-				// Reset for next use
-				this.finalContent = '';
+				console.log('[Gemini Provider] Final usage reported:', usage);
 			}
 		} catch (err) {
 			console.error('[Gemini Provider] Error handling chunk:', err);
-		}
-
-		// For Gemini, we need to generate a first chunk notification
-		// since it doesn't have a specific "start" event
-		if (!this.finalContent) {
-			callbacks.onFirstChunk(crypto.randomUUID(), '');
 		}
 	}
 }

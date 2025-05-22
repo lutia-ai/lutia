@@ -9,6 +9,10 @@ import { addFilesToMessage } from '$lib/utils/fileHandling';
  * Implementation of LLMProvider for Anthropic/Claude
  */
 export class ClaudeProvider implements LLMProvider {
+	// Track tokens for proper cost calculation
+	private inputTokens: number = 0;
+	private outputTokens: number = 0;
+
 	/**
 	 * Initialize the Anthropic client
 	 */
@@ -69,6 +73,10 @@ export class ClaudeProvider implements LLMProvider {
 		const systemMessage = hasSystemMessage ? messages[0].content : undefined;
 		const messageContent = hasSystemMessage ? messages.slice(1) : messages;
 
+		// Reset token counters for this stream
+		this.inputTokens = 0;
+		this.outputTokens = 0;
+
 		return await client.messages.stream({
 			...(systemMessage ? { system: systemMessage } : {}),
 			messages: messageContent,
@@ -101,22 +109,30 @@ export class ClaudeProvider implements LLMProvider {
 
 		if (chunk.type === 'message_start') {
 			console.log('[Claude Provider] Message start event', chunk.message.usage);
+			// Store input tokens when we first get them
+			this.inputTokens = chunk.message.usage.input_tokens || 0;
+
 			const usage: UsageMetrics = {
-				prompt_tokens: chunk.message.usage.input_tokens,
-				completion_tokens: 0,
-				total_tokens: chunk.message.usage.input_tokens
+				prompt_tokens: this.inputTokens,
+				completion_tokens: this.outputTokens,
+				total_tokens: this.inputTokens + this.outputTokens
 			};
+
 			callbacks.onUsage(usage, {
 				input_price: 0.000033,
 				output_price: 0.000132
 			});
 		} else if (chunk.type === 'message_delta') {
 			console.log('[Claude Provider] Message delta event', chunk.usage);
+			// Update output tokens as they come in
+			this.outputTokens = chunk.usage.output_tokens || 0;
+
 			const usage: UsageMetrics = {
-				prompt_tokens: chunk.usage.input_tokens,
-				completion_tokens: chunk.usage.output_tokens,
-				total_tokens: chunk.usage.input_tokens + chunk.usage.output_tokens
+				prompt_tokens: this.inputTokens,
+				completion_tokens: this.outputTokens,
+				total_tokens: this.inputTokens + this.outputTokens
 			};
+
 			callbacks.onUsage(usage, {
 				input_price: 0.000033,
 				output_price: 0.000132

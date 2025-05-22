@@ -46,21 +46,37 @@ export async function finalizeResponse({
 		const thinkingResponse = thinkingChunks.join('');
 		const response = chunks.join('');
 
-		// Calculate tokens and costs
-		const inputTokens = finalUsage.prompt_tokens;
-		let outputTokens = finalUsage.completion_tokens;
+		// Calculate tokens and costs, ensuring we have valid numbers
+		const inputTokens = finalUsage.prompt_tokens || 0;
+		let outputTokens = finalUsage.completion_tokens || 0;
 
 		if (!outputTokens) {
 			outputTokens = estimateTokenCount(response + thinkingResponse);
 		}
 
-		const inputCost = (inputTokens * model.input_price) / 1000000;
-		const outputCost = (outputTokens * model.output_price) / 1000000;
+		// Ensure we have valid numeric values for calculations
+		const safeInputTokens = isNaN(inputTokens) ? 0 : inputTokens;
+		const safeOutputTokens = isNaN(outputTokens) ? 0 : outputTokens;
+
+		// Calculate costs with safe values
+		const inputCost = (safeInputTokens * model.input_price) / 1000000;
+		const outputCost = (safeOutputTokens * model.output_price) / 1000000;
 		const totalCost = inputCost + outputCost;
 
-		// Apply charges
-		if (user.payment_tier === PaymentTier.PayAsYouGo) {
-			await updateUserBalanceWithDeduction(user.id, totalCost);
+		// Ensure the cost is a valid number before updating balance
+		const safeTotalCost = isNaN(totalCost) ? 0 : totalCost;
+
+		console.log('[Response Finalizer] Cost calculation:', {
+			inputTokens: safeInputTokens,
+			outputTokens: safeOutputTokens,
+			inputCost,
+			outputCost,
+			totalCost: safeTotalCost
+		});
+
+		// Apply charges only if there's a valid cost amount
+		if (user.payment_tier === PaymentTier.PayAsYouGo && safeTotalCost > 0) {
+			await updateUserBalanceWithDeduction(user.id, safeTotalCost);
 		}
 
 		// Determine status
@@ -84,11 +100,11 @@ export async function finalizeResponse({
 				userId: user.id,
 				apiProvider: apiProvider,
 				apiModel: model.name,
-				inputTokens: inputTokens,
+				inputTokens: safeInputTokens,
 				inputCost: inputCost,
-				outputTokens: outputTokens,
+				outputTokens: safeOutputTokens,
 				outputCost: outputCost,
-				totalCost: totalCost,
+				totalCost: safeTotalCost,
 				requestId: requestId,
 				status: status,
 				conversationId: messageConversationId,
@@ -147,21 +163,37 @@ export async function updateExistingMessageAndRequest({
 		const thinkingResponse = thinkingChunks.join('');
 		const response = chunks.join('');
 
-		// Calculate tokens and costs for the new response
-		const inputTokens = finalUsage.prompt_tokens;
-		let outputTokens = finalUsage.completion_tokens;
+		// Calculate tokens and costs for the new response with safe values
+		const inputTokens = finalUsage.prompt_tokens || 0;
+		let outputTokens = finalUsage.completion_tokens || 0;
 
 		if (!outputTokens) {
 			outputTokens = estimateTokenCount(response + thinkingResponse);
 		}
 
-		const inputCost = (inputTokens * model.input_price) / 1000000;
-		const outputCost = (outputTokens * model.output_price) / 1000000;
+		// Ensure we have valid numeric values for calculations
+		const safeInputTokens = isNaN(inputTokens) ? 0 : inputTokens;
+		const safeOutputTokens = isNaN(outputTokens) ? 0 : outputTokens;
+
+		// Calculate costs with safe values
+		const inputCost = (safeInputTokens * model.input_price) / 1000000;
+		const outputCost = (safeOutputTokens * model.output_price) / 1000000;
 		const totalCost = inputCost + outputCost;
 
-		// Apply charges for the new generation
-		if (user.payment_tier === PaymentTier.PayAsYouGo) {
-			await updateUserBalanceWithDeduction(user.id, totalCost);
+		// Ensure the cost is a valid number before updating balance
+		const safeTotalCost = isNaN(totalCost) ? 0 : totalCost;
+
+		console.log('[Response Finalizer] Regeneration cost calculation:', {
+			inputTokens: safeInputTokens,
+			outputTokens: safeOutputTokens,
+			inputCost,
+			outputCost,
+			totalCost: safeTotalCost
+		});
+
+		// Apply charges for the new generation only if there's a valid cost amount
+		if (user.payment_tier === PaymentTier.PayAsYouGo && safeTotalCost > 0) {
+			await updateUserBalanceWithDeduction(user.id, safeTotalCost);
 		}
 
 		// Determine status
@@ -207,10 +239,10 @@ export async function updateExistingMessageAndRequest({
 			data: {
 				// Use increment operation for numeric fields
 				input_tokens: {
-					increment: inputTokens
+					increment: safeInputTokens
 				},
 				output_tokens: {
-					increment: outputTokens
+					increment: safeOutputTokens
 				},
 				input_cost: {
 					increment: inputCost
@@ -219,7 +251,7 @@ export async function updateExistingMessageAndRequest({
 					increment: outputCost
 				},
 				total_cost: {
-					increment: totalCost
+					increment: safeTotalCost
 				},
 
 				// Regular updates for non-numeric fields

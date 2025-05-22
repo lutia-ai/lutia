@@ -5,7 +5,7 @@ import type { Model } from '$lib/types/types';
 import { addFilesToMessage } from '$lib/utils/fileHandling';
 
 /**
- * Implementation of LLMProvider for OpenAI/ChatGPT
+ * Implementation of LLMProvider for OpenAI
  */
 export class OpenAIProvider implements LLMProvider {
 	/**
@@ -19,27 +19,24 @@ export class OpenAIProvider implements LLMProvider {
 	 * Process messages according to OpenAI requirements
 	 */
 	processMessages(messages: any[], images: any[], files: any[]) {
+		console.log('[OpenAI Provider] Processing messages');
 		let processedMessages = [...messages];
 
 		if (images.length > 0) {
-			// Convert the last message content to GPT-4 Vision format
-			if (typeof processedMessages[processedMessages.length - 1].content === 'string') {
-				const textContent = processedMessages[processedMessages.length - 1]
-					.content as string;
-				const gptImages = images.map((image) => ({
-					type: 'image_url',
-					image_url: {
-						url: image.data,
-						detail: image.detail || 'auto'
-					}
-				}));
+			// Format images for OpenAI
+			const textContent = processedMessages[processedMessages.length - 1].content;
+			const gptImages = images.map((image) => ({
+				type: 'image_url',
+				image_url: {
+					url: image.data
+				}
+			}));
 
-				// Replace the string content with an array of content parts
-				processedMessages[processedMessages.length - 1].content = [
-					{ type: 'text', text: textContent },
-					...gptImages
-				];
-			}
+			// Replace the string content with an array of content parts
+			processedMessages[processedMessages.length - 1].content = [
+				{ type: 'text', text: textContent },
+				...gptImages
+			];
 		}
 
 		if (files.length > 0) processedMessages = addFilesToMessage(processedMessages, files);
@@ -57,19 +54,26 @@ export class OpenAIProvider implements LLMProvider {
 		reasoningEnabled
 	}: {
 		model: Model;
-		messages: any[];
+		messages: any;
 		reasoningEnabled?: boolean;
 	}) {
+		console.log('[OpenAI Provider] Creating completion stream');
 		const client = this.initializeClient();
 
-		return await client.chat.completions.create({
-			model: model.param,
-			messages,
-			stream: true,
-			stream_options: {
-				include_usage: true
-			}
-		});
+		try {
+			return await client.chat.completions.create({
+				model: model.param,
+				...(model.reasons && reasoningEnabled ? { reasoning: true } : {}),
+				messages,
+				stream: true,
+				stream_options: {
+					include_usage: true
+				}
+			});
+		} catch (err) {
+			console.error('[OpenAI Provider] Error creating stream:', err);
+			throw err;
+		}
 	}
 
 	/**
@@ -84,7 +88,15 @@ export class OpenAIProvider implements LLMProvider {
 			onReasoning?: (content: string) => void;
 		}
 	) {
+		// Track if this is the first content chunk
+		const isFirstContentChunk = chunk.choices?.[0]?.index === 0;
 		const content = chunk.choices?.[0]?.delta?.content || '';
+		const reasoningContent = chunk.choices?.[0]?.delta?.reasoning_content || '';
+
+		// Call onFirstChunk for first message chunk
+		if (isFirstContentChunk || (!content && !reasoningContent && !chunk.usage)) {
+			callbacks.onFirstChunk(crypto.randomUUID(), '');
+		}
 
 		if (chunk.usage) {
 			const usage: UsageMetrics = {
@@ -97,6 +109,10 @@ export class OpenAIProvider implements LLMProvider {
 
 		if (content) {
 			callbacks.onContent(content);
+		}
+
+		if (reasoningContent && callbacks.onReasoning) {
+			callbacks.onReasoning(reasoningContent);
 		}
 	}
 }

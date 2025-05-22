@@ -331,7 +331,7 @@ export const modelDictionary: ModelDictionary = {
 		models: {
 			gemini25Pro: {
 				name: 'Gemini_2_5_Pro',
-				param: 'gemini-2.5-pro-exp-03-25',
+				param: 'gemini-2.5-pro-preview-05-06',
 				legacy: false,
 				input_price: 1.25 * 1.1,
 				output_price: 10 * 1.1,

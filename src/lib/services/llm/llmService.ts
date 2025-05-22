@@ -28,6 +28,9 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 	console.log(
 		`[LLM Service] Messages count: ${messages.length}, Images: ${images.length}, Files: ${files.length}`
 	);
+	console.log(
+		`[LLM Service] Conversation ID: ${messageConversationId || 'new'}, Original: ${originalConversationId || 'none'}`
+	);
 
 	// Get the provider for the requested API
 	try {
@@ -90,6 +93,7 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 		return new ReadableStream({
 			async start(controller) {
 				try {
+					// Process each chunk from the provider's normalized stream
 					for await (const chunk of stream) {
 						if (clientDisconnected || abortSignal.aborted) {
 							break;
@@ -101,13 +105,24 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 								if (isFirstChunk) {
 									isFirstChunk = false;
 									try {
-										console.log('[LLM Service] Sending first chunk info');
+										// Only send a conversation ID update for new conversations
+										// If originalConversationId is 'new' or empty, we want to send the new messageConversationId
+										// Otherwise, keep using the existing conversation ID
+										const actualConversationId =
+											!originalConversationId ||
+											originalConversationId === 'new'
+												? messageConversationId
+												: originalConversationId;
+
+										console.log(
+											`[LLM Service] Sending first chunk info with conversation ID: ${actualConversationId}`
+										);
 										controller.enqueue(
 											textEncoder.encode(
 												JSON.stringify({
 													type: 'request_info',
 													request_id: requestId,
-													conversation_id: messageConversationId
+													conversation_id: actualConversationId
 												}) + '\n'
 											)
 										);
