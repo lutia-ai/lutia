@@ -1,9 +1,6 @@
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from '../../$types';
-import {
-	retrieveApiRequestByMessageId,
-	retrieveApiRequestsWithMessage
-} from '$lib/db/crud/apiRequest';
+import { retrieveApiRequestByMessageId } from '$lib/db/crud/apiRequest';
 import { deleteAllUserMessagesWithoutAConversation } from '$lib/db/crud/message';
 import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { retrieveUsersBalance, updateUserBalanceWithIncrement } from '$lib/db/crud/balance';
@@ -15,9 +12,8 @@ import {
 	getUserTransactionHistory
 } from '$lib/services/stripe/stripeFunctions';
 import { updateUserSettings } from '$lib/db/crud/userSettings';
-import { PaymentTier, type Conversation, type User, type UserSettings } from '@prisma/client';
+import { type UserSettings } from '@prisma/client';
 import {
-	retrieveConversationsByUserId,
 	retrieveApiRequestsByConversationId,
 	retrieveConversationById,
 	verifyConversationOwnership,
