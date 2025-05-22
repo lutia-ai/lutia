@@ -3,8 +3,7 @@ name: Tests
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ '**' ]
+  # Removed pull_request trigger to avoid duplication with pull-request.yml
 
 jobs:
   test:

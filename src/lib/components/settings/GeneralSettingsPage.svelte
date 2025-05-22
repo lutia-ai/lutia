@@ -5,7 +5,6 @@
 	import { signOut } from '@auth/sveltekit/client';
 
 	import MoonIcon from '$lib/components/icons/MoonIcon.svelte';
-	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import type { UserWithSettings } from '$lib/types/types';
