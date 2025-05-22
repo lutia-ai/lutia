@@ -280,18 +280,12 @@ describe('XAIProvider', () => {
 
 		provider.handleStreamChunk(usageChunk, mockCallbacks);
 
-		// Should call onUsage with the correct metrics and xAI pricing
-		expect(mockCallbacks.onUsage).toHaveBeenCalledWith(
-			{
-				prompt_tokens: 10,
-				completion_tokens: 20,
-				total_tokens: 30
-			},
-			{
-				input_price: 0.000015,
-				output_price: 0.000075
-			}
-		);
+		// Should call onUsage with the correct metrics
+		expect(mockCallbacks.onUsage).toHaveBeenCalledWith({
+			prompt_tokens: 10,
+			completion_tokens: 20,
+			total_tokens: 30
+		});
 	});
 
 	it('should handle reasoning content correctly', async () => {
@@ -395,17 +389,11 @@ describe('XAIProvider', () => {
 
 		// Should have called onUsage once
 		expect(mockCallbacks.onUsage).toHaveBeenCalledTimes(1);
-		expect(mockCallbacks.onUsage).toHaveBeenCalledWith(
-			{
-				prompt_tokens: 10,
-				completion_tokens: 20,
-				total_tokens: 30
-			},
-			{
-				input_price: 0.000015,
-				output_price: 0.000075
-			}
-		);
+		expect(mockCallbacks.onUsage).toHaveBeenCalledWith({
+			prompt_tokens: 10,
+			completion_tokens: 20,
+			total_tokens: 30
+		});
 	});
 
 	it('should process files correctly', async () => {

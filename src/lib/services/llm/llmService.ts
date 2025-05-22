@@ -6,6 +6,9 @@ import { InsufficientBalanceError } from '$lib/types/customErrors';
 
 /**
  * Process an LLM request with streaming response
+ * @param config Configuration for the LLM request including user, model, messages, etc.
+ * @param requestSignal AbortSignal to handle client disconnection
+ * @returns ReadableStream for streaming the response to the client
  */
 export async function processLLMRequest(config: LLMRequestConfig, requestSignal: AbortSignal) {
 	const {
@@ -115,33 +118,32 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 									}
 								}
 							},
-							onUsage: (usage, modelPrices) => {
+							onUsage: (usage) => {
 								finalUsage.prompt_tokens = usage.prompt_tokens;
 								finalUsage.completion_tokens = usage.completion_tokens;
 								finalUsage.total_tokens = usage.total_tokens;
 
 								try {
-									// Create a model with prices object with defaults for missing properties
-									const modelWithPrices = {
-										// Default fallback prices if none provided
-										...{ input_price: 0.00001, output_price: 0.00005 },
-										// Merge in any prices from the provider
-										...(modelPrices || {})
+									const actualModelPrices = {
+										input_price: model.input_price,
+										output_price: model.output_price
 									};
 
 									// Ensure we have valid numbers
 									const inputPrice = isNaN(
-										finalUsage.prompt_tokens * modelWithPrices.input_price
+										finalUsage.prompt_tokens * actualModelPrices.input_price
 									)
 										? 0
-										: (finalUsage.prompt_tokens * modelWithPrices.input_price) /
+										: (finalUsage.prompt_tokens *
+												actualModelPrices.input_price) /
 											1000000;
 									const outputPrice = isNaN(
-										finalUsage.completion_tokens * modelWithPrices.output_price
+										finalUsage.completion_tokens *
+											actualModelPrices.output_price
 									)
 										? 0
 										: (finalUsage.completion_tokens *
-												modelWithPrices.output_price) /
+												actualModelPrices.output_price) /
 											1000000;
 
 									controller.enqueue(

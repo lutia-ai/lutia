@@ -291,14 +291,11 @@ describe('OpenAIProvider', () => {
 		provider.handleStreamChunk(usageChunk, mockCallbacks);
 
 		// Should call onUsage with the correct metrics
-		expect(mockCallbacks.onUsage).toHaveBeenCalledWith(
-			{
-				prompt_tokens: 10,
-				completion_tokens: 20,
-				total_tokens: 30
-			},
-			'gpt-4'
-		);
+		expect(mockCallbacks.onUsage).toHaveBeenCalledWith({
+			prompt_tokens: 10,
+			completion_tokens: 20,
+			total_tokens: 30
+		});
 	});
 
 	it('should handle reasoning content correctly', async () => {
@@ -406,14 +403,11 @@ describe('OpenAIProvider', () => {
 
 		// Should have called onUsage once
 		expect(mockCallbacks.onUsage).toHaveBeenCalledTimes(1);
-		expect(mockCallbacks.onUsage).toHaveBeenCalledWith(
-			{
-				prompt_tokens: 10,
-				completion_tokens: 20,
-				total_tokens: 30
-			},
-			'gpt-4'
-		);
+		expect(mockCallbacks.onUsage).toHaveBeenCalledWith({
+			prompt_tokens: 10,
+			completion_tokens: 20,
+			total_tokens: 30
+		});
 	});
 
 	it('should process files correctly', async () => {

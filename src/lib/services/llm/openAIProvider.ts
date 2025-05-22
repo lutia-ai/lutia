@@ -81,7 +81,7 @@ export class OpenAIProvider implements LLMProvider {
 		chunk: any,
 		callbacks: {
 			onFirstChunk: (requestId: string, conversationId: string) => void;
-			onUsage: (usage: UsageMetrics, model: Model) => void;
+			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
 		}
@@ -102,7 +102,7 @@ export class OpenAIProvider implements LLMProvider {
 				completion_tokens: chunk.usage.completion_tokens,
 				total_tokens: chunk.usage.total_tokens
 			};
-			callbacks.onUsage(usage, chunk.model);
+			callbacks.onUsage(usage);
 		}
 
 		if (content) {

@@ -88,7 +88,7 @@ export class XAIProvider implements LLMProvider {
 		chunk: any,
 		callbacks: {
 			onFirstChunk: (requestId: string, conversationId: string) => void;
-			onUsage: (usage: UsageMetrics, model: any) => void;
+			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
 		}
@@ -104,10 +104,7 @@ export class XAIProvider implements LLMProvider {
 			};
 
 			// Use a minimal model object with just the price parameters
-			callbacks.onUsage(usage, {
-				input_price: 0.000015,
-				output_price: 0.000075
-			});
+			callbacks.onUsage(usage);
 		}
 
 		if (content) {

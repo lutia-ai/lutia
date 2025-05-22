@@ -242,18 +242,12 @@ describe('LlamaProvider', () => {
 
 		provider.handleStreamChunk(usageChunk, mockCallbacks);
 
-		// Should call onUsage with the correct metrics and Llama pricing
-		expect(mockCallbacks.onUsage).toHaveBeenCalledWith(
-			{
-				prompt_tokens: 10,
-				completion_tokens: 20,
-				total_tokens: 30
-			},
-			{
-				input_price: 0.0000015,
-				output_price: 0.000002
-			}
-		);
+		// Should call onUsage with the correct metrics
+		expect(mockCallbacks.onUsage).toHaveBeenCalledWith({
+			prompt_tokens: 10,
+			completion_tokens: 20,
+			total_tokens: 30
+		});
 	});
 
 	it('should handle empty content chunks', async () => {
@@ -363,17 +357,11 @@ describe('LlamaProvider', () => {
 
 		// Should have called onUsage once
 		expect(mockCallbacks.onUsage).toHaveBeenCalledTimes(1);
-		expect(mockCallbacks.onUsage).toHaveBeenCalledWith(
-			{
-				prompt_tokens: 10,
-				completion_tokens: 20,
-				total_tokens: 30
-			},
-			{
-				input_price: 0.0000015,
-				output_price: 0.000002
-			}
-		);
+		expect(mockCallbacks.onUsage).toHaveBeenCalledWith({
+			prompt_tokens: 10,
+			completion_tokens: 20,
+			total_tokens: 30
+		});
 	});
 
 	it('should process files correctly', async () => {

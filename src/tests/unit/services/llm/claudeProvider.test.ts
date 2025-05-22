@@ -257,17 +257,11 @@ describe('ClaudeProvider', () => {
 		);
 
 		// Should call onUsage with initial token counts
-		expect(mockCallbacks.onUsage).toHaveBeenCalledWith(
-			{
-				prompt_tokens: 50,
-				completion_tokens: 0,
-				total_tokens: 50
-			},
-			{
-				input_price: 0.000033,
-				output_price: 0.000132
-			}
-		);
+		expect(mockCallbacks.onUsage).toHaveBeenCalledWith({
+			prompt_tokens: 50,
+			completion_tokens: 0,
+			total_tokens: 50
+		});
 	});
 
 	it('should handle message_delta chunks correctly', () => {
@@ -299,17 +293,11 @@ describe('ClaudeProvider', () => {
 		provider.handleStreamChunk(deltaChunk, mockCallbacks);
 
 		// Should call onUsage with updated token counts
-		expect(mockCallbacks.onUsage).toHaveBeenCalledWith(
-			{
-				prompt_tokens: 50,
-				completion_tokens: 30,
-				total_tokens: 80
-			},
-			{
-				input_price: 0.000033,
-				output_price: 0.000132
-			}
-		);
+		expect(mockCallbacks.onUsage).toHaveBeenCalledWith({
+			prompt_tokens: 50,
+			completion_tokens: 30,
+			total_tokens: 80
+		});
 	});
 
 	it('should handle content_block_delta with text correctly', () => {

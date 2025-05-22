@@ -191,17 +191,11 @@ describe('GeminiProvider', () => {
 		provider.handleStreamChunk(finalChunk, mockCallbacks);
 
 		// Should call onUsage with the correct metrics
-		expect(mockCallbacks.onUsage).toHaveBeenCalledWith(
-			{
-				prompt_tokens: 10,
-				completion_tokens: 20,
-				total_tokens: 30
-			},
-			{
-				input_price: 0.00000125,
-				output_price: 0.00000375
-			}
-		);
+		expect(mockCallbacks.onUsage).toHaveBeenCalledWith({
+			prompt_tokens: 10,
+			completion_tokens: 20,
+			total_tokens: 30
+		});
 	});
 
 	it('should handle a complete stream lifecycle', async () => {

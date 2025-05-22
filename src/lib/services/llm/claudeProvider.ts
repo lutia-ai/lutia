@@ -100,7 +100,7 @@ export class ClaudeProvider implements LLMProvider {
 		chunk: any,
 		callbacks: {
 			onFirstChunk: (requestId: string, conversationId: string) => void;
-			onUsage: (usage: UsageMetrics, model: any) => void;
+			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
 		}
@@ -115,10 +115,7 @@ export class ClaudeProvider implements LLMProvider {
 				total_tokens: this.inputTokens + this.outputTokens
 			};
 
-			callbacks.onUsage(usage, {
-				input_price: 0.000033,
-				output_price: 0.000132
-			});
+			callbacks.onUsage(usage);
 		} else if (chunk.type === 'message_delta') {
 			// Update output tokens as they come in
 			this.outputTokens = chunk.usage.output_tokens || 0;
@@ -129,10 +126,7 @@ export class ClaudeProvider implements LLMProvider {
 				total_tokens: this.inputTokens + this.outputTokens
 			};
 
-			callbacks.onUsage(usage, {
-				input_price: 0.000033,
-				output_price: 0.000132
-			});
+			callbacks.onUsage(usage);
 		} else if (chunk.type === 'content_block_delta') {
 			if (chunk.delta.type === 'thinking_delta' && callbacks.onReasoning) {
 				const thinkingContent = chunk.delta?.thinking || '';

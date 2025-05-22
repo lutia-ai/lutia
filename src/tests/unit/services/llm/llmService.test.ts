@@ -35,10 +35,7 @@ vi.mock('$lib/services/llm/providerFactory', () => ({
 				if (chunk.type === 'text') {
 					callbacks.onContent(chunk.content);
 				} else if (chunk.type === 'usage') {
-					callbacks.onUsage(chunk.usage, {
-						input_price: 0.00001,
-						output_price: 0.00003
-					});
+					callbacks.onUsage(chunk.usage);
 				}
 				// Call onFirstChunk on first content
 				if (chunk.type === 'text') {
@@ -101,10 +98,7 @@ describe('LLM Service', () => {
 				if (chunk.type === 'text') {
 					callbacks.onContent(chunk.content);
 				} else if (chunk.type === 'usage') {
-					callbacks.onUsage(chunk.usage, {
-						input_price: 0.00001,
-						output_price: 0.00003
-					});
+					callbacks.onUsage(chunk.usage);
 				}
 				// Call onFirstChunk on first content
 				if (chunk.type === 'text') {
@@ -384,10 +378,7 @@ describe('LLM Service', () => {
 				if (chunk.type === 'text') {
 					callbacks.onContent(chunk.content);
 				} else if (chunk.type === 'usage') {
-					callbacks.onUsage(chunk.usage, {
-						input_price: 0.00001,
-						output_price: 0.00003
-					});
+					callbacks.onUsage(chunk.usage);
 				}
 				// Call onFirstChunk with new_conv_123 ID
 				if (chunk.type === 'text') {

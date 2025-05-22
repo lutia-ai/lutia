@@ -87,7 +87,7 @@ export class LlamaProvider implements LLMProvider {
 		chunk: any,
 		callbacks: {
 			onFirstChunk: (requestId: string, conversationId: string) => void;
-			onUsage: (usage: UsageMetrics, model: any) => void;
+			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
 		}
@@ -100,10 +100,7 @@ export class LlamaProvider implements LLMProvider {
 				completion_tokens: chunk.usage.completion_tokens,
 				total_tokens: chunk.usage.total_tokens
 			};
-			callbacks.onUsage(usage, {
-				input_price: 0.0000015, // Adjust based on actual Llama pricing
-				output_price: 0.000002
-			});
+			callbacks.onUsage(usage);
 		}
 
 		if (content) {

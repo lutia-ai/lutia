@@ -197,7 +197,7 @@ export class GeminiProvider implements LLMProvider {
 		chunk: any,
 		callbacks: {
 			onFirstChunk: (requestId: string, conversationId: string) => void;
-			onUsage: (usage: UsageMetrics, model: any) => void;
+			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
 		}
@@ -225,10 +225,7 @@ export class GeminiProvider implements LLMProvider {
 					total_tokens: chunk.usage.total_tokens || this.inputTokens
 				};
 
-				callbacks.onUsage(usage, {
-					input_price: 0.00000125,
-					output_price: 0.00000375
-				});
+				callbacks.onUsage(usage);
 			}
 		} catch (err) {
 			console.error('[Gemini Provider] Error handling chunk:', err);
