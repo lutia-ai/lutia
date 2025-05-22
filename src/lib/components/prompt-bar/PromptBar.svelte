@@ -61,10 +61,6 @@
 	// Event dispatcher
 	const dispatch = createEventDispatcher();
 
-	$: console.log('isContextWindowAuto', $isContextWindowAuto);
-
-	// Reactive statements
-
 	// Generates the fullPrompt and counts input tokens when the prompt changes
 	$: if (
 		prompt ||
@@ -293,12 +289,9 @@
 
 	function handleFileChange(e: CustomEvent<{ target: { files: FileList } }>) {
 		isDragging.set(false);
-		console.log('File change event received in PromptBar', e.detail.target.files);
 		processFileSelect(
 			e.detail,
 			(newPreviews, newAttachments) => {
-				console.log('New previews:', newPreviews);
-				console.log('New attachments:', newAttachments);
 				imagePreview = [...imagePreview, ...newPreviews];
 				fileAttachments = [...fileAttachments, ...newAttachments];
 			},

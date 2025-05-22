@@ -85,8 +85,6 @@ export async function deleteUserCardDetails(customerId: string): Promise<void> {
 
 		// Detach the payment method
 		await stripe.paymentMethods.detach(paymentMethodId);
-
-		console.log(`Payment method ${paymentMethodId} detached from customer ${customerId}.`);
 	} catch (error) {
 		console.error('Error detaching Stripe payment method:', error);
 		throw error;

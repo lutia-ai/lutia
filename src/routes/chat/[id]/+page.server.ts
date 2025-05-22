@@ -127,21 +127,13 @@ export const actions = {
 		const pageSize = Number(formData.get('pageSize')) || 20;
 
 		try {
-			console.log(
-				`Getting conversations for user ID ${userId}, page ${page}, pageSize ${pageSize}`
-			);
 			const user = await retrieveUserByEmail(session.user.email!);
-			console.log(`User payment tier: ${user.payment_tier}`);
 
 			const { conversations, hasMore, total } = await retrieveConversationsByUserIdPaginated(
 				userId,
 				page,
 				pageSize,
 				user.payment_tier
-			);
-
-			console.log(
-				`Retrieved ${conversations.length} conversations, hasMore: ${hasMore}, total: ${total}`
 			);
 
 			return {

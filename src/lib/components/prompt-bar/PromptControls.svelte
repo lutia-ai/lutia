@@ -31,7 +31,6 @@
 		event.preventDefault();
 		const target = event.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
-			console.log('File change event received in PromptControls', target.files);
 			dispatch('fileChange', { target: { files: target.files } });
 			// Reset the input value so the same file can be uploaded again
 			// target.value = '';
@@ -77,7 +76,7 @@
 
 		{#if modelSupportsReasoning || modelExtendedThinking}
 			<button
-				class:selected={reasoningOn}
+				class:selected={reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)}
 				class="reason-button"
 				tabindex="0"
 				on:click={handleToggleReasoning}
@@ -88,7 +87,11 @@
 				}}
 			>
 				<div class="brain-icon">
-					<BrainIcon color={reasoningOn ? '#16a1f9' : 'var(--text-color-light)'} />
+					<BrainIcon
+						color={reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)
+							? '#16a1f9'
+							: 'var(--text-color-light)'}
+					/>
 				</div>
 				<p>Reason</p>
 				<HoverTag
