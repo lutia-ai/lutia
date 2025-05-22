@@ -380,12 +380,15 @@ function updateChatHistory(
  */
 function updateImageCosts(imageArray: any[], currentChatIndex: number): void {
 	let imageCost = 0;
-	let imageTokens = 0;
 
-	for (const image of imageArray) {
-		const imageCalc = calculateImageCostByProvider(image, get(chosenModel), get(chosenCompany));
-		imageCost += imageCalc.cost;
-		imageTokens += imageCalc.tokens;
+	if (imageArray && imageArray.length > 0) {
+		// Calculate costs once for the entire array instead of per image
+		const imageCalc = calculateImageCostByProvider(
+			imageArray,
+			get(chosenModel),
+			get(chosenCompany)
+		);
+		imageCost = imageCalc.cost;
 	}
 
 	chatHistory.update((history) => {

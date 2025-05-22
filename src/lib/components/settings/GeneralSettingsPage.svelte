@@ -5,7 +5,6 @@
 	import { signOut } from '@auth/sveltekit/client';
 
 	import MoonIcon from '$lib/components/icons/MoonIcon.svelte';
-	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import type { UserWithSettings } from '$lib/types/types';
@@ -17,21 +16,12 @@
 
 	let darkModeOn: boolean = get(darkMode);
 	let companyDropdownOpen: boolean = user.user_settings?.company_menu_open ?? true;
-	let promptPricingVisible: boolean = user.user_settings?.prompt_pricing_visible ?? true;
 	let showContextWindowButton: boolean = user.user_settings?.show_context_window_button ?? true;
 
 	$: if (companyDropdownOpen || !companyDropdownOpen) {
 		// makes sure it only runs when there is a change
 		if (user.user_settings!.company_menu_open !== companyDropdownOpen) {
 			user.user_settings!.company_menu_open = companyDropdownOpen;
-			saveUserSettings(user.user_settings!);
-		}
-	}
-
-	$: if (promptPricingVisible || !promptPricingVisible) {
-		// makes sure it only runs when there is a change
-		if (user.user_settings!.prompt_pricing_visible !== promptPricingVisible) {
-			user.user_settings!.prompt_pricing_visible = promptPricingVisible;
 			saveUserSettings(user.user_settings!);
 		}
 	}
@@ -94,27 +84,6 @@
 		<p>Dark mode</p>
 		<div class="switch-wrapper">
 			<Switch bind:on={darkModeOn} on:toggle={handleToggle} />
-		</div>
-	</div>
-	<div
-		class="setting"
-		role="button"
-		tabindex="0"
-		on:click|stopPropagation={() => {
-			promptPricingVisible = !promptPricingVisible;
-		}}
-		on:keydown|stopPropagation={(e) => {
-			if (e.key === 'Enter') {
-				promptPricingVisible = !promptPricingVisible;
-			}
-		}}
-	>
-		<div class="icon-container">
-			<DollarIcon color="var(--text-color-light)" />
-		</div>
-		<p>Prompt pricing</p>
-		<div class="switch-wrapper">
-			<Switch bind:on={promptPricingVisible} />
 		</div>
 	</div>
 	<h4>Sidebar</h4>

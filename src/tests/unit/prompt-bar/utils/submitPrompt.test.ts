@@ -255,9 +255,9 @@ describe('submitPrompt', () => {
 		expect(userMessage?.attachments).toBeDefined();
 		expect(userMessage?.attachments?.length).toBe(1);
 
-		// Verify the calculator was called with the image
+		// Verify the calculator was called with the image array instead of a single image
 		expect(mockCalculateImageCostByProvider).toHaveBeenCalledWith(
-			expect.objectContaining({ url: 'data:image/jpeg;base64,abc123' }),
+			imageArray,
 			expect.anything(),
 			expect.anything()
 		);
