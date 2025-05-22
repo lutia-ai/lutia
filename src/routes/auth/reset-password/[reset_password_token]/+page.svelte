@@ -31,11 +31,11 @@
 				const errorMessage = 'An account with this email already exists.';
 				const subMessage =
 					"If you'd like to link your Google account, please sign in with your password first and then link your account in settings.";
-				errorPopup.showError(errorMessage, subMessage, 7000);
+				errorPopup.setVisibility(errorMessage, subMessage, 7000);
 			}
 			if (errorParam === 'CredentialsSignin') {
 				const errorMessage = 'Email or password is incorrect.';
-				errorPopup.showError(errorMessage);
+				errorPopup.setVisibility(errorMessage);
 			}
 		}
 	}
@@ -45,7 +45,7 @@
 		buttonActive = false;
 
 		if (formData.password !== formData.confirmPassword) {
-			errorPopup.showError("Passwords don't match");
+			errorPopup.setVisibility("Passwords don't match");
 			buttonActive = true;
 			return;
 		}
@@ -62,9 +62,9 @@
 		const result: ActionResult = deserialize(await response.text());
 
 		if (result.type === 'success' && result.data) {
-			errorPopup.showError(result.data.message, null, 5000, 'success');
+			errorPopup.setVisibility(result.data.message, null, 5000, 'success');
 		} else if (result.type === 'failure' && result.data) {
-			errorPopup.showError(result.data.message);
+			errorPopup.setVisibility(result.data.message);
 			buttonActive = true;
 		}
 	}

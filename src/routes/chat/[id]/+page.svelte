@@ -91,7 +91,7 @@
 			fileArray,
 			reasoning,
 			(message, subText, duration, type) =>
-				errorPopup.showError(
+				errorPopup.setVisibility(
 					message,
 					subText,
 					duration,
@@ -132,7 +132,7 @@
 		if (successParam && errorPopup) {
 			if (successParam === 'AccountLinkSuccess') {
 				const message = 'Linked accounts successfully!';
-				errorPopup.showError(message, null, 5000, 'success');
+				errorPopup.setVisibility(message, null, 5000, 'success');
 			}
 		}
 		const apiRequests = (await data.apiRequests) as SerializedApiRequest[];
