@@ -154,7 +154,7 @@ export async function regenerateMessage(messageId: number) {
 			const errorData = await streamResponse.clone().json();
 			// Clone the response so that we can safely read it as JSON
 			if (errorData.message === 'Insufficient balance') {
-				// errorPopup.showError(
+				// errorPopup.setVisibility(
 				//     errorData.message,
 				//     "Spending can't go below $0.10",
 				//     5000,
@@ -205,7 +205,7 @@ export async function regenerateMessage(messageId: number) {
 						outputPrice = data.usage.outputPrice;
 					} else if (data.type === 'error') {
 						console.error(data.message);
-						// errorPopup.showError(data.message, null, 5000, 'error');
+						// errorPopup.setVisibility(data.message, null, 5000, 'error');
 					}
 
 					// Update the chat history by matching message_id AND ensuring it's an LLM message

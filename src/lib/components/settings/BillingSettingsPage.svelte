@@ -67,7 +67,7 @@
 			topupLoading = true;
 			if (addCreditAmount < 5 || addCreditAmount > 100) {
 				let error = 'You can only topup between $5 and $100';
-				errorPopup.showError(error, null, 5000);
+				errorPopup.setVisibility(error, null, 5000);
 				return;
 			}
 
@@ -81,12 +81,12 @@
 			const result: ActionResult = deserialize(await response.text());
 
 			if (result.type === 'success' && result.data) {
-				errorPopup.showError('Top-up successful!', null, 5000, 'success');
+				errorPopup.setVisibility('Top-up successful!', null, 5000, 'success');
 				userBalance = result.data.balance;
 				addCreditOpen = false;
 				addCreditAmount = 0;
 			} else if (result.type === 'failure' && result.data) {
-				errorPopup.showError(result.data.message, null, 5000);
+				errorPopup.setVisibility(result.data.message, null, 5000);
 			}
 		} catch (error) {
 			console.error('Error topping up:', error);
@@ -109,7 +109,7 @@
 				cardDetails = undefined;
 				showDeleteCardDetailsCheck = false;
 			} else if (result.type === 'failure' && result.data) {
-				errorPopup.showError(result.data.message, null, 5000);
+				errorPopup.setVisibility(result.data.message, null, 5000);
 			}
 		} catch (error) {
 			console.error('Error deleting card details:', error);
