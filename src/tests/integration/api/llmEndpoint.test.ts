@@ -48,7 +48,7 @@ vi.mock('$lib/utils/apiRequestValidator', () => {
 vi.mock('$lib/services/llm/llmService', () => {
 	const createMockStream = (options: { delay?: number; abortable?: boolean } = {}) => {
 		const { delay = 0, abortable = false } = options;
-		
+
 		return new ReadableStream({
 			start(controller) {
 				// Send an initial chunk with request info
@@ -161,7 +161,7 @@ vi.mock('$lib/services/llm/llmService', () => {
 
 	// Default mock returns normal stream
 	const mockProcessLLMRequest = vi.fn().mockResolvedValue(createMockStream()) as any;
-	
+
 	// Expose the factory function for tests that need special behavior
 	mockProcessLLMRequest.createMockStream = createMockStream;
 
@@ -173,17 +173,14 @@ vi.mock('$lib/services/llm/llmService', () => {
 vi.mock('$lib/services/llm/imageGenerationService', () => {
 	return {
 		handleImageGeneration: vi.fn().mockResolvedValue(
-			new Response(
-				JSON.stringify({ image: 'mock_base64_data', outputPrice: 0.04 }),
-				{
-					headers: {
-						'Content-Type': 'application/json',
-						'Cache-Control': 'no-cache',
-						Connection: 'keep-alive',
-						'X-Request-Id': 'req123'
-					}
+			new Response(JSON.stringify({ image: 'mock_base64_data', outputPrice: 0.04 }), {
+				headers: {
+					'Content-Type': 'application/json',
+					'Cache-Control': 'no-cache',
+					Connection: 'keep-alive',
+					'X-Request-Id': 'req123'
 				}
-			)
+			})
 		)
 	};
 });
@@ -228,7 +225,7 @@ describe('LLM API Endpoint', () => {
 				email: 'test@example.com'
 			}
 		});
-		
+
 		// Re-setup the validateApiRequest mock to ensure it always returns valid data
 		const { validateApiRequest } = await import('$lib/utils/apiRequestValidator');
 		(validateApiRequest as any).mockResolvedValue({
@@ -253,27 +250,24 @@ describe('LLM API Endpoint', () => {
 			messageConversationId: 'conv123',
 			referencedMessageIds: []
 		});
-		
+
 		// Re-setup image generation mock after clearing all mocks
 		const { handleImageGeneration } = await import('$lib/services/llm/imageGenerationService');
 		(handleImageGeneration as any).mockResolvedValue(
-			new Response(
-				JSON.stringify({ image: 'mock_base64_data', outputPrice: 0.04 }),
-				{
-					headers: {
-						'Content-Type': 'application/json',
-						'Cache-Control': 'no-cache',
-						Connection: 'keep-alive',
-						'X-Request-Id': 'req123'
-					}
+			new Response(JSON.stringify({ image: 'mock_base64_data', outputPrice: 0.04 }), {
+				headers: {
+					'Content-Type': 'application/json',
+					'Cache-Control': 'no-cache',
+					Connection: 'keep-alive',
+					'X-Request-Id': 'req123'
 				}
-			)
+			})
 		);
 
 		// Re-setup database mocks to ensure they're available for new tests
 		const { updateUserBalanceWithDeduction } = await import('$lib/db/crud/balance');
 		const { createMessageAndApiRequestEntry } = await import('$lib/db/crud/apiRequest');
-		
+
 		(updateUserBalanceWithDeduction as any).mockResolvedValue(undefined);
 		(createMessageAndApiRequestEntry as any).mockResolvedValue({
 			message: { id: 12345 },
@@ -340,7 +334,7 @@ describe('LLM API Endpoint', () => {
 	it('should handle image generation models', async () => {
 		// Get the mock to modify
 		const { validateApiRequest } = await import('$lib/utils/apiRequestValidator');
-		
+
 		// Mock validateApiRequest to return a model with generatesImages=true for this test
 		(validateApiRequest as any).mockImplementationOnce(async () => ({
 			plainText: 'Generate an image of a cat',
@@ -394,7 +388,7 @@ describe('LLM API Endpoint', () => {
 
 		// Verify the image generation handler was called
 		expect(handleImageGeneration).toHaveBeenCalled();
-		
+
 		// Check that we get a proper response for image generation
 		expect(result).toBeInstanceOf(Response);
 		expect(result.headers.get('Content-Type')).toBe('application/json');
@@ -480,7 +474,7 @@ describe('LLM API Endpoint', () => {
 	it('should handle request cancellation mid-stream and still save partial response', async () => {
 		// Set up mock to use an abortable stream with delay that includes finalization
 		const { processLLMRequest } = await import('$lib/services/llm/llmService');
-		
+
 		// Create a custom stream that properly simulates the real behavior with finalization
 		const abortableStreamWithFinalization = new ReadableStream({
 			async start(controller) {
@@ -509,13 +503,17 @@ describe('LLM API Endpoint', () => {
 				setTimeout(async () => {
 					try {
 						// Even when aborted, finalizeResponse should be called
-						const { createMessageAndApiRequestEntry } = await import('$lib/db/crud/apiRequest');
-						const { updateUserBalanceWithDeduction } = await import('$lib/db/crud/balance');
-						
+						const { createMessageAndApiRequestEntry } = await import(
+							'$lib/db/crud/apiRequest'
+						);
+						const { updateUserBalanceWithDeduction } = await import(
+							'$lib/db/crud/balance'
+						);
+
 						// Simulate the actual database calls that would happen in finalizeResponse
 						await (createMessageAndApiRequestEntry as any)();
 						await (updateUserBalanceWithDeduction as any)();
-						
+
 						// Send usage and message_id to complete the stream as the real system would
 						controller.enqueue(
 							new TextEncoder().encode(
@@ -589,7 +587,7 @@ describe('LLM API Endpoint', () => {
 			while (true) {
 				const { value, done } = await reader.read();
 				if (done) break;
-				
+
 				const chunk = decoder.decode(value, { stream: true });
 				responseText += chunk;
 
@@ -624,7 +622,7 @@ describe('LLM API Endpoint', () => {
 	it('should deduct balance and save message even for aborted requests with partial content', async () => {
 		// Mock the LLM service to simulate a stream that gets content then gets aborted
 		const { processLLMRequest } = await import('$lib/services/llm/llmService');
-		
+
 		// Create a custom stream that sends some content then simulates abortion with proper finalization
 		const abortedStreamWithFinalization = new ReadableStream({
 			async start(controller) {
@@ -653,9 +651,13 @@ describe('LLM API Endpoint', () => {
 				setTimeout(async () => {
 					try {
 						// Simulate the database operations that would happen in finalizeResponse
-						const { updateUserBalanceWithDeduction } = await import('$lib/db/crud/balance');
-						const { createMessageAndApiRequestEntry } = await import('$lib/db/crud/apiRequest');
-						
+						const { updateUserBalanceWithDeduction } = await import(
+							'$lib/db/crud/balance'
+						);
+						const { createMessageAndApiRequestEntry } = await import(
+							'$lib/db/crud/apiRequest'
+						);
+
 						// Call the mocked functions to simulate the real behavior
 						await (updateUserBalanceWithDeduction as any)();
 						await (createMessageAndApiRequestEntry as any)();
@@ -667,7 +669,7 @@ describe('LLM API Endpoint', () => {
 									type: 'usage',
 									usage: {
 										inputPrice: 0.0001,
-										outputPrice: 0.0002  // Partial output cost
+										outputPrice: 0.0002 // Partial output cost
 									}
 								}) + '\n'
 							)
@@ -703,7 +705,9 @@ describe('LLM API Endpoint', () => {
 			body: JSON.stringify({
 				provider: ApiProvider.openAI,
 				plainTextPrompt: 'Generate a long response...',
-				promptStr: JSON.stringify([{ role: 'user', content: 'Generate a long response...' }]),
+				promptStr: JSON.stringify([
+					{ role: 'user', content: 'Generate a long response...' }
+				]),
 				modelStr: JSON.stringify({
 					name: 'GPT-4',
 					param: 'gpt-4'
@@ -730,7 +734,7 @@ describe('LLM API Endpoint', () => {
 			while (true) {
 				const { value, done } = await reader.read();
 				if (done) break;
-				
+
 				const chunk = decoder.decode(value, { stream: true });
 				responseText += chunk;
 
@@ -754,7 +758,7 @@ describe('LLM API Endpoint', () => {
 		// Verify database operations were called during finalization despite partial abortion
 		const { updateUserBalanceWithDeduction } = await import('$lib/db/crud/balance');
 		const { createMessageAndApiRequestEntry } = await import('$lib/db/crud/apiRequest');
-		
+
 		expect(createMessageAndApiRequestEntry).toHaveBeenCalled();
 		expect(updateUserBalanceWithDeduction).toHaveBeenCalled();
 	});
@@ -762,7 +766,7 @@ describe('LLM API Endpoint', () => {
 	it('should handle connection drops gracefully during streaming', async () => {
 		// Mock a stream that simulates connection drop after partial content
 		const { processLLMRequest } = await import('$lib/services/llm/llmService');
-		
+
 		const connectionDropStream = new ReadableStream({
 			start(controller) {
 				// Send initial chunks successfully
@@ -803,7 +807,9 @@ describe('LLM API Endpoint', () => {
 			body: JSON.stringify({
 				provider: ApiProvider.openAI,
 				plainTextPrompt: 'Tell me something interesting...',
-				promptStr: JSON.stringify([{ role: 'user', content: 'Tell me something interesting...' }]),
+				promptStr: JSON.stringify([
+					{ role: 'user', content: 'Tell me something interesting...' }
+				]),
 				modelStr: JSON.stringify({
 					name: 'GPT-4',
 					param: 'gpt-4'
@@ -842,7 +848,7 @@ describe('LLM API Endpoint', () => {
 	it('should not deduct balance if no content was received before cancellation', async () => {
 		// Mock a stream that gets cancelled immediately before any content
 		const { processLLMRequest } = await import('$lib/services/llm/llmService');
-		
+
 		const immediatelyCancelledStream = new ReadableStream({
 			start(controller) {
 				// Immediately error without sending any content
@@ -893,7 +899,7 @@ describe('LLM API Endpoint', () => {
 		// Verify no balance was deducted since no content was processed
 		const { updateUserBalanceWithDeduction } = await import('$lib/db/crud/balance');
 		const { createMessageAndApiRequestEntry } = await import('$lib/db/crud/apiRequest');
-		
+
 		// These should not be called if the request failed before processing
 		expect(updateUserBalanceWithDeduction).not.toHaveBeenCalled();
 		expect(createMessageAndApiRequestEntry).not.toHaveBeenCalled();
