@@ -3,16 +3,23 @@ import { ApiProvider } from '@prisma/client';
 
 /**
  * Calculate image cost based on the provider
+ * @param images An array of images or single image object to calculate cost for
+ * @param model The LLM model being used
+ * @param apiProvider The provider of the API (Anthropic, OpenAI, etc.)
+ * @returns Object containing cost and token count
  */
 export function calculateImageCostByProvider(
-	images: Image[],
+	images: Image[] | Image,
 	model: Model,
 	apiProvider: ApiProvider
 ): { cost: number; tokens: number } {
 	let cost = 0;
 	let tokens = 0;
 
-	for (const image of images) {
+	// Handle both array and single image inputs
+	const imageArray = Array.isArray(images) ? images : [images];
+
+	for (const image of imageArray) {
 		let result;
 		if (apiProvider === ApiProvider.anthropic) {
 			result = calculateClaudeImageCost(image.width, image.height, model);
