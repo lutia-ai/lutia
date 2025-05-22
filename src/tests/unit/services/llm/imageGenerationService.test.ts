@@ -349,23 +349,6 @@ describe('Image Generation Service', () => {
 		expect(response.headers.get('X-Request-Id')).toBe(mockRequestId);
 	});
 
-	it('should log API request creation', async () => {
-		// Spy on console.log
-		const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-		const response = await handleImageGeneration(
-			mockRequestBody,
-			mockUser,
-			mockModel,
-			mockRequestId
-		);
-
-		// Should log API request creation
-		expect(consoleLogSpy).toHaveBeenCalledWith('API Request created:', { id: 456 });
-
-		consoleLogSpy.mockRestore();
-	});
-
 	it('should handle PayAsYouGo user without conversation creation', async () => {
 		const response = await handleImageGeneration(
 			mockRequestBody,

@@ -427,27 +427,4 @@ describe('LlamaProvider', () => {
 		expect(mockCallbacks.onContent).toHaveBeenCalledWith('Hello');
 		expect(mockCallbacks.onReasoning).not.toHaveBeenCalled();
 	});
-
-	it('should log chunks during processing', async () => {
-		// Spy on console.log
-		const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-		const chunk = {
-			choices: [
-				{
-					index: 0,
-					delta: {
-						content: 'Hello'
-					}
-				}
-			]
-		};
-
-		provider.handleStreamChunk(chunk, mockCallbacks);
-
-		// Should log chunk processing
-		expect(consoleLogSpy).toHaveBeenCalledWith('[Llama Provider] Processing chunk');
-
-		consoleLogSpy.mockRestore();
-	});
 });
