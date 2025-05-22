@@ -137,7 +137,7 @@ async function makeApiRequest(
 
 	// Determine API endpoint
 	let uri = '/api/llm';
-	
+
 	const requestBody: any = {
 		plainTextPrompt: JSON.stringify(plainText),
 		promptStr: JSON.stringify(fullPrompt),
@@ -173,7 +173,7 @@ async function makeApiRequest(
 		},
 		body: JSON.stringify(requestBody)
 	});
-	
+
 	console.log(`[Submit Prompt] Response status: ${response.status}`);
 
 	if (!response.ok) {

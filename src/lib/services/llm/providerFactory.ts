@@ -21,7 +21,9 @@ export class LLMProviderFactoryImpl implements LLMProviderFactory {
 		this.providers.set(ApiProvider.google, new GeminiProvider());
 		this.providers.set(ApiProvider.xAI, new XAIProvider());
 		this.providers.set(ApiProvider.meta, new LlamaProvider());
-		console.log(`[Provider Factory] Providers initialized: ${[...this.providers.keys()].join(', ')}`);
+		console.log(
+			`[Provider Factory] Providers initialized: ${[...this.providers.keys()].join(', ')}`
+		);
 	}
 
 	/**
@@ -29,14 +31,16 @@ export class LLMProviderFactoryImpl implements LLMProviderFactory {
 	 */
 	getProvider(apiProvider: ApiProvider): LLMProvider {
 		console.log(`[Provider Factory] Requested provider: ${apiProvider}`);
-		console.log(`[Provider Factory] Available providers: ${[...this.providers.keys()].join(', ')}`);
+		console.log(
+			`[Provider Factory] Available providers: ${[...this.providers.keys()].join(', ')}`
+		);
 		const provider = this.providers.get(apiProvider);
-		
+
 		if (!provider) {
 			console.error(`[Provider Factory] Provider not implemented for ${apiProvider}`);
 			throw new Error(`Provider not implemented for ${apiProvider}`);
 		}
-		
+
 		console.log(`[Provider Factory] Found provider for: ${apiProvider}`);
 		return provider;
 	}

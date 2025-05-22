@@ -98,7 +98,7 @@ export class ClaudeProvider implements LLMProvider {
 		}
 	) {
 		console.log(`[Claude Provider] Processing chunk type: ${chunk.type}`);
-		
+
 		if (chunk.type === 'message_start') {
 			console.log('[Claude Provider] Message start event', chunk.message.usage);
 			const usage: UsageMetrics = {
@@ -124,17 +124,23 @@ export class ClaudeProvider implements LLMProvider {
 		} else if (chunk.type === 'content_block_delta') {
 			if (chunk.delta.type === 'thinking_delta' && callbacks.onReasoning) {
 				const thinkingContent = chunk.delta?.thinking || '';
-				console.log('[Claude Provider] Thinking content received', thinkingContent.substring(0, 20) + '...');
+				console.log(
+					'[Claude Provider] Thinking content received',
+					thinkingContent.substring(0, 20) + '...'
+				);
 				callbacks.onReasoning(thinkingContent);
 			} else if (chunk.delta.type === 'text_delta') {
 				const content = chunk.delta?.text || '';
 				if (content) {
-					console.log('[Claude Provider] Text content received', content.substring(0, 20) + '...');
+					console.log(
+						'[Claude Provider] Text content received',
+						content.substring(0, 20) + '...'
+					);
 					callbacks.onContent(content);
 				}
 			}
 		}
-		
+
 		// Call onFirstChunk for any first chunk
 		if (chunk.type === 'message_start') {
 			callbacks.onFirstChunk(crypto.randomUUID(), '');
