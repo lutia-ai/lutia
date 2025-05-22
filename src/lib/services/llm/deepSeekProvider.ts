@@ -22,7 +22,6 @@ export class DeepSeekProvider implements LLMProvider {
 	 * Process messages according to DeepSeek requirements
 	 */
 	processMessages(messages: any[], images: any[], files: any[]) {
-		console.log('[DeepSeek Provider] Processing messages');
 		let processedMessages = [...messages];
 
 		if (images.length > 0) {
@@ -57,7 +56,6 @@ export class DeepSeekProvider implements LLMProvider {
 		messages: any;
 		reasoningEnabled?: boolean;
 	}) {
-		console.log('[DeepSeek Provider] Creating completion stream');
 		const client = this.initializeClient();
 
 		return await client.chat.completions.create({

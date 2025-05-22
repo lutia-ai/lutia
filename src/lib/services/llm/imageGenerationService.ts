@@ -82,7 +82,6 @@ export async function handleImageGeneration(
 			error: errorMessage
 		}
 	);
-	console.log('API Request created:', apiRequest);
 
 	// Update the conversation's last_message timestamp
 	if (messageConversationId) {

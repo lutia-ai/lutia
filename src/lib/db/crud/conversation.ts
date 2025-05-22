@@ -62,10 +62,6 @@ export async function retrieveConversationsByUserIdPaginated(
 		const skip = (page - 1) * pageSize;
 		const take = pageSize;
 
-		console.log(
-			`Paginated conversations request - userId: ${userId}, page: ${page}, pageSize: ${pageSize}, paymentTier: ${paymentTier}`
-		);
-
 		// For PayAsYouGo users, limit to 30 conversations max
 		const maxConversations = paymentTier === PaymentTier.PayAsYouGo ? 30 : undefined;
 
@@ -75,8 +71,6 @@ export async function retrieveConversationsByUserIdPaginated(
 				user_id: userId
 			}
 		});
-
-		console.log(`Total conversations for user: ${total}`);
 
 		// For PayAsYouGo users, if they have more than 30 conversations,
 		// we'll only return the 30 most recent ones
@@ -94,17 +88,11 @@ export async function retrieveConversationsByUserIdPaginated(
 					: take
 		});
 
-		console.log(`Retrieved ${conversations.length} conversations`);
-
 		// Calculate if there are more conversations to load
 		const hasMore =
 			paymentTier === PaymentTier.PayAsYouGo
 				? skip + conversations.length < Math.min(total, maxConversations ?? total)
 				: skip + conversations.length < total;
-
-		console.log(
-			`hasMore: ${hasMore}, skip: ${skip}, length: ${conversations.length}, total: ${total}`
-		);
 
 		return {
 			conversations,
@@ -328,9 +316,6 @@ export async function deleteOldestConversation(userId: number): Promise<void> {
 				updated_at: 'asc'
 			}
 		});
-
-		console.log(`Oldest conversation: ${oldestConversation?.id}`);
-		console.log(`Oldest conversation: ${oldestConversation?.title}`);
 
 		if (oldestConversation) {
 			// Delete the conversation using the existing deleteConversation function

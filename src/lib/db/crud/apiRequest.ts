@@ -314,7 +314,6 @@ export async function updateApiRequest(
 			where: { id },
 			data: updatedData
 		});
-		console.log('API Request updated successfully');
 		return updatedApiRequest;
 	} catch (error) {
 		console.error('Error updating API Request entry:', error);

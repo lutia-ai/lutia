@@ -26,7 +26,6 @@ export class GeminiProvider implements LLMProvider {
 	 * Process messages according to Gemini requirements
 	 */
 	processMessages(messages: any[], images: any[], files: any[]) {
-		console.log('[Gemini Provider] Processing messages');
 		let processedMessages = [...messages];
 		let geminiImage: any = null;
 
@@ -78,7 +77,6 @@ export class GeminiProvider implements LLMProvider {
 		messages: any;
 		reasoningEnabled?: boolean;
 	}) {
-		console.log('[Gemini Provider] Creating completion stream');
 		const client = this.initializeClient();
 		this.genAIModel = client.getGenerativeModel({ model: model.param });
 
@@ -99,7 +97,6 @@ export class GeminiProvider implements LLMProvider {
 				inputCountResult = await this.genAIModel.countTokens(prompt);
 			}
 			this.inputTokens = inputCountResult.totalTokens;
-			console.log(`[Gemini Provider] Input tokens: ${this.inputTokens}`);
 		} catch (err) {
 			console.error('[Gemini Provider] Error counting tokens:', err);
 			this.inputTokens = 0;
@@ -214,7 +211,6 @@ export class GeminiProvider implements LLMProvider {
 			if (this.isFirstContent) {
 				this.isFirstContent = false;
 				callbacks.onFirstChunk(crypto.randomUUID(), '');
-				console.log('[Gemini Provider] First chunk sent');
 			}
 
 			if (content) {
@@ -233,8 +229,6 @@ export class GeminiProvider implements LLMProvider {
 					input_price: 0.00000125,
 					output_price: 0.00000375
 				});
-
-				console.log('[Gemini Provider] Final usage reported:', usage);
 			}
 		} catch (err) {
 			console.error('[Gemini Provider] Error handling chunk:', err);

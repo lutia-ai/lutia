@@ -66,14 +66,6 @@ export async function finalizeResponse({
 		// Ensure the cost is a valid number before updating balance
 		const safeTotalCost = isNaN(totalCost) ? 0 : totalCost;
 
-		console.log('[Response Finalizer] Cost calculation:', {
-			inputTokens: safeInputTokens,
-			outputTokens: safeOutputTokens,
-			inputCost,
-			outputCost,
-			totalCost: safeTotalCost
-		});
-
 		// Apply charges only if there's a valid cost amount
 		if (user.payment_tier === PaymentTier.PayAsYouGo && safeTotalCost > 0) {
 			await updateUserBalanceWithDeduction(user.id, safeTotalCost);
@@ -127,7 +119,6 @@ export async function finalizeResponse({
 			}
 		}
 
-		console.log('API Request created:', apiRequest);
 		return { message, apiRequest };
 	} catch (err) {
 		console.error('Error in finalizeResponse:', err);
@@ -182,14 +173,6 @@ export async function updateExistingMessageAndRequest({
 
 		// Ensure the cost is a valid number before updating balance
 		const safeTotalCost = isNaN(totalCost) ? 0 : totalCost;
-
-		console.log('[Response Finalizer] Regeneration cost calculation:', {
-			inputTokens: safeInputTokens,
-			outputTokens: safeOutputTokens,
-			inputCost,
-			outputCost,
-			totalCost: safeTotalCost
-		});
 
 		// Apply charges for the new generation only if there's a valid cost amount
 		if (user.payment_tier === PaymentTier.PayAsYouGo && safeTotalCost > 0) {
@@ -263,7 +246,6 @@ export async function updateExistingMessageAndRequest({
 			}
 		});
 
-		console.log('Message and API Request updated for regeneration:', updatedApiRequest);
 		return { message: updatedMessage, apiRequest: updatedApiRequest };
 	} catch (err) {
 		console.error('Error in updateExistingMessageAndRequest:', err);

@@ -19,7 +19,6 @@ export class OpenAIProvider implements LLMProvider {
 	 * Process messages according to OpenAI requirements
 	 */
 	processMessages(messages: any[], images: any[], files: any[]) {
-		console.log('[OpenAI Provider] Processing messages');
 		let processedMessages = [...messages];
 
 		if (images.length > 0) {
@@ -57,7 +56,6 @@ export class OpenAIProvider implements LLMProvider {
 		messages: any;
 		reasoningEnabled?: boolean;
 	}) {
-		console.log('[OpenAI Provider] Creating completion stream');
 		const client = this.initializeClient();
 
 		try {

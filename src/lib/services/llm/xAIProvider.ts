@@ -24,7 +24,6 @@ export class XAIProvider implements LLMProvider {
 	 * Process messages according to xAI requirements
 	 */
 	processMessages(messages: any[], images: any[], files: any[]) {
-		console.log('[xAI Provider] Processing messages');
 		let processedMessages = [...messages];
 
 		if (images.length > 0) {
@@ -64,7 +63,6 @@ export class XAIProvider implements LLMProvider {
 		messages: any;
 		reasoningEnabled?: boolean;
 	}) {
-		console.log('[xAI Provider] Creating completion stream');
 		const client = this.initializeClient();
 
 		try {

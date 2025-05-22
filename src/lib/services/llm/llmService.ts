@@ -24,24 +24,12 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 		reasoningEnabled
 	} = config;
 
-	console.log(`[LLM Service] Processing request with provider: ${apiProvider}`);
-	console.log(
-		`[LLM Service] Messages count: ${messages.length}, Images: ${images.length}, Files: ${files.length}`
-	);
-	console.log(
-		`[LLM Service] Conversation ID: ${messageConversationId || 'new'}, Original: ${originalConversationId || 'none'}`
-	);
-
 	// Get the provider for the requested API
 	try {
 		const provider = llmProviderFactory.getProvider(apiProvider);
-		console.log(`[LLM Service] Provider retrieved successfully`);
 
 		// Process the messages with the specific provider
 		const processedMessages = provider.processMessages(messages, images, files);
-		console.log(
-			`[LLM Service] Messages processed, count: ${Array.isArray(processedMessages) ? processedMessages.length : 'N/A (custom format)'}`
-		);
 
 		// Track response data
 		const chunks: string[] = [];
@@ -57,13 +45,11 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 		// Create the stream
 		let stream;
 		try {
-			console.log(`[LLM Service] Creating completion stream with model: ${model.name}`);
 			stream = await provider.createCompletionStream({
 				model,
 				messages: processedMessages,
 				reasoningEnabled
 			});
-			console.log(`[LLM Service] Stream created successfully`);
 		} catch (err) {
 			console.error('[LLM Service] Error creating stream:', err);
 			throw error(500, 'Error creating stream');
@@ -114,9 +100,6 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 												? messageConversationId
 												: originalConversationId;
 
-										console.log(
-											`[LLM Service] Sending first chunk info with conversation ID: ${actualConversationId}`
-										);
 										controller.enqueue(
 											textEncoder.encode(
 												JSON.stringify({
@@ -145,20 +128,6 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 										// Merge in any prices from the provider
 										...(modelPrices || {})
 									};
-
-									console.log(
-										'[LLM Service] Sending usage info',
-										JSON.stringify({
-											inputPrice:
-												(finalUsage.prompt_tokens *
-													modelWithPrices.input_price) /
-												1000000,
-											outputPrice:
-												(finalUsage.completion_tokens *
-													modelWithPrices.output_price) /
-												1000000
-										})
-									);
 
 									// Ensure we have valid numbers
 									const inputPrice = isNaN(

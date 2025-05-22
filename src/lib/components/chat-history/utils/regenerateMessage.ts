@@ -111,8 +111,6 @@ export async function regenerateMessage(messageId: number) {
 			fullPrompt.push(currentMessage);
 		}
 
-		console.log('fullPrompt: ', fullPrompt);
-
 		const streamResponse = await fetch(uri, {
 			method: 'POST',
 			headers: {

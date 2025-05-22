@@ -157,15 +157,6 @@ async function makeApiRequest(
 		requestBody.conversationId = validConversationId;
 	}
 
-	console.log(`[Submit Prompt] Sending request to ${uri}`, {
-		company: get(chosenCompany),
-		model: get(chosenModel).name,
-		hasImages: imageArray.length > 0,
-		hasFiles: fileArray.length > 0,
-		conversationId: validConversationId,
-		reasoning: reasoning
-	});
-
 	const response = await fetch(uri, {
 		method: 'POST',
 		headers: {
@@ -173,8 +164,6 @@ async function makeApiRequest(
 		},
 		body: JSON.stringify(requestBody)
 	});
-
-	console.log(`[Submit Prompt] Response status: ${response.status}`);
 
 	if (!response.ok) {
 		const errorData = await response.clone().json();

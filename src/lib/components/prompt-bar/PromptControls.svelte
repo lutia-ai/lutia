@@ -31,7 +31,6 @@
 		event.preventDefault();
 		const target = event.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
-			console.log('File change event received in PromptControls', target.files);
 			dispatch('fileChange', { target: { files: target.files } });
 			// Reset the input value so the same file can be uploaded again
 			// target.value = '';

@@ -14,26 +14,18 @@ export class LLMProviderFactoryImpl implements LLMProviderFactory {
 	private providers: Map<ApiProvider, LLMProvider> = new Map();
 
 	constructor() {
-		console.log('[Provider Factory] Initializing providers...');
 		this.providers.set(ApiProvider.openAI, new OpenAIProvider());
 		this.providers.set(ApiProvider.deepSeek, new DeepSeekProvider());
 		this.providers.set(ApiProvider.anthropic, new ClaudeProvider());
 		this.providers.set(ApiProvider.google, new GeminiProvider());
 		this.providers.set(ApiProvider.xAI, new XAIProvider());
 		this.providers.set(ApiProvider.meta, new LlamaProvider());
-		console.log(
-			`[Provider Factory] Providers initialized: ${[...this.providers.keys()].join(', ')}`
-		);
 	}
 
 	/**
 	 * Get the provider instance for the specified API provider
 	 */
 	getProvider(apiProvider: ApiProvider): LLMProvider {
-		console.log(`[Provider Factory] Requested provider: ${apiProvider}`);
-		console.log(
-			`[Provider Factory] Available providers: ${[...this.providers.keys()].join(', ')}`
-		);
 		const provider = this.providers.get(apiProvider);
 
 		if (!provider) {
@@ -41,7 +33,6 @@ export class LLMProviderFactoryImpl implements LLMProviderFactory {
 			throw new Error(`Provider not implemented for ${apiProvider}`);
 		}
 
-		console.log(`[Provider Factory] Found provider for: ${apiProvider}`);
 		return provider;
 	}
 }

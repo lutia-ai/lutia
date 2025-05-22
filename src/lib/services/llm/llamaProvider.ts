@@ -24,7 +24,6 @@ export class LlamaProvider implements LLMProvider {
 	 * Process messages according to Llama requirements
 	 */
 	processMessages(messages: any[], images: any[], files: any[]) {
-		console.log('[Llama Provider] Processing messages');
 		let processedMessages = [...messages];
 
 		if (images.length > 0) {
@@ -64,7 +63,6 @@ export class LlamaProvider implements LLMProvider {
 		messages: any;
 		reasoningEnabled?: boolean;
 	}) {
-		console.log('[Llama Provider] Creating completion stream');
 		const client = this.initializeClient();
 
 		try {
@@ -94,7 +92,6 @@ export class LlamaProvider implements LLMProvider {
 			onReasoning?: (content: string) => void;
 		}
 	) {
-		console.log(`[Llama Provider] Processing chunk`);
 		const content = chunk.choices?.[0]?.delta?.content || '';
 
 		if (chunk.usage) {
