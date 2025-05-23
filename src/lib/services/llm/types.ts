@@ -8,6 +8,7 @@ export interface UsageMetrics {
 	prompt_tokens: number;
 	completion_tokens: number;
 	total_tokens: number;
+	thinking_tokens?: number;
 }
 
 /**
@@ -41,7 +42,7 @@ export interface LLMProvider {
 		chunk: any,
 		callbacks: {
 			onFirstChunk: (requestId: string, conversationId: string) => void;
-			onUsage: (usage: UsageMetrics, model: any) => void;
+			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
 		}

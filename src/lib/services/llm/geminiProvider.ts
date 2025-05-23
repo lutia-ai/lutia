@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { env } from '$env/dynamic/private';
 import type { LLMProvider, UsageMetrics } from './types';
 import type { Model } from '$lib/types/types';
@@ -8,17 +8,14 @@ import { addFilesToMessage } from '$lib/utils/fileHandling';
  * Implementation of LLMProvider for Google's Gemini
  */
 export class GeminiProvider implements LLMProvider {
-	private genAI!: GoogleGenerativeAI;
-	private genAIModel: any;
-	private finalContent: string = '';
-	private inputTokens: number = 0;
+	private genAI!: GoogleGenAI;
 	private isFirstContent: boolean = true;
 
 	/**
 	 * Initialize the Gemini client
 	 */
 	initializeClient() {
-		this.genAI = new GoogleGenerativeAI(env.VITE_GOOGLE_GEMINI_API_KEY);
+		this.genAI = new GoogleGenAI({ apiKey: env.VITE_GOOGLE_GEMINI_API_KEY });
 		return this.genAI;
 	}
 
@@ -78,114 +75,55 @@ export class GeminiProvider implements LLMProvider {
 		reasoningEnabled?: boolean;
 	}) {
 		const client = this.initializeClient();
-		this.genAIModel = client.getGenerativeModel({ model: model.param });
 
 		// Reset first content flag for each new stream
 		this.isFirstContent = true;
 
 		const { prompt, geminiImage } = messages;
 
-		// Count input tokens
-		let inputCountResult: { totalTokens: number };
-		try {
-			if (geminiImage) {
-				inputCountResult = await this.genAIModel.countTokens([
-					JSON.stringify(prompt),
-					geminiImage
-				]);
-			} else {
-				inputCountResult = await this.genAIModel.countTokens(prompt);
-			}
-			this.inputTokens = inputCountResult.totalTokens;
-		} catch (err) {
-			console.error('[Gemini Provider] Error counting tokens:', err);
-			this.inputTokens = 0;
-		}
-
 		// Generate the stream
 		try {
 			let streamResponse;
+
+			// Configure thinking for 2.5 series models
+			const config = reasoningEnabled
+				? {
+						thinkingConfig: {
+							includeThoughts: true
+						}
+					}
+				: undefined;
+
 			if (geminiImage) {
-				streamResponse = await this.genAIModel.generateContentStream([
-					JSON.stringify(prompt),
-					geminiImage
-				]);
+				// For image requests, pass content and config separately
+				const content = [
+					...prompt.contents.map((msg: any) => ({
+						role: msg.role,
+						parts: msg.parts
+					})),
+					{
+						role: 'user',
+						parts: [geminiImage]
+					}
+				];
+
+				streamResponse = await client.models.generateContentStream({
+					model: model.param,
+					contents: content,
+					config: config
+				});
 			} else {
-				streamResponse = await this.genAIModel.generateContentStream(prompt);
+				streamResponse = await client.models.generateContentStream({
+					model: model.param,
+					contents: prompt.contents,
+					config: config
+				});
 			}
 
-			// Create a normalized async iterator that works the same way regardless
-			// of whether we're using stream.stream or the direct stream
-			return this.normalizeGeminiStream(streamResponse);
+			// Return the stream directly - no normalization needed
+			return streamResponse;
 		} catch (err) {
 			console.error('[Gemini Provider] Error creating stream:', err);
-			throw err;
-		}
-	}
-
-	/**
-	 * Normalize the Gemini stream into a standardized async iterator
-	 * This handles differences between Gemini API versions
-	 */
-	private async *normalizeGeminiStream(streamResponse: any): AsyncGenerator<any> {
-		this.finalContent = ''; // Reset for this stream
-
-		try {
-			// Determine which stream property to use
-			const streamIterator = streamResponse.stream ? streamResponse.stream : streamResponse;
-
-			// Track if this is the last chunk
-			let isLastChunk = false;
-
-			// Iterate through the stream
-			for await (const chunk of streamIterator) {
-				// Check if this is the last chunk (some versions set this flag)
-				if (chunk.isLast) {
-					isLastChunk = true;
-				}
-
-				// Yield the chunk for processing
-				yield chunk;
-
-				// Accumulate content for token counting
-				const candidate = chunk.candidates?.[0];
-				const content = candidate?.content?.parts?.[0]?.text || '';
-				if (content) {
-					this.finalContent += content;
-				}
-			}
-
-			// After the stream ends, yield a final chunk with usage info
-			// This mimics the behavior of other providers like Claude
-			if (this.finalContent) {
-				try {
-					const outputCountResult = await this.genAIModel.countTokens(this.finalContent);
-					const outputTokens = outputCountResult.totalTokens;
-
-					// Create a synthetic "final" chunk with token usage
-					yield {
-						isLast: true,
-						usage: {
-							input_tokens: this.inputTokens,
-							output_tokens: outputTokens,
-							total_tokens: this.inputTokens + outputTokens
-						}
-					};
-				} catch (err) {
-					console.error('[Gemini Provider] Error counting output tokens:', err);
-					// Still provide a chunk with whatever token info we have
-					yield {
-						isLast: true,
-						usage: {
-							input_tokens: this.inputTokens,
-							output_tokens: 0,
-							total_tokens: this.inputTokens
-						}
-					};
-				}
-			}
-		} catch (err) {
-			console.error('[Gemini Provider] Error in normalized stream:', err);
 			throw err;
 		}
 	}
@@ -205,24 +143,43 @@ export class GeminiProvider implements LLMProvider {
 		try {
 			// Check if the response has the expected structure
 			const candidate = chunk.candidates?.[0];
-			const content = candidate?.content?.parts?.[0]?.text || '';
 
-			// Call onFirstChunk with the first chunk that has content
-			if (this.isFirstContent) {
+			// Process all parts in the candidate content
+			const parts = candidate?.content?.parts || [];
+			let hasContent = false;
+
+			for (const part of parts) {
+				if (!part.text) {
+					continue;
+				}
+
+				hasContent = true;
+
+				// Check if this is thinking content or regular content
+				if (part.thought) {
+					// This is thinking/reasoning content
+					if (callbacks.onReasoning) {
+						callbacks.onReasoning(part.text);
+					}
+				} else {
+					// This is regular response content
+					callbacks.onContent(part.text);
+				}
+			}
+
+			// Call onFirstChunk with the first chunk that has any content
+			if (this.isFirstContent && hasContent) {
 				this.isFirstContent = false;
 				callbacks.onFirstChunk(crypto.randomUUID(), '');
 			}
 
-			if (content) {
-				callbacks.onContent(content);
-			}
-
-			// If this is the end of the stream (final chunk with usage), report usage
-			if (chunk.isLast && chunk.usage) {
+			// Handle usage metadata from the new SDK
+			if (chunk.usageMetadata) {
 				const usage: UsageMetrics = {
-					prompt_tokens: chunk.usage.input_tokens || this.inputTokens,
-					completion_tokens: chunk.usage.output_tokens || 0,
-					total_tokens: chunk.usage.total_tokens || this.inputTokens
+					prompt_tokens: chunk.usageMetadata.promptTokenCount || 0,
+					completion_tokens: chunk.usageMetadata.candidatesTokenCount || 0,
+					thinking_tokens: chunk.usageMetadata.thoughtsTokenCount || 0,
+					total_tokens: chunk.usageMetadata.totalTokenCount || 0
 				};
 
 				callbacks.onUsage(usage);

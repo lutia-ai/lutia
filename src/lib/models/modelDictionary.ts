@@ -380,10 +380,25 @@ export const modelDictionary: ModelDictionary = {
 				description: 'State of the art reasoning model',
 				max_input_per_request: 15000
 			},
+			gemini25Flash: {
+				name: 'Gemini_2_5_Flash',
+				param: 'gemini-2.5-flash-preview-05-20',
+				legacy: false,
+				input_price: 0.15 * 1.1,
+				output_price: 0.6 * 1.1,
+				context_window: 1048576,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 1,
+				reasons: true,
+				generatesImages: false,
+				description: 'Fast and versatile performance',
+				max_input_per_request: 15000
+			},
 			gemini20Flash: {
 				name: 'Gemini_2_0_Flash',
 				param: 'gemini-2.0-flash',
-				legacy: false,
+				legacy: true,
 				input_price: 0.1 * 1.1,
 				output_price: 0.4 * 1.1,
 				context_window: 1048576, // max input cost $0.1048576
@@ -392,7 +407,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 1,
 				reasons: false,
 				generatesImages: false,
-				description: 'Fast and versatile performance',
+				description: '',
 				max_input_per_request: 15000
 			},
 			gemini20FlashLite: {
