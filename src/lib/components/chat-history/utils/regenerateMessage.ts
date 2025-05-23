@@ -55,26 +55,7 @@ export async function regenerateMessage(messageId: number) {
 			throw new Error('Failed to fetch Api request with message data');
 		}
 
-		let uri: string;
-		switch (apiRequestWithMessage.apiProvider) {
-			case ApiProvider.anthropic:
-				uri = '/api/claude';
-				break;
-			case ApiProvider.openAI:
-				uri = '/api/chatGPT';
-				break;
-			case ApiProvider.meta:
-				uri = '/api/llama';
-				break;
-			case ApiProvider.xAI:
-				uri = '/api/xAI';
-				break;
-			case ApiProvider.deepSeek:
-				uri = '/api/deepSeek';
-				break;
-			default:
-				uri = '/api/gemini';
-		}
+		let uri = '/api/llm';
 
 		const reasoningOn = apiRequestWithMessage.message?.reasoning ? true : false;
 		// UUID validation function
@@ -130,8 +111,6 @@ export async function regenerateMessage(messageId: number) {
 			fullPrompt.push(currentMessage);
 		}
 
-		console.log('fullPrompt: ', fullPrompt);
-
 		const streamResponse = await fetch(uri, {
 			method: 'POST',
 			headers: {
@@ -142,6 +121,7 @@ export async function regenerateMessage(messageId: number) {
 				promptStr: JSON.stringify(fullPrompt),
 				modelStr: JSON.stringify(apiRequestWithMessage.apiModel),
 				imagesStr: JSON.stringify(apiRequestWithMessage.message?.pictures),
+				provider: apiRequestWithMessage.apiProvider,
 				...(apiRequestWithMessage.apiProvider === ApiProvider.anthropic
 					? { reasoningOn }
 					: {}),
@@ -154,7 +134,7 @@ export async function regenerateMessage(messageId: number) {
 			const errorData = await streamResponse.clone().json();
 			// Clone the response so that we can safely read it as JSON
 			if (errorData.message === 'Insufficient balance') {
-				// errorPopup.showError(
+				// errorPopup.setVisibility(
 				//     errorData.message,
 				//     "Spending can't go below $0.10",
 				//     5000,
@@ -205,7 +185,7 @@ export async function regenerateMessage(messageId: number) {
 						outputPrice = data.usage.outputPrice;
 					} else if (data.type === 'error') {
 						console.error(data.message);
-						// errorPopup.showError(data.message, null, 5000, 'error');
+						// errorPopup.setVisibility(data.message, null, 5000, 'error');
 					}
 
 					// Update the chat history by matching message_id AND ensuring it's an LLM message

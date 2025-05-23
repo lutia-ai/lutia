@@ -27,16 +27,16 @@
 				const errorMessage = 'An account with this email already exists.';
 				const subMessage =
 					"If you'd like to link your Google account, please sign in with your password first and then link your account in settings.";
-				errorPopup.showError(errorMessage, subMessage, 7000);
+				errorPopup.setVisibility(errorMessage, subMessage, 7000);
 			} else if (errorParam === 'CredentialsSignin' && codeParam?.startsWith('unverified_')) {
 				const [, email] = codeParam.split('_', 2);
 				verifyEmail = email;
 				const errorMessage = 'Please verify your email';
 				showVerifyEmail = true;
-				errorPopup.showError(errorMessage);
+				errorPopup.setVisibility(errorMessage);
 			} else if (errorParam === 'CredentialsSignin') {
 				const errorMessage = 'Email or password is incorrect.';
-				errorPopup.showError(errorMessage);
+				errorPopup.setVisibility(errorMessage);
 			}
 		}
 	}
@@ -126,7 +126,7 @@
 						callbackUrl: '/'
 					});
 				} else if (result.type === 'failure' && result.data) {
-					errorPopup.showError(result.data.message);
+					errorPopup.setVisibility(result.data.message);
 				}
 			});
 		});
@@ -150,10 +150,10 @@
 				const result: ActionResult = deserialize(await response.text());
 
 				if (result.type === 'success' && result.data) {
-					errorPopup.showError(result.data.message, null, 5000, 'success');
+					errorPopup.setVisibility(result.data.message, null, 5000, 'success');
 					goto('/');
 				} else if (result.type === 'failure' && result.data) {
-					errorPopup.showError(result.data.message);
+					errorPopup.setVisibility(result.data.message);
 				}
 			});
 		});

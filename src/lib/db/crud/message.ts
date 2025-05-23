@@ -33,7 +33,6 @@ export async function createMessage(
 			}
 		});
 
-		console.log('Message saved successfully');
 		return message;
 	} catch (error) {
 		console.error('Error adding Message entry:', error);
@@ -85,8 +84,6 @@ export async function deleteAllUserMessagesWithoutAConversation(userId: number):
 				}
 			});
 		});
-
-		console.log(`All non-conversation messages for user ${userId} have been deleted.`);
 	} catch (error) {
 		console.error('Error deleting messages:', error);
 		throw error;
@@ -125,7 +122,6 @@ export async function updateMessage(
 			where: { id },
 			data: processedData
 		});
-		console.log('Message updated successfully');
 		return updatedMessage;
 	} catch (error) {
 		console.error('Error updating Message entry:', error);

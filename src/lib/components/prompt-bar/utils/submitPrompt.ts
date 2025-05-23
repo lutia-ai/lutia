@@ -136,36 +136,18 @@ async function makeApiRequest(
 		get(conversationId) && isValidUUID(get(conversationId)!) ? get(conversationId) : undefined;
 
 	// Determine API endpoint
-	let uri: string;
-	switch (get(chosenCompany)) {
-		case 'anthropic':
-			uri = '/api/claude';
-			break;
-		case 'openAI':
-			uri = '/api/chatGPT';
-			break;
-		case 'meta':
-			uri = '/api/llama';
-			break;
-		case 'xAI':
-			uri = '/api/xAI';
-			break;
-		case 'deepSeek':
-			uri = '/api/deepSeek';
-			break;
-		default:
-			uri = '/api/gemini';
-	}
+	let uri = '/api/llm';
 
 	const requestBody: any = {
 		plainTextPrompt: JSON.stringify(plainText),
 		promptStr: JSON.stringify(fullPrompt),
 		modelStr: JSON.stringify(get(chosenModel).name),
 		imagesStr: JSON.stringify(imageArray),
-		filesStr: JSON.stringify(fileArray)
+		filesStr: JSON.stringify(fileArray),
+		provider: get(chosenCompany)
 	};
 
-	// Only add reasoning for Anthropic
+	// Only add reasoning for providers that support it
 	if (get(chosenCompany) === 'anthropic') {
 		requestBody.reasoningOn = reasoning;
 	}
@@ -187,6 +169,7 @@ async function makeApiRequest(
 		const errorData = await response.clone().json();
 		chatHistory.update((history) => history.slice(0, -2));
 
+		console.error(`[Submit Prompt] Error response:`, errorData);
 		if (errorData.message === 'Insufficient balance') {
 			throw new Error("Spending can't go below $0.10");
 		}

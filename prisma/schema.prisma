@@ -35,6 +35,8 @@ enum ApiModel {
   GPT_4
   GPT_3_5_Turbo
   DALL_E
+  Claude_4_Opus
+  Claude_4_Sonnet
   Claude_3_7_Sonnet
   Claude_3_5_Sonnet
   Claude_3_5_Haiku
@@ -46,6 +48,7 @@ enum ApiModel {
   Gemini_1_0_Pro
   Gemini_2_0_Flash
   Gemini_2_0_Flash_Lite
+  Gemini_2_5_Flash
   Gemini_2_5_Pro
   Llama_3_2_90b_Vision
   Grok_3_beta

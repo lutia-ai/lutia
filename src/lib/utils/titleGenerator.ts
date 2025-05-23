@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 /**
  * Generates a conversation title based on the user's prompt using Gemini
@@ -8,17 +8,22 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
  */
 export async function generateConversationTitle(prompt: string): Promise<string> {
 	try {
-		const genAI = new GoogleGenerativeAI(env.VITE_GOOGLE_GEMINI_API_KEY);
-		const genAIModel = genAI.getGenerativeModel({
-			model: 'gemini-2.0-flash-lite-preview-02-05'
-		});
+		const genAI = new GoogleGenAI({ apiKey: env.VITE_GOOGLE_GEMINI_API_KEY });
 
 		const titlePrompt = `Generate a short, concise title (maximum 5 words) for a conversation that starts with this message: "${prompt}". 
         Return ONLY the title text with no quotes or additional explanation.`;
 
-		const result = await genAIModel.generateContent(titlePrompt);
-		const response = await result.response;
-		const text = response.text();
+		const result = await genAI.models.generateContent({
+			model: 'gemini-2.0-flash-lite-preview-02-05',
+			contents: [
+				{
+					role: 'user',
+					parts: [{ text: titlePrompt }]
+				}
+			]
+		});
+
+		const text = result.text;
 
 		if (text) {
 			// Clean up the title - remove quotes and limit length

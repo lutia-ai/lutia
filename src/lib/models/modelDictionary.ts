@@ -228,9 +228,26 @@ export const modelDictionary: ModelDictionary = {
 	},
 	anthropic: {
 		models: {
-			claude37Sonnet: {
-				name: 'Claude_3_7_Sonnet',
-				param: 'claude-3-7-sonnet-latest',
+			claude4Opus: {
+				name: 'Claude_4_Opus',
+				param: 'claude-opus-4-20250514',
+				legacy: false,
+				input_price: 15 * 1.1,
+				output_price: 75 * 1.1,
+				context_window: 200000,
+				max_tokens: 8192, // this refers to output tokens
+				hub: 'Xenova/claude-tokenizer',
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false,
+				reasons: true,
+				extendedThinking: true,
+				description: 'Most intelligent model for complex tasks',
+				max_input_per_request: 2500
+			},
+			claude4Sonnet: {
+				name: 'Claude_4_Sonnet',
+				param: 'claude-sonnet-4-20250514',
 				legacy: false,
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
@@ -242,8 +259,25 @@ export const modelDictionary: ModelDictionary = {
 				generatesImages: false,
 				reasons: true,
 				extendedThinking: true,
-				description: 'Smartest model with extended thinking',
-				max_input_per_request: 8000
+				description: 'Optimal balance of intelligence, cost, and speed',
+				max_input_per_request: 10000
+			},
+			claude37Sonnet: {
+				name: 'Claude_3_7_Sonnet',
+				param: 'claude-3-7-sonnet-latest',
+				legacy: true,
+				input_price: 3 * 1.1,
+				output_price: 15 * 1.1,
+				context_window: 200000,
+				max_tokens: 8192, // this refers to output tokens
+				hub: 'Xenova/claude-tokenizer',
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false,
+				reasons: true,
+				extendedThinking: true,
+				description: '',
+				max_input_per_request: 10000
 			},
 			claude35Sonnet: {
 				name: 'Claude_3_5_Sonnet',
@@ -280,7 +314,7 @@ export const modelDictionary: ModelDictionary = {
 			claude3Opus: {
 				name: 'Claude_3_Opus',
 				param: 'claude-3-opus-20240229',
-				legacy: false,
+				legacy: true,
 				input_price: 15 * 1.1,
 				output_price: 75 * 1.1,
 				context_window: 200000, // max input spend $3
@@ -331,7 +365,7 @@ export const modelDictionary: ModelDictionary = {
 		models: {
 			gemini25Pro: {
 				name: 'Gemini_2_5_Pro',
-				param: 'gemini-2.5-pro-exp-03-25',
+				param: 'gemini-2.5-pro-preview-05-06',
 				legacy: false,
 				input_price: 1.25 * 1.1,
 				output_price: 10 * 1.1,
@@ -346,10 +380,25 @@ export const modelDictionary: ModelDictionary = {
 				description: 'State of the art reasoning model',
 				max_input_per_request: 15000
 			},
+			gemini25Flash: {
+				name: 'Gemini_2_5_Flash',
+				param: 'gemini-2.5-flash-preview-05-20',
+				legacy: false,
+				input_price: 0.15 * 1.1,
+				output_price: 0.6 * 1.1,
+				context_window: 1048576,
+				hub: 'Xenova/gpt-4o',
+				handlesImages: true,
+				maxImages: 1,
+				reasons: true,
+				generatesImages: false,
+				description: 'Fast and versatile performance',
+				max_input_per_request: 15000
+			},
 			gemini20Flash: {
 				name: 'Gemini_2_0_Flash',
 				param: 'gemini-2.0-flash',
-				legacy: false,
+				legacy: true,
 				input_price: 0.1 * 1.1,
 				output_price: 0.4 * 1.1,
 				context_window: 1048576, // max input cost $0.1048576
@@ -358,7 +407,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 1,
 				reasons: false,
 				generatesImages: false,
-				description: 'Fast and versatile performance',
+				description: '',
 				max_input_per_request: 15000
 			},
 			gemini20FlashLite: {
