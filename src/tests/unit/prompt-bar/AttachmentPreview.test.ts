@@ -104,10 +104,6 @@ describe('AttachmentPreview', () => {
 		const previewContainer = container.querySelector('.attachment-preview');
 		expect(previewContainer?.classList.contains('has-attachments')).toBe(true);
 
-		// Should have an "Images" heading
-		const imagesHeading = container.querySelector('.attachment-group.images h3');
-		expect(imagesHeading?.textContent).toBe('Images');
-
 		// Should render the correct number of image thumbnails
 		const imageThumbnails = container.querySelectorAll('.attachment-items > *');
 		expect(imageThumbnails.length).toBe(2);
@@ -123,10 +119,6 @@ describe('AttachmentPreview', () => {
 		// Verify the component has the 'has-attachments' class
 		const previewContainer = container.querySelector('.attachment-preview');
 		expect(previewContainer?.classList.contains('has-attachments')).toBe(true);
-
-		// Should have a "Files" heading
-		const filesHeading = container.querySelector('.attachment-group.files h3');
-		expect(filesHeading?.textContent).toBe('Files');
 
 		// Should render the correct number of file previews
 		const filePreviews = container.querySelectorAll(

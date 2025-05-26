@@ -84,7 +84,6 @@
 		{/if}
 		{#if modelHandlesImages && imageAttachments.length > 0}
 			<div class="attachment-group images" style="opacity: {$isDragging ? 0 : 1};">
-				<h3>Images</h3>
 				<div class="attachment-items">
 					{#each imageAttachments as image, index}
 						<ImageThumbnail
@@ -100,7 +99,6 @@
 
 		{#if fileAttachments.length > 0}
 			<div class="attachment-group files">
-				<h3>Files</h3>
 				<div class="attachment-items">
 					{#each fileAttachments as file, index}
 						<FilePreview
