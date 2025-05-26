@@ -200,6 +200,58 @@ describe('promptBarUtils', () => {
 			expect(result.tokens).toBe(1004.5);
 			expect(result.price).toBeCloseTo((1004.5 / 1000000) * mockModel.input_price, 10);
 		});
+
+		/**
+		 * Test that empty prompt should return 0 tokens and 0 price
+		 */
+		it('should return 0 tokens and 0 price for empty prompt', async () => {
+			const emptyPrompt = '';
+
+			// Mock estimateTokenCount to return what it would actually return for JSON.stringify('')
+			// JSON.stringify('') returns '""' which has 2 characters
+			// This simulates the bug where empty string gets 2 tokens
+			mockEstimateTokenCount.mockReturnValueOnce(0.5); // 2 chars / 4 = 0.5
+
+			const result = await calculateTokensAndPrice(emptyPrompt, [], mockModel, mockCompany);
+
+			// This test should fail initially due to the bug
+			// After the fix, it should pass
+			expect(result.tokens).toBe(0);
+			expect(result.price).toBe(0);
+		});
+
+		/**
+		 * Test for empty string variations that should all return 0 tokens
+		 */
+		it('should return 0 tokens for various empty prompt formats', async () => {
+			const emptyPrompts = ['', '<br>', '   ', '\n', '\t'];
+
+			for (const emptyPrompt of emptyPrompts) {
+				mockEstimateTokenCount.mockClear();
+
+				const result = await calculateTokensAndPrice(
+					emptyPrompt,
+					[],
+					mockModel,
+					mockCompany
+				);
+
+				expect(result.tokens).toBe(0);
+				expect(result.price).toBe(0);
+			}
+		});
+
+		/**
+		 * Test for empty message arrays
+		 */
+		it('should return 0 tokens for empty message arrays', async () => {
+			const emptyMessages: Message[] = [];
+
+			const result = await calculateTokensAndPrice(emptyMessages, [], mockModel, mockCompany);
+
+			expect(result.tokens).toBe(0);
+			expect(result.price).toBe(0);
+		});
 	});
 
 	describe('preparePromptWithAttachments', () => {

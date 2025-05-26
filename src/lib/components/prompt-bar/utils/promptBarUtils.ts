@@ -122,6 +122,14 @@ export async function calculateTokensAndPrice(
 	}
 
 	try {
+		// Check if the prompt is effectively empty
+		const isEmptyPrompt = isPromptEmpty(fullPrompt);
+
+		if (isEmptyPrompt) {
+			// Return 0 tokens and price for empty prompts
+			return { tokens: 0, price: 0 };
+		}
+
 		tokens = estimateTokenCount(JSON.stringify(fullPrompt));
 		// const result = await countTokens(fullPrompt, chosenModel);
 		// tokens = result.tokens;
@@ -146,6 +154,41 @@ export async function calculateTokensAndPrice(
 	}
 
 	return { tokens, price };
+}
+
+/**
+ * Checks if a prompt is effectively empty
+ * @param prompt The prompt to check (string or Message array)
+ * @returns True if the prompt is empty or contains only whitespace/formatting
+ */
+function isPromptEmpty(prompt: Message[] | string): boolean {
+	if (typeof prompt === 'string') {
+		// Remove HTML tags, whitespace, and check if empty
+		const cleanedPrompt = prompt
+			.replace(/<br\s*\/?>/gi, '') // Remove <br> tags
+			.replace(/&nbsp;/gi, ' ') // Replace &nbsp; with spaces
+			.trim(); // Remove leading/trailing whitespace
+
+		return cleanedPrompt === '';
+	}
+
+	if (Array.isArray(prompt)) {
+		// Check if array is empty or all messages have empty content
+		if (prompt.length === 0) {
+			return true;
+		}
+
+		return prompt.every((message) => {
+			const content = typeof message.content === 'string' ? message.content : '';
+			const cleanedContent = content
+				.replace(/<br\s*\/?>/gi, '')
+				.replace(/&nbsp;/gi, ' ')
+				.trim();
+			return cleanedContent === '';
+		});
+	}
+
+	return true; // Default to empty if unknown type
 }
 
 /**
