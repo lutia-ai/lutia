@@ -67,7 +67,7 @@ export interface LLMRequestConfig {
 	images: any[];
 	files: any[];
 	apiProvider: any;
-	regenerateMessageId?: number;
+	regenerateMessageId?: string;
 	messageConversationId: string;
 	originalConversationId?: string;
 	referencedMessageIds: string[];
