@@ -251,6 +251,8 @@
 		isDragging.set(false);
 		processFileSelect(
 			e.detail,
+			imagePreview,
+			$chosenModel,
 			(newPreviews, newAttachments) => {
 				imagePreview = [...imagePreview, ...newPreviews];
 				fileAttachments = [...fileAttachments, ...newAttachments];
@@ -287,10 +289,39 @@
 		dispatch('viewFile', detail);
 	}
 
+	/**
+	 * Handle notification from AttachmentPreview
+	 * @param detail Event detail containing notification data
+	 */
+	function handleAttachmentNotification({
+		detail
+	}: CustomEvent<{
+		title: string;
+		message: string;
+		duration: number;
+		type: 'info' | 'success' | 'error';
+	}>) {
+		dispatch('notification', detail);
+	}
+
+	/**
+	 * Handle images being automatically removed due to model constraints
+	 * @param detail Event detail containing the removed images
+	 */
+	function handleImagesRemoved({ detail }: CustomEvent<{ removedImages: Image[] }>) {
+		// Update local imagePreview array (this might be redundant since AttachmentPreview already updates it)
+		// but ensures consistency
+		imagePreview = imagePreview.filter(
+			(img) => !detail.removedImages.some((removedImg) => removedImg.data === img.data)
+		);
+	}
+
 	function handleFileChange(e: CustomEvent<{ target: { files: FileList } }>) {
 		isDragging.set(false);
 		processFileSelect(
 			e.detail,
+			imagePreview,
+			$chosenModel,
 			(newPreviews, newAttachments) => {
 				imagePreview = [...imagePreview, ...newPreviews];
 				fileAttachments = [...fileAttachments, ...newAttachments];
@@ -368,7 +399,7 @@
 			<AttachmentPreview
 				imageAttachments={imagePreview}
 				{fileAttachments}
-				modelHandlesImages={$chosenModel.handlesImages}
+				currentModel={$chosenModel}
 				on:drop={handleDrop}
 				on:dragEnter={handleDragEnter}
 				on:dragLeave={handleDragLeave}
@@ -376,6 +407,8 @@
 				on:removeFile={handleRemoveFile}
 				on:viewImage={handleViewImage}
 				on:viewFile={handleViewFile}
+				on:notification={handleAttachmentNotification}
+				on:imagesRemoved={handleImagesRemoved}
 			/>
 		{/if}
 
@@ -404,7 +437,7 @@
 			{reasoningOn}
 			modelSupportsReasoning={$chosenModel.reasons}
 			modelExtendedThinking={$chosenModel.extendedThinking}
-			chosenCompany={$chosenCompany}
+			currentModel={$chosenModel}
 			{placeholderVisible}
 			on:submit={handleSubmit}
 			on:fileChange={handleFileChange}
