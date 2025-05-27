@@ -290,13 +290,6 @@
 		gap: 15px;
 
 		.attachment-group {
-			h3 {
-				font-size: 0.9rem;
-				margin: 0 0 8px 0;
-				font-weight: 600;
-				color: var(--text-color-secondary);
-			}
-
 			.attachment-items {
 				display: flex;
 				flex-wrap: wrap;
