@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { ApiProvider } from '@prisma/client';
+	import type { Model } from '$lib/types/types';
 	import BrainIcon from '../icons/BrainIcon.svelte';
 	import HoverTag from '../HoverTag.svelte';
 	import { chosenModel, isContextWindowAuto } from '$lib/stores';
@@ -12,7 +12,7 @@
 	export let reasoningOn: boolean = false;
 	export let modelSupportsReasoning: boolean = false;
 	export let modelExtendedThinking: boolean = false;
-	export let chosenCompany: ApiProvider;
+	export let currentModel: Model;
 	export let placeholderVisible: boolean = true;
 
 	// Event dispatcher
@@ -25,6 +25,9 @@
 
 	// File input element
 	let fileInput: HTMLInputElement;
+
+	// Reactive property to determine if multiple files are allowed
+	$: allowMultiple = currentModel.maxImages > 1 || !currentModel.handlesImages;
 
 	// Handle file input change
 	function handleFileChange(event: Event) {
@@ -69,7 +72,7 @@
 				accept="image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.txt,.py,.js,.html,.css,.json,.md,.svelte,.tsx,.jsx,.ts,.java,.c,.cpp,.cs,.go,.rb,.php,.swift,.kt"
 				style="display: none;"
 				on:change={handleFileChange}
-				multiple={chosenCompany !== 'google'}
+				multiple={allowMultiple}
 			/>
 			<HoverTag text="Add images, PDFs, or code files" position="top" />
 		</button>

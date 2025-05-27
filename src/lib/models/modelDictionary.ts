@@ -12,7 +12,7 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 1047576,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 0,
+				maxImages: 5,
 				reasons: false,
 				description: 'Flagship GPT model for complex tasks',
 				max_input_per_request: 10000 // How many tokens can be inputted per request when not custom context window
@@ -26,7 +26,7 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 1047576,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 0,
+				maxImages: 5,
 				reasons: false,
 				description: 'Balanced for intelligence, speed, and cost',
 				max_input_per_request: 12000 // How many tokens can be inputted per request when not custom context window
@@ -40,7 +40,7 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 1047576,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 0,
+				maxImages: 5,
 				reasons: false,
 				description: 'Fastest, most cost-effective GPT 4.1 model',
 				max_input_per_request: 15000 // How many tokens can be inputted per request when not custom context window
@@ -54,7 +54,7 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 200000,
 				hub: 'Xenova/gpt-4o',
 				handlesImages: true,
-				maxImages: 0,
+				maxImages: 5,
 				reasons: true,
 				description: 'Faster, more affordable reasoning model',
 				max_input_per_request: 10000
@@ -82,7 +82,7 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 128000, // max input cost $0.1408
 				hub: 'Xenova/gpt-4o',
 				handlesImages: false,
-				maxImages: 0,
+				maxImages: 5,
 				reasons: true,
 				description: 'Fast, flexible reasoning model',
 				max_input_per_request: 10000

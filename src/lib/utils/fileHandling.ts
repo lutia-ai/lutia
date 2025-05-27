@@ -1,6 +1,8 @@
-import type { FileAttachment, Image } from '$lib/types/types';
+import type { FileAttachment, Image } from '../types/types';
 import type { ActionResult } from '@sveltejs/kit';
 import { deserialize } from '$app/forms';
+import type { Model } from '../types/types';
+import { validateImageUpload } from './imageValidation';
 
 // Function to extract text content from file
 export async function extractFileContent(file: File): Promise<string> {
@@ -184,17 +186,21 @@ export function getFileIconColor(fileExtension: string): string {
 /**
  * Handles file selection from input or drag events
  * @param event The file input or drop event
+ * @param currentImages Current array of images already uploaded
+ * @param currentModel The current model with its constraints
  * @param onComplete Callback function that receives the processed files and previews
  * @param showNotification Function to display notifications
  */
 export function processFileSelect(
 	event: Event | any,
+	currentImages: Image[],
+	currentModel: Model,
 	onComplete: (newPreviews: Image[], newAttachments: FileAttachment[]) => void,
 	showNotification: (
 		title: string,
 		message: string,
 		duration: number,
-		type: 'info' | 'success'
+		type: 'info' | 'success' | 'error'
 	) => void
 ): void {
 	let files;
@@ -208,6 +214,21 @@ export function processFileSelect(
 	}
 
 	if (files && files.length > 0) {
+		// Count how many images are being uploaded
+		const imageFiles = Array.from(files as FileList).filter((file: File) =>
+			file.type.startsWith('image/')
+		);
+
+		// Validate image upload before processing
+		if (imageFiles.length > 0) {
+			const validation = validateImageUpload(currentImages, imageFiles.length, currentModel);
+
+			if (!validation.isValid) {
+				showNotification('Image upload limit', validation.errorMessage!, 5000, 'error');
+				return;
+			}
+		}
+
 		const newPreviews: Image[] = [];
 		const newAttachments: FileAttachment[] = [];
 		let processedFiles = 0;

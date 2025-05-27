@@ -102,7 +102,7 @@
 					title,
 					message,
 					duration,
-					type as 'success' | 'info' | undefined
+					type as 'success' | 'info' | 'error' | undefined
 				)
 		);
 	}

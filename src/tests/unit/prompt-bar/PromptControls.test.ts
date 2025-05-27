@@ -5,7 +5,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import PromptControls from '$lib/components/prompt-bar/PromptControls.svelte';
 import { chosenModel, isContextWindowAuto } from '$lib/stores';
-import { ApiProvider } from '@prisma/client';
+import { ApiProvider, ApiModel } from '@prisma/client';
+import type { Model } from '$lib/types/types';
 
 // Mock the stores
 vi.mock('$lib/stores', () => ({
@@ -18,6 +19,24 @@ vi.mock('$lib/stores', () => ({
 		set: vi.fn()
 	}
 }));
+
+// Mock model for testing
+const mockModel: Model = {
+	name: ApiModel.GPT_4o,
+	param: 'gpt-4o',
+	legacy: false,
+	input_price: 2.5,
+	output_price: 10,
+	context_window: 128000,
+	hub: 'Xenova/gpt-4o',
+	handlesImages: true,
+	maxImages: 5,
+	generatesImages: false,
+	reasons: false,
+	extendedThinking: false,
+	description: 'Versatile, high-intelligence flagship model',
+	max_input_per_request: 10000
+};
 
 describe('PromptControls', () => {
 	beforeEach(() => {
@@ -45,7 +64,7 @@ describe('PromptControls', () => {
 	it('should render correctly with default props', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI
+				currentModel: mockModel
 			}
 		});
 
@@ -70,7 +89,7 @@ describe('PromptControls', () => {
 	it('should render reasoning button when modelSupportsReasoning is true', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI,
+				currentModel: mockModel,
 				modelSupportsReasoning: true
 			}
 		});
@@ -84,7 +103,7 @@ describe('PromptControls', () => {
 	it('should render reasoning button when modelExtendedThinking is true', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI,
+				currentModel: mockModel,
 				modelExtendedThinking: true
 			}
 		});
@@ -98,7 +117,7 @@ describe('PromptControls', () => {
 	it('should not render reasoning button when neither supports reasoning', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI,
+				currentModel: mockModel,
 				modelSupportsReasoning: false,
 				modelExtendedThinking: false
 			}
@@ -113,7 +132,7 @@ describe('PromptControls', () => {
 	it('should apply selected class when reasoningOn is true', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI,
+				currentModel: mockModel,
 				modelSupportsReasoning: true,
 				reasoningOn: true
 			}
@@ -130,7 +149,7 @@ describe('PromptControls', () => {
 	it('should render context window button', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI
+				currentModel: mockModel
 			}
 		});
 
@@ -151,7 +170,7 @@ describe('PromptControls', () => {
 
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI
+				currentModel: mockModel
 			}
 		});
 
@@ -166,7 +185,7 @@ describe('PromptControls', () => {
 	it('should disable submit button when placeholderVisible is true', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI,
+				currentModel: mockModel,
 				placeholderVisible: true
 			}
 		});
@@ -179,7 +198,7 @@ describe('PromptControls', () => {
 	it('should enable submit button when placeholderVisible is false', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI,
+				currentModel: mockModel,
 				placeholderVisible: false
 			}
 		});
@@ -195,7 +214,7 @@ describe('PromptControls', () => {
 	it('should dispatch submit event when submit button is clicked', async () => {
 		const { component, container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI,
+				currentModel: mockModel,
 				placeholderVisible: false
 			}
 		});
@@ -212,7 +231,7 @@ describe('PromptControls', () => {
 	it('should dispatch toggleReasoning event when reasoning button is clicked', async () => {
 		const { component, container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI,
+				currentModel: mockModel,
 				modelSupportsReasoning: true
 			}
 		});
@@ -229,7 +248,7 @@ describe('PromptControls', () => {
 	it('should toggle context window auto setting when custom button is clicked', async () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI
+				currentModel: mockModel
 			}
 		});
 
@@ -237,93 +256,92 @@ describe('PromptControls', () => {
 		await fireEvent.click(contextWindowButton as Element);
 
 		// Verify isContextWindowAuto.set was called with the opposite of the current value
-		expect(isContextWindowAuto.set).toHaveBeenCalledWith(false);
+		expect(isContextWindowAuto.set).toHaveBeenCalledWith(false); // Should toggle from true to false
 	});
 
-	/**
-	 * Test file input handling
-	 */
 	it('should open file dialog when plus button is clicked', async () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI
+				currentModel: mockModel
 			}
 		});
 
-		const plusButton = container.querySelector('.plus-icon');
+		// Mock the file input click method
 		const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+		fileInput.click = vi.fn();
 
-		// Mock the click method
-		const clickMock = vi.fn();
-		Object.defineProperty(fileInput, 'click', {
-			value: clickMock
-		});
-
+		const plusButton = container.querySelector('.plus-icon');
 		await fireEvent.click(plusButton as Element);
 
-		expect(clickMock).toHaveBeenCalledTimes(1);
+		expect(fileInput.click).toHaveBeenCalledTimes(1);
 	});
 
 	it('should dispatch fileChange event when files are selected', async () => {
 		const { component, container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI
+				currentModel: mockModel
 			}
 		});
 
 		const mockFileChange = vi.fn();
 		component.$on('fileChange', mockFileChange);
 
-		const fileInput = container.querySelector('input[type="file"]');
+		const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
 
-		// Create a mock file list
-		const file = new File(['file content'], 'test.txt', { type: 'text/plain' });
+		// Mock file list
+		const mockFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+		const mockFileList = {
+			0: mockFile,
+			length: 1,
+			item: (index: number) => (index === 0 ? mockFile : null),
+			[Symbol.iterator]: function* (this: any) {
+				for (let i = 0; i < this.length; i++) {
+					yield this.item(i);
+				}
+			}
+		} as unknown as FileList;
+
+		// Simulate file selection
 		Object.defineProperty(fileInput, 'files', {
-			value: [file]
+			value: mockFileList,
+			writable: false
 		});
 
-		await fireEvent.change(fileInput as Element);
+		await fireEvent.change(fileInput);
 
 		expect(mockFileChange).toHaveBeenCalledTimes(1);
 		expect(mockFileChange).toHaveBeenCalledWith(
 			expect.objectContaining({
-				detail: {
-					target: {
-						files: [file]
-					}
-				}
+				detail: expect.objectContaining({
+					target: expect.objectContaining({
+						files: mockFileList
+					})
+				})
 			})
 		);
 	});
 
-	/**
-	 * Test keyboard accessibility
-	 */
 	it('should open file dialog on Enter key on plus button', async () => {
 		const { container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI
+				currentModel: mockModel
 			}
 		});
 
-		const plusButton = container.querySelector('.plus-icon');
+		// Mock the file input click method
 		const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+		fileInput.click = vi.fn();
 
-		// Mock the click method
-		const clickMock = vi.fn();
-		Object.defineProperty(fileInput, 'click', {
-			value: clickMock
-		});
-
+		const plusButton = container.querySelector('.plus-icon');
 		await fireEvent.keyDown(plusButton as Element, { key: 'Enter' });
 
-		expect(clickMock).toHaveBeenCalledTimes(1);
+		expect(fileInput.click).toHaveBeenCalledTimes(1);
 	});
 
 	it('should dispatch submit event on Enter key on submit button', async () => {
 		const { component, container } = render(PromptControls, {
 			props: {
-				chosenCompany: ApiProvider.openAI,
+				currentModel: mockModel,
 				placeholderVisible: false
 			}
 		});
