@@ -59,7 +59,7 @@
 		height: 100%;
 		background-color: var(--bg-color);
 		border-radius: 10px;
-		border: 1px solid rgba(0, 0, 0, 0.1);
+		border: 0.5px solid rgba(0, 0, 0, 0.1);
 		// margin-right: 10px;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 		transition:
@@ -83,7 +83,7 @@
 		&:hover {
 			transform: translateY(-2px);
 			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-			border-color: rgba(29, 96, 194, 0.4);
+			// border-color: rgba(29, 96, 194, 0.4);
 
 			.remove-button {
 				opacity: 1;

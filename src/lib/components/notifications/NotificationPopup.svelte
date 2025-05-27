@@ -8,7 +8,7 @@
 	export let show = false;
 	export let message = '';
 	export let details: string | null = null;
-	export let type: 'info' | 'success' = 'info';
+	export let type: 'info' | 'success' | 'error' = 'info';
 	export let duration = 5000;
 
 	let timeoutId: NodeJS.Timeout;
@@ -19,7 +19,7 @@
 		newMessage: string,
 		newDetails: string | null = null,
 		newDuration = 5000,
-		newType: 'info' | 'success' = 'info'
+		newType: 'info' | 'success' | 'error' = 'info'
 	) {
 		clearTimeout(timeoutId);
 		clearInterval(progressInterval);
@@ -71,6 +71,8 @@
 			<div class="icon-container">
 				{#if type === 'success'}
 					<CheckIcon color="var(--success-color, #4CAF50)" />
+				{:else if type === 'error'}
+					<CrossIcon color="var(--error-color, #f44336)" />
 				{:else}
 					<InfoIcon color="var(--info-color, #2196F3)" />
 				{/if}
@@ -122,7 +124,6 @@
 		background: var(--bg-color-light);
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		pointer-events: auto;
-		/* border-left: 4px solid; */
 		overflow: hidden;
 	}
 
@@ -132,6 +133,10 @@
 
 	.notification-content.info {
 		border-left-color: var(--info-color, #2196f3);
+	}
+
+	.notification-content.error {
+		border-left-color: var(--error-color, #f44336);
 	}
 
 	.icon-container {
@@ -209,6 +214,10 @@
 
 	.info .progress-bar {
 		background: var(--info-color, #2196f3);
+	}
+
+	.error .progress-bar {
+		background: var(--error-color, #f44336);
 	}
 
 	@media (max-width: 480px) {
