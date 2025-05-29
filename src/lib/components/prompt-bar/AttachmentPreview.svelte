@@ -55,11 +55,15 @@
 
 	// Event handlers
 	/**
-	 * Handles drag over events by preventing default behavior
+	 * Handles drag over events by preventing default behavior and setting the drop effect
+	 * to 'copy', indicating that a copy operation is intended.
 	 * @param e The drag event
 	 */
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
+		if (e.dataTransfer) {
+			e.dataTransfer.dropEffect = 'copy';
+		}
 	}
 
 	/**
