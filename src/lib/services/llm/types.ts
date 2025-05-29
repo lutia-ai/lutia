@@ -12,6 +12,14 @@ export interface UsageMetrics {
 }
 
 /**
+ * Image pricing result interface
+ */
+export interface ImagePricingResult {
+	tokens: number;
+	cost: number;
+}
+
+/**
  * Interface for LLM providers
  */
 export interface LLMProvider {

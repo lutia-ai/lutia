@@ -28,14 +28,21 @@
 	// Reactive property to determine if multiple files are allowed
 	$: allowMultiple = currentModel.maxImages > 1 || !currentModel.handlesImages;
 
+	/**
+	 * Reset the file input value - called from parent after submission
+	 */
+	export function resetFileInput() {
+		if (fileInput) {
+			fileInput.value = '';
+		}
+	}
+
 	// Handle file input change
 	function handleFileChange(event: Event) {
 		event.preventDefault();
 		const target = event.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
 			dispatch('fileChange', { target: { files: target.files } });
-			// Reset the input value so the same file can be uploaded again
-			// target.value = '';
 		}
 	}
 

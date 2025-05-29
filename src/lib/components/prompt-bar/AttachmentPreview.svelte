@@ -195,7 +195,7 @@
 <style lang="scss">
 	.attachment-preview {
 		width: 100%;
-		min-height: 120px;
+		min-height: 95px;
 		padding: 0;
 		border-radius: 20px 20px 0 0;
 		background: var(--bg-color-attachment);
@@ -218,8 +218,7 @@
 
 	.image-drop-container {
 		position: absolute;
-		height: 100%;
-		min-height: 110px;
+		min-height: 90px;
 		width: 100%;
 		border: 2px dashed rgba(255, 255, 255, 0.2);
 		border-radius: 20px;

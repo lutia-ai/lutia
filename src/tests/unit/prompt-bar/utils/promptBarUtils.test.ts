@@ -256,8 +256,22 @@ describe('promptBarUtils', () => {
 
 	describe('preparePromptWithAttachments', () => {
 		const mockFiles = [
-			{ name: 'test.txt', content: 'This is test content' },
-			{ name: 'code.js', content: 'function test() { return true; }' }
+			{
+				type: 'file' as const,
+				data: 'This is test content',
+				media_type: 'text/plain',
+				filename: 'test.txt',
+				file_extension: 'txt',
+				size: 100
+			},
+			{
+				type: 'file' as const,
+				data: 'function test() { return true; }',
+				media_type: 'text/javascript',
+				filename: 'code.js',
+				file_extension: 'js',
+				size: 200
+			}
 		];
 
 		it('should append file info to string prompts', () => {
@@ -274,7 +288,16 @@ describe('promptBarUtils', () => {
 
 		it('should truncate long file contents', () => {
 			const longContent = 'a'.repeat(1000);
-			const longFiles = [{ name: 'long.txt', content: longContent }];
+			const longFiles = [
+				{
+					type: 'file' as const,
+					data: longContent,
+					media_type: 'text/plain',
+					filename: 'long.txt',
+					file_extension: 'txt',
+					size: 1000
+				}
+			];
 
 			const result = preparePromptWithAttachments('Prompt', longFiles) as string;
 

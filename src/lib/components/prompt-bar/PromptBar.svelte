@@ -54,6 +54,7 @@
 	let input_price: number = 0;
 	let promptBarHeight: number = 0;
 	let promptInput: PromptInput;
+	let promptControls: PromptControls;
 	let wrapperElement: HTMLDivElement;
 	let promptBarWrapperElement: HTMLDivElement;
 	let promptBarWrapperWidth: string = '';
@@ -91,22 +92,16 @@
 					fullPrompt.set(prompt);
 				}
 			}
-
-			// For token counting, create a temporary prompt that includes file attachments
-			if (fileAttachments.length > 0) {
-				// const tokenCountPrompt = preparePromptWithAttachments($fullPrompt, fileAttachments);
-				// handleCountTokens(tokenCountPrompt);
-			} else {
-				calculateTokensAndPrice(
-					$fullPrompt,
-					imagePreview,
-					$chosenModel,
-					$chosenCompany
-				).then((result) => {
-					input_tokens = result.tokens;
-					input_price = result.price;
-				});
-			}
+			calculateTokensAndPrice(
+				$fullPrompt,
+				imagePreview,
+				$chosenModel,
+				$chosenCompany,
+				fileAttachments
+			).then((result) => {
+				input_tokens = result.tokens;
+				input_price = result.price;
+			});
 		}
 	}
 
@@ -361,6 +356,9 @@
 			$chosenModel,
 			$chosenCompany
 		));
+
+		// Reset file input
+		promptControls.resetFileInput();
 	}
 
 	// Handle clicks on prompt input
@@ -434,6 +432,7 @@
 			{placeholderVisible}
 			on:submit={handleSubmit}
 			on:fileChange={handleFileChange}
+			bind:this={promptControls}
 		/>
 
 		{#if !$isContextWindowAuto && (user.user_settings?.prompt_pricing_visible || !$isContextWindowAuto)}
