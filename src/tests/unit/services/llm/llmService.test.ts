@@ -7,6 +7,23 @@ import { ApiProvider, PaymentTier } from '@prisma/client';
 import { ReadableStream } from 'stream/web';
 import type { Model } from '$lib/types/types';
 
+// Mock node-mailjet to prevent ReferenceError: define is not defined
+vi.mock('node-mailjet', () => ({
+	default: {
+		connect: vi.fn().mockReturnValue({
+			post: vi.fn().mockReturnValue({
+				request: vi.fn().mockResolvedValue({})
+			})
+		})
+	}
+}));
+
+// Mock email service
+vi.mock('$lib/services/email', () => ({
+	sendEmail: vi.fn(),
+	verifyEmailBody: vi.fn()
+}));
+
 // Mock the provider factory
 vi.mock('$lib/services/llm/providerFactory', () => ({
 	llmProviderFactory: {
@@ -215,7 +232,7 @@ describe('LLM Service', () => {
 			images: [],
 			files: [],
 			apiProvider: ApiProvider.openAI,
-			regenerateMessageId: 123,
+			regenerateMessageId: '123',
 			messageConversationId: 'conv123',
 			originalConversationId: 'conv123',
 			referencedMessageIds: [],

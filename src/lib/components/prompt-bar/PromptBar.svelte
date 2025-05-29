@@ -12,7 +12,8 @@
 		isDragging,
 		isSidebarOpen,
 		isLargeScreen,
-		mobileSidebarOpen
+		mobileSidebarOpen,
+		reasoningOn
 	} from '$lib/stores.ts';
 	import { modelDictionary } from '$lib/models/modelDictionary';
 	import {
@@ -48,7 +49,6 @@
 	let searchQuery: string = '';
 	let filteredModels: { company: ApiProvider; model: Model; formattedName: string }[] = [];
 	let selectedModelIndex: number | null = 0;
-	let reasoningOn: boolean = false;
 	let placeholderVisible: boolean = true;
 	let input_tokens: number = 0;
 	let input_price: number = 0;
@@ -332,12 +332,6 @@
 		);
 	}
 
-	// Control functions
-
-	function handleToggleReasoning() {
-		reasoningOn = !reasoningOn;
-	}
-
 	// Submit function
 	async function handleSubmit() {
 		if (prompt.length === 0 || prompt === '<br>') {
@@ -349,7 +343,7 @@
 			prompt: prompt.trim(),
 			images: $chosenModel.handlesImages ? imagePreview : [],
 			fileAttachments,
-			reasoningOn
+			reasoningOn: $reasoningOn
 		};
 
 		// Dispatch submit event to parent
@@ -434,14 +428,12 @@
 		/>
 
 		<PromptControls
-			{reasoningOn}
 			modelSupportsReasoning={$chosenModel.reasons}
 			modelExtendedThinking={$chosenModel.extendedThinking}
 			currentModel={$chosenModel}
 			{placeholderVisible}
 			on:submit={handleSubmit}
 			on:fileChange={handleFileChange}
-			on:toggleReasoning={handleToggleReasoning}
 		/>
 
 		{#if !$isContextWindowAuto && (user.user_settings?.prompt_pricing_visible || !$isContextWindowAuto)}

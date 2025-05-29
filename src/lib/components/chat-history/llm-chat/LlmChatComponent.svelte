@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chatHistory } from '$lib/stores';
+	import { chatHistory, chosenModel } from '$lib/stores';
 	import {
 		isLlmChatComponent,
 		isModelAnthropic,
@@ -26,6 +26,57 @@
 	export let chatIndex: number;
 	export let chat: LlmChat;
 	export let openImageViewer: (image: string, alt: string) => void;
+
+	let isReasoningStreaming = false;
+
+	/**
+	 * Determines if the reasoning is currently streaming
+	 * Reasoning is streaming when:
+	 * - Chat is loading
+	 * - Model supports reasoning
+	 * - Main message content hasn't started yet (no components or empty text)
+	 */
+	$: {
+		const isLastMessage = chatIndex === $chatHistory.length - 1;
+		const modelSupportsReasoning = $chosenModel.reasons || $chosenModel.extendedThinking;
+		const hasMainContent =
+			(chat.components && chat.components.length > 0) ||
+			(chat.text && chat.text.trim().length > 0);
+
+		// Reasoning is streaming if chat is loading, model supports reasoning,
+		// this is the last message, and main content hasn't started yet
+		isReasoningStreaming =
+			chat.loading && isLastMessage && modelSupportsReasoning && !hasMainContent;
+	}
+
+	/**
+	 * Handles auto-collapse scroll for reasoning component
+	 * Smoothly scrolls so the LLM message is positioned at the top of the viewport
+	 * @param isManualToggle - If true, scrolls to the current message; if false/undefined, scrolls to the last message
+	 */
+	function handleReasoningAutoCollapse(isManualToggle?: boolean): void {
+		setTimeout(() => {
+			const chatMessages = document.querySelectorAll('.user-chat-wrapper, .llm-container');
+			if (chatMessages.length > 0) {
+				let targetMessage: Element;
+
+				if (isManualToggle) {
+					// For manual toggles, scroll to the current message (based on chatIndex)
+					targetMessage =
+						chatMessages[chatIndex] || chatMessages[chatMessages.length - 1];
+				} else {
+					// For auto-collapse after loading, scroll to the last message
+					targetMessage = chatMessages[chatMessages.length - 1];
+				}
+
+				const offset = targetMessage.getBoundingClientRect().top + window.scrollY - 100;
+				window.scrollTo({
+					top: offset,
+					behavior: 'smooth'
+				});
+			}
+		}, 100);
+	}
 </script>
 
 <div
@@ -57,8 +108,12 @@
 	{/if}
 	<div class="llm-chat">
 		{#if isLlmChatComponent(chat)}
-			{#if chat.reasoning && chat.reasoning.content !== ''}
-				<Reasoning reasoning={chat.reasoning.content} />
+			{#if chat.reasoning?.content}
+				<Reasoning
+					reasoning={chat.reasoning?.content || ''}
+					isLoading={isReasoningStreaming}
+					onAutoCollapse={handleReasoningAutoCollapse}
+				/>
 			{/if}
 			{#each chat.components || [] as component, componentIndex}
 				{#if component.type === 'text'}
