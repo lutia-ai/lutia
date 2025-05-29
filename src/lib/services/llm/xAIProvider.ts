@@ -87,7 +87,7 @@ export class XAIProvider implements LLMProvider {
 	handleStreamChunk(
 		chunk: any,
 		callbacks: {
-			onFirstChunk: (requestId: string, conversationId: string) => void;
+			onFirstChunk: (requestId: string) => void;
 			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
@@ -117,7 +117,7 @@ export class XAIProvider implements LLMProvider {
 
 		// Call onFirstChunk if this is the first token
 		if (!content && !reasoningContent) {
-			callbacks.onFirstChunk(crypto.randomUUID(), '');
+			callbacks.onFirstChunk(crypto.randomUUID());
 		}
 	}
 }

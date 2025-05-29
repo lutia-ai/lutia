@@ -116,7 +116,7 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 
 						// Process the chunk with the provider-specific handler
 						provider.handleStreamChunk(chunk, {
-							onFirstChunk: (requestId, conversationId) => {
+							onFirstChunk: (requestId) => {
 								if (isFirstChunk) {
 									isFirstChunk = false;
 									try {

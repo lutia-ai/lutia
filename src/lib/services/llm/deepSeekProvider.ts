@@ -74,7 +74,7 @@ export class DeepSeekProvider implements LLMProvider {
 	handleStreamChunk(
 		chunk: any,
 		callbacks: {
-			onFirstChunk: (requestId: string, conversationId: string) => void;
+			onFirstChunk: (requestId: string) => void;
 			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
@@ -87,7 +87,7 @@ export class DeepSeekProvider implements LLMProvider {
 
 		// Call onFirstChunk for first message chunk
 		if (isFirstContentChunk || (!content && !reasoningContent && !chunk.usage)) {
-			callbacks.onFirstChunk(crypto.randomUUID(), '');
+			callbacks.onFirstChunk(crypto.randomUUID());
 		}
 
 		if (chunk.usage) {
