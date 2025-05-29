@@ -86,13 +86,11 @@ export class GeminiProvider implements LLMProvider {
 			let streamResponse;
 
 			// Configure thinking for 2.5 series models
-			const config = reasoningEnabled
-				? {
-						thinkingConfig: {
-							includeThoughts: true
-						}
-					}
-				: undefined;
+			const config = {
+				thinkingConfig: {
+					includeThoughts: true
+				}
+			};
 
 			if (geminiImage) {
 				// For image requests, pass content and config separately
@@ -134,7 +132,7 @@ export class GeminiProvider implements LLMProvider {
 	handleStreamChunk(
 		chunk: any,
 		callbacks: {
-			onFirstChunk: (requestId: string, conversationId: string) => void;
+			onFirstChunk: (requestId: string) => void;
 			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
@@ -170,7 +168,7 @@ export class GeminiProvider implements LLMProvider {
 			// Call onFirstChunk with the first chunk that has any content
 			if (this.isFirstContent && hasContent) {
 				this.isFirstContent = false;
-				callbacks.onFirstChunk(crypto.randomUUID(), '');
+				callbacks.onFirstChunk(crypto.randomUUID());
 			}
 
 			// Handle usage metadata from the new SDK
