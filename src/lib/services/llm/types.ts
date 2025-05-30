@@ -12,6 +12,14 @@ export interface UsageMetrics {
 }
 
 /**
+ * Image pricing result interface
+ */
+export interface ImagePricingResult {
+	tokens: number;
+	cost: number;
+}
+
+/**
  * Interface for LLM providers
  */
 export interface LLMProvider {
@@ -67,7 +75,7 @@ export interface LLMRequestConfig {
 	images: any[];
 	files: any[];
 	apiProvider: any;
-	regenerateMessageId?: number;
+	regenerateMessageId?: string;
 	messageConversationId: string;
 	originalConversationId?: string;
 	referencedMessageIds: string[];

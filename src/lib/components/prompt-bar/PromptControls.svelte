@@ -3,13 +3,12 @@
 	import type { Model } from '$lib/types/types';
 	import BrainIcon from '../icons/BrainIcon.svelte';
 	import HoverTag from '../HoverTag.svelte';
-	import { chosenModel, isContextWindowAuto } from '$lib/stores';
+	import { chosenModel, isContextWindowAuto, reasoningOn } from '$lib/stores';
 	import ArrowIcon from '$lib/components/icons/Arrow.svelte';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import PlusIcon from '$lib/components/icons/PlusIcon.svelte';
 
 	// Props
-	export let reasoningOn: boolean = false;
 	export let modelSupportsReasoning: boolean = false;
 	export let modelExtendedThinking: boolean = false;
 	export let currentModel: Model;
@@ -29,20 +28,22 @@
 	// Reactive property to determine if multiple files are allowed
 	$: allowMultiple = currentModel.maxImages > 1 || !currentModel.handlesImages;
 
+	/**
+	 * Reset the file input value - called from parent after submission
+	 */
+	export function resetFileInput() {
+		if (fileInput) {
+			fileInput.value = '';
+		}
+	}
+
 	// Handle file input change
 	function handleFileChange(event: Event) {
 		event.preventDefault();
 		const target = event.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
 			dispatch('fileChange', { target: { files: target.files } });
-			// Reset the input value so the same file can be uploaded again
-			// target.value = '';
 		}
-	}
-
-	// Handle toggle reasoning
-	function handleToggleReasoning() {
-		dispatch('toggleReasoning');
 	}
 
 	// Handle submit
@@ -79,19 +80,19 @@
 
 		{#if modelSupportsReasoning || modelExtendedThinking}
 			<button
-				class:selected={reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)}
+				class:selected={$reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)}
 				class="reason-button"
 				tabindex="0"
-				on:click={handleToggleReasoning}
+				on:click={() => reasoningOn.set(!$reasoningOn)}
 				on:keydown|stopPropagation={(e) => {
 					if (e.key === 'Enter') {
-						if (modelExtendedThinking) reasoningOn = !reasoningOn;
+						if (modelExtendedThinking) reasoningOn.set(!$reasoningOn);
 					}
 				}}
 			>
 				<div class="brain-icon">
 					<BrainIcon
-						color={reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)
+						color={$reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)
 							? '#16a1f9'
 							: 'var(--text-color-light)'}
 					/>

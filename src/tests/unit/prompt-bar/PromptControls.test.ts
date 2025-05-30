@@ -4,8 +4,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import PromptControls from '$lib/components/prompt-bar/PromptControls.svelte';
-import { chosenModel, isContextWindowAuto } from '$lib/stores';
-import { ApiProvider, ApiModel } from '@prisma/client';
+import { chosenModel, isContextWindowAuto, reasoningOn } from '$lib/stores';
+import { ApiModel } from '@prisma/client';
 import type { Model } from '$lib/types/types';
 
 // Mock the stores
@@ -15,6 +15,10 @@ vi.mock('$lib/stores', () => ({
 		set: vi.fn()
 	},
 	isContextWindowAuto: {
+		subscribe: vi.fn(),
+		set: vi.fn()
+	},
+	reasoningOn: {
 		subscribe: vi.fn(),
 		set: vi.fn()
 	}
@@ -54,8 +58,15 @@ describe('PromptControls', () => {
 			return () => {}; // Return unsubscribe function
 		});
 
+		// Mock the reasoningOn store subscribe method
+		const mockReasoningOnSubscribe = vi.fn((callback: (value: boolean) => void) => {
+			callback(true); // Default value for testing selected state
+			return () => {}; // Return unsubscribe function
+		});
+
 		(chosenModel.subscribe as any).mockImplementation(mockChosenModelSubscribe);
 		(isContextWindowAuto.subscribe as any).mockImplementation(mockIsContextWindowAutoSubscribe);
+		(reasoningOn.subscribe as any).mockImplementation(mockReasoningOnSubscribe);
 	});
 
 	/**
@@ -133,8 +144,7 @@ describe('PromptControls', () => {
 		const { container } = render(PromptControls, {
 			props: {
 				currentModel: mockModel,
-				modelSupportsReasoning: true,
-				reasoningOn: true
+				modelSupportsReasoning: true
 			}
 		});
 
@@ -229,20 +239,18 @@ describe('PromptControls', () => {
 	});
 
 	it('should dispatch toggleReasoning event when reasoning button is clicked', async () => {
-		const { component, container } = render(PromptControls, {
+		const { container } = render(PromptControls, {
 			props: {
 				currentModel: mockModel,
 				modelSupportsReasoning: true
 			}
 		});
 
-		const mockToggleReasoning = vi.fn();
-		component.$on('toggleReasoning', mockToggleReasoning);
-
 		const reasoningButton = container.querySelectorAll('.reason-button')[0];
 		await fireEvent.click(reasoningButton as Element);
 
-		expect(mockToggleReasoning).toHaveBeenCalledTimes(1);
+		// Verify reasoningOn.set was called with the opposite of the current value
+		expect(reasoningOn.set).toHaveBeenCalledWith(false); // Should toggle from true to false
 	});
 
 	it('should toggle context window auto setting when custom button is clicked', async () => {

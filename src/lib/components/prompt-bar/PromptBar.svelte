@@ -12,7 +12,8 @@
 		isDragging,
 		isSidebarOpen,
 		isLargeScreen,
-		mobileSidebarOpen
+		mobileSidebarOpen,
+		reasoningOn
 	} from '$lib/stores.ts';
 	import { modelDictionary } from '$lib/models/modelDictionary';
 	import {
@@ -48,12 +49,12 @@
 	let searchQuery: string = '';
 	let filteredModels: { company: ApiProvider; model: Model; formattedName: string }[] = [];
 	let selectedModelIndex: number | null = 0;
-	let reasoningOn: boolean = false;
 	let placeholderVisible: boolean = true;
 	let input_tokens: number = 0;
 	let input_price: number = 0;
 	let promptBarHeight: number = 0;
 	let promptInput: PromptInput;
+	let promptControls: PromptControls;
 	let wrapperElement: HTMLDivElement;
 	let promptBarWrapperElement: HTMLDivElement;
 	let promptBarWrapperWidth: string = '';
@@ -91,22 +92,16 @@
 					fullPrompt.set(prompt);
 				}
 			}
-
-			// For token counting, create a temporary prompt that includes file attachments
-			if (fileAttachments.length > 0) {
-				// const tokenCountPrompt = preparePromptWithAttachments($fullPrompt, fileAttachments);
-				// handleCountTokens(tokenCountPrompt);
-			} else {
-				calculateTokensAndPrice(
-					$fullPrompt,
-					imagePreview,
-					$chosenModel,
-					$chosenCompany
-				).then((result) => {
-					input_tokens = result.tokens;
-					input_price = result.price;
-				});
-			}
+			calculateTokensAndPrice(
+				$fullPrompt,
+				imagePreview,
+				$chosenModel,
+				$chosenCompany,
+				fileAttachments
+			).then((result) => {
+				input_tokens = result.tokens;
+				input_price = result.price;
+			});
 		}
 	}
 
@@ -332,12 +327,6 @@
 		);
 	}
 
-	// Control functions
-
-	function handleToggleReasoning() {
-		reasoningOn = !reasoningOn;
-	}
-
 	// Submit function
 	async function handleSubmit() {
 		if (prompt.length === 0 || prompt === '<br>') {
@@ -349,7 +338,7 @@
 			prompt: prompt.trim(),
 			images: $chosenModel.handlesImages ? imagePreview : [],
 			fileAttachments,
-			reasoningOn
+			reasoningOn: $reasoningOn
 		};
 
 		// Dispatch submit event to parent
@@ -367,6 +356,9 @@
 			$chosenModel,
 			$chosenCompany
 		));
+
+		// Reset file input
+		promptControls.resetFileInput();
 	}
 
 	// Handle clicks on prompt input
@@ -434,14 +426,13 @@
 		/>
 
 		<PromptControls
-			{reasoningOn}
 			modelSupportsReasoning={$chosenModel.reasons}
 			modelExtendedThinking={$chosenModel.extendedThinking}
 			currentModel={$chosenModel}
 			{placeholderVisible}
 			on:submit={handleSubmit}
 			on:fileChange={handleFileChange}
-			on:toggleReasoning={handleToggleReasoning}
+			bind:this={promptControls}
 		/>
 
 		{#if !$isContextWindowAuto && (user.user_settings?.prompt_pricing_visible || !$isContextWindowAuto)}

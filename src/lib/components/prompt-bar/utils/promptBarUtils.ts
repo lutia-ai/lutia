@@ -2,7 +2,7 @@
  * Utility functions for the PromptBar component
  */
 
-import type { Message, Model, ModelDictionary } from '$lib/types/types';
+import type { FileAttachment, Message, Model, ModelDictionary } from '$lib/types/types';
 import type { ApiProvider } from '@prisma/client';
 import { calculateImageCostByProvider } from '$lib/models/cost-calculators/imageCalculator';
 import { formatModelEnumToReadable } from '$lib/models/modelUtils';
@@ -105,13 +105,15 @@ export function focusAtEnd(element: HTMLElement): void {
  * @param imageAttachments Any image attachments
  * @param chosenModel The selected model
  * @param chosenCompany The selected company
+ * @param fileAttachments Any file attachments (optional)
  * @returns Object with token count and price
  */
 export async function calculateTokensAndPrice(
 	fullPrompt: Message[] | string,
 	imageAttachments: any[],
 	chosenModel: Model,
-	chosenCompany: ApiProvider
+	chosenCompany: ApiProvider,
+	fileAttachments?: any[]
 ): Promise<{ tokens: number; price: number }> {
 	// Default values
 	let tokens = 0;
@@ -121,19 +123,18 @@ export async function calculateTokensAndPrice(
 		return { tokens, price };
 	}
 
+	// Check if prompt is empty or contains only empty content
+	if (isEmptyPrompt(fullPrompt)) {
+		return { tokens, price };
+	}
+
 	try {
-		// Check if the prompt is effectively empty
-		const isEmptyPrompt = isPromptEmpty(fullPrompt);
-
-		if (isEmptyPrompt) {
-			// Return 0 tokens and price for empty prompts
-			return { tokens: 0, price: 0 };
+		// Prepare prompt with file attachments for accurate token counting
+		let promptForTokenCount = fullPrompt;
+		if (fileAttachments && fileAttachments.length > 0) {
+			promptForTokenCount = preparePromptWithAttachments(fullPrompt, fileAttachments);
 		}
-
-		tokens = estimateTokenCount(JSON.stringify(fullPrompt));
-		// const result = await countTokens(fullPrompt, chosenModel);
-		// tokens = result.tokens;
-		// price = result.price;
+		tokens = estimateTokenCount(promptForTokenCount as string, 'simple');
 
 		// Add tokens for images if applicable
 		if (imageAttachments.length > 0 && chosenModel.handlesImages) {
@@ -149,6 +150,16 @@ export async function calculateTokensAndPrice(
 		if (chosenModel.input_price && tokens > 0) {
 			price = (tokens / 1000000) * chosenModel.input_price;
 		}
+
+		// Add image pricing costs separately (some providers have separate image pricing)
+		if (imageAttachments.length > 0 && chosenModel.handlesImages) {
+			const imageCost = calculateImageCostByProvider(
+				imageAttachments,
+				chosenModel,
+				chosenCompany
+			).cost;
+			price += imageCost;
+		}
 	} catch (error) {
 		console.error('Error calculating tokens:', error);
 	}
@@ -157,38 +168,54 @@ export async function calculateTokensAndPrice(
 }
 
 /**
- * Checks if a prompt is effectively empty
- * @param prompt The prompt to check (string or Message array)
- * @returns True if the prompt is empty or contains only whitespace/formatting
+ * Checks if a prompt is empty or contains only empty content
+ * @param fullPrompt The prompt to check
+ * @returns True if the prompt is empty
  */
-function isPromptEmpty(prompt: Message[] | string): boolean {
-	if (typeof prompt === 'string') {
-		// Remove HTML tags, whitespace, and check if empty
-		const cleanedPrompt = prompt
-			.replace(/<br\s*\/?>/gi, '') // Remove <br> tags
-			.replace(/&nbsp;/gi, ' ') // Replace &nbsp; with spaces
-			.trim(); // Remove leading/trailing whitespace
+function isEmptyPrompt(fullPrompt: Message[] | string): boolean {
+	if (!fullPrompt) return true;
 
-		return cleanedPrompt === '';
+	if (typeof fullPrompt === 'string') {
+		// Check for empty string or strings with only whitespace/HTML breaks
+		const trimmed = fullPrompt
+			.trim()
+			.replace(/<br\s*\/?>/gi, '')
+			.replace(/&nbsp;/gi, '')
+			.replace(/\r/g, '')
+			.replace(/\n/g, '')
+			.replace(/\t/g, '')
+			.replace(/\s/g, '');
+		return trimmed === '';
 	}
 
-	if (Array.isArray(prompt)) {
+	if (Array.isArray(fullPrompt)) {
 		// Check if array is empty or all messages have empty content
-		if (prompt.length === 0) {
-			return true;
-		}
+		if (fullPrompt.length === 0) return true;
 
-		return prompt.every((message) => {
-			const content = typeof message.content === 'string' ? message.content : '';
-			const cleanedContent = content
-				.replace(/<br\s*\/?>/gi, '')
-				.replace(/&nbsp;/gi, ' ')
-				.trim();
-			return cleanedContent === '';
+		return fullPrompt.every((message) => {
+			if (!message.content) return true;
+
+			// Handle case where content might be an array (for some message formats)
+			if (Array.isArray(message.content)) return message.content.length === 0;
+
+			// Handle string content
+			if (typeof message.content === 'string') {
+				const trimmed = message.content
+					.trim()
+					.replace(/<br\s*\/?>/gi, '')
+					.replace(/&nbsp;/gi, '')
+					.replace(/\r/g, '')
+					.replace(/\n/g, '')
+					.replace(/\t/g, '')
+					.replace(/\s/g, '');
+				return trimmed === '';
+			}
+
+			return false;
 		});
 	}
 
-	return true; // Default to empty if unknown type
+	return false;
 }
 
 /**
@@ -199,15 +226,23 @@ function isPromptEmpty(prompt: Message[] | string): boolean {
  */
 export function preparePromptWithAttachments(
 	fullPrompt: Message[] | string,
-	fileAttachments: any[]
+	fileAttachments: FileAttachment[]
 ): Message[] | string {
+	const MAX_FILE_CONTENT_LENGTH = 500; // Maximum characters for file content
+
 	// If it's already a string, append file info
 	if (typeof fullPrompt === 'string') {
 		let result = fullPrompt;
 		fileAttachments.forEach((file) => {
-			result += `\n\nFile: ${file.name}\nContent: ${file.content.substring(0, 500)}${
-				file.content.length > 500 ? '...' : ''
-			}`;
+			// Safely handle undefined or null file content
+			let fileContent = file.data || '';
+
+			// Truncate long file contents
+			if (fileContent.length > MAX_FILE_CONTENT_LENGTH) {
+				fileContent = fileContent.substring(0, MAX_FILE_CONTENT_LENGTH) + '...';
+			}
+
+			result += `\n\nFile: ${file.filename}\nContent: ${fileContent}`;
 		});
 		return result;
 	}
@@ -216,11 +251,17 @@ export function preparePromptWithAttachments(
 	if (Array.isArray(fullPrompt)) {
 		const result = [...fullPrompt];
 		fileAttachments.forEach((file) => {
+			// Safely handle undefined or null file content
+			let fileContent = file.data || '';
+
+			// Truncate long file contents
+			if (fileContent.length > MAX_FILE_CONTENT_LENGTH) {
+				fileContent = fileContent.substring(0, MAX_FILE_CONTENT_LENGTH) + '...';
+			}
+
 			result.push({
 				role: 'system',
-				content: `File: ${file.name}\nContent: ${file.content.substring(0, 500)}${
-					file.content.length > 500 ? '...' : ''
-				}`
+				content: `File: ${file.filename}\nContent: ${fileContent}`
 			});
 		});
 		return result;

@@ -197,8 +197,8 @@ export async function regenerateMessage(messageId: number) {
 										text: responseText,
 										components: responseComponents,
 										reasoning: reasoningComponent,
-										input_cost: msg.input_cost + inputPrice,
-										output_cost: msg.output_cost + outputPrice,
+										input_cost: inputPrice,
+										output_cost: outputPrice,
 										loading: false
 									}
 								: msg

@@ -3,6 +3,7 @@ import type { LLMRequestConfig, UsageMetrics } from './types';
 import { llmProviderFactory } from './providerFactory';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
 import { InsufficientBalanceError } from '$lib/types/customErrors';
+import { retrieveApiRequestByMessageId } from '$lib/db/crud/apiRequest';
 
 /**
  * Process an LLM request with streaming response
@@ -26,6 +27,31 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 		requestId,
 		reasoningEnabled
 	} = config;
+
+	// Get existing costs if regenerating
+	let existingInputCost = 0;
+	let existingOutputCost = 0;
+
+	if (regenerateMessageId) {
+		try {
+			// Parse the JSON string to get the actual messageId number
+			const messageIdNumber = JSON.parse(regenerateMessageId);
+			const existingApiRequest = await retrieveApiRequestByMessageId(
+				messageIdNumber,
+				user.id,
+				false // Get non-serialized version
+			);
+
+			if (existingApiRequest && 'input_cost' in existingApiRequest) {
+				// existingApiRequest is the non-serialized version with Decimal fields
+				existingInputCost = parseFloat(existingApiRequest.input_cost.toString());
+				existingOutputCost = parseFloat(existingApiRequest.output_cost.toString());
+			}
+		} catch (err) {
+			console.error('[LLM Service] Error fetching existing costs:', err);
+			// Continue with 0 costs if fetch fails
+		}
+	}
 
 	// Get the provider for the requested API
 	try {
@@ -90,7 +116,7 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 
 						// Process the chunk with the provider-specific handler
 						provider.handleStreamChunk(chunk, {
-							onFirstChunk: (requestId, conversationId) => {
+							onFirstChunk: (requestId) => {
 								if (isFirstChunk) {
 									isFirstChunk = false;
 									try {
@@ -129,15 +155,15 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 										output_price: model.output_price
 									};
 
-									// Ensure we have valid numbers
-									const inputPrice = isNaN(
+									// Calculate current generation costs
+									const currentInputPrice = isNaN(
 										finalUsage.prompt_tokens * actualModelPrices.input_price
 									)
 										? 0
 										: (finalUsage.prompt_tokens *
 												actualModelPrices.input_price) /
 											1000000;
-									const outputPrice = isNaN(
+									const currentOutputPrice = isNaN(
 										finalUsage.completion_tokens *
 											actualModelPrices.output_price
 									)
@@ -146,13 +172,21 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 												actualModelPrices.output_price) /
 											1000000;
 
+									// For regeneration, send accumulated totals; for new messages, send current costs
+									const totalInputPrice = regenerateMessageId
+										? existingInputCost + currentInputPrice
+										: currentInputPrice;
+									const totalOutputPrice = regenerateMessageId
+										? existingOutputCost + currentOutputPrice
+										: currentOutputPrice;
+
 									controller.enqueue(
 										textEncoder.encode(
 											JSON.stringify({
 												type: 'usage',
 												usage: {
-													inputPrice,
-													outputPrice
+													inputPrice: totalInputPrice,
+													outputPrice: totalOutputPrice
 												}
 											}) + '\n'
 										)

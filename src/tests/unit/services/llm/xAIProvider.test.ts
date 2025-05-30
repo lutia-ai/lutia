@@ -340,8 +340,7 @@ describe('XAIProvider', () => {
 
 		// Should call onFirstChunk for empty chunks
 		expect(mockCallbacks.onFirstChunk).toHaveBeenCalledWith(
-			'123e4567-e89b-12d3-a456-426614174000',
-			''
+			'123e4567-e89b-12d3-a456-426614174000'
 		);
 		expect(mockCallbacks.onContent).not.toHaveBeenCalled();
 	});

@@ -86,7 +86,7 @@ export class LlamaProvider implements LLMProvider {
 	handleStreamChunk(
 		chunk: any,
 		callbacks: {
-			onFirstChunk: (requestId: string, conversationId: string) => void;
+			onFirstChunk: (requestId: string) => void;
 			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
@@ -109,7 +109,7 @@ export class LlamaProvider implements LLMProvider {
 
 		// If this is first chunk, make sure we call onFirstChunk
 		if (chunk.isFirstChunk || chunk.choices?.[0]?.index === 0) {
-			callbacks.onFirstChunk(crypto.randomUUID(), '');
+			callbacks.onFirstChunk(crypto.randomUUID());
 		}
 	}
 }

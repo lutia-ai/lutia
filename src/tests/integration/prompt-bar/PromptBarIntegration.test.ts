@@ -21,6 +21,7 @@ const isDragging = writable(false);
 const isSidebarOpen = writable(false);
 const isLargeScreen = writable(true);
 const mobileSidebarOpen = writable(false);
+const reasoningOn = writable(false);
 
 // Mock the stores
 vi.mock('$lib/stores', () => ({
@@ -33,7 +34,8 @@ vi.mock('$lib/stores', () => ({
 	isDragging,
 	isSidebarOpen,
 	isLargeScreen,
-	mobileSidebarOpen
+	mobileSidebarOpen,
+	reasoningOn
 }));
 
 // Mock other dependencies
@@ -178,6 +180,7 @@ describe('PromptBar Component Integration Tests', () => {
 		isSidebarOpen.set(false);
 		isLargeScreen.set(true);
 		mobileSidebarOpen.set(false);
+		reasoningOn.set(false);
 
 		// Create mock user based on actual UserWithSettings type
 		mockUser = {
