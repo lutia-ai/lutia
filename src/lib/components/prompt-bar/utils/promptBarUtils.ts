@@ -123,6 +123,11 @@ export async function calculateTokensAndPrice(
 		return { tokens, price };
 	}
 
+	// Check if prompt is empty or contains only empty content
+	if (isEmptyPrompt(fullPrompt)) {
+		return { tokens, price };
+	}
+
 	try {
 		// Prepare prompt with file attachments for accurate token counting
 		let promptForTokenCount = fullPrompt;
@@ -163,6 +168,57 @@ export async function calculateTokensAndPrice(
 }
 
 /**
+ * Checks if a prompt is empty or contains only empty content
+ * @param fullPrompt The prompt to check
+ * @returns True if the prompt is empty
+ */
+function isEmptyPrompt(fullPrompt: Message[] | string): boolean {
+	if (!fullPrompt) return true;
+
+	if (typeof fullPrompt === 'string') {
+		// Check for empty string or strings with only whitespace/HTML breaks
+		const trimmed = fullPrompt
+			.trim()
+			.replace(/<br\s*\/?>/gi, '')
+			.replace(/&nbsp;/gi, '')
+			.replace(/\r/g, '')
+			.replace(/\n/g, '')
+			.replace(/\t/g, '')
+			.replace(/\s/g, '');
+		return trimmed === '';
+	}
+
+	if (Array.isArray(fullPrompt)) {
+		// Check if array is empty or all messages have empty content
+		if (fullPrompt.length === 0) return true;
+
+		return fullPrompt.every((message) => {
+			if (!message.content) return true;
+
+			// Handle case where content might be an array (for some message formats)
+			if (Array.isArray(message.content)) return message.content.length === 0;
+
+			// Handle string content
+			if (typeof message.content === 'string') {
+				const trimmed = message.content
+					.trim()
+					.replace(/<br\s*\/?>/gi, '')
+					.replace(/&nbsp;/gi, '')
+					.replace(/\r/g, '')
+					.replace(/\n/g, '')
+					.replace(/\t/g, '')
+					.replace(/\s/g, '');
+				return trimmed === '';
+			}
+
+			return false;
+		});
+	}
+
+	return false;
+}
+
+/**
  * Prepares a prompt with file attachments for token counting
  * @param fullPrompt The full prompt
  * @param fileAttachments File attachments to include
@@ -172,12 +228,20 @@ export function preparePromptWithAttachments(
 	fullPrompt: Message[] | string,
 	fileAttachments: FileAttachment[]
 ): Message[] | string {
+	const MAX_FILE_CONTENT_LENGTH = 500; // Maximum characters for file content
+
 	// If it's already a string, append file info
 	if (typeof fullPrompt === 'string') {
 		let result = fullPrompt;
 		fileAttachments.forEach((file) => {
 			// Safely handle undefined or null file content
-			const fileContent = file.data;
+			let fileContent = file.data || '';
+
+			// Truncate long file contents
+			if (fileContent.length > MAX_FILE_CONTENT_LENGTH) {
+				fileContent = fileContent.substring(0, MAX_FILE_CONTENT_LENGTH) + '...';
+			}
+
 			result += `\n\nFile: ${file.filename}\nContent: ${fileContent}`;
 		});
 		return result;
@@ -188,7 +252,13 @@ export function preparePromptWithAttachments(
 		const result = [...fullPrompt];
 		fileAttachments.forEach((file) => {
 			// Safely handle undefined or null file content
-			const fileContent = file.data;
+			let fileContent = file.data || '';
+
+			// Truncate long file contents
+			if (fileContent.length > MAX_FILE_CONTENT_LENGTH) {
+				fileContent = fileContent.substring(0, MAX_FILE_CONTENT_LENGTH) + '...';
+			}
+
 			result.push({
 				role: 'system',
 				content: `File: ${file.filename}\nContent: ${fileContent}`

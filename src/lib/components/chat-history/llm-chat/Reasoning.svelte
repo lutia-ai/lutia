@@ -4,26 +4,126 @@
 		sanitizeLLmContent
 	} from '$lib/components/chat-history/utils/chatHistory';
 	import marked from '$lib/utils/marked-extensions.ts';
+	import { onMount } from 'svelte';
 
 	export let reasoning: string;
 	export let isLoading: boolean = false;
 	export let onAutoCollapse: ((isManualToggle?: boolean) => void) | undefined = undefined;
+	export let animationMode: 'character' | 'word' | 'none' = 'character'; // Animation mode option
 
 	let isExpanded: boolean = false;
 	let previousIsLoading: boolean = isLoading;
+	let displayedText: string = '';
+	let previousReasoning: string = '';
+	let typewriterTimeout: ReturnType<typeof setTimeout> | null = null;
+	let animationFrame: number | null = null;
 	const CONDENSED_LENGTH: number = 330; // Character limit for condensed view
+	const TYPEWRITER_DELAY: number = 1; // Milliseconds between characters (adjust for speed)
+	const WORD_DELAY: number = 10; // Milliseconds between words (for word mode)
+
+	/**
+	 * Smoothly animates new text using a typewriter effect
+	 * @param newText - The new text to animate to
+	 */
+	function animateToNewText(newText: string): void {
+		// Clear any existing animation
+		if (typewriterTimeout) {
+			clearTimeout(typewriterTimeout);
+			typewriterTimeout = null;
+		}
+		if (animationFrame) {
+			cancelAnimationFrame(animationFrame);
+			animationFrame = null;
+		}
+
+		// If we're not loading or animation is disabled, just set the text immediately
+		if (!isLoading || animationMode === 'none') {
+			displayedText = newText;
+			return;
+		}
+
+		// Find the common prefix between old and new text
+		let commonLength = 0;
+		const minLength = Math.min(displayedText.length, newText.length);
+		for (let i = 0; i < minLength; i++) {
+			if (displayedText[i] === newText[i]) {
+				commonLength++;
+			} else {
+				break;
+			}
+		}
+
+		// Only animate the new part
+		const newPart = newText.slice(commonLength);
+
+		if (newPart.length === 0) return;
+
+		if (animationMode === 'word') {
+			// Word-by-word animation
+			const words = newPart.split(/(\s+)/); // Split preserving whitespace
+			let currentWordIndex = 0;
+
+			function typeNextWord(): void {
+				if (currentWordIndex < words.length) {
+					const wordsToShow = words.slice(0, currentWordIndex + 1).join('');
+					displayedText = newText.slice(0, commonLength) + wordsToShow;
+					currentWordIndex++;
+
+					animationFrame = requestAnimationFrame(() => {
+						typewriterTimeout = setTimeout(typeNextWord, WORD_DELAY);
+					});
+				}
+			}
+
+			typeNextWord();
+		} else {
+			// Character-by-character animation (default)
+			let currentIndex = 0;
+
+			function typeNextCharacter(): void {
+				if (currentIndex < newPart.length) {
+					displayedText = newText.slice(0, commonLength + currentIndex + 1);
+					currentIndex++;
+
+					// Use requestAnimationFrame for smoother animation
+					animationFrame = requestAnimationFrame(() => {
+						typewriterTimeout = setTimeout(typeNextCharacter, TYPEWRITER_DELAY);
+					});
+				}
+			}
+
+			typeNextCharacter();
+		}
+	}
+
+	// Watch for reasoning changes and animate smoothly
+	$: if (reasoning !== previousReasoning) {
+		animateToNewText(reasoning);
+		previousReasoning = reasoning;
+	}
 
 	// Watch for when loading finishes to auto-collapse
 	$: if (!isLoading && reasoning.length > CONDENSED_LENGTH) {
 		const wasLoading = previousIsLoading;
 		isExpanded = false;
 
+		// Complete any pending animation immediately when loading finishes
+		if (typewriterTimeout) {
+			clearTimeout(typewriterTimeout);
+			typewriterTimeout = null;
+		}
+		if (animationFrame) {
+			cancelAnimationFrame(animationFrame);
+			animationFrame = null;
+		}
+		displayedText = reasoning;
+
 		// If this was an auto-collapse (loading just finished), trigger scroll
 		if (wasLoading && onAutoCollapse) {
 			// Delay scroll to allow slide transition to start
 			setTimeout(() => {
 				onAutoCollapse();
-			}, 150); // Half of the slide transition duration
+			}, 150);
 		}
 	}
 
@@ -39,7 +139,7 @@
 		if (onAutoCollapse && !isExpanded) {
 			setTimeout(() => {
 				onAutoCollapse(true); // Pass true to indicate this is a manual toggle
-			}, 0); // Half of the slide transition duration
+			}, 0);
 		}
 	}
 
@@ -47,19 +147,37 @@
 	 * Checks if the content should show expand/collapse option
 	 * This includes both streaming content that's reached the limit and completed content that's long
 	 * @param content - The reasoning content
-	 * @param loading - Whether content is still loading
 	 * @returns True if content is longer than condensed length
 	 */
 	function shouldShowToggle(content: string): boolean {
 		return content.length > CONDENSED_LENGTH;
 	}
 
-	$: processedContent = processLinks(marked(sanitizeLLmContent(reasoning)));
-	$: condensedContent =
-		typeof processedContent === 'string'
-			? processedContent.substring(0, CONDENSED_LENGTH) + '...'
-			: processedContent;
+	// Use displayed text for processing instead of raw reasoning
+	$: processedContent = processLinks(marked(sanitizeLLmContent(displayedText)));
+	$: condensedContent = (() => {
+		// Create condensed content from raw text to avoid cutting HTML entities
+		if (typeof processedContent === 'string' && displayedText.length > CONDENSED_LENGTH) {
+			const rawCondensed = displayedText.substring(0, CONDENSED_LENGTH) + '...';
+			return processLinks(marked(sanitizeLLmContent(rawCondensed)));
+		}
+		return processedContent;
+	})();
 	$: showToggle = !isLoading && shouldShowToggle(reasoning);
+
+	// Clean up on component destroy
+	onMount(() => {
+		// Initialize displayed text on mount
+		displayedText = reasoning;
+		return () => {
+			if (typewriterTimeout) {
+				clearTimeout(typewriterTimeout);
+			}
+			if (animationFrame) {
+				cancelAnimationFrame(animationFrame);
+			}
+		};
+	});
 </script>
 
 <div
@@ -94,14 +212,18 @@
 		{/if}
 	</div>
 
-	{#if reasoning.length > 0}
+	{#if displayedText.length > 0}
 		<div
 			class="reasoning-content"
 			class:expanded={isLoading || isExpanded}
 			class:condensed={!isLoading && !isExpanded && reasoning.length > CONDENSED_LENGTH}
+			class:streaming={isLoading}
 		>
 			{@html isExpanded || isLoading ? processedContent : condensedContent}
 		</div>
+	{/if}
+	{#if isLoading}
+		<span class="gpt-loading-dot" />
 	{/if}
 </div>
 
@@ -117,6 +239,32 @@
 
 		&.expandable {
 			cursor: pointer;
+		}
+
+		.gpt-loading-dot {
+			position: relative;
+			width: 15px !important;
+			height: 15px !important;
+			background: var(--text-color);
+			transform: translateY(4px);
+			border-radius: 50%;
+			display: flex;
+			animation: pulse-shrink 1s infinite;
+		}
+
+		@keyframes pulse-shrink {
+			0% {
+				background-color: var(--text-color); /* Original color at start */
+				transform: translateY(4px) scale(1);
+			}
+			50% {
+				background-color: var(--text-color-light); /* Slightly lighter color */
+				transform: translateY(4px) scale(0.9); /* Slightly smaller */
+			}
+			100% {
+				background-color: var(--text-color); /* Back to original color */
+				transform: translateY(4px) scale(1); /* Back to original size */
+			}
 		}
 	}
 
@@ -171,13 +319,35 @@
 		line-height: 30px;
 		overflow: hidden;
 		transition: all 0.6s ease-in-out;
+		position: relative;
+		// max-height: 2000px;
 
 		&.expanded {
 			max-height: 2000px; // Large enough to accommodate most content
 		}
 
 		&.condensed {
-			max-height: 150px; // Approximate height for condensed content
+			max-height: 250px; // Approximate height for condensed content
+		}
+
+		&.streaming {
+			// Add a subtle glow effect during streaming
+			&::after {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: linear-gradient(
+					90deg,
+					transparent,
+					rgba(var(--text-color-rgb, 255, 255, 255), 0.1),
+					transparent
+				);
+				animation: streaming-glow 3s ease-in-out infinite;
+				pointer-events: none;
+			}
 		}
 
 		:global(p) {
@@ -207,6 +377,20 @@
 		}
 		100% {
 			background-position: 100% 0;
+		}
+	}
+
+	@keyframes streaming-glow {
+		0% {
+			transform: translateX(-100%);
+			opacity: 0;
+		}
+		50% {
+			opacity: 0.8;
+		}
+		100% {
+			transform: translateX(100%);
+			opacity: 0;
 		}
 	}
 

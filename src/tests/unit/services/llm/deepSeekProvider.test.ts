@@ -245,8 +245,7 @@ describe('DeepSeekProvider', () => {
 
 		// First chunk should trigger onFirstChunk
 		expect(mockCallbacks.onFirstChunk).toHaveBeenCalledWith(
-			'123e4567-e89b-12d3-a456-426614174000',
-			''
+			'123e4567-e89b-12d3-a456-426614174000'
 		);
 
 		// Content should be passed to onContent
@@ -325,8 +324,7 @@ describe('DeepSeekProvider', () => {
 
 		// Should still call onFirstChunk for empty chunks
 		expect(mockCallbacks.onFirstChunk).toHaveBeenCalledWith(
-			'123e4567-e89b-12d3-a456-426614174000',
-			''
+			'123e4567-e89b-12d3-a456-426614174000'
 		);
 		expect(mockCallbacks.onContent).not.toHaveBeenCalled();
 	});

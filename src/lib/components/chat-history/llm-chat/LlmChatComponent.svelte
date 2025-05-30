@@ -113,6 +113,7 @@
 					reasoning={chat.reasoning?.content || ''}
 					isLoading={isReasoningStreaming}
 					onAutoCollapse={handleReasoningAutoCollapse}
+					animationMode="word"
 				/>
 			{/if}
 			{#each chat.components || [] as component, componentIndex}
@@ -148,7 +149,7 @@
 					</div>
 				{/if}
 			{/each}
-			{#if chat.loading}
+			{#if chat.loading && (!isReasoningStreaming || !chat.reasoning?.content)}
 				<span class="gpt-loading-dot" />
 			{/if}
 			{#if !chat.loading}

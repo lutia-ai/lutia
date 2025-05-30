@@ -67,8 +67,7 @@ export class GeminiProvider implements LLMProvider {
 	 */
 	async createCompletionStream({
 		model,
-		messages,
-		reasoningEnabled
+		messages
 	}: {
 		model: Model;
 		messages: any;
