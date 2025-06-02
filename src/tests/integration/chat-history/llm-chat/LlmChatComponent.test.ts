@@ -65,7 +65,10 @@ vi.mock('$lib/types/typeGuards', () => ({
 	isModelOpenAI: vi.fn().mockImplementation((model: string) => model.includes('gpt')),
 	isModelGoogle: vi.fn().mockImplementation((model: string) => model.includes('Gemini')),
 	isModelXAI: vi.fn().mockImplementation((model: string) => model.includes('Grok')),
-	isModelDeepSeek: vi.fn().mockImplementation((model: string) => model.includes('DeepSeek'))
+	isModelDeepSeek: vi.fn().mockImplementation((model: string) => model.includes('DeepSeek')),
+	isToolUseComponent: vi
+		.fn()
+		.mockImplementation((component: any) => component.type === 'tool_use')
 }));
 
 // Regular imports after all mocks
@@ -213,7 +216,7 @@ describe('LlmChatComponent Integration Tests', () => {
 		const mockChat: LlmChat = {
 			message_id: 8,
 			by: 'Claude-3-Opus',
-			text: 'This is the response',
+			text: 'This is a response with reasoning',
 			input_cost: 0.01,
 			output_cost: 0.02,
 			price_open: false,
@@ -221,14 +224,14 @@ describe('LlmChatComponent Integration Tests', () => {
 			loading: false,
 			components: [
 				{
+					type: 'reasoning',
+					content: 'This is the reasoning behind the response'
+				} as Component,
+				{
 					type: 'text',
-					content: 'This is the response'
+					content: 'This is a response with reasoning'
 				} as Component
-			],
-			reasoning: {
-				type: 'reasoning',
-				content: 'This is the reasoning behind the response'
-			}
+			]
 		};
 
 		const { container } = render(LlmChatComponent, {
@@ -335,6 +338,48 @@ describe('LlmChatComponent Integration Tests', () => {
 		// Test passes if toolbar exists (price functionality is tested elsewhere)
 	});
 
+	it('should render tool use components correctly', () => {
+		const mockChat: LlmChat = {
+			message_id: 11,
+			by: 'Claude-3-Opus',
+			text: 'I will search for information',
+			input_cost: 0.01,
+			output_cost: 0.02,
+			price_open: false,
+			copied: false,
+			loading: false,
+			components: [
+				{
+					type: 'text',
+					content: 'I will search for information'
+				} as Component,
+				{
+					type: 'tool_use',
+					tool_name: 'web_search',
+					content: 'Using web_search...',
+					tool_data: { query: 'test query' }
+				} as Component,
+				{
+					type: 'text',
+					content: 'Here are the results'
+				} as Component
+			]
+		};
+
+		const { container } = render(LlmChatComponent, {
+			props: {
+				chatIndex: 0,
+				chat: mockChat,
+				openImageViewer: mockOpenImageViewer
+			}
+		});
+
+		expect(container.textContent).toContain('I will search for information');
+		expect(container.textContent).toContain('Using web_search...');
+		expect(container.textContent).toContain('Here are the results');
+		expect(container.querySelector('.tool-use-container')).not.toBeNull();
+	});
+
 	it('should handle reasoning streaming behavior correctly', async () => {
 		// Create a long reasoning text
 		const longReasoningText = 'A'.repeat(300); // Longer than CONDENSED_LENGTH (250)
@@ -349,11 +394,12 @@ describe('LlmChatComponent Integration Tests', () => {
 			price_open: false,
 			copied: false,
 			loading: true,
-			components: [], // No components yet
-			reasoning: {
-				type: 'reasoning',
-				content: longReasoningText
-			}
+			components: [
+				{
+					type: 'reasoning',
+					content: longReasoningText
+				} as Component
+			]
 		};
 
 		// Mock this as the last message in history
@@ -375,6 +421,10 @@ describe('LlmChatComponent Integration Tests', () => {
 			loading: false,
 			text: 'Here is my response',
 			components: [
+				{
+					type: 'reasoning',
+					content: longReasoningText
+				} as Component,
 				{
 					type: 'text',
 					content: 'Here is my response'

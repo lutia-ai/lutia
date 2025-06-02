@@ -100,9 +100,10 @@ export async function deleteAllUserMessagesWithoutAConversation(userId: number):
  */
 export async function updateMessage(
 	id: number,
-	updatedData: Partial<Omit<Message, 'id' | 'pictures' | 'files'>> & {
+	updatedData: Partial<Omit<Message, 'id' | 'pictures' | 'files' | 'ordered_content'>> & {
 		pictures?: Image[];
 		files?: any;
+		ordered_content?: any;
 	}
 ): Promise<Message> {
 	try {
@@ -116,6 +117,10 @@ export async function updateMessage(
 
 		if (updatedData.files !== undefined) {
 			processedData.files = updatedData.files;
+		}
+
+		if (updatedData.ordered_content !== undefined) {
+			processedData.ordered_content = updatedData.ordered_content;
 		}
 
 		const updatedMessage = await prisma.message.update({

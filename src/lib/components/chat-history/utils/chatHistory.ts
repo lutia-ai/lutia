@@ -8,7 +8,9 @@ import type {
 	ApiRequestWithMessage,
 	SerializedMessage,
 	FileAttachment,
-	Attachment
+	Attachment,
+	OrderedContent,
+	ToolUseComponent
 } from '$lib/types/types';
 import { deserialize } from '$app/forms';
 import { chatHistory, numberPrevMessages } from '$lib/stores';
@@ -28,6 +30,12 @@ function serializeMessage(message: any): SerializedMessage {
 		reasoning: message.reasoning || '',
 		pictures: Array.isArray(message.pictures) ? (message.pictures as Image[]) : [],
 		files: Array.isArray(message.files) ? (message.files as FileAttachment[]) : [],
+		webSearchResults: Array.isArray(message.web_search_results)
+			? message.web_search_results
+			: [],
+		orderedContent: Array.isArray(message.ordered_content)
+			? (message.ordered_content as OrderedContent)
+			: undefined,
 		// Add these fields for referenced messages
 		referencedMessages: Array.isArray(message.referencedMessages)
 			? message.referencedMessages.map((msg: Message) => ({
@@ -36,7 +44,13 @@ function serializeMessage(message: any): SerializedMessage {
 					response: msg.response,
 					reasoning: msg.reasoning || '',
 					pictures: Array.isArray(msg.pictures) ? (msg.pictures as Image[]) : [],
-					files: Array.isArray(msg.files) ? (msg.files as FileAttachment[]) : []
+					files: Array.isArray(msg.files) ? (msg.files as FileAttachment[]) : [],
+					webSearchResults: Array.isArray(msg.web_search_results)
+						? msg.web_search_results
+						: [],
+					orderedContent: Array.isArray(msg.ordered_content)
+						? (msg.ordered_content as OrderedContent)
+						: undefined
 				}))
 			: []
 	};
@@ -71,7 +85,10 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 			};
 		}
 
-		const components: Component[] = parseMessageContent(message.response);
+		// Use ordered content if available, otherwise parse message content for backward compatibility
+		const components: Component[] = message.orderedContent
+			? parseOrderedContent(message.orderedContent)
+			: parseMessageContent(message.response);
 
 		const llmChat: LlmChat = {
 			message_id: apiRequest.message?.id,
@@ -86,6 +103,8 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 				type: 'reasoning',
 				content: apiRequest.message?.reasoning || ''
 			},
+			webSearchResults: apiRequest.message?.webSearchResults || [],
+			orderedContent: message.orderedContent,
 			components:
 				apiRequest.message?.pictures &&
 				apiRequest.message?.pictures.length > 0 &&
@@ -350,4 +369,75 @@ export function handleKeyboardShortcut(event: KeyboardEvent) {
 			event.preventDefault();
 		}
 	}
+}
+
+/**
+ * Parses ordered content stream into components while preserving order
+ * @param orderedContent Array of content items in order received
+ * @returns Array of components maintaining original order
+ */
+export function parseOrderedContent(orderedContent: OrderedContent): Component[] {
+	const components: Component[] = [];
+	let textBuffer = '';
+	let reasoningBuffer = '';
+
+	for (const item of orderedContent) {
+		if (item.type === 'text') {
+			// Flush any accumulated reasoning first
+			if (reasoningBuffer.trim()) {
+				components.push({
+					type: 'reasoning',
+					content: reasoningBuffer.trim()
+				});
+				reasoningBuffer = '';
+			}
+
+			textBuffer += item.content;
+		} else if (item.type === 'reasoning') {
+			// Flush any accumulated text first
+			if (textBuffer.trim()) {
+				components.push(...parseMessageContent(textBuffer));
+				textBuffer = '';
+			}
+
+			// Accumulate reasoning content
+			reasoningBuffer += item.content;
+		} else if (item.type === 'tool_use') {
+			// Flush any accumulated content first
+			if (reasoningBuffer.trim()) {
+				components.push({
+					type: 'reasoning',
+					content: reasoningBuffer.trim()
+				});
+				reasoningBuffer = '';
+			}
+			if (textBuffer.trim()) {
+				components.push(...parseMessageContent(textBuffer));
+				textBuffer = '';
+			}
+
+			// Add tool use component
+			const toolComponent: ToolUseComponent = {
+				type: 'tool_use',
+				tool_name: item.metadata?.tool_name || '',
+				tool_data: item.metadata?.tool_data,
+				content: item.content,
+				timestamp: item.metadata?.timestamp
+			};
+			components.push(toolComponent);
+		}
+	}
+
+	// Flush any remaining content in the correct order
+	if (reasoningBuffer.trim()) {
+		components.push({
+			type: 'reasoning',
+			content: reasoningBuffer.trim()
+		});
+	}
+	if (textBuffer.trim()) {
+		components.push(...parseMessageContent(textBuffer));
+	}
+
+	return components;
 }

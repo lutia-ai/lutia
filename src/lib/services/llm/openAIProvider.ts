@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { env } from '$env/dynamic/private';
 import type { LLMProvider, UsageMetrics } from './types';
-import type { Model } from '$lib/types/types';
+import type { Model, ToolUseCallback } from '$lib/types/types';
 import { addFilesToMessage } from '$lib/utils/fileHandling';
 
 /**
@@ -84,6 +84,7 @@ export class OpenAIProvider implements LLMProvider {
 			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
+			onToolUse?: ToolUseCallback;
 		}
 	) {
 		// Track if this is the first content chunk

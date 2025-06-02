@@ -11,9 +11,20 @@ import {
 	conversationId
 } from '$lib/stores';
 import { generateFullPrompt } from '$lib/components/prompt-bar/utils/promptFunctions';
-import { parseMessageContent } from '$lib/components/chat-history/utils/chatHistory';
+import { parseOrderedContent } from '$lib/components/chat-history/utils/chatHistory';
 import { isLlmChatComponent } from '$lib/types/typeGuards';
 import { calculateImageCostByProvider } from '$lib/models/cost-calculators/imageCalculator';
+import {
+	handleStreamingResponse,
+	type StreamCallbacks,
+	type StreamingState
+} from '$lib/utils/streamingUtils';
+import { ApiRequestBuilder, ApiErrorHandler, createLLMRequest } from '$lib/utils/apiUtils';
+import {
+	ChatHistoryErrorManager,
+	ErrorNotificationManager,
+	LLM_ERROR_MESSAGES
+} from '$lib/utils/errorHandling';
 
 /**
  * Handles the submission of a prompt to an AI model
@@ -77,7 +88,7 @@ export async function submitPrompt(
 		if (get(chosenModel).generatesImages) {
 			await handleImageGenerationResponse(response, currentChatIndex);
 		} else {
-			await handleStreamingResponse(response, currentChatIndex, errorPopupHandler);
+			await handleTextStreamingResponse(response, currentChatIndex, errorPopupHandler);
 		}
 
 		// Calculate and update image costs
@@ -124,61 +135,22 @@ async function makeApiRequest(
 		get(isContextWindowAuto)
 	);
 
-	// UUID validation function
-	const isValidUUID = (uuid: string) => {
-		const uuidRegex =
-			/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-		return uuidRegex.test(uuid);
-	};
+	// Build request using shared utility
+	const requestBody = new ApiRequestBuilder()
+		.setPromptData(plainText, fullPrompt, get(chosenModel).name)
+		.setAttachments(imageArray, fileArray)
+		.setProvider(get(chosenCompany))
+		.setReasoning(get(chosenCompany), reasoning)
+		.setConversationId(get(conversationId))
+		.build();
 
-	// Only include conversationId if it's a valid UUID
-	const validConversationId =
-		get(conversationId) && isValidUUID(get(conversationId)!) ? get(conversationId) : undefined;
+	const response = await createLLMRequest('/api/llm', requestBody);
 
-	// Determine API endpoint
-	let uri = '/api/llm';
-
-	const requestBody: any = {
-		plainTextPrompt: JSON.stringify(plainText),
-		promptStr: JSON.stringify(fullPrompt),
-		modelStr: JSON.stringify(get(chosenModel).name),
-		imagesStr: JSON.stringify(imageArray),
-		filesStr: JSON.stringify(fileArray),
-		provider: get(chosenCompany)
-	};
-
-	// Only add reasoning for providers that support it
-	if (get(chosenCompany) === 'anthropic') {
-		requestBody.reasoningOn = reasoning;
-	}
-
-	// Only add conversationId if valid
-	if (validConversationId) {
-		requestBody.conversationId = validConversationId;
-	}
-
-	const response = await fetch(uri, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify(requestBody)
+	// Use shared error handling
+	await ApiErrorHandler.validateResponse(response, () => {
+		// Handle insufficient balance - remove the added messages
+		ChatHistoryErrorManager.removeRecentMessages(chatHistory.update);
 	});
-
-	if (!response.ok) {
-		const errorData = await response.clone().json();
-		chatHistory.update((history) => history.slice(0, -2));
-
-		console.error(`[Submit Prompt] Error response:`, errorData);
-		if (errorData.message === 'Insufficient balance') {
-			throw new Error("Spending can't go below $0.10");
-		}
-		throw new Error(errorData.message || 'An error occurred');
-	}
-
-	if (!response.body) {
-		throw new Error('Response body is null');
-	}
 
 	return response;
 }
@@ -223,12 +195,12 @@ async function handleImageGenerationResponse(
 }
 
 /**
- * Handles streaming response from the API
+ * Handles text streaming response from the API using shared utilities with real-time updates
  * @param response The fetch response
  * @param currentChatIndex The index of the current chat message
  * @param errorPopupHandler Function to display error popups
  */
-async function handleStreamingResponse(
+async function handleTextStreamingResponse(
 	response: Response,
 	currentChatIndex: number,
 	errorPopupHandler: (
@@ -238,106 +210,52 @@ async function handleStreamingResponse(
 		type: string
 	) => void
 ): Promise<void> {
-	const reader = response.body!.getReader();
-	const decoder = new TextDecoder();
-	let responseText = '';
-	let reasoningText = '';
-	let responseComponents: Component[] = [];
-	let reasoningComponent: ReasoningComponent | undefined;
-	let message_id: number | undefined;
-	let inputPrice = 0;
-	let outputPrice = 0;
-
-	while (true) {
-		const { value, done } = await reader.read();
-		if (done) break;
-
-		// Decode the chunk
-		const chunk = decoder.decode(value, { stream: true });
-
-		// Process lines (each JSON object is on its own line)
-		const lines = chunk.split('\n').filter((line) => line.trim());
-
-		for (const line of lines) {
-			try {
-				const data = JSON.parse(line);
-
-				// Handle different message types
-				if (data.type === 'text') {
-					responseText += data.content;
-					responseComponents = parseMessageContent(responseText);
-				} else if (data.type === 'reasoning') {
-					reasoningText += data.content;
-					reasoningComponent = {
-						type: 'reasoning',
-						content: reasoningText
-					};
-				} else if (data.type === 'usage') {
-					inputPrice = data.usage.inputPrice;
-					outputPrice = data.usage.outputPrice;
-				} else if (data.type === 'request_info') {
-					// Update the URL without reloading the page
-					const url = new URL(window.location.href);
-
-					// Ensure conversation_id is a string
-					const conversation_id = data.conversation_id || 'new';
-					url.pathname = `/chat/${conversation_id}`;
-
-					// This updates the URL without causing a page reload
-					pushState(url.toString(), {});
-					conversationId.set(conversation_id);
-				} else if (data.type === 'message_id') {
-					message_id = data.message_id;
-				} else if (data.type === 'error') {
-					console.error(data.message);
-					errorPopupHandler(data.message, null, 5000, 'error');
-				}
-
-				// Update chat history with the current state
-				updateChatHistory(
-					currentChatIndex,
-					responseText,
-					responseComponents,
-					reasoningComponent,
-					message_id,
-					inputPrice,
-					outputPrice
-				);
-			} catch (e) {
-				console.error('Error parsing stream chunk:', e);
-				// Continue with the next line if one fails to parse
-			}
+	const callbacks: StreamCallbacks = {
+		onRequestInfo: (convId) => {
+			// Update the URL without reloading the page
+			const url = new URL(window.location.href);
+			url.pathname = `/chat/${convId}`;
+			pushState(url.toString(), {});
+			conversationId.set(convId);
+		},
+		onError: (message) => {
+			errorPopupHandler(message, null, 5000, 'error');
+		},
+		onChunkProcessed: (currentState: StreamingState) => {
+			// Update chat history in real-time as chunks are processed
+			updateChatHistory(currentChatIndex, currentState, true);
 		}
-	}
+	};
+
+	// Use real-time streaming handler
+	const finalResult = await handleStreamingResponse(response, callbacks);
+
+	// Final update to ensure everything is set correctly
+	updateChatHistory(currentChatIndex, finalResult, false);
 }
 
 /**
- * Updates the chat history with current response state
+ * Updates chat history with final streaming results
  * @param currentChatIndex The index of the current chat message
- * @param responseText The current response text
- * @param responseComponents Parsed components from the response
- * @param reasoningComponent Reasoning component if available
- * @param message_id Message ID from the API
- * @param inputPrice Input cost price
- * @param outputPrice Output cost price
+ * @param result Results from streaming handler
+ * @param isFinal Whether this is the final update
  */
 function updateChatHistory(
 	currentChatIndex: number,
-	responseText: string,
-	responseComponents: Component[],
-	reasoningComponent: ReasoningComponent | undefined,
-	message_id: number | undefined,
-	inputPrice: number,
-	outputPrice: number
+	result: StreamingState,
+	isLoading: boolean = false
 ): void {
+	// Parse ordered content to get components that maintain order
+	const orderedComponents = parseOrderedContent(result.orderedContent);
+
 	// Update user message with message_id
-	if (message_id) {
+	if (result.messageId) {
 		chatHistory.update((history) =>
 			history.map((msg, index) =>
 				index === currentChatIndex - 1
 					? {
 							...msg,
-							message_id: message_id
+							message_id: result.messageId
 						}
 					: msg
 			)
@@ -350,12 +268,22 @@ function updateChatHistory(
 			index === currentChatIndex
 				? {
 						...msg,
-						text: responseText,
-						components: responseComponents,
-						reasoning: reasoningComponent,
-						message_id: message_id,
-						input_cost: inputPrice,
-						output_cost: outputPrice
+						text: result.responseText,
+						components: orderedComponents,
+						orderedContent: result.orderedContent,
+						// Only include webSearchResults if they exist and have content
+						...(result.webSearchResults &&
+						result.webSearchResults.length > 0 &&
+						result.webSearchResults.some(
+							(result) => result.results && result.results.length > 0
+						)
+							? { webSearchResults: result.webSearchResults }
+							: {}),
+						message_id: result.messageId,
+						input_cost: result.inputPrice,
+						output_cost: result.outputPrice,
+						toolInProgress: result.toolInProgress,
+						loading: isLoading
 					}
 				: msg
 		)
@@ -407,18 +335,15 @@ function handleError(
 ): void {
 	console.error('Error:', error);
 
-	chatHistory.update((history) => {
-		const newHistory = [...history];
-		if (newHistory[currentChatIndex] && isLlmChatComponent(newHistory[currentChatIndex])) {
-			newHistory[currentChatIndex].text =
-				'An error occurred while generating a response. Please try again.';
-			(newHistory[currentChatIndex] as LlmChat).loading = false;
-		}
-		return newHistory;
-	});
+	// Use shared error handling for chat history update
+	ChatHistoryErrorManager.setMessageError(
+		chatHistory.update,
+		currentChatIndex,
+		LLM_ERROR_MESSAGES.GENERATION_ERROR
+	);
 
-	const errorMessage = error.message || 'An unknown error occurred';
-	notificationHandler('Error', errorMessage, 5000, 'info');
+	// Use shared error notification
+	ErrorNotificationManager.showError(notificationHandler, error);
 }
 
 /**

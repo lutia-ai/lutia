@@ -5,11 +5,12 @@ import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { validateApiRequest, type ApiRequestData } from '$lib/utils/apiRequestValidator';
 import { processLLMRequest } from '$lib/services/llm/llmService';
 import { handleImageGeneration } from '$lib/services/llm/imageGenerationService';
+import type { RequestHandler } from './$types';
 
 /**
  * Unified API endpoint for all LLM providers
  */
-export async function POST({ request, locals, url }) {
+export const POST: RequestHandler = async ({ request, locals, url }) => {
 	const requestId = crypto.randomUUID();
 
 	let session = await locals.auth();
@@ -88,4 +89,4 @@ export async function POST({ request, locals, url }) {
 		}
 		throw error(500, 'An error occurred while processing your request');
 	}
-}
+};

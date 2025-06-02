@@ -114,6 +114,8 @@ model Message {
   pictures           Json?
   files              Json?
   reasoning          String?
+  web_search_results Json?
+  ordered_content    Json?
   referencedMessages Message[]   @relation("MessageReferences")
   referencedBy       Message[]   @relation("MessageReferences")
   apiRequest         ApiRequest?

@@ -1,7 +1,8 @@
 import { error, json } from '@sveltejs/kit';
 import { retrieveUserRequestsInDateRange } from '$lib/db/crud/apiRequest';
+import type { RequestHandler } from './$types';
 
-export async function GET({ locals, url }) {
+export const GET: RequestHandler = async ({ locals, url }) => {
 	let session = await locals.auth();
 	if (!session || !session.user) {
 		throw error(401, 'Forbidden');
@@ -26,4 +27,4 @@ export async function GET({ locals, url }) {
 		console.error('Error retrieving API requests:', error);
 		return json({ error: 'Failed to retrieve API requests' }, { status: 500 });
 	}
-}
+};

@@ -1,4 +1,4 @@
-import type { GptTokenUsage, Image, Model, FileAttachment } from '$lib/types/types';
+import type { GptTokenUsage, Image, Model, FileAttachment, OrderedContent } from '$lib/types/types';
 import { createMessageAndApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { ApiProvider, ApiRequestStatus, PaymentTier, type User } from '@prisma/client';
@@ -15,6 +15,8 @@ export interface FinalizationParams {
 	files: FileAttachment[];
 	chunks: string[];
 	thinkingChunks: string[];
+	webSearchResults: any[];
+	orderedContent?: OrderedContent;
 	finalUsage: GptTokenUsage;
 	wasAborted: boolean;
 	error: any;
@@ -33,6 +35,8 @@ export async function finalizeResponse({
 	files,
 	chunks,
 	thinkingChunks,
+	webSearchResults,
+	orderedContent,
 	finalUsage,
 	wasAborted = false,
 	error = null,
@@ -86,6 +90,10 @@ export async function finalizeResponse({
 				pictures: images,
 				files: files,
 				reasoning: thinkingResponse,
+				webSearchResults: webSearchResults
+					? webSearchResults.filter((result) => result !== undefined)
+					: undefined,
+				orderedContent: orderedContent,
 				referencedMessageIds: referencedMessageIds
 			},
 			{
@@ -132,6 +140,8 @@ export interface RegenerationParams {
 	model: Model;
 	chunks: string[];
 	thinkingChunks: string[];
+	webSearchResults: any[];
+	orderedContent?: OrderedContent;
 	finalUsage: GptTokenUsage;
 	wasAborted: boolean;
 	error: any;
@@ -144,6 +154,8 @@ export async function updateExistingMessageAndRequest({
 	model,
 	chunks,
 	thinkingChunks,
+	webSearchResults,
+	orderedContent,
 	finalUsage,
 	wasAborted = false,
 	error = null,
@@ -211,7 +223,17 @@ export async function updateExistingMessageAndRequest({
 				response: response,
 				reasoning: thinkingResponse,
 				// Add files if they exist
-				...(files ? { files: files } : {})
+				...(files ? { files: files } : {}),
+				// Add web search results if they exist
+				...(webSearchResults && webSearchResults.length > 0
+					? {
+							web_search_results: webSearchResults.filter(
+								(result) => result !== undefined
+							)
+						}
+					: {}),
+				// Add orderedContent if it exists
+				...(orderedContent ? { ordered_content: orderedContent } : {})
 				// Note: not updating the prompt field as it remains the same
 			}
 		});

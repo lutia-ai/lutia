@@ -237,7 +237,8 @@ describe('ChatHistory Utility Functions', () => {
 							size: 1024
 						}
 					],
-					created_at: new Date('2023-01-01T12:00:00Z')
+					webSearchResults: [],
+					referencedMessages: []
 				}
 			};
 
@@ -278,6 +279,7 @@ describe('ChatHistory Utility Functions', () => {
 							size: 1024
 						}
 					],
+					webSearchResults: [],
 					referencedMessages: []
 				}
 			});
@@ -336,6 +338,7 @@ describe('ChatHistory Utility Functions', () => {
 					reasoning: 'Test reasoning',
 					pictures: [],
 					files: [],
+					webSearchResults: [],
 					referencedMessages: [
 						{
 							id: 789,
@@ -388,6 +391,7 @@ describe('ChatHistory Utility Functions', () => {
 						reasoning: '',
 						pictures: [],
 						files: [],
+						webSearchResults: [],
 						referencedMessages: []
 					}
 				}
@@ -413,6 +417,7 @@ describe('ChatHistory Utility Functions', () => {
 			if (isLlmChatComponent(llmChat)) {
 				expect(llmChat.input_cost).toBe(0.001);
 				expect(llmChat.output_cost).toBe(0.002);
+				expect(llmChat.webSearchResults).toEqual([]);
 
 				// Check that components were parsed from the response
 				expect(llmChat.components.length).toBe(2);
@@ -459,6 +464,7 @@ describe('ChatHistory Utility Functions', () => {
 								size: 1024
 							}
 						],
+						webSearchResults: [],
 						referencedMessages: []
 					}
 				}
@@ -503,6 +509,7 @@ describe('ChatHistory Utility Functions', () => {
 							}
 						],
 						files: [],
+						webSearchResults: [],
 						referencedMessages: []
 					}
 				}
@@ -516,6 +523,7 @@ describe('ChatHistory Utility Functions', () => {
 				expect(llmChat.components.length).toBe(1);
 				expect(llmChat.components[0].type).toBe('image');
 				expect((llmChat.components[0] as any).ai).toBe(true);
+				expect(llmChat.webSearchResults).toEqual([]);
 			}
 		});
 	});

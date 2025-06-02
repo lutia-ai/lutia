@@ -93,6 +93,8 @@ export async function createMessageAndApiRequestEntry(
 					pictures: messageData.pictures,
 					files: messageData.files,
 					reasoning: messageData.reasoning,
+					web_search_results: messageData.webSearchResults,
+					ordered_content: messageData.orderedContent,
 					referencedMessages: {
 						// Connect any referenced messages if they exist
 						connect: referencedMessages.map((msg) => ({ id: msg.id }))
@@ -220,6 +222,7 @@ export async function retrieveApiRequestByMessageId(
 								prompt: true,
 								response: true,
 								reasoning: true,
+								web_search_results: true,
 								created_at: true,
 								referencedMessages: true,
 								referencedBy: true
@@ -232,6 +235,7 @@ export async function retrieveApiRequestByMessageId(
 								prompt: true,
 								response: true,
 								reasoning: true,
+								web_search_results: true,
 								created_at: true,
 								referencedMessages: true,
 								referencedBy: true

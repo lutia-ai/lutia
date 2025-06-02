@@ -330,26 +330,6 @@
 			max-height: 250px; // Approximate height for condensed content
 		}
 
-		&.streaming {
-			// Add a subtle glow effect during streaming
-			&::after {
-				content: '';
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				background: linear-gradient(
-					90deg,
-					transparent,
-					rgba(var(--text-color-rgb, 255, 255, 255), 0.1),
-					transparent
-				);
-				animation: streaming-glow 3s ease-in-out infinite;
-				pointer-events: none;
-			}
-		}
-
 		:global(p) {
 			margin: 0 0 10px 0;
 		}

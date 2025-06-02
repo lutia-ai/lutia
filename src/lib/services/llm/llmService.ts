@@ -2,8 +2,13 @@ import { error } from '@sveltejs/kit';
 import type { LLMRequestConfig, UsageMetrics } from './types';
 import { llmProviderFactory } from './providerFactory';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
-import { InsufficientBalanceError } from '$lib/types/customErrors';
 import { retrieveApiRequestByMessageId } from '$lib/db/crud/apiRequest';
+import {
+	OrderedContentManager,
+	WebSearchManager,
+	ServerStreamEncoder
+} from '$lib/utils/streamingUtils';
+import { CostCalculator } from '$lib/utils/apiUtils';
 
 /**
  * Process an LLM request with streaming response
@@ -63,6 +68,9 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 		// Track response data
 		const chunks: string[] = [];
 		const thinkingChunks: string[] = [];
+		const contentManager = new OrderedContentManager();
+		const searchManager = new WebSearchManager();
+		const encoder = new ServerStreamEncoder();
 		let isFirstChunk = true;
 		const finalUsage: UsageMetrics = {
 			prompt_tokens: 0,
@@ -102,8 +110,6 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 			}
 		});
 
-		const textEncoder = new TextEncoder();
-
 		// Create and return the readable stream
 		return new ReadableStream({
 			async start(controller) {
@@ -130,12 +136,9 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 												: originalConversationId;
 
 										controller.enqueue(
-											textEncoder.encode(
-												JSON.stringify({
-													type: 'request_info',
-													request_id: requestId,
-													conversation_id: actualConversationId
-												}) + '\n'
+											encoder.encodeRequestInfo(
+												requestId,
+												actualConversationId
 											)
 										);
 									} catch (err) {
@@ -150,46 +153,23 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 								finalUsage.total_tokens = usage.total_tokens;
 
 								try {
-									const actualModelPrices = {
-										input_price: model.input_price,
-										output_price: model.output_price
-									};
-
-									// Calculate current generation costs
-									const currentInputPrice = isNaN(
-										finalUsage.prompt_tokens * actualModelPrices.input_price
-									)
-										? 0
-										: (finalUsage.prompt_tokens *
-												actualModelPrices.input_price) /
-											1000000;
-									const currentOutputPrice = isNaN(
-										finalUsage.completion_tokens *
-											actualModelPrices.output_price
-									)
-										? 0
-										: (finalUsage.completion_tokens *
-												actualModelPrices.output_price) /
-											1000000;
+									// Calculate current generation costs using shared utility
+									const currentCosts = CostCalculator.calculateTotalCost(
+										finalUsage.prompt_tokens,
+										finalUsage.completion_tokens,
+										model
+									);
 
 									// For regeneration, send accumulated totals; for new messages, send current costs
 									const totalInputPrice = regenerateMessageId
-										? existingInputCost + currentInputPrice
-										: currentInputPrice;
+										? existingInputCost + currentCosts.inputCost
+										: currentCosts.inputCost;
 									const totalOutputPrice = regenerateMessageId
-										? existingOutputCost + currentOutputPrice
-										: currentOutputPrice;
+										? existingOutputCost + currentCosts.outputCost
+										: currentCosts.outputCost;
 
 									controller.enqueue(
-										textEncoder.encode(
-											JSON.stringify({
-												type: 'usage',
-												usage: {
-													inputPrice: totalInputPrice,
-													outputPrice: totalOutputPrice
-												}
-											}) + '\n'
-										)
+										encoder.encodeUsage(totalInputPrice, totalOutputPrice)
 									);
 								} catch (err) {
 									console.error(
@@ -202,14 +182,9 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 							onContent: (content) => {
 								try {
 									chunks.push(content);
-									controller.enqueue(
-										textEncoder.encode(
-											JSON.stringify({
-												type: 'text',
-												content: content
-											}) + '\n'
-										)
-									);
+									contentManager.addText(content);
+
+									controller.enqueue(encoder.encodeText(content));
 								} catch (err) {
 									console.error('Client already disconnected (content)');
 									clientDisconnected = true;
@@ -218,16 +193,27 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 							onReasoning: (content) => {
 								try {
 									thinkingChunks.push(content);
-									controller.enqueue(
-										textEncoder.encode(
-											JSON.stringify({
-												type: 'reasoning',
-												content: content
-											}) + '\n'
-										)
-									);
+									contentManager.addReasoning(content);
+
+									controller.enqueue(encoder.encodeReasoning(content));
 								} catch (err) {
 									console.error('Client already disconnected (reasoning)');
+									clientDisconnected = true;
+								}
+							},
+							onToolUse: (toolName, toolData) => {
+								try {
+									// Store web search results for saving to database
+									if (toolName === 'web_search' && toolData) {
+										searchManager.addWebSearchResults(toolData);
+									}
+
+									// Use shared content manager for tool tracking
+									contentManager.addToolUse(toolName, toolData);
+
+									controller.enqueue(encoder.encodeToolUse(toolName, toolData));
+								} catch (err) {
+									console.error('Client already disconnected (tool_use)');
 									clientDisconnected = true;
 								}
 							}
@@ -238,14 +224,10 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 					console.error(err);
 					try {
 						controller.enqueue(
-							textEncoder.encode(
-								JSON.stringify({
-									type: 'error',
-									message:
-										errorMessage?.error?.error?.message ||
-										errorMessage?.message ||
-										'Unknown error occurred'
-								}) + '\n'
+							encoder.encodeError(
+								errorMessage?.error?.error?.message ||
+									errorMessage?.message ||
+									'Unknown error occurred'
 							)
 						);
 					} catch (controllerError) {
@@ -255,7 +237,7 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 				} finally {
 					try {
 						if (!regenerateMessageId) {
-							const { message, apiRequest } = await finalizeResponse({
+							const { message } = await finalizeResponse({
 								user,
 								model,
 								plainText,
@@ -263,6 +245,8 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 								files,
 								chunks,
 								thinkingChunks,
+								webSearchResults: searchManager.getWebSearchResults(),
+								orderedContent: contentManager.getOrderedContent(),
 								finalUsage,
 								wasAborted: clientDisconnected,
 								error: errorMessage,
@@ -273,36 +257,24 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 								referencedMessageIds: referencedMessageIds.map((id) => Number(id))
 							});
 
-							controller.enqueue(
-								textEncoder.encode(
-									JSON.stringify({
-										type: 'message_id',
-										message_id: message.id
-									}) + '\n'
-								)
-							);
+							controller.enqueue(encoder.encodeMessageId(message.id));
 						} else {
 							// Path for regenerating a response to an existing message
-							const { message, apiRequest } = await updateExistingMessageAndRequest({
+							const { message } = await updateExistingMessageAndRequest({
 								messageId: regenerateMessageId.toString(),
 								user,
 								model,
 								chunks,
 								thinkingChunks,
+								webSearchResults: searchManager.getWebSearchResults(),
+								orderedContent: contentManager.getOrderedContent(),
 								finalUsage,
 								wasAborted: clientDisconnected,
 								error: errorMessage,
 								files
 							});
 
-							controller.enqueue(
-								textEncoder.encode(
-									JSON.stringify({
-										type: 'message_id',
-										message_id: message.id
-									}) + '\n'
-								)
-							);
+							controller.enqueue(encoder.encodeMessageId(message.id));
 						}
 					} catch (err) {
 						console.error('Error in finalizeResponse:', err);

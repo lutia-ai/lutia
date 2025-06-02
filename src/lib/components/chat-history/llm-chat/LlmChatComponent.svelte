@@ -6,7 +6,8 @@
 		isModelDeepSeek,
 		isModelGoogle,
 		isModelOpenAI,
-		isModelXAI
+		isModelXAI,
+		isToolUseComponent
 	} from '$lib/types/typeGuards';
 	import type { LlmChat } from '$lib/types/types';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
@@ -22,6 +23,9 @@
 	import ChatToolbar from '../chat-toolbar/ChatToolbar.svelte';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
+	import WebSearchResults from '../web-search-results/WebSearchResults.svelte';
+	import { fade } from 'svelte/transition';
+	import ToolUse from './ToolUse.svelte';
 
 	export let chatIndex: number;
 	export let chat: LlmChat;
@@ -108,16 +112,16 @@
 	{/if}
 	<div class="llm-chat">
 		{#if isLlmChatComponent(chat)}
-			{#if chat.reasoning?.content}
-				<Reasoning
-					reasoning={chat.reasoning?.content || ''}
-					isLoading={isReasoningStreaming}
-					onAutoCollapse={handleReasoningAutoCollapse}
-					animationMode="word"
-				/>
-			{/if}
 			{#each chat.components || [] as component, componentIndex}
-				{#if component.type === 'text'}
+				{#if component.type === 'reasoning'}
+					<Reasoning
+						reasoning={component.content}
+						isLoading={componentIndex === (chat.components || []).length - 1 &&
+							chat.loading}
+						onAutoCollapse={handleReasoningAutoCollapse}
+						animationMode="word"
+					/>
+				{:else if component.type === 'text'}
 					<p class="content-paragraph">
 						{@html processLinks(
 							marked(
@@ -135,6 +139,14 @@
 						{chatIndex}
 						{componentIndex}
 					/>
+				{:else if isToolUseComponent(component)}
+					<ToolUse
+						toolName={component.tool_name}
+						toolData={component.tool_data}
+						content={component.content}
+						isActive={componentIndex === (chat.components || []).length - 1 &&
+							chat.loading}
+					/>
 				{:else if component.type === 'image'}
 					<div
 						class="image-container"
@@ -149,6 +161,11 @@
 					</div>
 				{/if}
 			{/each}
+			{#if !chat.loading}
+				<div transition:fade={{ duration: 400, delay: 200 }}>
+					<WebSearchResults searchResults={chat.webSearchResults} />
+				</div>
+			{/if}
 			{#if chat.loading && (!isReasoningStreaming || !chat.reasoning?.content)}
 				<span class="gpt-loading-dot" />
 			{/if}
