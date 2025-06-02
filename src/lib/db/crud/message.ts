@@ -2,11 +2,18 @@ import type { Image } from '$lib/types/types';
 import type { Message } from '@prisma/client';
 import prisma from '$lib/db/prisma';
 
+/**
+ * Creates a new message with ordered content
+ * @param prompt User's prompt/question
+ * @param pictures Array of images attached to the message
+ * @param orderedContent Ordered content array containing all response data
+ * @param referencedMessageIds Optional array of message IDs this message references
+ * @returns Promise with the created Message
+ */
 export async function createMessage(
 	prompt: string,
-	response: string,
 	pictures: Image[],
-	reasoning?: string,
+	orderedContent?: any,
 	referencedMessageIds?: number[]
 ): Promise<Message> {
 	try {
@@ -24,9 +31,8 @@ export async function createMessage(
 		const message = await prisma.message.create({
 			data: {
 				prompt,
-				response,
 				pictures,
-				reasoning,
+				ordered_content: orderedContent,
 				referencedMessages: {
 					connect: referencedMessages.map((msg) => ({ id: msg.id }))
 				}

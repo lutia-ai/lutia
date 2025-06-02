@@ -162,11 +162,8 @@ export type GeminiImage = {
 type SerializedMessage = {
 	id: number;
 	prompt: string;
-	response: string;
-	reasoning: string;
 	pictures: Image[];
 	files: FileAttachment[];
-	webSearchResults: any[];
 	orderedContent?: OrderedContent;
 	referencedMessages: SerializedMessage[];
 };
@@ -284,11 +281,8 @@ export interface GptTokenUsage {
 
 export interface CreateMessageData {
 	prompt: string;
-	response: string;
 	pictures: Image[];
 	files: FileAttachment[];
-	reasoning?: string;
-	webSearchResults?: WebSearchData[];
 	orderedContent?: OrderedContent;
 	referencedMessageIds?: number[];
 }

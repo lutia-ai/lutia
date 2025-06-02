@@ -21,18 +21,14 @@ import { calculateTabWidth } from '$lib/components/chat-history/utils/codeContai
 
 /**
  * Helper function to serialize a Message without causing circular references
+ * Updated to work with the new ordered_content system
  */
 function serializeMessage(message: any): SerializedMessage {
 	return {
 		id: message.id,
 		prompt: message.prompt,
-		response: message.response,
-		reasoning: message.reasoning || '',
 		pictures: Array.isArray(message.pictures) ? (message.pictures as Image[]) : [],
 		files: Array.isArray(message.files) ? (message.files as FileAttachment[]) : [],
-		webSearchResults: Array.isArray(message.web_search_results)
-			? message.web_search_results
-			: [],
 		orderedContent: Array.isArray(message.ordered_content)
 			? (message.ordered_content as OrderedContent)
 			: undefined,
@@ -41,13 +37,8 @@ function serializeMessage(message: any): SerializedMessage {
 			? message.referencedMessages.map((msg: Message) => ({
 					id: msg.id,
 					prompt: msg.prompt,
-					response: msg.response,
-					reasoning: msg.reasoning || '',
 					pictures: Array.isArray(msg.pictures) ? (msg.pictures as Image[]) : [],
 					files: Array.isArray(msg.files) ? (msg.files as FileAttachment[]) : [],
-					webSearchResults: Array.isArray(msg.web_search_results)
-						? msg.web_search_results
-						: [],
 					orderedContent: Array.isArray(msg.ordered_content)
 						? (msg.ordered_content as OrderedContent)
 						: undefined
@@ -75,6 +66,52 @@ export function serializeApiRequest(apiRequest: ApiRequestWithMessage): Serializ
 	};
 }
 
+/**
+ * Extracts response text from ordered content for backward compatibility
+ */
+export function extractResponseText(orderedContent: OrderedContent): string {
+	if (!orderedContent || !Array.isArray(orderedContent)) {
+		return '';
+	}
+
+	return orderedContent
+		.filter((item) => item.type === 'text')
+		.map((item) => item.content)
+		.join('');
+}
+
+/**
+ * Extracts reasoning content from ordered content
+ */
+export function extractReasoningContent(orderedContent: OrderedContent): string {
+	if (!orderedContent || !Array.isArray(orderedContent)) {
+		return '';
+	}
+
+	return orderedContent
+		.filter((item) => item.type === 'reasoning')
+		.map((item) => item.content)
+		.join('');
+}
+
+/**
+ * Extracts web search results from ordered content
+ */
+export function extractWebSearchResults(orderedContent: OrderedContent): any[] {
+	if (!orderedContent || !Array.isArray(orderedContent)) {
+		return [];
+	}
+
+	const toolUseItems = orderedContent.filter(
+		(item) =>
+			item.type === 'tool_use' &&
+			item.metadata?.tool_name === 'web_search' &&
+			item.metadata?.tool_data
+	);
+
+	return toolUseItems.map((item) => item.metadata?.tool_data).filter(Boolean);
+}
+
 export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 	let chatComponents = apiRequests.map((apiRequest): ChatComponent => {
 		const message = apiRequest.message;
@@ -85,15 +122,30 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 			};
 		}
 
-		// Use ordered content if available, otherwise parse message content for backward compatibility
+		// Use ordered content as the primary source
 		const components: Component[] = message.orderedContent
 			? parseOrderedContent(message.orderedContent)
-			: parseMessageContent(message.response);
+			: [];
+
+		// Extract text content for the 'text' field (for backward compatibility)
+		const responseText = message.orderedContent
+			? extractResponseText(message.orderedContent)
+			: '';
+
+		// Extract reasoning content
+		const reasoningContent = message.orderedContent
+			? extractReasoningContent(message.orderedContent)
+			: '';
+
+		// Extract web search results
+		const webSearchResults = message.orderedContent
+			? extractWebSearchResults(message.orderedContent)
+			: [];
 
 		const llmChat: LlmChat = {
 			message_id: apiRequest.message?.id,
 			by: apiRequest.apiModel.toString(),
-			text: message.response,
+			text: responseText,
 			input_cost: parseFloat(apiRequest.inputCost),
 			output_cost: parseFloat(apiRequest.outputCost),
 			price_open: false,
@@ -101,9 +153,9 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 			copied: false,
 			reasoning: {
 				type: 'reasoning',
-				content: apiRequest.message?.reasoning || ''
+				content: reasoningContent
 			},
-			webSearchResults: apiRequest.message?.webSearchResults || [],
+			webSearchResults: webSearchResults,
 			orderedContent: message.orderedContent,
 			components:
 				apiRequest.message?.pictures &&

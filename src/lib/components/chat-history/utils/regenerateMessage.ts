@@ -1,5 +1,9 @@
 import { deserialize } from '$app/forms';
-import { parseOrderedContent } from '$lib/components/chat-history/utils/chatHistory';
+import {
+	parseOrderedContent,
+	extractReasoningContent,
+	extractResponseText
+} from '$lib/components/chat-history/utils/chatHistory';
 import { chatHistory } from '$lib/stores';
 import type {
 	Component,
@@ -65,7 +69,10 @@ export async function regenerateMessage(messageId: number) {
 			throw new Error('Failed to fetch Api request with message data');
 		}
 
-		const reasoningOn = apiRequestWithMessage.message?.reasoning ? true : false;
+		// Check if reasoning was enabled by looking for reasoning content in ordered_content
+		const reasoningOn = apiRequestWithMessage.message?.orderedContent
+			? extractReasoningContent(apiRequestWithMessage.message.orderedContent).length > 0
+			: false;
 
 		// Create the fullPrompt array with message history
 		let fullPrompt: ChatMessage[] = [];
@@ -87,10 +94,16 @@ export async function regenerateMessage(messageId: number) {
 					role: 'user',
 					content: refMsg.prompt
 				};
+
+				// Extract response text from ordered content for AI message
+				const responseText = refMsg.orderedContent
+					? extractResponseText(refMsg.orderedContent)
+					: '';
+
 				const AiMessage: ChatMessage = {
 					message_id: refMsg.id,
 					role: 'assistant',
-					content: refMsg.response
+					content: responseText
 				};
 				fullPrompt.push(userMessage, AiMessage);
 			});

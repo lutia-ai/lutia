@@ -27,6 +27,11 @@ export interface FinalizationParams {
 	referencedMessageIds: number[];
 }
 
+/**
+ * Finalizes the LLM response by saving to database using only ordered_content
+ * @param params Finalization parameters
+ * @returns Object containing the created message and API request
+ */
 export async function finalizeResponse({
 	user,
 	model,
@@ -47,15 +52,14 @@ export async function finalizeResponse({
 	referencedMessageIds
 }: FinalizationParams) {
 	try {
-		const thinkingResponse = thinkingChunks.join('');
-		const response = chunks.join('');
-
 		// Calculate tokens and costs, ensuring we have valid numbers
 		const inputTokens = finalUsage.prompt_tokens || 0;
+		const responseText = chunks.join('');
+		const thinkingText = thinkingChunks.join('');
 		let outputTokens = finalUsage.completion_tokens || 0;
 
 		if (!outputTokens) {
-			outputTokens = estimateTokenCount(response + thinkingResponse);
+			outputTokens = estimateTokenCount(responseText + thinkingText);
 		}
 
 		// Ensure we have valid numeric values for calculations
@@ -82,17 +86,12 @@ export async function finalizeResponse({
 				? ApiRequestStatus.FAILED
 				: ApiRequestStatus.COMPLETED;
 
-		// Create database records
+		// Create database records using only ordered_content
 		const { message, apiRequest } = await createMessageAndApiRequestEntry(
 			{
 				prompt: plainText,
-				response: response,
 				pictures: images,
 				files: files,
-				reasoning: thinkingResponse,
-				webSearchResults: webSearchResults
-					? webSearchResults.filter((result) => result !== undefined)
-					: undefined,
 				orderedContent: orderedContent,
 				referencedMessageIds: referencedMessageIds
 			},
@@ -113,7 +112,7 @@ export async function finalizeResponse({
 		);
 
 		// Only update conversation if we got a response
-		if (response.length > 0 && messageConversationId) {
+		if (responseText.length > 0 && messageConversationId) {
 			await updateConversationLastMessage(messageConversationId);
 
 			// Generate title for new conversations
@@ -148,6 +147,11 @@ export interface RegenerationParams {
 	files?: FileAttachment[];
 }
 
+/**
+ * Updates an existing message and request with new response data using only ordered_content
+ * @param params Regeneration parameters
+ * @returns Object containing the updated message and API request
+ */
 export async function updateExistingMessageAndRequest({
 	messageId,
 	user,
@@ -162,16 +166,14 @@ export async function updateExistingMessageAndRequest({
 	files
 }: RegenerationParams) {
 	try {
-		// Combine the chunks into response text
-		const thinkingResponse = thinkingChunks.join('');
-		const response = chunks.join('');
-
 		// Calculate tokens and costs for the new response with safe values
 		const inputTokens = finalUsage.prompt_tokens || 0;
+		const responseText = chunks.join('');
+		const thinkingText = thinkingChunks.join('');
 		let outputTokens = finalUsage.completion_tokens || 0;
 
 		if (!outputTokens) {
-			outputTokens = estimateTokenCount(response + thinkingResponse);
+			outputTokens = estimateTokenCount(responseText + thinkingText);
 		}
 
 		// Ensure we have valid numeric values for calculations
@@ -216,23 +218,13 @@ export async function updateExistingMessageAndRequest({
 			throw new Error(`API request for message ID ${messageId} not found`);
 		}
 
-		// Update the message with the new response but keep the original prompt
+		// Update the message with only the ordered_content and files
 		const updatedMessage = await prisma.message.update({
 			where: { id: Number(messageId) },
 			data: {
-				response: response,
-				reasoning: thinkingResponse,
 				// Add files if they exist
 				...(files ? { files: files } : {}),
-				// Add web search results if they exist
-				...(webSearchResults && webSearchResults.length > 0
-					? {
-							web_search_results: webSearchResults.filter(
-								(result) => result !== undefined
-							)
-						}
-					: {}),
-				// Add orderedContent if it exists
+				// Update with the new ordered content
 				...(orderedContent ? { ordered_content: orderedContent } : {})
 				// Note: not updating the prompt field as it remains the same
 			}

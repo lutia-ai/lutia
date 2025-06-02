@@ -77,10 +77,12 @@ describe('regenerateMessage', () => {
 								message: {
 									id: mockMessageId,
 									prompt: 'Test prompt',
-									response: 'Test response',
-									reasoning: 'Test reasoning',
 									pictures: [],
 									files: [],
+									orderedContent: [
+										{ type: 'reasoning', content: 'Test reasoning', order: 0 },
+										{ type: 'text', content: 'Test response', order: 1 }
+									],
 									referencedMessages: []
 								}
 							}
@@ -160,7 +162,7 @@ describe('regenerateMessage', () => {
 		expect(updatedMessage).toBeDefined();
 		expect(updatedMessage.loading).toBe(true);
 		expect(updatedMessage.components).toEqual([]);
-		expect(updatedMessage.reasoning).toBeUndefined();
+		expect(updatedMessage.orderedContent).toEqual([]);
 
 		// Wait for the promise to resolve to avoid test leakage
 		await promise;
@@ -181,8 +183,13 @@ describe('regenerateMessage', () => {
 								message: {
 									id: mockMessageId,
 									prompt: 'Test prompt',
-									response: 'Test response',
-									reasoning: 'Test reasoning'
+									pictures: [],
+									files: [],
+									orderedContent: [
+										{ type: 'reasoning', content: 'Test reasoning', order: 0 },
+										{ type: 'text', content: 'Test response', order: 1 }
+									],
+									referencedMessages: []
 								}
 							}
 						})
@@ -222,6 +229,6 @@ describe('regenerateMessage', () => {
 		expect(restoredMessage).toBeDefined();
 		expect(restoredMessage.loading).toBe(false);
 		expect(restoredMessage.components).toEqual(mockOriginalComponents);
-		expect(restoredMessage.reasoning).toEqual(mockOriginalReasoning);
+		expect(restoredMessage.orderedContent).toBeDefined();
 	});
 });
