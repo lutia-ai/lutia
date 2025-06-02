@@ -20,7 +20,10 @@ vi.mock('$lib/stores', () => ({
 }));
 
 vi.mock('$lib/components/chat-history/utils/chatHistory', () => ({
-	parseMessageContent: vi.fn((content) => [{ type: 'text', content }])
+	parseMessageContent: vi.fn((content) => [{ type: 'text', content }]),
+	parseOrderedContent: vi.fn((content) => [{ type: 'text', content: 'Parsed content' }]),
+	extractReasoningContent: vi.fn((content) => 'Extracted reasoning'),
+	extractResponseText: vi.fn((content) => 'Extracted response')
 }));
 
 vi.mock('$lib/types/typeGuards', () => ({
@@ -35,6 +38,7 @@ describe('regenerateMessage', () => {
 	const mockMessageId = 2;
 	let mockOriginalComponents: Component[];
 	let mockOriginalReasoning: ReasoningComponent;
+	let mockOriginalOrderedContent: any[];
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -42,6 +46,10 @@ describe('regenerateMessage', () => {
 		// Setup original message content
 		mockOriginalComponents = [{ type: 'text', content: 'Original content' }];
 		mockOriginalReasoning = { type: 'reasoning', content: 'Original reasoning' };
+		mockOriginalOrderedContent = [
+			{ type: 'reasoning', content: 'Original reasoning', order: 0 },
+			{ type: 'text', content: 'Original content', order: 1 }
+		];
 
 		// Setup chat history
 		(chatHistory.update as any).mockImplementation((fn: Updater<ChatComponent[]>) => {
@@ -53,6 +61,7 @@ describe('regenerateMessage', () => {
 					text: 'Hello from Claude',
 					components: mockOriginalComponents,
 					reasoning: mockOriginalReasoning,
+					orderedContent: mockOriginalOrderedContent,
 					input_cost: 0.001,
 					output_cost: 0.002,
 					loading: false
@@ -198,7 +207,11 @@ describe('regenerateMessage', () => {
 			.mockRejectedValueOnce(new Error('API call failed'));
 
 		// When regenerateMessage is called
-		await regenerateMessage(mockMessageId);
+		try {
+			await regenerateMessage(mockMessageId);
+		} catch (error) {
+			// Expected to fail
+		}
 
 		// Then the store should be updated twice - once for loading and once for restoring
 		expect(chatHistory.update).toHaveBeenCalledTimes(2);
@@ -229,6 +242,6 @@ describe('regenerateMessage', () => {
 		expect(restoredMessage).toBeDefined();
 		expect(restoredMessage.loading).toBe(false);
 		expect(restoredMessage.components).toEqual(mockOriginalComponents);
-		expect(restoredMessage.orderedContent).toBeDefined();
+		expect(restoredMessage.orderedContent).toEqual(mockOriginalOrderedContent);
 	});
 });

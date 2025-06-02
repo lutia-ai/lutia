@@ -258,8 +258,6 @@ describe('ChatHistory Utility Functions', () => {
 				message: {
 					id: 456,
 					prompt: 'Test prompt',
-					response: 'Test response',
-					reasoning: 'Test reasoning',
 					pictures: [
 						{
 							type: 'image',
@@ -279,7 +277,7 @@ describe('ChatHistory Utility Functions', () => {
 							size: 1024
 						}
 					],
-					webSearchResults: [],
+					orderedContent: undefined,
 					referencedMessages: []
 				}
 			});
@@ -386,12 +384,16 @@ describe('ChatHistory Utility Functions', () => {
 					message: {
 						id: 456,
 						prompt: 'What is JavaScript?',
-						response:
-							'JavaScript is a programming language.\n\n```js\nconsole.log("Hello world");\n```',
-						reasoning: '',
 						pictures: [],
 						files: [],
-						webSearchResults: [],
+						orderedContent: [
+							{
+								type: 'text',
+								content:
+									'JavaScript is a programming language.\n\n```js\nconsole.log("Hello world");\n```',
+								order: 0
+							}
+						],
 						referencedMessages: []
 					}
 				}
@@ -442,8 +444,6 @@ describe('ChatHistory Utility Functions', () => {
 					message: {
 						id: 456,
 						prompt: 'Analyze this image',
-						response: 'I see a cat in the image.',
-						reasoning: '',
 						pictures: [
 							{
 								type: 'image',
@@ -464,7 +464,9 @@ describe('ChatHistory Utility Functions', () => {
 								size: 1024
 							}
 						],
-						webSearchResults: [],
+						orderedContent: [
+							{ type: 'text', content: 'I see a cat in the image.', order: 0 }
+						],
 						referencedMessages: []
 					}
 				}
@@ -496,8 +498,6 @@ describe('ChatHistory Utility Functions', () => {
 					message: {
 						id: 456,
 						prompt: 'Generate an image of a cat',
-						response: 'Here is an image of a cat',
-						reasoning: '',
 						pictures: [
 							{
 								type: 'image',
@@ -509,7 +509,9 @@ describe('ChatHistory Utility Functions', () => {
 							}
 						],
 						files: [],
-						webSearchResults: [],
+						orderedContent: [
+							{ type: 'text', content: 'Here is an image of a cat', order: 0 }
+						],
 						referencedMessages: []
 					}
 				}
