@@ -110,10 +110,9 @@ model UserSettings {
 model Message {
   id                 Int         @id @default(autoincrement())
   prompt             String
-  response           String
   pictures           Json?
   files              Json?
-  reasoning          String?
+  ordered_content    Json?
   referencedMessages Message[]   @relation("MessageReferences")
   referencedBy       Message[]   @relation("MessageReferences")
   apiRequest         ApiRequest?

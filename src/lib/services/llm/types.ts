@@ -1,5 +1,4 @@
-import type { Model } from '$lib/types/types';
-import type { ApiProvider, User } from '@prisma/client';
+import type { ToolUseCallback } from '$lib/types/types';
 
 /**
  * Represents the usage metrics for a LLM request
@@ -53,6 +52,7 @@ export interface LLMProvider {
 			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
+			onToolUse?: ToolUseCallback;
 		}
 	): void;
 }

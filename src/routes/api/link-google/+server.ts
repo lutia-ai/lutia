@@ -3,8 +3,9 @@ import { retrieveUserByEmail, updateUser } from '$lib/db/crud/user';
 import { UserNotFoundError } from '$lib/types/customErrors';
 import { type User as UserEntity } from '@prisma/client';
 import { generateLinkingToken } from '$lib/auth/utils';
+import type { RequestHandler } from './$types';
 
-export async function GET({ locals }) {
+export const GET: RequestHandler = async ({ locals }) => {
 	let session = await locals.auth();
 	if (!session || !session.user) {
 		throw error(401, 'Forbidden');
@@ -27,4 +28,4 @@ export async function GET({ locals }) {
 	const linkingToken = generateLinkingToken();
 	await updateUser(user!.id, { oauth_link_token: linkingToken });
 	return json({ linkingToken });
-}
+};
