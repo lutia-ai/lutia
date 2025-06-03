@@ -142,10 +142,12 @@
 				{:else if isToolUseComponent(component)}
 					<ToolUse
 						toolName={component.tool_name}
-						toolData={component.tool_data}
-						content={component.content}
 						isActive={componentIndex === (chat.components || []).length - 1 &&
 							chat.loading}
+						webSearchResults={component.tool_name === 'web_search' &&
+						component.tool_data
+							? [component.tool_data]
+							: []}
 					/>
 				{:else if component.type === 'image'}
 					<div
@@ -161,11 +163,6 @@
 					</div>
 				{/if}
 			{/each}
-			{#if !chat.loading}
-				<div transition:fade={{ duration: 400, delay: 200 }}>
-					<WebSearchResults searchResults={chat.webSearchResults} />
-				</div>
-			{/if}
 			{#if chat.loading && (!isReasoningStreaming || !chat.reasoning?.content)}
 				<span class="gpt-loading-dot" />
 			{/if}

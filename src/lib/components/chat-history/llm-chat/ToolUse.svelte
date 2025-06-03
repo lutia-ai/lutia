@@ -67,15 +67,17 @@
 	$: toolConfig = getToolConfig(toolName, isActive);
 
 	// Check if web search has results to show
-	$: hasWebSearchResults = toolName === 'web_search' && 
-		webSearchResults && 
-		webSearchResults.length > 0 && 
-		webSearchResults.some(result => result.results && result.results.length > 0);
+	$: hasWebSearchResults =
+		toolName === 'web_search' &&
+		webSearchResults &&
+		webSearchResults.length > 0 &&
+		webSearchResults.some((result) => result.results && result.results.length > 0);
 
 	// Get flattened results for favicon display
-	$: allResults = webSearchResults && Array.isArray(webSearchResults)
-		? webSearchResults.flatMap((searchData) => searchData?.results || [])
-		: [];
+	$: allResults =
+		webSearchResults && Array.isArray(webSearchResults)
+			? webSearchResults.flatMap((searchData) => searchData?.results || [])
+			: [];
 	$: displayResults = allResults.slice(0, 3);
 	$: totalResults = allResults.length;
 
@@ -136,7 +138,7 @@
 </script>
 
 <div class="tool-use-container" transition:fade={{ duration: 300 }}>
-	<div 
+	<div
 		class="tool-header"
 		class:clickable={hasWebSearchResults && !isActive}
 		role={hasWebSearchResults && !isActive ? 'button' : 'group'}
@@ -146,20 +148,11 @@
 	>
 		<div class="tool-icon" style="color: {toolConfig.color}">
 			{#if toolName === 'web_search'}
-                <div 
-					style="width: 18px; height: 18px;"
-				>
-                    <SpinningGlobeIcon 
-					    color={toolConfig.color}
-                    />
-                </div>
+				<div style="width: 18px; height: 18px;">
+					<SpinningGlobeIcon color={toolConfig.color} />
+				</div>
 			{:else}
-				<svg 
-					width="20" 
-					height="20" 
-					viewBox="0 0 24 24" 
-					fill="currentColor"
-				>
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
 					{@html getToolIcon(toolConfig.icon)}
 				</svg>
 			{/if}
@@ -192,12 +185,9 @@
 			</div>
 		{/if}
 	</div>
-	
+
 	{#if isExpanded && hasWebSearchResults && !isActive}
-		<div 
-			class="web-search-results-container" 
-			transition:slide={{ duration: 400, delay: 100 }}
-		>
+		<div class="web-search-results-container" transition:slide={{ duration: 400, delay: 100 }}>
 			<WebSearchResults searchResults={webSearchResults} />
 		</div>
 	{/if}
@@ -208,7 +198,7 @@
 		display: flex;
 		flex-direction: column;
 		margin: 0 0 16px 0;
-		
+
 		.tool-header {
 			display: flex;
 			align-items: center;
@@ -218,13 +208,13 @@
 			font-weight: 300;
 			opacity: 0.65;
 			transition: all 0.2s ease;
-			
+
 			&.clickable {
 				cursor: pointer;
 				border-radius: 6px;
 				padding: 8px 12px;
 				margin: -4px -8px;
-				
+
 				&:hover {
 					opacity: 1;
 				}
