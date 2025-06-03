@@ -139,32 +139,42 @@ describe('Image Generation Service', () => {
 		// Verify API request was created
 		const { createMessageAndApiRequestEntry } = await import('$lib/db/crud/apiRequest');
 		expect(createMessageAndApiRequestEntry).toHaveBeenCalledWith(
-			expect.objectContaining({
-				prompt: 'A cute cat sitting on a windowsill',
-				response: '[AI generated image]',
-				pictures: expect.arrayContaining([
-					expect.objectContaining({
+			{
+				files: [],
+				orderedContent: [
+					{
+						content: '[AI generated image]',
+						order: 0,
+						type: 'text'
+					}
+				],
+				pictures: [
+					{
 						type: 'image',
 						data: 'data:image/png;base64,mock_base64_image_data',
 						media_type: 'image/png',
 						width: 1024,
 						height: 1024,
 						ai: true
-					})
-				])
-			}),
-			expect.objectContaining({
+					}
+				],
+				prompt: 'A cute cat sitting on a windowsill',
+				referencedMessageIds: []
+			},
+			{
 				userId: 1,
-				apiProvider: ApiProvider.openAI,
+				apiProvider: 'openAI',
 				apiModel: 'DALL_E',
+				conversationId: null,
+				error: undefined,
 				inputTokens: 0,
 				inputCost: 0,
 				outputTokens: 0,
 				outputCost: 0.04,
 				totalCost: 0.04,
-				requestId: mockRequestId,
-				status: ApiRequestStatus.COMPLETED
-			})
+				requestId: 'req123',
+				status: 'COMPLETED'
+			}
 		);
 	});
 

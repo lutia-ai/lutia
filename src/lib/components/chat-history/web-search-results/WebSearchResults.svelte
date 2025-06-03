@@ -133,49 +133,6 @@
 		margin-top: 20px;
 		margin-bottom: 20px;
 
-		.search-header {
-			display: flex;
-			align-items: center;
-			justify-content: flex-start;
-			margin-bottom: 16px;
-
-			.header-button {
-				background: none;
-				border: none;
-				cursor: pointer;
-				padding: 8px 12px;
-				border-radius: 8px;
-				transition: all 0.2s ease;
-
-				&:hover {
-					background: var(--bg-color-light);
-				}
-			}
-
-			.header-content {
-				display: flex;
-				align-items: center;
-				gap: 8px;
-				color: var(--text-color-light);
-				font-size: 14px;
-				font-weight: 500;
-
-				svg {
-					opacity: 0.7;
-				}
-
-				.expand-arrow {
-					opacity: 0.7;
-					transform: rotate(0deg);
-					transition: all 0.2s ease;
-
-					&.expanded {
-						transform: rotate(180deg);
-					}
-				}
-			}
-		}
-
 		.search-grid {
 			display: grid;
 			grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -242,16 +199,6 @@
 					-webkit-box-orient: vertical;
 					overflow: hidden;
 				}
-			}
-		}
-
-		.additional-results-container {
-			margin-top: 16px;
-
-			.search-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-				gap: 16px;
 			}
 		}
 	}

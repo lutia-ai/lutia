@@ -356,7 +356,7 @@ describe('LlmChatComponent Integration Tests', () => {
 				{
 					type: 'tool_use',
 					tool_name: 'web_search',
-					content: 'Using web_search...',
+					content: 'Searched the web',
 					tool_data: { query: 'test query' }
 				} as Component,
 				{
@@ -375,7 +375,7 @@ describe('LlmChatComponent Integration Tests', () => {
 		});
 
 		expect(container.textContent).toContain('I will search for information');
-		expect(container.textContent).toContain('Using web_search...');
+		expect(container.textContent).toContain('Searched the web');
 		expect(container.textContent).toContain('Here are the results');
 		expect(container.querySelector('.tool-use-container')).not.toBeNull();
 	});
