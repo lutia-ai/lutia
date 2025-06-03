@@ -99,17 +99,12 @@ export async function submitPrompt(
 }
 
 /**
- * Prepares the conversation by setting the conversation ID from URL if needed
+ * Prepares the conversation by setting the conversation ID from URL parameter
  */
 function prepareConversation(): void {
-	// If we're on the /chat/new route, always clear the conversationId
-	if (get(page).params.id === 'new') {
-		conversationId.set('new');
-	}
-	// Otherwise, set conversationId from slug parameter if not already set
-	else if (!get(conversationId) || get(conversationId) === 'new') {
-		conversationId.set(get(page).params.id);
-	}
+	// Always sync conversationId with the current URL parameter when submitting
+	const currentUrlId = get(page).params.id;
+	conversationId.set(currentUrlId);
 }
 
 /**

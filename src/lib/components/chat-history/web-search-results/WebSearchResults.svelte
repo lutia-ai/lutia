@@ -94,47 +94,8 @@
 
 {#if searchResults && searchResults.length > 0 && allResults.length > 0}
 	<div class="web-search-results">
-		<div class="search-header">
-			{#if hasMoreResults}
-				<button
-					class="header-button"
-					on:click={toggleExpanded}
-					aria-label={isExpanded ? 'Show fewer sources' : 'Show more sources'}
-					type="button"
-				>
-					<div class="header-content">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-							<path
-								d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"
-							/>
-						</svg>
-						<span>Sources</span>
-						<svg
-							class="expand-arrow"
-							class:expanded={isExpanded}
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-						>
-							<path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
-						</svg>
-					</div>
-				</button>
-			{:else}
-				<div class="header-content">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-						<path
-							d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"
-						/>
-					</svg>
-					<span>Sources</span>
-				</div>
-			{/if}
-		</div>
-
 		<div class="search-grid">
-			{#each initialResults as result}
+			{#each allResults as result}
 				{#if result && result.url && result.title}
 					<div
 						class="search-card"
@@ -164,49 +125,6 @@
 				{/if}
 			{/each}
 		</div>
-
-		{#if isExpanded && additionalResults.length > 0}
-			<div
-				class="additional-results-container"
-				transition:slide={{ duration: 400, delay: 100 }}
-			>
-				<div class="search-grid">
-					{#each additionalResults as result}
-						{#if result && result.url && result.title}
-							<div
-								class="search-card"
-								role="button"
-								tabindex="0"
-								on:click={() => openUrl(result.url)}
-								on:keydown={(e) => handleCardKeydown(e, result.url)}
-							>
-								<div class="card-content">
-									<div class="source-header">
-										<div class="source-info">
-											<img
-												src={getFaviconUrl(result.url)}
-												alt={getDomainName(result.url)}
-												class="favicon"
-												loading="lazy"
-												on:error={handleImageError}
-											/>
-											<span class="source-name"
-												>{getDomainName(result.url)}</span
-											>
-										</div>
-										<span class="publish-time"
-											>{formatPageAge(result.page_age)}</span
-										>
-									</div>
-
-									<h3 class="article-title">{truncateText(result.title, 100)}</h3>
-								</div>
-							</div>
-						{/if}
-					{/each}
-				</div>
-			</div>
-		{/if}
 	</div>
 {/if}
 

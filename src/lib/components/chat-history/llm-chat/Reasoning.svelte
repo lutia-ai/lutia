@@ -323,7 +323,7 @@
 		// max-height: 2000px;
 
 		&.expanded {
-			max-height: 2000px; // Large enough to accommodate most content
+			max-height: 20000px; // Large enough to accommodate most content
 		}
 
 		&.condensed {
