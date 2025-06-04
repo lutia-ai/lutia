@@ -20,7 +20,33 @@ export type ReasoningComponent = {
 	content: string;
 };
 
-export type Component = CodeComponent | TextComponent | Image | ReasoningComponent;
+export type ToolUseComponent = {
+	type: 'tool_use';
+	tool_name: string;
+	tool_data?: any;
+	content: string;
+	timestamp?: number;
+};
+
+export type ContentItem = {
+	type: 'text' | 'tool_use' | 'reasoning';
+	content: string;
+	metadata?: {
+		tool_name?: string;
+		tool_data?: any;
+		timestamp?: number;
+	};
+	order: number;
+};
+
+export type OrderedContent = ContentItem[];
+
+export type Component =
+	| CodeComponent
+	| TextComponent
+	| Image
+	| ReasoningComponent
+	| ToolUseComponent;
 
 export type LlmChat = {
 	message_id?: number;
@@ -32,7 +58,10 @@ export type LlmChat = {
 	loading: boolean;
 	copied: boolean;
 	components: Component[];
+	orderedContent?: OrderedContent;
 	reasoning?: ReasoningComponent;
+	webSearchResults?: WebSearchData[];
+	toolInProgress?: boolean;
 };
 
 export type UserChat = {
@@ -133,10 +162,9 @@ export type GeminiImage = {
 type SerializedMessage = {
 	id: number;
 	prompt: string;
-	response: string;
-	reasoning: string;
 	pictures: Image[];
 	files: FileAttachment[];
+	orderedContent?: OrderedContent;
 	referencedMessages: SerializedMessage[];
 };
 
@@ -253,10 +281,9 @@ export interface GptTokenUsage {
 
 export interface CreateMessageData {
 	prompt: string;
-	response: string;
 	pictures: Image[];
 	files: FileAttachment[];
-	reasoning?: string;
+	orderedContent?: OrderedContent;
 	referencedMessageIds?: number[];
 }
 
@@ -274,3 +301,21 @@ export interface CreateApiRequestData {
 	conversationId?: string;
 	error?: string;
 }
+
+// Tool usage types
+export type WebSearchResult = {
+	type: string;
+	title: string;
+	url: string;
+	page_age: string | null;
+	hasContent: boolean;
+};
+
+export type WebSearchData = {
+	results: WebSearchResult[];
+	totalResults: number;
+};
+
+export type ToolData = WebSearchData | any; // Allow for future tool types
+
+export type ToolUseCallback = (toolName: string, toolData: ToolData) => void;

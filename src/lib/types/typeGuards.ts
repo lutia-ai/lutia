@@ -8,7 +8,8 @@ import type {
 	LlmChat,
 	UserChat,
 	ModelDictionary,
-	Model
+	Model,
+	ToolUseComponent
 } from '$lib/types/types';
 
 export function isCodeComponent(component: Component): component is CodeComponent {
@@ -17,6 +18,10 @@ export function isCodeComponent(component: Component): component is CodeComponen
 
 export function isTextComponent(component: Component): component is TextComponent {
 	return component.type === 'text';
+}
+
+export function isToolUseComponent(component: Component): component is ToolUseComponent {
+	return component.type === 'tool_use';
 }
 
 export function isLlmChatComponent(component: ChatComponent): component is LlmChat {

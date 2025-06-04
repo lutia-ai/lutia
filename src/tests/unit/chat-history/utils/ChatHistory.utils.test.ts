@@ -237,7 +237,8 @@ describe('ChatHistory Utility Functions', () => {
 							size: 1024
 						}
 					],
-					created_at: new Date('2023-01-01T12:00:00Z')
+					webSearchResults: [],
+					referencedMessages: []
 				}
 			};
 
@@ -257,8 +258,6 @@ describe('ChatHistory Utility Functions', () => {
 				message: {
 					id: 456,
 					prompt: 'Test prompt',
-					response: 'Test response',
-					reasoning: 'Test reasoning',
 					pictures: [
 						{
 							type: 'image',
@@ -278,6 +277,7 @@ describe('ChatHistory Utility Functions', () => {
 							size: 1024
 						}
 					],
+					orderedContent: undefined,
 					referencedMessages: []
 				}
 			});
@@ -336,6 +336,7 @@ describe('ChatHistory Utility Functions', () => {
 					reasoning: 'Test reasoning',
 					pictures: [],
 					files: [],
+					webSearchResults: [],
 					referencedMessages: [
 						{
 							id: 789,
@@ -383,11 +384,16 @@ describe('ChatHistory Utility Functions', () => {
 					message: {
 						id: 456,
 						prompt: 'What is JavaScript?',
-						response:
-							'JavaScript is a programming language.\n\n```js\nconsole.log("Hello world");\n```',
-						reasoning: '',
 						pictures: [],
 						files: [],
+						orderedContent: [
+							{
+								type: 'text',
+								content:
+									'JavaScript is a programming language.\n\n```js\nconsole.log("Hello world");\n```',
+								order: 0
+							}
+						],
 						referencedMessages: []
 					}
 				}
@@ -413,6 +419,7 @@ describe('ChatHistory Utility Functions', () => {
 			if (isLlmChatComponent(llmChat)) {
 				expect(llmChat.input_cost).toBe(0.001);
 				expect(llmChat.output_cost).toBe(0.002);
+				expect(llmChat.webSearchResults).toEqual([]);
 
 				// Check that components were parsed from the response
 				expect(llmChat.components.length).toBe(2);
@@ -437,8 +444,6 @@ describe('ChatHistory Utility Functions', () => {
 					message: {
 						id: 456,
 						prompt: 'Analyze this image',
-						response: 'I see a cat in the image.',
-						reasoning: '',
 						pictures: [
 							{
 								type: 'image',
@@ -458,6 +463,9 @@ describe('ChatHistory Utility Functions', () => {
 								file_extension: 'pdf',
 								size: 1024
 							}
+						],
+						orderedContent: [
+							{ type: 'text', content: 'I see a cat in the image.', order: 0 }
 						],
 						referencedMessages: []
 					}
@@ -490,8 +498,6 @@ describe('ChatHistory Utility Functions', () => {
 					message: {
 						id: 456,
 						prompt: 'Generate an image of a cat',
-						response: 'Here is an image of a cat',
-						reasoning: '',
 						pictures: [
 							{
 								type: 'image',
@@ -503,6 +509,9 @@ describe('ChatHistory Utility Functions', () => {
 							}
 						],
 						files: [],
+						orderedContent: [
+							{ type: 'text', content: 'Here is an image of a cat', order: 0 }
+						],
 						referencedMessages: []
 					}
 				}
@@ -516,6 +525,7 @@ describe('ChatHistory Utility Functions', () => {
 				expect(llmChat.components.length).toBe(1);
 				expect(llmChat.components[0].type).toBe('image');
 				expect((llmChat.components[0] as any).ai).toBe(true);
+				expect(llmChat.webSearchResults).toEqual([]);
 			}
 		});
 	});

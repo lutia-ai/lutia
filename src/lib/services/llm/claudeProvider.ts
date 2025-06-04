@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { env } from '$env/dynamic/private';
 import type { LLMProvider, UsageMetrics } from './types';
-import type { Model } from '$lib/types/types';
+import type { Model, ToolData, ToolUseCallback } from '$lib/types/types';
 import type { ClaudeImage } from '$lib/types/types';
 import { addFilesToMessage } from '$lib/utils/fileHandling';
 
@@ -82,6 +82,13 @@ export class ClaudeProvider implements LLMProvider {
 			messages: messageContent,
 			model: model.param,
 			max_tokens: max_tokens,
+			tools: [
+				{
+					type: 'web_search_20250305',
+					name: 'web_search',
+					max_uses: 5
+				}
+			] as any,
 			...(reasoningEnabled && model.reasons
 				? {
 						thinking: {
@@ -103,6 +110,7 @@ export class ClaudeProvider implements LLMProvider {
 			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
+			onToolUse?: (toolName: string, toolData: ToolData) => void;
 		}
 	) {
 		if (chunk.type === 'message_start') {
@@ -116,6 +124,37 @@ export class ClaudeProvider implements LLMProvider {
 			};
 
 			callbacks.onUsage(usage);
+		} else if (chunk.type === 'content_block_start') {
+			console.log(chunk);
+
+			// Handle tool usage
+			if (chunk.content_block.type === 'server_tool_use' && callbacks.onToolUse) {
+				console.log('Tool use started:', chunk.content_block.name);
+				// Pass undefined to indicate tool is starting (no results yet)
+				callbacks.onToolUse('web_search', undefined);
+			} else if (
+				chunk.content_block.type === 'web_search_tool_result' &&
+				callbacks.onToolUse
+			) {
+				// Handle web search results - this will update the existing tool use entry
+				const searchResults = chunk.content_block.content;
+				if (searchResults && Array.isArray(searchResults)) {
+					const formattedResults = searchResults.map((result: any) => ({
+						type: result.type,
+						title: result.title,
+						url: result.url,
+						page_age: result.page_age,
+						// Don't include encrypted_content as it's not useful for display
+						hasContent: !!result.encrypted_content
+					}));
+
+					// Pass the results to update the existing tool use entry
+					callbacks.onToolUse('web_search', {
+						results: formattedResults,
+						totalResults: formattedResults.length
+					});
+				}
+			}
 		} else if (chunk.type === 'message_delta') {
 			// Update output tokens as they come in
 			this.outputTokens = chunk.usage.output_tokens || 0;

@@ -45,6 +45,7 @@
 	let promptBarHeight: number = 0;
 	let scrollAnimationFrame: number | null = null;
 	let isScrollingProgrammatically = false;
+	let userScrollDetected = false;
 
 	// File viewer state
 	let showFileViewer = false;
@@ -148,7 +149,44 @@
 		mounted = true;
 	});
 
+	/**
+	 * Detects user scroll interaction and stops programmatic scrolling
+	 */
+	function handleUserScroll(): void {
+		if (isScrollingProgrammatically) {
+			userScrollDetected = true;
+			stopProgrammaticScroll();
+		}
+	}
+
+	/**
+	 * Stops the programmatic scroll animation
+	 */
+	function stopProgrammaticScroll(): void {
+		if (scrollAnimationFrame !== null) {
+			cancelAnimationFrame(scrollAnimationFrame);
+			scrollAnimationFrame = null;
+		}
+		isScrollingProgrammatically = false;
+	}
+
+	/**
+	 * Detects keyboard navigation that should stop programmatic scrolling
+	 * @param event - The keyboard event
+	 */
+	function handleKeyNavigation(event: KeyboardEvent): void {
+		// Stop programmatic scroll on navigation keys
+		const navigationKeys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'];
+		if (isScrollingProgrammatically && navigationKeys.includes(event.key)) {
+			userScrollDetected = true;
+			stopProgrammaticScroll();
+		}
+	}
+
 	// Add missing scrollToBottom function
+	/**
+	 * Smoothly scrolls to the bottom of the page
+	 */
 	function scrollToBottom() {
 		// Cancel any ongoing animation frame
 		if (scrollAnimationFrame !== null) {
@@ -156,15 +194,22 @@
 		}
 
 		isScrollingProgrammatically = true;
+		userScrollDetected = false;
 
 		// Smooth scrolling function
 		const scrollStep = function () {
+			// Check if user has tried to scroll manually
+			if (userScrollDetected) {
+				stopProgrammaticScroll();
+				return;
+			}
+
 			const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
 			const targetPosition = document.documentElement.scrollHeight;
 			const distanceToScroll = targetPosition - currentScrollPosition - window.innerHeight;
 
 			// Check if the end is reached, we can stop scrolling
-			if (distanceToScroll > 0 && isScrollingProgrammatically) {
+			if (distanceToScroll > 0 && isScrollingProgrammatically && !userScrollDetected) {
 				// Calculate a variable scroll distance, using easing
 				const scrollDistance = Math.min(
 					distanceToScroll,
@@ -175,7 +220,7 @@
 				scrollAnimationFrame = requestAnimationFrame(scrollStep);
 			} else {
 				// Clear frame if finished
-				scrollAnimationFrame = null;
+				stopProgrammaticScroll();
 			}
 		};
 
@@ -183,7 +228,10 @@
 		scrollStep();
 	}
 
-	// Update isAtBottom to focus only on scroll position and not reference removed variables
+	/**
+	 * Checks if the page is scrolled to the bottom
+	 * @returns True if at bottom, false otherwise
+	 */
 	function isAtBottom(): boolean {
 		const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
 		const windowHeight = window.innerHeight;
@@ -205,11 +253,15 @@
 	}}
 	on:keydown={(e) => {
 		handleKeyboardShortcut(e);
+		handleKeyNavigation(e);
 		saveUserSettings(data.user.user_settings ?? {});
 	}}
 	on:dragover|preventDefault={() => {
 		isDragging.set(true);
 	}}
+	on:wheel={handleUserScroll}
+	on:touchstart={handleUserScroll}
+	on:touchmove={handleUserScroll}
 />
 
 <ErrorPopup bind:this={errorPopup} />

@@ -52,7 +52,13 @@ export async function handleImageGeneration(
 	const { message, apiRequest } = await createMessageAndApiRequestEntry(
 		{
 			prompt: plainText,
-			response: '[AI generated image]',
+			orderedContent: [
+				{
+					type: 'text',
+					content: '[AI generated image]',
+					order: 0
+				}
+			],
 			pictures: [
 				{
 					type: 'image',
@@ -63,7 +69,6 @@ export async function handleImageGeneration(
 					ai: true
 				}
 			],
-			reasoning: '',
 			referencedMessageIds: [],
 			files: []
 		},

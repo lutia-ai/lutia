@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
+      DATABASE_URL: postgresql://user:password@localhost:5432/dummy_db_for_ci
       SECRET_STRIPE_API_KEY: ${{ secrets.SECRET_STRIPE_API_KEY || 'dummy-key-for-ci' }}
       PUBLIC_STRIPE_API_KEY: ${{ secrets.PUBLIC_STRIPE_API_KEY || 'dummy-key-for-ci' }}
       VITE_GOOGLE_GEMINI_API_KEY: ${{ secrets.VITE_GOOGLE_GEMINI_API_KEY || 'dummy-key-for-ci' }}

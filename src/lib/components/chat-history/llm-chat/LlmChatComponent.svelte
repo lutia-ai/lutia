@@ -6,7 +6,8 @@
 		isModelDeepSeek,
 		isModelGoogle,
 		isModelOpenAI,
-		isModelXAI
+		isModelXAI,
+		isToolUseComponent
 	} from '$lib/types/typeGuards';
 	import type { LlmChat } from '$lib/types/types';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
@@ -22,6 +23,9 @@
 	import ChatToolbar from '../chat-toolbar/ChatToolbar.svelte';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
+	import WebSearchResults from '../web-search-results/WebSearchResults.svelte';
+	import { fade } from 'svelte/transition';
+	import ToolUse from './ToolUse.svelte';
 
 	export let chatIndex: number;
 	export let chat: LlmChat;
@@ -108,16 +112,16 @@
 	{/if}
 	<div class="llm-chat">
 		{#if isLlmChatComponent(chat)}
-			{#if chat.reasoning?.content}
-				<Reasoning
-					reasoning={chat.reasoning?.content || ''}
-					isLoading={isReasoningStreaming}
-					onAutoCollapse={handleReasoningAutoCollapse}
-					animationMode="word"
-				/>
-			{/if}
 			{#each chat.components || [] as component, componentIndex}
-				{#if component.type === 'text'}
+				{#if component.type === 'reasoning'}
+					<Reasoning
+						reasoning={component.content}
+						isLoading={componentIndex === (chat.components || []).length - 1 &&
+							chat.loading}
+						onAutoCollapse={handleReasoningAutoCollapse}
+						animationMode="word"
+					/>
+				{:else if component.type === 'text'}
 					<p class="content-paragraph">
 						{@html processLinks(
 							marked(
@@ -134,6 +138,16 @@
 						tabWidth={component.tabWidth}
 						{chatIndex}
 						{componentIndex}
+					/>
+				{:else if isToolUseComponent(component)}
+					<ToolUse
+						toolName={component.tool_name}
+						isActive={componentIndex === (chat.components || []).length - 1 &&
+							chat.loading}
+						webSearchResults={component.tool_name === 'web_search' &&
+						component.tool_data
+							? [component.tool_data]
+							: []}
 					/>
 				{:else if component.type === 'image'}
 					<div

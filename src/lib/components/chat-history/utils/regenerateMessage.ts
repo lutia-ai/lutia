@@ -1,29 +1,43 @@
 import { deserialize } from '$app/forms';
-import { parseMessageContent } from '$lib/components/chat-history/utils/chatHistory';
+import {
+	parseOrderedContent,
+	extractReasoningContent,
+	extractResponseText
+} from '$lib/components/chat-history/utils/chatHistory';
 import { chatHistory } from '$lib/stores';
 import type {
 	Component,
 	ReasoningComponent,
 	SerializedApiRequest,
-	Message as ChatMessage
+	Message as ChatMessage,
+	OrderedContent,
+	ContentItem
 } from '$lib/types/types';
 import { isLlmChatComponent } from '$lib/types/typeGuards';
-import { ApiProvider } from '@prisma/client';
 import type { ActionResult } from '@sveltejs/kit';
+import {
+	handleStreamingResponse,
+	type StreamCallbacks,
+	type StreamingState
+} from '$lib/utils/streamingUtils';
+import { ApiRequestBuilder, ApiErrorHandler, createLLMRequest } from '$lib/utils/apiUtils';
 
 export async function regenerateMessage(messageId: number) {
 	let originalComponent: Component[] = [];
 	let originalReasoning: ReasoningComponent | undefined;
+	let originalOrderedContent: OrderedContent | undefined;
 	chatHistory.update((history) => {
 		return history.map((msg) => {
 			if (msg.message_id === messageId && isLlmChatComponent(msg)) {
-				// Store the original text before clearing it
+				// Store the original content before clearing it
 				originalComponent = msg.components;
 				originalReasoning = msg.reasoning ?? originalReasoning;
+				originalOrderedContent = msg.orderedContent;
 
 				return {
 					...msg,
 					components: [],
+					orderedContent: [],
 					reasoning: undefined,
 					loading: true
 				};
@@ -40,13 +54,13 @@ export async function regenerateMessage(messageId: number) {
 			method: 'POST',
 			body: formData
 		});
-		const result: ActionResult = deserialize(await response.text());
+		const fetchResult: ActionResult = deserialize(await response.text());
 
 		let apiRequestWithMessage: SerializedApiRequest | null = null;
 
-		if (result.type === 'success' && result.data) {
-			apiRequestWithMessage = result.data as SerializedApiRequest;
-		} else if (result.type === 'failure' && result.data) {
+		if (fetchResult.type === 'success' && fetchResult.data) {
+			apiRequestWithMessage = fetchResult.data as SerializedApiRequest;
+		} else if (fetchResult.type === 'failure' && fetchResult.data) {
 			console.error('Failed to fetch Api request with message data');
 			throw new Error('Failed to fetch Api request with message data');
 		}
@@ -55,22 +69,10 @@ export async function regenerateMessage(messageId: number) {
 			throw new Error('Failed to fetch Api request with message data');
 		}
 
-		let uri = '/api/llm';
-
-		const reasoningOn = apiRequestWithMessage.message?.reasoning ? true : false;
-		// UUID validation function
-		const isValidUUID = (uuid: string) => {
-			const uuidRegex =
-				/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-			return uuidRegex.test(uuid);
-		};
-
-		// Only include conversationId if it's a valid UUID and user is premium
-		const validConversationId =
-			apiRequestWithMessage.conversationId &&
-			isValidUUID(apiRequestWithMessage.conversationId)
-				? apiRequestWithMessage.conversationId
-				: undefined;
+		// Check if reasoning was enabled by looking for reasoning content in ordered_content
+		const reasoningOn = apiRequestWithMessage.message?.orderedContent
+			? extractReasoningContent(apiRequestWithMessage.message.orderedContent).length > 0
+			: false;
 
 		// Create the fullPrompt array with message history
 		let fullPrompt: ChatMessage[] = [];
@@ -92,10 +94,16 @@ export async function regenerateMessage(messageId: number) {
 					role: 'user',
 					content: refMsg.prompt
 				};
+
+				// Extract response text from ordered content for AI message
+				const responseText = refMsg.orderedContent
+					? extractResponseText(refMsg.orderedContent)
+					: '';
+
 				const AiMessage: ChatMessage = {
 					message_id: refMsg.id,
 					role: 'assistant',
-					content: refMsg.response
+					content: responseText
 				};
 				fullPrompt.push(userMessage, AiMessage);
 			});
@@ -111,121 +119,110 @@ export async function regenerateMessage(messageId: number) {
 			fullPrompt.push(currentMessage);
 		}
 
-		const streamResponse = await fetch(uri, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				plainTextPrompt: JSON.stringify(apiRequestWithMessage.message?.prompt),
-				promptStr: JSON.stringify(fullPrompt),
-				modelStr: JSON.stringify(apiRequestWithMessage.apiModel),
-				imagesStr: JSON.stringify(apiRequestWithMessage.message?.pictures),
-				provider: apiRequestWithMessage.apiProvider,
-				...(apiRequestWithMessage.apiProvider === ApiProvider.anthropic
-					? { reasoningOn }
-					: {}),
-				...(validConversationId ? { conversationId: validConversationId } : {}),
-				regenerateMessageId: JSON.stringify(messageId)
-			})
+		// Build request using shared utility
+		const requestBody = new ApiRequestBuilder()
+			.setPromptData(
+				apiRequestWithMessage.message?.prompt || '',
+				fullPrompt,
+				apiRequestWithMessage.apiModel
+			)
+			.setAttachments(
+				apiRequestWithMessage.message?.pictures || [],
+				[] // No files in regeneration context
+			)
+			.setProvider(apiRequestWithMessage.apiProvider)
+			.setReasoning(apiRequestWithMessage.apiProvider, reasoningOn)
+			.setConversationId(apiRequestWithMessage.conversationId)
+			.build();
+
+		// Add regeneration-specific field
+		requestBody.regenerateMessageId = JSON.stringify(messageId);
+
+		const streamResponse = await createLLMRequest('/api/llm', requestBody);
+
+		// Use shared error handling
+		await ApiErrorHandler.validateResponse(streamResponse);
+
+		// Use shared streaming handler with real-time updates
+		const callbacks: StreamCallbacks = {
+			onChunkProcessed: (currentState: StreamingState) => {
+				updateChatHistoryForRegeneration(messageId, currentState);
+			}
+		};
+
+		const streamResult = await handleStreamingResponse(streamResponse, callbacks);
+
+		// Final update to ensure everything is set correctly
+		updateChatHistoryForRegeneration(messageId, streamResult, true);
+	} catch (error: any) {
+		console.error('Error regenerating message:', error);
+
+		// Restore original content on error
+		chatHistory.update((history) => {
+			return history.map((msg) => {
+				if (msg.message_id === messageId && isLlmChatComponent(msg)) {
+					return {
+						...msg,
+						components: originalComponent,
+						orderedContent: originalOrderedContent,
+						reasoning: originalReasoning,
+						loading: false
+					};
+				}
+				return msg;
+			});
 		});
 
-		if (!streamResponse.ok) {
-			const errorData = await streamResponse.clone().json();
-			// Clone the response so that we can safely read it as JSON
-			if (errorData.message === 'Insufficient balance') {
-				// errorPopup.setVisibility(
-				//     errorData.message,
-				//     "Spending can't go below $0.10",
-				//     5000,
-				//     'error'
-				// );
-			}
-			throw new Error(errorData.message || 'An error occurred');
-		}
-
-		if (!streamResponse.body) {
-			throw new Error('Response body is null');
-		}
-
-		const reader = streamResponse.body.getReader();
-		const decoder = new TextDecoder();
-		let responseText = '';
-		let reasoningText = '';
-		let responseComponents: Component[] = [];
-		let reasoningComponent: ReasoningComponent;
-		let inputPrice: number = 0;
-		let outputPrice: number = 0;
-
-		while (true) {
-			const { value, done } = await reader.read();
-			if (done) break;
-
-			// Decode the chunk
-			const chunk = decoder.decode(value, { stream: true });
-
-			// Process lines (each JSON object is on its own line)
-			const lines = chunk.split('\n').filter((line) => line.trim());
-
-			for (const line of lines) {
-				try {
-					const data = JSON.parse(line);
-					// Handle different message types
-					if (data.type === 'text') {
-						responseText += data.content;
-						responseComponents = parseMessageContent(responseText);
-					} else if (data.type === 'reasoning') {
-						reasoningText += data.content;
-						reasoningComponent = {
-							type: 'reasoning',
-							content: reasoningText
-						};
-					} else if (data.type === 'usage') {
-						inputPrice = data.usage.inputPrice;
-						outputPrice = data.usage.outputPrice;
-					} else if (data.type === 'error') {
-						console.error(data.message);
-						// errorPopup.setVisibility(data.message, null, 5000, 'error');
-					}
-
-					// Update the chat history by matching message_id AND ensuring it's an LLM message
-					chatHistory.update((history) =>
-						history.map((msg) =>
-							msg.message_id === messageId && isLlmChatComponent(msg)
-								? {
-										...msg,
-										text: responseText,
-										components: responseComponents,
-										reasoning: reasoningComponent,
-										input_cost: inputPrice,
-										output_cost: outputPrice,
-										loading: false
-									}
-								: msg
-						)
-					);
-				} catch (e) {
-					console.error('Error parsing stream chunk:', e);
-					// Continue with the next line if one fails to parse
-				}
-			}
-		}
-	} catch (error) {
-		console.error('Error regenerating message:', error);
-		if (originalComponent) {
-			chatHistory.update((history) => {
-				return history.map((msg) => {
-					if (msg.message_id === messageId && isLlmChatComponent(msg)) {
-						return {
-							...msg,
-							components: originalComponent,
-							reasoning: originalReasoning,
-							loading: false
-						};
-					}
-					return msg;
-				});
-			});
-		}
+		throw error; // Re-throw to be handled by caller
 	}
+}
+
+/**
+ * Updates chat history with regenerated message content (final update)
+ * @param messageId Message ID being regenerated
+ * @param result Final streaming result
+ * @param isFinal Whether this is the final update
+ */
+function updateChatHistoryForRegeneration(
+	messageId: number,
+	result: StreamingState,
+	isFinal: boolean = false
+): void {
+	// Parse ordered content to get components
+	const orderedComponents = parseOrderedContent(result.orderedContent);
+
+	// Extract reasoning component if it exists
+	const reasoningComponent = orderedComponents.find((comp) => comp.type === 'reasoning') as
+		| ReasoningComponent
+		| undefined;
+
+	// Filter out reasoning from regular components since it's handled separately
+	const regularComponents = orderedComponents.filter((comp) => comp.type !== 'reasoning');
+
+	chatHistory.update((history) => {
+		return history.map((msg) => {
+			if (msg.message_id === messageId && isLlmChatComponent(msg)) {
+				return {
+					...msg,
+					text: result.responseText,
+					components: regularComponents,
+					orderedContent: result.orderedContent,
+					reasoning: reasoningComponent,
+					// Only include webSearchResults if they exist and have content
+					...(result.webSearchResults &&
+					result.webSearchResults.length > 0 &&
+					result.webSearchResults.some(
+						(searchResult) => searchResult.results && searchResult.results.length > 0
+					)
+						? { webSearchResults: result.webSearchResults }
+						: {}),
+					input_cost: result.inputPrice,
+					output_cost: result.outputPrice,
+					toolInProgress: result.toolInProgress,
+					loading: isFinal ? false : result.toolInProgress // Only set loading to false on final update
+				};
+			}
+			return msg;
+		});
+	});
 }

@@ -89,10 +89,9 @@ export async function createMessageAndApiRequestEntry(
 			const message = await tx.message.create({
 				data: {
 					prompt: messageData.prompt,
-					response: messageData.response,
 					pictures: messageData.pictures,
 					files: messageData.files,
-					reasoning: messageData.reasoning,
+					ordered_content: messageData.orderedContent,
 					referencedMessages: {
 						// Connect any referenced messages if they exist
 						connect: referencedMessages.map((msg) => ({ id: msg.id }))
@@ -215,11 +214,12 @@ export async function retrieveApiRequestByMessageId(
 					include: {
 						referencedMessages: {
 							select: {
-								// All fields except pictures
+								// Core fields only - legacy fields will be removed
 								id: true,
 								prompt: true,
-								response: true,
-								reasoning: true,
+								pictures: true,
+								files: true,
+								ordered_content: true,
 								created_at: true,
 								referencedMessages: true,
 								referencedBy: true
@@ -227,11 +227,12 @@ export async function retrieveApiRequestByMessageId(
 						},
 						referencedBy: {
 							select: {
-								// All fields except pictures
+								// Core fields only - legacy fields will be removed
 								id: true,
 								prompt: true,
-								response: true,
-								reasoning: true,
+								pictures: true,
+								files: true,
+								ordered_content: true,
 								created_at: true,
 								referencedMessages: true,
 								referencedBy: true
