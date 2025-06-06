@@ -91,13 +91,12 @@ export async function createMessageAndApiRequestEntry(
 					prompt: messageData.prompt,
 					pictures: messageData.pictures,
 					files: messageData.files,
-					ordered_content: messageData.orderedContent
-					// Note: referencedMessages connection removed due to Prisma type generation issues
-					// This should be re-enabled once Prisma client is regenerated
-					// referencedMessages: {
-					// 	// Connect any referenced messages if they exist
-					// 	connect: referencedMessages.map((msg) => ({ id: msg.id }))
-					// }
+					ordered_content: messageData.orderedContent,
+					...(referencedMessages.length > 0 && {
+						referencedMessages: {
+							connect: referencedMessages.map((msg) => ({ id: msg.id }))
+						}
+					})
 				}
 			});
 
