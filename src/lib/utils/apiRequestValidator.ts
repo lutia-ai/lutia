@@ -179,10 +179,13 @@ export async function validateApiRequest(
 		const estimatedInputCost = (estimatedInputTokens * model.input_price) / 1000000 + imageCost;
 
 		// Create a new conversation if no existing conversationId was provided
-		let finalConversationId: string | undefined = messageConversationId
-			? (messageConversationId as string)
-			: undefined;
-		if (!messageConversationId) {
+		let finalConversationId: string | undefined;
+
+		if (messageConversationId) {
+			// Use existing conversation ID
+			finalConversationId = messageConversationId as string;
+		} else {
+			// Create new conversation
 			if (user.payment_tier === PaymentTier.Premium) {
 				// Premium users always get a new conversation
 				const conversation = await createConversation(user.id, 'New Chat');
