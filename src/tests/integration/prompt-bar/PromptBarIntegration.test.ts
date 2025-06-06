@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import { calculateTokensAndPrice } from '$lib/components/prompt-bar/utils/promptBarUtils';
 import { modelDictionary } from '$lib/models/modelDictionary';
 import type { Model, UserWithSettings } from '$lib/types/types';
@@ -352,8 +353,8 @@ describe('PromptBar Component Integration Tests', () => {
 	/**
 	 * Store reactivity integration tests
 	 */
-	describe('Store Reactivity', () => {
-		it('should react to store changes', async () => {
+        describe('Store Reactivity', () => {
+                it('should react to store changes', async () => {
 			const { default: PromptBar } = await import(
 				'$lib/components/prompt-bar/PromptBar.svelte'
 			);
@@ -370,9 +371,9 @@ describe('PromptBar Component Integration Tests', () => {
 				// Component should still be rendered after store changes
 				expect(container.querySelector('.prompt-bar')).toBeTruthy();
 			});
-		});
+                });
 
-		it('should handle model changes', async () => {
+                it('should handle model changes', async () => {
 			const { default: PromptBar } = await import(
 				'$lib/components/prompt-bar/PromptBar.svelte'
 			);
@@ -385,10 +386,74 @@ describe('PromptBar Component Integration Tests', () => {
 			chosenModel.set(modelDictionary.anthropic.models.claude35Sonnet);
 			chosenCompany.set('anthropic');
 
-			await waitFor(() => {
-				// Component should still be rendered after model changes
-				expect(container.querySelector('.prompt-bar')).toBeTruthy();
-			});
-		});
-	});
+                        await waitFor(() => {
+                                // Component should still be rendered after model changes
+                                expect(container.querySelector('.prompt-bar')).toBeTruthy();
+                        });
+                });
+        });
+
+        /**
+         * New tests for prompt pricing updates
+         */
+        describe('Prompt Pricing Updates', () => {
+                it('updates price when prompt or context window changes', async () => {
+                        const { default: PromptBar } = await import(
+                                '$lib/components/prompt-bar/PromptBar.svelte'
+                        );
+
+                        // Set some chat history so context window has effect
+                        chatHistory.set([
+                                {
+                                        message_id: 1,
+                                        by: 'user',
+                                        text: 'Hello there',
+                                        attachments: []
+                                },
+                                {
+                                        message_id: 2,
+                                        by: 'GPT_4o',
+                                        text: 'General Kenobi',
+                                        attachments: []
+                                }
+                        ]);
+
+                        const { container } = render(PromptBar, {
+                                props: { user: mockUser }
+                        });
+
+                        const inputElement = container.querySelector(
+                                '.prompt-input'
+                        ) as HTMLElement;
+
+                        inputElement.innerHTML = 'Test prompt';
+                        await fireEvent.input(inputElement);
+                        await tick();
+
+                        const tokenContainer = container.querySelector('.input-token-container');
+                        expect(tokenContainer).toBeTruthy();
+
+                        await waitFor(() => {
+                                const text = tokenContainer?.querySelector('.right')?.textContent || '';
+                                expect(text).toMatch(/Input tokens:/);
+                        });
+
+                        const initialTokensText =
+                                tokenContainer?.querySelector('.right')?.textContent || '';
+                        const initialContextText =
+                                tokenContainer?.querySelector('p')?.textContent || '';
+
+                        const initialTokens = parseInt(initialTokensText.replace(/\D/g, ''));
+
+                        // Increase context window size
+                        numberPrevMessages.set(1);
+                        await tick();
+
+                        await waitFor(() => {
+                                const updatedContext =
+                                        tokenContainer?.querySelector('p')?.textContent || '';
+                                expect(updatedContext).not.toBe(initialContextText);
+                        });
+                });
+        });
 });
