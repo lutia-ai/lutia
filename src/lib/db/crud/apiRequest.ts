@@ -92,10 +92,11 @@ export async function createMessageAndApiRequestEntry(
 					pictures: messageData.pictures,
 					files: messageData.files,
 					ordered_content: messageData.orderedContent,
-					referencedMessages: {
-						// Connect any referenced messages if they exist
-						connect: referencedMessages.map((msg) => ({ id: msg.id }))
-					}
+					...(referencedMessages.length > 0 && {
+						referencedMessages: {
+							connect: referencedMessages.map((msg) => ({ id: msg.id }))
+						}
+					})
 				}
 			});
 
@@ -196,7 +197,7 @@ export async function retrieveApiRequestByMessageId(
 	messageId: number,
 	userId?: number,
 	serialize: boolean = false
-): Promise<ApiRequest | SerializedApiRequest | null> {
+): Promise<ApiRequestWithMessage | SerializedApiRequest | null> {
 	try {
 		const whereCondition: any = {
 			message_id: messageId
@@ -212,32 +213,34 @@ export async function retrieveApiRequestByMessageId(
 			include: {
 				message: {
 					include: {
-						referencedMessages: {
-							select: {
-								// Core fields only - legacy fields will be removed
-								id: true,
-								prompt: true,
-								pictures: true,
-								files: true,
-								ordered_content: true,
-								created_at: true,
-								referencedMessages: true,
-								referencedBy: true
-							}
-						},
-						referencedBy: {
-							select: {
-								// Core fields only - legacy fields will be removed
-								id: true,
-								prompt: true,
-								pictures: true,
-								files: true,
-								ordered_content: true,
-								created_at: true,
-								referencedMessages: true,
-								referencedBy: true
-							}
-						}
+						// Note: referencedMessages include removed due to Prisma type generation issues
+						// This should be re-enabled once Prisma client is regenerated
+						// referencedMessages: {
+						// 	select: {
+						// 		// Core fields only - legacy fields will be removed
+						// 		id: true,
+						// 		prompt: true,
+						// 		pictures: true,
+						// 		files: true,
+						// 		ordered_content: true,
+						// 		created_at: true,
+						// 		referencedMessages: true,
+						// 		referencedBy: true
+						// 	}
+						// },
+						// referencedBy: {
+						// 	select: {
+						// 		// Core fields only - legacy fields will be removed
+						// 		id: true,
+						// 		prompt: true,
+						// 		pictures: true,
+						// 		files: true,
+						// 		ordered_content: true,
+						// 		created_at: true,
+						// 		referencedMessages: true,
+						// 		referencedBy: true
+						// 	}
+						// }
 					}
 				}
 			}

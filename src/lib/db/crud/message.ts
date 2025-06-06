@@ -33,9 +33,11 @@ export async function createMessage(
 				prompt,
 				pictures,
 				ordered_content: orderedContent,
-				referencedMessages: {
-					connect: referencedMessages.map((msg) => ({ id: msg.id }))
-				}
+				...(referencedMessages.length > 0 && {
+					referencedMessages: {
+						connect: referencedMessages.map((msg) => ({ id: msg.id }))
+					}
+				})
 			}
 		});
 

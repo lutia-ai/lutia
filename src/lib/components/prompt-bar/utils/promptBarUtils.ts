@@ -134,7 +134,17 @@ export async function calculateTokensAndPrice(
 		if (fileAttachments && fileAttachments.length > 0) {
 			promptForTokenCount = preparePromptWithAttachments(fullPrompt, fileAttachments);
 		}
-		tokens = estimateTokenCount(promptForTokenCount as string, 'simple');
+
+		let textForTokenCount: string;
+		if (Array.isArray(promptForTokenCount)) {
+			textForTokenCount = promptForTokenCount
+				.map((msg) => (typeof msg.content === 'string' ? msg.content : ''))
+				.join(' ');
+		} else {
+			textForTokenCount = promptForTokenCount as string;
+		}
+
+		tokens = estimateTokenCount(textForTokenCount, 'simple');
 
 		// Add tokens for images if applicable
 		if (imageAttachments.length > 0 && chosenModel.handlesImages) {
