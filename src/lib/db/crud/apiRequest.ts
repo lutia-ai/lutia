@@ -2,6 +2,7 @@ import { retrieveUserByEmail } from '$lib/db/crud/user';
 import type { ApiModel, ApiProvider, ApiRequest, ApiRequestStatus, Message } from '@prisma/client';
 import type {
 	ApiRequestWithMessage,
+	ApiRequestWithReferencedMessage,
 	CreateApiRequestData,
 	CreateMessageData,
 	SerializedApiRequest
@@ -197,7 +198,7 @@ export async function retrieveApiRequestByMessageId(
 	messageId: number,
 	userId?: number,
 	serialize: boolean = false
-): Promise<ApiRequestWithMessage | SerializedApiRequest | null> {
+): Promise<ApiRequestWithReferencedMessage | SerializedApiRequest | null> {
 	try {
 		const whereCondition: any = {
 			message_id: messageId
@@ -213,34 +214,36 @@ export async function retrieveApiRequestByMessageId(
 			include: {
 				message: {
 					include: {
-						// Note: referencedMessages include removed due to Prisma type generation issues
-						// This should be re-enabled once Prisma client is regenerated
-						// referencedMessages: {
-						// 	select: {
-						// 		// Core fields only - legacy fields will be removed
-						// 		id: true,
-						// 		prompt: true,
-						// 		pictures: true,
-						// 		files: true,
-						// 		ordered_content: true,
-						// 		created_at: true,
-						// 		referencedMessages: true,
-						// 		referencedBy: true
-						// 	}
-						// },
-						// referencedBy: {
-						// 	select: {
-						// 		// Core fields only - legacy fields will be removed
-						// 		id: true,
-						// 		prompt: true,
-						// 		pictures: true,
-						// 		files: true,
-						// 		ordered_content: true,
-						// 		created_at: true,
-						// 		referencedMessages: true,
-						// 		referencedBy: true
-						// 	}
-						// }
+						referencedMessages: {
+							select: {
+								// Core fields only - legacy fields will be removed
+								id: true,
+								prompt: true,
+								response: true,
+								pictures: true,
+								files: true,
+								ordered_content: true,
+								reasoning: true,
+								created_at: true,
+								referencedMessages: true,
+								referencedBy: true
+							}
+						},
+						referencedBy: {
+							select: {
+								// Core fields only - legacy fields will be removed
+								id: true,
+								prompt: true,
+								response: true,
+								pictures: true,
+								files: true,
+								ordered_content: true,
+								reasoning: true,
+								created_at: true,
+								referencedMessages: true,
+								referencedBy: true
+							}
+						}
 					}
 				}
 			}

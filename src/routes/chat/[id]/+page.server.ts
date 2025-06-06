@@ -384,8 +384,8 @@ export const actions = {
 			);
 			return apiRequestWithMessage;
 		} catch (error) {
-			console.error('Error deleting conversation:', error);
-			return fail(500, { message: 'Failed to delete conversation' });
+			console.error('Error retrieving message and api request:', error);
+			return fail(500, { message: 'Failed to retrieve message and api request' });
 		}
 	},
 	extractPdfText: async ({ request }) => {
