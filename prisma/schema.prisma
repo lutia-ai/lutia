@@ -44,17 +44,17 @@ model UserSettings {
 }
 
 model Message {
-  id         Int         @id @default(autoincrement())
-  prompt     String
-  response   String?
-  ordered_content Json?
-  pictures   Json?
-  reasoning  String?
-  created_at DateTime    @default(now())
-  files      Json?
-  apiRequest ApiRequest?
-  messages_A Message[]   @relation("MessageReferences")
-  messages_B Message[]   @relation("MessageReferences")
+  id                 Int         @id @default(autoincrement())
+  prompt             String
+  response           String?
+  ordered_content    Json?
+  pictures           Json?
+  reasoning          String?
+  created_at         DateTime    @default(now())
+  files              Json?
+  apiRequest         ApiRequest?
+  referencedMessages Message[]   @relation("MessageReferences")
+  referencedBy       Message[]   @relation("MessageReferences")
 
   @@map("messages")
 }

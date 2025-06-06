@@ -92,10 +92,11 @@ export async function createMessageAndApiRequestEntry(
 					pictures: messageData.pictures,
 					files: messageData.files,
 					ordered_content: messageData.orderedContent,
-					referencedMessages: {
-						// Connect any referenced messages if they exist
-						connect: referencedMessages.map((msg) => ({ id: msg.id }))
-					}
+					...(referencedMessages.length > 0 && {
+						referencedMessages: {
+							connect: referencedMessages.map((msg) => ({ id: msg.id }))
+						}
+					})
 				}
 			});
 
