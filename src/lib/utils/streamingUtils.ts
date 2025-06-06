@@ -231,8 +231,6 @@ async function processStreamChunk(
 			} else if (data.type === 'usage') {
 				callbacks.onUsage?.(data.usage.inputPrice, data.usage.outputPrice);
 			} else if (data.type === 'tool_use') {
-				console.log(`Tool used: ${data.tool_name}`, data.tool_data);
-
 				contentManager.addToolUse(data.tool_name, data.tool_data);
 
 				// Handle web search results - only add if data is valid

@@ -125,11 +125,11 @@ export class ClaudeProvider implements LLMProvider {
 
 			callbacks.onUsage(usage);
 		} else if (chunk.type === 'content_block_start') {
-			console.log(chunk);
+			// console.log(chunk);
 
 			// Handle tool usage
 			if (chunk.content_block.type === 'server_tool_use' && callbacks.onToolUse) {
-				console.log('Tool use started:', chunk.content_block.name);
+				// console.log('Tool use started:', chunk.content_block.name);
 				// Pass undefined to indicate tool is starting (no results yet)
 				callbacks.onToolUse('web_search', undefined);
 			} else if (

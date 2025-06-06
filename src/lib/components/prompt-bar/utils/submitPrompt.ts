@@ -102,9 +102,20 @@ export async function submitPrompt(
  * Prepares the conversation by setting the conversation ID from URL parameter
  */
 function prepareConversation(): void {
-	// Always sync conversationId with the current URL parameter when submitting
 	const currentUrlId = get(page).params.id;
-	conversationId.set(currentUrlId);
+	const currentStoreId = get(conversationId);
+
+	// Only sync from URL to store if:
+	// 1. Store is 'new' or undefined (initial state)
+	// 2. URL has a valid UUID (not 'new')
+	// This prevents overwriting a valid conversation ID with 'new' due to URL update delays
+	if ((currentStoreId === 'new' || !currentStoreId) && currentUrlId !== 'new') {
+		conversationId.set(currentUrlId);
+	} else if (currentStoreId !== 'new' && currentUrlId === 'new') {
+		// Keep the store value - don't overwrite with 'new' from URL
+	} else {
+		conversationId.set(currentUrlId);
+	}
 }
 
 /**
@@ -131,12 +142,13 @@ async function makeApiRequest(
 	);
 
 	// Build request using shared utility
+	const currentConvId = get(conversationId);
 	const requestBody = new ApiRequestBuilder()
 		.setPromptData(plainText, fullPrompt, get(chosenModel).name)
 		.setAttachments(imageArray, fileArray)
 		.setProvider(get(chosenCompany))
 		.setReasoning(get(chosenCompany), reasoning)
-		.setConversationId(get(conversationId))
+		.setConversationId(currentConvId)
 		.build();
 
 	const response = await createLLMRequest('/api/llm', requestBody);
