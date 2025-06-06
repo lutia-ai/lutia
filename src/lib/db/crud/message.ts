@@ -32,10 +32,12 @@ export async function createMessage(
 			data: {
 				prompt,
 				pictures,
-				ordered_content: orderedContent,
-				referencedMessages: {
-					connect: referencedMessages.map((msg) => ({ id: msg.id }))
-				}
+				ordered_content: orderedContent
+				// Note: referencedMessages connection removed due to Prisma type generation issues
+				// This should be re-enabled once Prisma client is regenerated
+				// referencedMessages: {
+				// 	connect: referencedMessages.map((msg) => ({ id: msg.id }))
+				// }
 			}
 		});
 
