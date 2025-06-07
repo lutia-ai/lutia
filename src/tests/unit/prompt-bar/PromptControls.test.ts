@@ -85,8 +85,7 @@ describe('PromptControls', () => {
 	 */
 	it('should render correctly with default props', () => {
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		// Verify the plus button is rendered
@@ -110,8 +109,7 @@ describe('PromptControls', () => {
 	it('should render reasoning button when modelSupportsReasoning is true', () => {
 		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		// Verify the reasoning button is rendered
@@ -123,8 +121,7 @@ describe('PromptControls', () => {
 	it('should render reasoning button when modelExtendedThinking is true', () => {
 		const extendedThinkingModel = { ...mockModel, extendedThinking: true };
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		// Verify the reasoning button is rendered
@@ -141,8 +138,7 @@ describe('PromptControls', () => {
 		});
 
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		// Verify there's only the context window button
@@ -154,8 +150,7 @@ describe('PromptControls', () => {
 	it('should apply selected class when reasoningOn is true', () => {
 		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		// Verify the reasoning button has the selected class
@@ -174,8 +169,7 @@ describe('PromptControls', () => {
 		});
 
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		// Verify the context window button is rendered
@@ -194,8 +188,7 @@ describe('PromptControls', () => {
 		);
 
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		// Verify the context window button has the selected class
@@ -252,8 +245,7 @@ describe('PromptControls', () => {
 	it('should dispatch toggleReasoning event when reasoning button is clicked', async () => {
 		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		const reasoningButton = container.querySelectorAll('.reason-button')[0];
@@ -271,14 +263,15 @@ describe('PromptControls', () => {
 		});
 
 		// Mock isContextWindowAuto to return true initially
-		(isContextWindowAuto.subscribe as any).mockImplementation((callback: (value: boolean) => void) => {
-			callback(true);
-			return () => {};
-		});
+		(isContextWindowAuto.subscribe as any).mockImplementation(
+			(callback: (value: boolean) => void) => {
+				callback(true);
+				return () => {};
+			}
+		);
 
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		const contextWindowButton = container.querySelectorAll('.reason-button')[0];
@@ -290,8 +283,7 @@ describe('PromptControls', () => {
 
 	it('should open file dialog when plus button is clicked', async () => {
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		// Mock the file input click method
@@ -306,8 +298,7 @@ describe('PromptControls', () => {
 
 	it('should dispatch fileChange event when files are selected', async () => {
 		const { component, container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		const mockFileChange = vi.fn();
@@ -350,8 +341,7 @@ describe('PromptControls', () => {
 
 	it('should open file dialog on Enter key on plus button', async () => {
 		const { container } = render(PromptControls, {
-			props: {
-			}
+			props: {}
 		});
 
 		// Mock the file input click method
