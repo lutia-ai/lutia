@@ -58,7 +58,7 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 				return {
 					user,
 					userImage: session.user.image,
-					apiRequests: retrieveApiRequestsByConversationId(conversationId, true),
+					apiRequests: retrieveApiRequestsByConversationId(conversationId),
 					conversation
 				};
 			}

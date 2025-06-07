@@ -40,6 +40,7 @@ export interface LLMProvider {
 		model: any;
 		messages: any;
 		reasoningEnabled?: boolean;
+		webSearchEnabled?: boolean;
 	}): Promise<any>;
 
 	/**
@@ -81,4 +82,5 @@ export interface LLMRequestConfig {
 	referencedMessageIds: string[];
 	requestId: string;
 	reasoningEnabled?: boolean;
+	webSearchEnabled?: boolean;
 }

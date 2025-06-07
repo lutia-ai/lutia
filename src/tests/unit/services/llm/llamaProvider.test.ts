@@ -99,7 +99,6 @@ describe('LlamaProvider', () => {
 			input_price: 0.0000015,
 			output_price: 0.000002,
 			context_window: 128000,
-			hub: 'meta',
 			handlesImages: true,
 			maxImages: 5,
 			generatesImages: false,
@@ -108,7 +107,8 @@ describe('LlamaProvider', () => {
 			reasons: false,
 			extendedThinking: false,
 			max_input_per_request: 128000,
-			severity: 0
+			severity: 0,
+			web_search: false
 		} as Model;
 
 		// Mock crypto.randomUUID

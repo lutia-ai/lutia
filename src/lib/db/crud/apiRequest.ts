@@ -158,34 +158,6 @@ export async function retrieveApiRequests(userEmail: string): Promise<ApiRequest
 	}
 }
 
-export async function retrieveApiRequestsWithMessage(
-	userId: number,
-	serialize: boolean = false
-): Promise<ApiRequestWithMessage[] | SerializedApiRequest[]> {
-	try {
-		const apiRequests = await prisma.apiRequest.findMany({
-			where: {
-				user_id: userId, // Filter by user ID
-				message: {
-					// Ensure that the message relation exists (is not null)
-					NOT: {
-						id: undefined
-					}
-				},
-				conversation_id: null // Only include requests without a conversation ID
-			},
-			include: {
-				message: true // Include the related message entity
-			}
-		});
-
-		return serialize ? apiRequests.map(serializeApiRequest) : apiRequests;
-	} catch (error) {
-		console.error('Error retrieving API requests for user:', error);
-		throw error;
-	}
-}
-
 /**
  * Retrieves an API request with its associated message by message ID,
  * including any messages referenced by this message

@@ -108,7 +108,6 @@ describe('XAIProvider', () => {
 			input_price: 0.000015,
 			output_price: 0.000075,
 			context_window: 128000,
-			hub: 'xai',
 			handlesImages: true,
 			maxImages: 5,
 			generatesImages: false,
@@ -117,7 +116,8 @@ describe('XAIProvider', () => {
 			reasons: true,
 			extendedThinking: false,
 			max_input_per_request: 128000,
-			severity: 0
+			severity: 0,
+			web_search: false
 		} as Model;
 
 		// Mock crypto.randomUUID

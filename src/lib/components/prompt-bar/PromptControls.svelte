@@ -3,15 +3,12 @@
 	import type { Model } from '$lib/types/types';
 	import BrainIcon from '../icons/BrainIcon.svelte';
 	import HoverTag from '../HoverTag.svelte';
-	import { chosenModel, isContextWindowAuto, reasoningOn } from '$lib/stores';
+	import { chosenModel, isContextWindowAuto, reasoningOn, webSearchOn } from '$lib/stores';
 	import ArrowIcon from '$lib/components/icons/Arrow.svelte';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import PlusIcon from '$lib/components/icons/PlusIcon.svelte';
+	import SpinningGlobeIcon from '../icons/SpinningGlobeIcon.svelte';
 
-	// Props
-	export let modelSupportsReasoning: boolean = false;
-	export let modelExtendedThinking: boolean = false;
-	export let currentModel: Model;
 	export let placeholderVisible: boolean = true;
 
 	// Event dispatcher
@@ -26,7 +23,7 @@
 	let fileInput: HTMLInputElement;
 
 	// Reactive property to determine if multiple files are allowed
-	$: allowMultiple = currentModel.maxImages > 1 || !currentModel.handlesImages;
+	$: allowMultiple = $chosenModel.maxImages > 1 || !$chosenModel.handlesImages;
 
 	/**
 	 * Reset the file input value - called from parent after submission
@@ -78,21 +75,23 @@
 			<HoverTag text="Add images, PDFs, or code files" position="top" />
 		</button>
 
-		{#if modelSupportsReasoning || modelExtendedThinking}
+		{#if $chosenModel.reasons || $chosenModel.extendedThinking}
 			<button
-				class:selected={$reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)}
+				class:selected={$reasoningOn ||
+					($chosenModel.reasons && !$chosenModel.extendedThinking)}
 				class="reason-button"
 				tabindex="0"
 				on:click={() => reasoningOn.set(!$reasoningOn)}
 				on:keydown|stopPropagation={(e) => {
 					if (e.key === 'Enter') {
-						if (modelExtendedThinking) reasoningOn.set(!$reasoningOn);
+						if ($chosenModel.extendedThinking) reasoningOn.set(!$reasoningOn);
 					}
 				}}
 			>
 				<div class="brain-icon">
 					<BrainIcon
-						color={$reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)
+						color={$reasoningOn ||
+						($chosenModel.reasons && !$chosenModel.extendedThinking)
 							? '#16a1f9'
 							: 'var(--text-color-light)'}
 					/>
@@ -102,6 +101,33 @@
 					text={$chosenModel.reasons
 						? 'Thinks before responding'
 						: "Selected model doesn't support reasoning"}
+					position="top"
+				/>
+			</button>
+		{/if}
+
+		{#if $chosenModel.web_search}
+			<button
+				class:selected={$webSearchOn}
+				class="reason-button"
+				tabindex="0"
+				on:click={() => webSearchOn.set(!$webSearchOn)}
+				on:keydown|stopPropagation={(e) => {
+					if (e.key === 'Enter') {
+						webSearchOn.set(!$webSearchOn);
+					}
+				}}
+			>
+				<div class="brain-icon">
+					<SpinningGlobeIcon
+						color={$webSearchOn ? '#16a1f9' : 'var(--text-color-light)'}
+					/>
+				</div>
+				<p>Search</p>
+				<HoverTag
+					text={$chosenModel.web_search
+						? 'Search the web for real-time information'
+						: "Selected model doesn't support web search"}
 					position="top"
 				/>
 			</button>

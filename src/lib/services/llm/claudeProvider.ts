@@ -54,11 +54,13 @@ export class ClaudeProvider implements LLMProvider {
 	async createCompletionStream({
 		model,
 		messages,
-		reasoningEnabled
+		reasoningEnabled,
+		webSearchEnabled
 	}: {
 		model: Model;
 		messages: any[];
 		reasoningEnabled?: boolean;
+		webSearchEnabled?: boolean;
 	}) {
 		const client = this.initializeClient();
 
@@ -82,13 +84,17 @@ export class ClaudeProvider implements LLMProvider {
 			messages: messageContent,
 			model: model.param,
 			max_tokens: max_tokens,
-			tools: [
-				{
-					type: 'web_search_20250305',
-					name: 'web_search',
-					max_uses: 5
-				}
-			] as any,
+			...(webSearchEnabled && model.web_search
+				? {
+						tools: [
+							{
+								type: 'web_search_20250305',
+								name: 'web_search',
+								max_uses: 5
+							}
+						] as any
+					}
+				: {}),
 			...(reasoningEnabled && model.reasons
 				? {
 						thinking: {

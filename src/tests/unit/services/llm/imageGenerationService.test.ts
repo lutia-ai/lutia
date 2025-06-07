@@ -84,7 +84,6 @@ describe('Image Generation Service', () => {
 			input_price: 0,
 			output_price: 0.04,
 			context_window: 0,
-			hub: 'openai',
 			handlesImages: false,
 			maxImages: 0,
 			generatesImages: true,
@@ -93,7 +92,8 @@ describe('Image Generation Service', () => {
 			reasons: false,
 			extendedThinking: false,
 			max_input_per_request: 0,
-			severity: 0
+			severity: 0,
+			web_search: false
 		} as Model;
 
 		mockRequestBody = {

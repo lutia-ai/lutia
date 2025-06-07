@@ -15,7 +15,6 @@ export interface FinalizationParams {
 	files: FileAttachment[];
 	chunks: string[];
 	thinkingChunks: string[];
-	webSearchResults: any[];
 	orderedContent?: OrderedContent;
 	finalUsage: GptTokenUsage;
 	wasAborted: boolean;
@@ -40,7 +39,6 @@ export async function finalizeResponse({
 	files,
 	chunks,
 	thinkingChunks,
-	webSearchResults,
 	orderedContent,
 	finalUsage,
 	wasAborted = false,

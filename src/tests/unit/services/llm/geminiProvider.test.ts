@@ -148,12 +148,15 @@ describe('GeminiProvider', () => {
 			name: 'Gemini_1_5_Pro',
 			legacy: false,
 			context_window: 1000000,
-			hub: 'gemini',
 			handlesImages: true,
 			maxImages: 1,
 			generatesImages: false,
 			description: 'Google Gemini Pro model',
-			max_tokens: 4096
+			max_tokens: 4096,
+			reasons: false,
+			extendedThinking: false,
+			max_input_per_request: 1000000,
+			web_search: false
 		} as Model;
 
 		const messages = {
@@ -231,12 +234,15 @@ describe('GeminiProvider', () => {
 			name: 'Gemini_1_5_Pro',
 			legacy: false,
 			context_window: 1000000,
-			hub: 'gemini',
 			handlesImages: true,
 			maxImages: 1,
 			generatesImages: false,
 			description: 'Google Gemini Pro model',
-			max_tokens: 4096
+			max_tokens: 4096,
+			reasons: false,
+			extendedThinking: false,
+			max_input_per_request: 1000000,
+			web_search: false
 		} as Model;
 
 		const messages = {
@@ -290,12 +296,15 @@ describe('GeminiProvider', () => {
 			name: 'Gemini_1_5_Pro',
 			legacy: false,
 			context_window: 1000000,
-			hub: 'gemini',
 			handlesImages: true,
 			maxImages: 1,
 			generatesImages: false,
 			description: 'Google Gemini Pro model',
-			max_tokens: 4096
+			max_tokens: 4096,
+			reasons: false,
+			extendedThinking: false,
+			max_input_per_request: 1000000,
+			web_search: false
 		} as Model;
 
 		const messages = {

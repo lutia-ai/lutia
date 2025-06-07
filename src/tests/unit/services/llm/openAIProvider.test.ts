@@ -108,7 +108,6 @@ describe('OpenAIProvider', () => {
 			input_price: 0.00003,
 			output_price: 0.00006,
 			context_window: 8192,
-			hub: 'openai',
 			handlesImages: true,
 			maxImages: 5,
 			generatesImages: false,
@@ -117,7 +116,8 @@ describe('OpenAIProvider', () => {
 			reasons: true,
 			extendedThinking: false,
 			max_input_per_request: 8192,
-			severity: 0
+			severity: 0,
+			web_search: false
 		} as Model;
 
 		// Mock crypto.randomUUID

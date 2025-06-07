@@ -117,6 +117,16 @@ export class ApiRequestBuilder {
 	}
 
 	/**
+	 * Set web search flag (only for supported providers)
+	 */
+	setWebSearch(provider: string, webSearch: boolean): this {
+		if (provider === 'anthropic') {
+			this.requestBody.webSearchOn = webSearch;
+		}
+		return this;
+	}
+
+	/**
 	 * Set conversation ID if valid
 	 */
 	setConversationId(conversationId: string | null | undefined): this {

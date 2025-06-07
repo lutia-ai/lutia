@@ -31,14 +31,14 @@ describe('ModelSearch', () => {
 				input_price: 0.01,
 				output_price: 0.03,
 				context_window: 8192,
-				hub: 'openai',
 				handlesImages: true,
 				maxImages: 10,
 				generatesImages: false,
 				reasons: true,
 				extendedThinking: true,
 				description: 'GPT-4',
-				max_input_per_request: 4000
+				max_input_per_request: 4000,
+				web_search: false
 			},
 			formattedName: 'GPT-4'
 		},
@@ -51,14 +51,14 @@ describe('ModelSearch', () => {
 				input_price: 0.015,
 				output_price: 0.075,
 				context_window: 200000,
-				hub: 'anthropic',
 				handlesImages: true,
 				maxImages: 10,
 				generatesImages: false,
 				reasons: true,
 				extendedThinking: true,
 				description: 'Claude 3 Opus',
-				max_input_per_request: 4000
+				max_input_per_request: 4000,
+				web_search: false
 			},
 			formattedName: 'Claude 3 Opus'
 		},
@@ -71,14 +71,14 @@ describe('ModelSearch', () => {
 				input_price: 0.0005,
 				output_price: 0.0015,
 				context_window: 32768,
-				hub: 'google',
 				handlesImages: true,
 				maxImages: 10,
 				generatesImages: false,
 				reasons: false,
 				extendedThinking: false,
 				description: 'Gemini Pro',
-				max_input_per_request: 4000
+				max_input_per_request: 4000,
+				web_search: false
 			},
 			formattedName: 'Gemini Pro'
 		}

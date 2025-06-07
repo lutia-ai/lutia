@@ -68,10 +68,6 @@ vi.mock('$lib/utils/responseFinalizer', () => ({
 	finalizeResponse: vi.fn().mockResolvedValue({
 		message: { id: 456 },
 		apiRequest: { id: 789 }
-	}),
-	updateExistingMessageAndRequest: vi.fn().mockResolvedValue({
-		message: { id: 123 },
-		apiRequest: { id: 456 }
 	})
 }));
 
@@ -125,16 +121,10 @@ describe('LLM Service', () => {
 		}));
 
 		// Re-establish response finalizer mocks after clearing
-		const { finalizeResponse, updateExistingMessageAndRequest } = await import(
-			'$lib/utils/responseFinalizer'
-		);
+		const { finalizeResponse } = await import('$lib/utils/responseFinalizer');
 		(finalizeResponse as Mock).mockResolvedValue({
 			message: { id: 456 },
 			apiRequest: { id: 789 }
-		});
-		(updateExistingMessageAndRequest as Mock).mockResolvedValue({
-			message: { id: 123 },
-			apiRequest: { id: 456 }
 		});
 
 		// Set up abort controller for testing
@@ -156,7 +146,6 @@ describe('LLM Service', () => {
 			input_price: 0.00001,
 			output_price: 0.00003,
 			context_window: 8192,
-			hub: 'openai',
 			handlesImages: false,
 			maxImages: 0,
 			generatesImages: false,
@@ -165,7 +154,8 @@ describe('LLM Service', () => {
 			extendedThinking: false,
 			max_input_per_request: 4096,
 			severity: 0,
-			reasons: true
+			reasons: true,
+			web_search: false
 		};
 
 		// Mock crypto.randomUUID
@@ -219,37 +209,6 @@ describe('LLM Service', () => {
 		expect(output).toContain('Hello');
 		expect(output).toContain('world');
 		expect(output).toContain('usage');
-	});
-
-	it('should handle regeneration requests correctly', async () => {
-		const { updateExistingMessageAndRequest } = await import('$lib/utils/responseFinalizer');
-
-		const config = {
-			user: mockUser,
-			model: mockModel,
-			messages: [{ role: 'user', content: 'Hello' }],
-			plainText: 'Hello',
-			images: [],
-			files: [],
-			apiProvider: ApiProvider.openAI,
-			regenerateMessageId: '123',
-			messageConversationId: 'conv123',
-			originalConversationId: 'conv123',
-			referencedMessageIds: [],
-			requestId: 'req123'
-		};
-
-		const stream = await processLLMRequest(config, abortSignal);
-
-		// Consume the stream to trigger the finally block
-		const reader = stream.getReader();
-		while (true) {
-			const { done } = await reader.read();
-			if (done) break;
-		}
-
-		// Verify that updateExistingMessageAndRequest was called for regeneration
-		expect(updateExistingMessageAndRequest).toHaveBeenCalled();
 	});
 
 	it('should handle new conversation requests correctly', async () => {

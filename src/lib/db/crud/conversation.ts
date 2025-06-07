@@ -255,9 +255,8 @@ export async function verifyConversationOwnership(
  * Retrieve all API requests for a specific conversation, including messages
  */
 export async function retrieveApiRequestsByConversationId(
-	conversationId: string,
-	serialize: boolean = false
-): Promise<ApiRequestWithMessage[] | SerializedApiRequest[]> {
+	conversationId: string
+): Promise<SerializedApiRequest[]> {
 	try {
 		const apiRequests = await prisma.apiRequest.findMany({
 			where: {
@@ -276,7 +275,7 @@ export async function retrieveApiRequestsByConversationId(
 				request_timestamp: 'asc'
 			}
 		});
-		return serialize ? apiRequests.map(serializeApiRequest) : apiRequests;
+		return apiRequests.map(serializeApiRequest);
 	} catch (error) {
 		console.error('Error retrieving API requests for conversation:', error);
 		throw error;

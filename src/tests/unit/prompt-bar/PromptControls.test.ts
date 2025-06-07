@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import PromptControls from '$lib/components/prompt-bar/PromptControls.svelte';
-import { chosenModel, isContextWindowAuto, reasoningOn } from '$lib/stores';
+import { chosenModel, isContextWindowAuto, reasoningOn, webSearchOn } from '$lib/stores';
 import { ApiModel } from '@prisma/client';
 import type { Model } from '$lib/types/types';
 
@@ -21,6 +21,10 @@ vi.mock('$lib/stores', () => ({
 	reasoningOn: {
 		subscribe: vi.fn(),
 		set: vi.fn()
+	},
+	webSearchOn: {
+		subscribe: vi.fn(),
+		set: vi.fn()
 	}
 }));
 
@@ -32,14 +36,14 @@ const mockModel: Model = {
 	input_price: 2.5,
 	output_price: 10,
 	context_window: 128000,
-	hub: 'Xenova/gpt-4o',
 	handlesImages: true,
 	maxImages: 5,
 	generatesImages: false,
 	reasons: false,
 	extendedThinking: false,
 	description: 'Versatile, high-intelligence flagship model',
-	max_input_per_request: 10000
+	max_input_per_request: 10000,
+	web_search: false
 };
 
 describe('PromptControls', () => {
@@ -64,9 +68,16 @@ describe('PromptControls', () => {
 			return () => {}; // Return unsubscribe function
 		});
 
+		// Mock the webSearchOn store subscribe method
+		const mockWebSearchOnSubscribe = vi.fn((callback: (value: boolean) => void) => {
+			callback(false); // Default value
+			return () => {}; // Return unsubscribe function
+		});
+
 		(chosenModel.subscribe as any).mockImplementation(mockChosenModelSubscribe);
 		(isContextWindowAuto.subscribe as any).mockImplementation(mockIsContextWindowAutoSubscribe);
 		(reasoningOn.subscribe as any).mockImplementation(mockReasoningOnSubscribe);
+		(webSearchOn.subscribe as any).mockImplementation(mockWebSearchOnSubscribe);
 	});
 
 	/**
@@ -74,9 +85,7 @@ describe('PromptControls', () => {
 	 */
 	it('should render correctly with default props', () => {
 		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel
-			}
+			props: {}
 		});
 
 		// Verify the plus button is rendered
@@ -98,11 +107,9 @@ describe('PromptControls', () => {
 	 * Test reasoning button
 	 */
 	it('should render reasoning button when modelSupportsReasoning is true', () => {
+		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel,
-				modelSupportsReasoning: true
-			}
+			props: {}
 		});
 
 		// Verify the reasoning button is rendered
@@ -112,11 +119,9 @@ describe('PromptControls', () => {
 	});
 
 	it('should render reasoning button when modelExtendedThinking is true', () => {
+		const extendedThinkingModel = { ...mockModel, extendedThinking: true };
 		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel,
-				modelExtendedThinking: true
-			}
+			props: {}
 		});
 
 		// Verify the reasoning button is rendered
@@ -126,26 +131,26 @@ describe('PromptControls', () => {
 	});
 
 	it('should not render reasoning button when neither supports reasoning', () => {
-		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel,
-				modelSupportsReasoning: false,
-				modelExtendedThinking: false
-			}
+		// Mock the chosenModel store to return a model that doesn't support reasoning
+		(chosenModel.subscribe as any).mockImplementation((callback: (value: any) => void) => {
+			callback({ reasons: false, extendedThinking: false });
+			return () => {};
 		});
 
-		// Verify there's only the context window button (the second reason-button)
+		const { container } = render(PromptControls, {
+			props: {}
+		});
+
+		// Verify there's only the context window button
 		const reasoningButtons = container.querySelectorAll('.reason-button');
 		expect(reasoningButtons.length).toBe(1);
 		expect(reasoningButtons[0].textContent).toContain('Custom');
 	});
 
 	it('should apply selected class when reasoningOn is true', () => {
+		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel,
-				modelSupportsReasoning: true
-			}
+			props: {}
 		});
 
 		// Verify the reasoning button has the selected class
@@ -157,10 +162,14 @@ describe('PromptControls', () => {
 	 * Test context window button
 	 */
 	it('should render context window button', () => {
+		// Mock the chosenModel store to return a model that doesn't support reasoning
+		(chosenModel.subscribe as any).mockImplementation((callback: (value: any) => void) => {
+			callback({ reasons: false, extendedThinking: false });
+			return () => {};
+		});
+
 		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel
-			}
+			props: {}
 		});
 
 		// Verify the context window button is rendered
@@ -179,9 +188,7 @@ describe('PromptControls', () => {
 		);
 
 		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel
-			}
+			props: {}
 		});
 
 		// Verify the context window button has the selected class
@@ -195,7 +202,6 @@ describe('PromptControls', () => {
 	it('should disable submit button when placeholderVisible is true', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
 				placeholderVisible: true
 			}
 		});
@@ -208,7 +214,6 @@ describe('PromptControls', () => {
 	it('should enable submit button when placeholderVisible is false', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
 				placeholderVisible: false
 			}
 		});
@@ -224,7 +229,6 @@ describe('PromptControls', () => {
 	it('should dispatch submit event when submit button is clicked', async () => {
 		const { component, container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
 				placeholderVisible: false
 			}
 		});
@@ -239,11 +243,9 @@ describe('PromptControls', () => {
 	});
 
 	it('should dispatch toggleReasoning event when reasoning button is clicked', async () => {
+		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel,
-				modelSupportsReasoning: true
-			}
+			props: {}
 		});
 
 		const reasoningButton = container.querySelectorAll('.reason-button')[0];
@@ -254,24 +256,34 @@ describe('PromptControls', () => {
 	});
 
 	it('should toggle context window auto setting when custom button is clicked', async () => {
-		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel
+		// Mock the chosenModel store to return a model that doesn't support reasoning
+		(chosenModel.subscribe as any).mockImplementation((callback: (value: any) => void) => {
+			callback({ reasons: false, extendedThinking: false });
+			return () => {};
+		});
+
+		// Mock isContextWindowAuto to return true initially
+		(isContextWindowAuto.subscribe as any).mockImplementation(
+			(callback: (value: boolean) => void) => {
+				callback(true);
+				return () => {};
 			}
+		);
+
+		const { container } = render(PromptControls, {
+			props: {}
 		});
 
 		const contextWindowButton = container.querySelectorAll('.reason-button')[0];
 		await fireEvent.click(contextWindowButton as Element);
 
 		// Verify isContextWindowAuto.set was called with the opposite of the current value
-		expect(isContextWindowAuto.set).toHaveBeenCalledWith(false); // Should toggle from true to false
+		expect(isContextWindowAuto.set).toHaveBeenCalledWith(false);
 	});
 
 	it('should open file dialog when plus button is clicked', async () => {
 		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel
-			}
+			props: {}
 		});
 
 		// Mock the file input click method
@@ -286,9 +298,7 @@ describe('PromptControls', () => {
 
 	it('should dispatch fileChange event when files are selected', async () => {
 		const { component, container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel
-			}
+			props: {}
 		});
 
 		const mockFileChange = vi.fn();
@@ -331,9 +341,7 @@ describe('PromptControls', () => {
 
 	it('should open file dialog on Enter key on plus button', async () => {
 		const { container } = render(PromptControls, {
-			props: {
-				currentModel: mockModel
-			}
+			props: {}
 		});
 
 		// Mock the file input click method
@@ -349,7 +357,6 @@ describe('PromptControls', () => {
 	it('should dispatch submit event on Enter key on submit button', async () => {
 		const { component, container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
 				placeholderVisible: false
 			}
 		});

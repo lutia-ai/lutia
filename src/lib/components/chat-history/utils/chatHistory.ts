@@ -15,7 +15,7 @@ import type {
 import { deserialize } from '$app/forms';
 import { chatHistory, numberPrevMessages } from '$lib/stores';
 import type { ActionResult } from '@sveltejs/kit';
-import { type Message, type UserSettings } from '@prisma/client';
+import { type Message } from '@prisma/client';
 import { get } from 'svelte/store';
 import { calculateTabWidth } from '$lib/components/chat-history/utils/codeContainerUtils';
 
@@ -24,25 +24,30 @@ import { calculateTabWidth } from '$lib/components/chat-history/utils/codeContai
  * Updated to work with the new ordered_content system
  */
 function serializeMessage(message: any): SerializedMessage {
+	const orderedContent = Array.isArray(message.ordered_content)
+		? (message.ordered_content as OrderedContent)
+		: undefined;
+
 	return {
 		id: message.id,
 		prompt: message.prompt,
 		pictures: Array.isArray(message.pictures) ? (message.pictures as Image[]) : [],
 		files: Array.isArray(message.files) ? (message.files as FileAttachment[]) : [],
-		orderedContent: Array.isArray(message.ordered_content)
-			? (message.ordered_content as OrderedContent)
-			: undefined,
+		orderedContent,
 		// Add these fields for referenced messages
 		referencedMessages: Array.isArray(message.referencedMessages)
-			? message.referencedMessages.map((msg: Message) => ({
-					id: msg.id,
-					prompt: msg.prompt,
-					pictures: Array.isArray(msg.pictures) ? (msg.pictures as Image[]) : [],
-					files: Array.isArray(msg.files) ? (msg.files as FileAttachment[]) : [],
-					orderedContent: Array.isArray(msg.ordered_content)
+			? message.referencedMessages.map((msg: Message) => {
+					const msgOrderedContent = Array.isArray(msg.ordered_content)
 						? (msg.ordered_content as OrderedContent)
-						: undefined
-				}))
+						: undefined;
+					return {
+						id: msg.id,
+						prompt: msg.prompt || '',
+						pictures: Array.isArray(msg.pictures) ? (msg.pictures as Image[]) : [],
+						files: Array.isArray(msg.files) ? (msg.files as FileAttachment[]) : [],
+						orderedContent: msgOrderedContent || []
+					};
+				})
 			: []
 	};
 }

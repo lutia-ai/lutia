@@ -32,6 +32,7 @@ import {
  * @param imageArray Array of images attached to the prompt
  * @param fileArray Array of files attached to the prompt
  * @param reasoning Whether reasoning mode is enabled (for models that support it)
+ * @param webSearch Whether web search mode is enabled (for models that support it)
  * @param errorPopupHandler Function to display error popups
  * @param notificationHandler Function to display notifications
  * @returns Promise<void>
@@ -41,6 +42,7 @@ export async function submitPrompt(
 	imageArray: any[],
 	fileArray: any[],
 	reasoning: boolean,
+	webSearch: boolean,
 	errorPopupHandler: (
 		message: string,
 		subText: string | null,
@@ -82,7 +84,13 @@ export async function submitPrompt(
 		prepareConversation();
 
 		// Make API request to the appropriate endpoint
-		const response = await makeApiRequest(plainText, imageArray, fileArray, reasoning);
+		const response = await makeApiRequest(
+			plainText,
+			imageArray,
+			fileArray,
+			reasoning,
+			webSearch
+		);
 
 		// Handle response based on model type
 		if (get(chosenModel).generatesImages) {
@@ -124,13 +132,15 @@ function prepareConversation(): void {
  * @param imageArray Array of images attached to the prompt
  * @param fileArray Array of files attached to the prompt
  * @param reasoning Whether reasoning mode is enabled
+ * @param webSearch Whether web search mode is enabled
  * @returns Promise with the fetch response
  */
 async function makeApiRequest(
 	plainText: string,
 	imageArray: any[],
 	fileArray: any[],
-	reasoning: boolean
+	reasoning: boolean,
+	webSearch: boolean
 ): Promise<Response> {
 	const fullPrompt = generateFullPrompt(
 		plainText,
@@ -148,6 +158,7 @@ async function makeApiRequest(
 		.setAttachments(imageArray, fileArray)
 		.setProvider(get(chosenCompany))
 		.setReasoning(get(chosenCompany), reasoning)
+		.setWebSearch(get(chosenCompany), webSearch)
 		.setConversationId(currentConvId)
 		.build();
 

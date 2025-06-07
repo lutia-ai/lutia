@@ -25,14 +25,14 @@ const mockGeminiModel: Model = {
 	input_price: 1.25,
 	output_price: 10,
 	context_window: 1048576,
-	hub: 'Xenova/gpt-4o',
 	handlesImages: true,
 	maxImages: 1, // Gemini supports only 1 image
 	generatesImages: false,
 	reasons: true,
 	extendedThinking: false,
 	description: 'State of the art reasoning model',
-	max_input_per_request: 15000
+	max_input_per_request: 15000,
+	web_search: false
 };
 
 const mockOpenAIModel: Model = {
@@ -42,14 +42,14 @@ const mockOpenAIModel: Model = {
 	input_price: 2.5,
 	output_price: 10,
 	context_window: 128000,
-	hub: 'Xenova/gpt-4o',
 	handlesImages: true,
 	maxImages: 5, // OpenAI supports up to 5 images
 	generatesImages: false,
 	reasons: false,
 	extendedThinking: false,
 	description: 'Versatile, high-intelligence flagship model',
-	max_input_per_request: 10000
+	max_input_per_request: 10000,
+	web_search: false
 };
 
 const mockTextOnlyModel: Model = {
@@ -59,14 +59,14 @@ const mockTextOnlyModel: Model = {
 	input_price: 0.5,
 	output_price: 1.5,
 	context_window: 16385,
-	hub: 'Xenova/gpt-3.5-turbo',
 	handlesImages: false,
 	maxImages: 0, // No image support
 	generatesImages: false,
 	reasons: false,
 	extendedThinking: false,
 	description: 'Fast and affordable small model',
-	max_input_per_request: 15000
+	max_input_per_request: 15000,
+	web_search: false
 };
 
 // Mock image data
