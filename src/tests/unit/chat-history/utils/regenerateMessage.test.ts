@@ -23,7 +23,8 @@ vi.mock('$lib/components/chat-history/utils/chatHistory', () => ({
 	parseMessageContent: vi.fn((content) => [{ type: 'text', content }]),
 	parseOrderedContent: vi.fn((content) => [{ type: 'text', content: 'Parsed content' }]),
 	extractReasoningContent: vi.fn((content) => 'Extracted reasoning'),
-	extractResponseText: vi.fn((content) => 'Extracted response')
+	extractResponseText: vi.fn((content) => 'Extracted response'),
+	extractWebSearchResults: vi.fn((content) => [])
 }));
 
 vi.mock('$lib/types/typeGuards', () => ({

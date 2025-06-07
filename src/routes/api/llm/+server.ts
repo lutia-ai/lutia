@@ -69,7 +69,8 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 				originalConversationId: requestBody.conversationId,
 				referencedMessageIds: referencedMessageIds.map((id) => id.toString()),
 				requestId,
-				reasoningEnabled: requestBody.reasoningOn
+				reasoningEnabled: requestBody.reasoningOn,
+				webSearchEnabled: requestBody.webSearchOn
 			},
 			request.signal
 		);

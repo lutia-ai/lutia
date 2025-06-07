@@ -80,7 +80,8 @@
 			prompt: plainText,
 			images: imageArray,
 			fileAttachments: fileArray,
-			reasoningOn: reasoning
+			reasoningOn: reasoning,
+			webSearchOn: webSearch
 		} = event.detail;
 
 		// Scroll to the last message
@@ -91,6 +92,7 @@
 			imageArray,
 			fileArray,
 			reasoning,
+			webSearch,
 			(message, subText, duration, type) =>
 				errorPopup.setVisibility(
 					message,

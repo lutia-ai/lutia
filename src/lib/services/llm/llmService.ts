@@ -2,13 +2,13 @@ import { error } from '@sveltejs/kit';
 import type { LLMRequestConfig, UsageMetrics } from './types';
 import { llmProviderFactory } from './providerFactory';
 import { finalizeResponse, updateExistingMessageAndRequest } from '$lib/utils/responseFinalizer';
-import { retrieveApiRequestByMessageId } from '$lib/db/crud/apiRequest';
 import {
 	OrderedContentManager,
 	WebSearchManager,
 	ServerStreamEncoder
 } from '$lib/utils/streamingUtils';
 import { CostCalculator } from '$lib/utils/apiUtils';
+import { retrieveApiRequestByMessageId } from '$lib/db/crud/apiRequest';
 
 /**
  * Process an LLM request with streaming response
@@ -30,7 +30,8 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 		originalConversationId,
 		referencedMessageIds,
 		requestId,
-		reasoningEnabled
+		reasoningEnabled,
+		webSearchEnabled
 	} = config;
 
 	// Get existing costs if regenerating
@@ -85,7 +86,8 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 			stream = await provider.createCompletionStream({
 				model,
 				messages: processedMessages,
-				reasoningEnabled
+				reasoningEnabled,
+				webSearchEnabled
 			});
 		} catch (err) {
 			console.error('[LLM Service] Error creating stream:', err);
@@ -245,7 +247,6 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 								files,
 								chunks,
 								thinkingChunks,
-								webSearchResults: searchManager.getWebSearchResults(),
 								orderedContent: contentManager.getOrderedContent(),
 								finalUsage,
 								wasAborted: clientDisconnected,
@@ -256,7 +257,6 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 								apiProvider,
 								referencedMessageIds: referencedMessageIds.map((id) => Number(id))
 							});
-
 							controller.enqueue(encoder.encodeMessageId(message.id));
 						} else {
 							// Path for regenerating a response to an existing message

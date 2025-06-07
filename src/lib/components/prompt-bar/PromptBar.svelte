@@ -13,7 +13,8 @@
 		isSidebarOpen,
 		isLargeScreen,
 		mobileSidebarOpen,
-		reasoningOn
+		reasoningOn,
+		webSearchOn
 	} from '$lib/stores.ts';
 	import { modelDictionary } from '$lib/models/modelDictionary';
 	import {
@@ -338,7 +339,8 @@
 			prompt: prompt.trim(),
 			images: $chosenModel.handlesImages ? imagePreview : [],
 			fileAttachments,
-			reasoningOn: $reasoningOn
+			reasoningOn: $reasoningOn,
+			webSearchOn: $webSearchOn
 		};
 
 		// Dispatch submit event to parent
@@ -426,8 +428,6 @@
 		/>
 
 		<PromptControls
-			modelSupportsReasoning={$chosenModel.reasons}
-			modelExtendedThinking={$chosenModel.extendedThinking}
 			currentModel={$chosenModel}
 			{placeholderVisible}
 			on:submit={handleSubmit}

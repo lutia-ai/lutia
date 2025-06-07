@@ -118,6 +118,9 @@ export const isDragging = writable<boolean>(false);
 // Store for controlling if the reasoning is on
 export const reasoningOn = writable<boolean>(false);
 
+// Store for controlling if web search is on
+export const webSearchOn = writable<boolean>(false);
+
 // Derived store to check if any sidebar is open
 export const isSidebarOpen = derived(
 	[conversationsOpen, contextWindowOpen, filesSidebarOpen],

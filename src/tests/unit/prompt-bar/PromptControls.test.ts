@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import PromptControls from '$lib/components/prompt-bar/PromptControls.svelte';
-import { chosenModel, isContextWindowAuto, reasoningOn } from '$lib/stores';
+import { chosenModel, isContextWindowAuto, reasoningOn, webSearchOn } from '$lib/stores';
 import { ApiModel } from '@prisma/client';
 import type { Model } from '$lib/types/types';
 
@@ -19,6 +19,10 @@ vi.mock('$lib/stores', () => ({
 		set: vi.fn()
 	},
 	reasoningOn: {
+		subscribe: vi.fn(),
+		set: vi.fn()
+	},
+	webSearchOn: {
 		subscribe: vi.fn(),
 		set: vi.fn()
 	}
@@ -64,9 +68,16 @@ describe('PromptControls', () => {
 			return () => {}; // Return unsubscribe function
 		});
 
+		// Mock the webSearchOn store subscribe method
+		const mockWebSearchOnSubscribe = vi.fn((callback: (value: boolean) => void) => {
+			callback(false); // Default value
+			return () => {}; // Return unsubscribe function
+		});
+
 		(chosenModel.subscribe as any).mockImplementation(mockChosenModelSubscribe);
 		(isContextWindowAuto.subscribe as any).mockImplementation(mockIsContextWindowAutoSubscribe);
 		(reasoningOn.subscribe as any).mockImplementation(mockReasoningOnSubscribe);
+		(webSearchOn.subscribe as any).mockImplementation(mockWebSearchOnSubscribe);
 	});
 
 	/**
@@ -98,10 +109,10 @@ describe('PromptControls', () => {
 	 * Test reasoning button
 	 */
 	it('should render reasoning button when modelSupportsReasoning is true', () => {
+		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
-				modelSupportsReasoning: true
+				currentModel: reasoningModel
 			}
 		});
 
@@ -112,10 +123,10 @@ describe('PromptControls', () => {
 	});
 
 	it('should render reasoning button when modelExtendedThinking is true', () => {
+		const extendedThinkingModel = { ...mockModel, extendedThinking: true };
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
-				modelExtendedThinking: true
+				currentModel: extendedThinkingModel
 			}
 		});
 
@@ -126,11 +137,10 @@ describe('PromptControls', () => {
 	});
 
 	it('should not render reasoning button when neither supports reasoning', () => {
+		const noReasoningModel = { ...mockModel, reasons: false, extendedThinking: false };
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
-				modelSupportsReasoning: false,
-				modelExtendedThinking: false
+				currentModel: noReasoningModel
 			}
 		});
 
@@ -141,10 +151,10 @@ describe('PromptControls', () => {
 	});
 
 	it('should apply selected class when reasoningOn is true', () => {
+		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
-				modelSupportsReasoning: true
+				currentModel: reasoningModel
 			}
 		});
 
@@ -239,10 +249,10 @@ describe('PromptControls', () => {
 	});
 
 	it('should dispatch toggleReasoning event when reasoning button is clicked', async () => {
+		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
-				modelSupportsReasoning: true
+				currentModel: reasoningModel
 			}
 		});
 

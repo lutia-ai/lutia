@@ -173,7 +173,7 @@ describe('submitPrompt', () => {
 			{ by: modelDictionary.openAI.models.gpt4o.name, text: '', loading: true }
 		);
 
-		await submitPrompt(plainText, [], [], false, mockErrorPopup, mockNotification);
+		await submitPrompt(plainText, [], [], false, false, mockErrorPopup, mockNotification);
 
 		// Verify chat history update was called
 		expect(mockChatHistoryUpdate).toHaveBeenCalled();
@@ -220,7 +220,7 @@ describe('submitPrompt', () => {
 			ok: true
 		});
 
-		await submitPrompt(plainText, [], [], false, mockErrorPopup, mockNotification);
+		await submitPrompt(plainText, [], [], false, false, mockErrorPopup, mockNotification);
 
 		// Verify API call was made
 		expect(global.fetch).toHaveBeenCalled();
@@ -247,7 +247,15 @@ describe('submitPrompt', () => {
 
 		// Mock the function to not throw errors
 		try {
-			await submitPrompt(plainText, imageArray, [], false, mockErrorPopup, mockNotification);
+			await submitPrompt(
+				plainText,
+				imageArray,
+				[],
+				false,
+				false,
+				mockErrorPopup,
+				mockNotification
+			);
 
 			// Find user message in history
 			const userMessage = mockChatHistoryArray.find((msg) => msg.by === 'user');
@@ -275,7 +283,7 @@ describe('submitPrompt', () => {
 
 		// We expect the function to throw internally, but it should handle the error
 		// so we don't expect our call to throw
-		await submitPrompt(plainText, [], [], false, mockErrorPopup, mockNotification);
+		await submitPrompt(plainText, [], [], false, false, mockErrorPopup, mockNotification);
 
 		// Should call the notification handler with the error
 		expect(mockNotification).toHaveBeenCalled();
@@ -305,7 +313,7 @@ describe('submitPrompt', () => {
 		// but before adding the AI message
 		mockChatHistoryArray.push({ by: 'user', text: plainText, attachments: [] });
 
-		await submitPrompt(plainText, [], [], false, mockErrorPopup, mockNotification);
+		await submitPrompt(plainText, [], [], false, false, mockErrorPopup, mockNotification);
 
 		// Should call the notification handler with the error
 		expect(mockNotification).toHaveBeenCalled();
@@ -320,7 +328,7 @@ describe('submitPrompt', () => {
 	it('should abort if prompt is empty', async () => {
 		const emptyPrompt = '   ';
 
-		await submitPrompt(emptyPrompt, [], [], false, mockErrorPopup, mockNotification);
+		await submitPrompt(emptyPrompt, [], [], false, false, mockErrorPopup, mockNotification);
 
 		// Should not add any messages to history or make API calls
 		expect(mockChatHistoryArray.length).toBe(0);

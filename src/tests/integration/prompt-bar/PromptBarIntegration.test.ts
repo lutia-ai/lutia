@@ -23,6 +23,7 @@ const isSidebarOpen = writable(false);
 const isLargeScreen = writable(true);
 const mobileSidebarOpen = writable(false);
 const reasoningOn = writable(false);
+const webSearchOn = writable(false);
 
 // Mock the stores
 vi.mock('$lib/stores', () => ({
@@ -36,7 +37,8 @@ vi.mock('$lib/stores', () => ({
 	isSidebarOpen,
 	isLargeScreen,
 	mobileSidebarOpen,
-	reasoningOn
+	reasoningOn,
+	webSearchOn
 }));
 
 // Mock other dependencies

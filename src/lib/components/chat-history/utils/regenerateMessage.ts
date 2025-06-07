@@ -2,7 +2,8 @@ import { deserialize } from '$app/forms';
 import {
 	parseOrderedContent,
 	extractReasoningContent,
-	extractResponseText
+	extractResponseText,
+	extractWebSearchResults
 } from '$lib/components/chat-history/utils/chatHistory';
 import { chatHistory } from '$lib/stores';
 import type {
@@ -74,6 +75,11 @@ export async function regenerateMessage(messageId: number) {
 			? extractReasoningContent(apiRequestWithMessage.message.orderedContent).length > 0
 			: false;
 
+		// Check if web search was enabled by looking for web search results
+		const webSearchOn = apiRequestWithMessage.message?.orderedContent
+			? extractWebSearchResults(apiRequestWithMessage.message.orderedContent).length > 0
+			: false;
+
 		// Create the fullPrompt array with message history
 		let fullPrompt: ChatMessage[] = [];
 
@@ -132,6 +138,7 @@ export async function regenerateMessage(messageId: number) {
 			)
 			.setProvider(apiRequestWithMessage.apiProvider)
 			.setReasoning(apiRequestWithMessage.apiProvider, reasoningOn)
+			.setWebSearch(apiRequestWithMessage.apiProvider, webSearchOn)
 			.setConversationId(apiRequestWithMessage.conversationId)
 			.build();
 

@@ -3,16 +3,19 @@
 	import type { Model } from '$lib/types/types';
 	import BrainIcon from '../icons/BrainIcon.svelte';
 	import HoverTag from '../HoverTag.svelte';
-	import { chosenModel, isContextWindowAuto, reasoningOn } from '$lib/stores';
+	import { chosenModel, isContextWindowAuto, reasoningOn, webSearchOn } from '$lib/stores';
 	import ArrowIcon from '$lib/components/icons/Arrow.svelte';
 	import ContextWindowIcon from '$lib/components/icons/ContextWindowIcon.svelte';
 	import PlusIcon from '$lib/components/icons/PlusIcon.svelte';
+	import SpinningGlobeIcon from '../icons/SpinningGlobeIcon.svelte';
 
 	// Props
-	export let modelSupportsReasoning: boolean = false;
-	export let modelExtendedThinking: boolean = false;
-	export let currentModel: Model;
 	export let placeholderVisible: boolean = true;
+	export let currentModel: Model;
+
+	let modelSupportsReasoning: boolean = currentModel.reasons || false;
+	let modelExtendedThinking: boolean = currentModel.extendedThinking || false;
+	let modelSupportsWebSearch: boolean = currentModel.web_search || false;
 
 	// Event dispatcher
 	const dispatch = createEventDispatcher<{
@@ -102,6 +105,33 @@
 					text={$chosenModel.reasons
 						? 'Thinks before responding'
 						: "Selected model doesn't support reasoning"}
+					position="top"
+				/>
+			</button>
+		{/if}
+
+		{#if modelSupportsWebSearch}
+			<button
+				class:selected={$webSearchOn}
+				class="reason-button"
+				tabindex="0"
+				on:click={() => webSearchOn.set(!$webSearchOn)}
+				on:keydown|stopPropagation={(e) => {
+					if (e.key === 'Enter') {
+						webSearchOn.set(!$webSearchOn);
+					}
+				}}
+			>
+				<div class="brain-icon">
+					<SpinningGlobeIcon
+						color={$webSearchOn ? '#16a1f9' : 'var(--text-color-light)'}
+					/>
+				</div>
+				<p>Search</p>
+				<HoverTag
+					text={modelSupportsWebSearch
+						? 'Search the web for real-time information'
+						: "Selected model doesn't support web search"}
 					position="top"
 				/>
 			</button>
