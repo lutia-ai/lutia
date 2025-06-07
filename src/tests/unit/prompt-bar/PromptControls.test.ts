@@ -86,7 +86,6 @@ describe('PromptControls', () => {
 	it('should render correctly with default props', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel
 			}
 		});
 
@@ -112,7 +111,6 @@ describe('PromptControls', () => {
 		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: reasoningModel
 			}
 		});
 
@@ -126,7 +124,6 @@ describe('PromptControls', () => {
 		const extendedThinkingModel = { ...mockModel, extendedThinking: true };
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: extendedThinkingModel
 			}
 		});
 
@@ -137,14 +134,18 @@ describe('PromptControls', () => {
 	});
 
 	it('should not render reasoning button when neither supports reasoning', () => {
-		const noReasoningModel = { ...mockModel, reasons: false, extendedThinking: false };
+		// Mock the chosenModel store to return a model that doesn't support reasoning
+		(chosenModel.subscribe as any).mockImplementation((callback: (value: any) => void) => {
+			callback({ reasons: false, extendedThinking: false });
+			return () => {};
+		});
+
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: noReasoningModel
 			}
 		});
 
-		// Verify there's only the context window button (the second reason-button)
+		// Verify there's only the context window button
 		const reasoningButtons = container.querySelectorAll('.reason-button');
 		expect(reasoningButtons.length).toBe(1);
 		expect(reasoningButtons[0].textContent).toContain('Custom');
@@ -154,7 +155,6 @@ describe('PromptControls', () => {
 		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: reasoningModel
 			}
 		});
 
@@ -167,9 +167,14 @@ describe('PromptControls', () => {
 	 * Test context window button
 	 */
 	it('should render context window button', () => {
+		// Mock the chosenModel store to return a model that doesn't support reasoning
+		(chosenModel.subscribe as any).mockImplementation((callback: (value: any) => void) => {
+			callback({ reasons: false, extendedThinking: false });
+			return () => {};
+		});
+
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel
 			}
 		});
 
@@ -190,7 +195,6 @@ describe('PromptControls', () => {
 
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel
 			}
 		});
 
@@ -205,7 +209,6 @@ describe('PromptControls', () => {
 	it('should disable submit button when placeholderVisible is true', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
 				placeholderVisible: true
 			}
 		});
@@ -218,7 +221,6 @@ describe('PromptControls', () => {
 	it('should enable submit button when placeholderVisible is false', () => {
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
 				placeholderVisible: false
 			}
 		});
@@ -234,7 +236,6 @@ describe('PromptControls', () => {
 	it('should dispatch submit event when submit button is clicked', async () => {
 		const { component, container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
 				placeholderVisible: false
 			}
 		});
@@ -252,7 +253,6 @@ describe('PromptControls', () => {
 		const reasoningModel = { ...mockModel, reasons: true };
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: reasoningModel
 			}
 		});
 
@@ -264,9 +264,20 @@ describe('PromptControls', () => {
 	});
 
 	it('should toggle context window auto setting when custom button is clicked', async () => {
+		// Mock the chosenModel store to return a model that doesn't support reasoning
+		(chosenModel.subscribe as any).mockImplementation((callback: (value: any) => void) => {
+			callback({ reasons: false, extendedThinking: false });
+			return () => {};
+		});
+
+		// Mock isContextWindowAuto to return true initially
+		(isContextWindowAuto.subscribe as any).mockImplementation((callback: (value: boolean) => void) => {
+			callback(true);
+			return () => {};
+		});
+
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel
 			}
 		});
 
@@ -274,13 +285,12 @@ describe('PromptControls', () => {
 		await fireEvent.click(contextWindowButton as Element);
 
 		// Verify isContextWindowAuto.set was called with the opposite of the current value
-		expect(isContextWindowAuto.set).toHaveBeenCalledWith(false); // Should toggle from true to false
+		expect(isContextWindowAuto.set).toHaveBeenCalledWith(false);
 	});
 
 	it('should open file dialog when plus button is clicked', async () => {
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel
 			}
 		});
 
@@ -297,7 +307,6 @@ describe('PromptControls', () => {
 	it('should dispatch fileChange event when files are selected', async () => {
 		const { component, container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel
 			}
 		});
 
@@ -342,7 +351,6 @@ describe('PromptControls', () => {
 	it('should open file dialog on Enter key on plus button', async () => {
 		const { container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel
 			}
 		});
 
@@ -359,7 +367,6 @@ describe('PromptControls', () => {
 	it('should dispatch submit event on Enter key on submit button', async () => {
 		const { component, container } = render(PromptControls, {
 			props: {
-				currentModel: mockModel,
 				placeholderVisible: false
 			}
 		});

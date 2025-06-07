@@ -428,7 +428,6 @@
 		/>
 
 		<PromptControls
-			currentModel={$chosenModel}
 			{placeholderVisible}
 			on:submit={handleSubmit}
 			on:fileChange={handleFileChange}

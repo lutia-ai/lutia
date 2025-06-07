@@ -9,13 +9,7 @@
 	import PlusIcon from '$lib/components/icons/PlusIcon.svelte';
 	import SpinningGlobeIcon from '../icons/SpinningGlobeIcon.svelte';
 
-	// Props
 	export let placeholderVisible: boolean = true;
-	export let currentModel: Model;
-
-	let modelSupportsReasoning: boolean = currentModel.reasons || false;
-	let modelExtendedThinking: boolean = currentModel.extendedThinking || false;
-	let modelSupportsWebSearch: boolean = currentModel.web_search || false;
 
 	// Event dispatcher
 	const dispatch = createEventDispatcher<{
@@ -29,7 +23,7 @@
 	let fileInput: HTMLInputElement;
 
 	// Reactive property to determine if multiple files are allowed
-	$: allowMultiple = currentModel.maxImages > 1 || !currentModel.handlesImages;
+	$: allowMultiple = $chosenModel.maxImages > 1 || !$chosenModel.handlesImages;
 
 	/**
 	 * Reset the file input value - called from parent after submission
@@ -81,21 +75,23 @@
 			<HoverTag text="Add images, PDFs, or code files" position="top" />
 		</button>
 
-		{#if modelSupportsReasoning || modelExtendedThinking}
+		{#if $chosenModel.reasons || $chosenModel.extendedThinking}
 			<button
-				class:selected={$reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)}
+				class:selected={$reasoningOn ||
+					($chosenModel.reasons && !$chosenModel.extendedThinking)}
 				class="reason-button"
 				tabindex="0"
 				on:click={() => reasoningOn.set(!$reasoningOn)}
 				on:keydown|stopPropagation={(e) => {
 					if (e.key === 'Enter') {
-						if (modelExtendedThinking) reasoningOn.set(!$reasoningOn);
+						if ($chosenModel.extendedThinking) reasoningOn.set(!$reasoningOn);
 					}
 				}}
 			>
 				<div class="brain-icon">
 					<BrainIcon
-						color={$reasoningOn || (modelSupportsReasoning && !modelExtendedThinking)
+						color={$reasoningOn ||
+						($chosenModel.reasons && !$chosenModel.extendedThinking)
 							? '#16a1f9'
 							: 'var(--text-color-light)'}
 					/>
@@ -110,7 +106,7 @@
 			</button>
 		{/if}
 
-		{#if modelSupportsWebSearch}
+		{#if $chosenModel.web_search}
 			<button
 				class:selected={$webSearchOn}
 				class="reason-button"
@@ -129,7 +125,7 @@
 				</div>
 				<p>Search</p>
 				<HoverTag
-					text={modelSupportsWebSearch
+					text={$chosenModel.web_search
 						? 'Search the web for real-time information'
 						: "Selected model doesn't support web search"}
 					position="top"
