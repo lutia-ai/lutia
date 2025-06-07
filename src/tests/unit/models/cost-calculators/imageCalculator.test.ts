@@ -11,7 +11,6 @@ describe('Image Cost Calculator', () => {
 	const mockModel: Model = {
 		name: 'Claude_3_Opus' as ApiModel,
 		param: '200k',
-		hub: 'anthropic',
 		input_price: 15, // $15 per million tokens
 		output_price: 75, // $75 per million tokens
 		context_window: 200000,
@@ -22,7 +21,8 @@ describe('Image Cost Calculator', () => {
 		maxImages: 20,
 		extendedThinking: false,
 		description: 'Claude 3 Opus',
-		max_input_per_request: 150000
+		max_input_per_request: 150000,
+		web_search: false
 	};
 
 	const testImages: Image[] = [

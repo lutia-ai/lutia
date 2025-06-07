@@ -10,7 +10,6 @@ describe('modelSelectionUtils', () => {
 	const TEST_MODEL: Model = {
 		name: ApiModel.GPT_4,
 		param: '100k',
-		hub: 'openai',
 		input_price: 10,
 		output_price: 20,
 		context_window: 100000,
@@ -21,7 +20,8 @@ describe('modelSelectionUtils', () => {
 		reasons: false,
 		extendedThinking: false,
 		description: 'Test Model',
-		max_input_per_request: 90000
+		max_input_per_request: 90000,
+		web_search: false
 	};
 
 	// Mock all dependencies
@@ -46,7 +46,7 @@ describe('modelSelectionUtils', () => {
 				},
 				anthropic: {
 					models: {
-						claude: { ...TEST_MODEL, name: ApiModel.Claude_3_Opus, hub: 'anthropic' }
+						claude: { ...TEST_MODEL, name: ApiModel.Claude_3_Opus }
 					}
 				}
 			}

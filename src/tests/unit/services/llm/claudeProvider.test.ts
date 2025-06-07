@@ -105,7 +105,6 @@ describe('ClaudeProvider', () => {
 			input_price: 0.000033,
 			output_price: 0.000132,
 			context_window: 200000,
-			hub: 'claude',
 			handlesImages: true,
 			maxImages: 5,
 			generatesImages: false,
@@ -114,7 +113,8 @@ describe('ClaudeProvider', () => {
 			reasons: true,
 			extendedThinking: false,
 			max_input_per_request: 200000,
-			severity: 0
+			severity: 0,
+			web_search: false
 		} as Model;
 
 		// Mock crypto.randomUUID

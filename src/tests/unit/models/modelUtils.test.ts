@@ -15,7 +15,6 @@ const mocks = vi.hoisted(() => {
 					GPT_4o: {
 						name: 'GPT_4o',
 						param: '100k',
-						hub: 'openai',
 						input_price: 10,
 						output_price: 30,
 						context_window: 128000,
@@ -26,12 +25,12 @@ const mocks = vi.hoisted(() => {
 						reasons: true,
 						extendedThinking: true,
 						description: 'GPT-4o',
-						max_input_per_request: 120000
+						max_input_per_request: 120000,
+						web_search: false
 					},
 					GPT_4_Vision: {
 						name: 'GPT_4_Vision',
 						param: '128k',
-						hub: 'openai',
 						input_price: 10,
 						output_price: 30,
 						context_window: 128000,
@@ -42,7 +41,8 @@ const mocks = vi.hoisted(() => {
 						reasons: true,
 						extendedThinking: true,
 						description: 'GPT-4 Vision',
-						max_input_per_request: 120000
+						max_input_per_request: 120000,
+						web_search: false
 					}
 				}
 			},
@@ -51,7 +51,6 @@ const mocks = vi.hoisted(() => {
 					Claude_3_Opus: {
 						name: 'Claude_3_Opus',
 						param: '200k',
-						hub: 'anthropic',
 						input_price: 15,
 						output_price: 75,
 						context_window: 200000,
@@ -62,7 +61,8 @@ const mocks = vi.hoisted(() => {
 						reasons: false,
 						extendedThinking: false,
 						description: 'Claude 3 Opus',
-						max_input_per_request: 150000
+						max_input_per_request: 150000,
+						web_search: false
 					}
 				}
 			}
@@ -103,7 +103,6 @@ describe('Model Utilities', () => {
 			expect(model).not.toBeNull();
 			if (model) {
 				expect(model.name).toBe('GPT_4o');
-				expect(model.hub).toBe('openai');
 			}
 		});
 
@@ -112,7 +111,6 @@ describe('Model Utilities', () => {
 			expect(model).not.toBeNull();
 			if (model) {
 				expect(model.name).toBe('Claude_3_Opus');
-				expect(model.hub).toBe('anthropic');
 			}
 		});
 

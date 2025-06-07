@@ -75,20 +75,20 @@ export type ChatComponent = LlmChat | UserChat;
 
 export type Model = {
 	name: ApiModel;
-	param: string;
-	legacy: boolean;
-	input_price: number;
-	output_price: number;
-	context_window: number;
-	max_tokens?: number;
-	hub: string;
-	handlesImages: boolean;
-	maxImages: number;
-	generatesImages: boolean;
-	reasons: boolean;
-	extendedThinking: boolean;
-	description: string;
-	max_input_per_request: number;
+	param: string; // The model name used in the API call
+	legacy: boolean; // Whether the model is legacy (not the latest version)
+	input_price: number; // The price per input 1m tokens
+	output_price: number; // The price per output 1m tokens
+	context_window: number; // The maximum number of tokens that can be inputted in a single request
+	max_tokens?: number; // The maximum number of tokens that can be outputted in a single request
+	handlesImages: boolean; // Whether the model can handle images
+	maxImages: number; // The maximum number of images that can be inputted in a single request
+	generatesImages: boolean; // Whether the model can generate images
+	reasons: boolean; // Whether the model can generate reasoning
+	extendedThinking: boolean; // Whether the model can generate extended thinking
+	description: string; // A description of the model
+	max_input_per_request: number; // The maximum number of tokens that can be inputted in a single request
+	web_search: boolean; // Whether the model can use web search
 };
 
 export type ModelLogos = Record<string, { logo: any }>;

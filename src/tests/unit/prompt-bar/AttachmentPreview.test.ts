@@ -26,14 +26,14 @@ const mockModel: Model = {
 	input_price: 2.5,
 	output_price: 10,
 	context_window: 128000,
-	hub: 'Xenova/gpt-4o',
 	handlesImages: true,
 	maxImages: 5,
 	generatesImages: false,
 	reasons: false,
 	extendedThinking: false,
 	description: 'Versatile, high-intelligence flagship model',
-	max_input_per_request: 10000
+	max_input_per_request: 10000,
+	web_search: false
 };
 
 describe('AttachmentPreview', () => {

@@ -108,7 +108,6 @@ describe('DeepSeekProvider', () => {
 			input_price: 0.00000014,
 			output_price: 0.00000028,
 			context_window: 64000,
-			hub: 'deepseek',
 			handlesImages: true,
 			maxImages: 5,
 			generatesImages: false,
@@ -117,7 +116,8 @@ describe('DeepSeekProvider', () => {
 			reasons: true,
 			extendedThinking: false,
 			max_input_per_request: 64000,
-			severity: 0
+			severity: 0,
+			web_search: false
 		} as Model;
 
 		// Mock crypto.randomUUID

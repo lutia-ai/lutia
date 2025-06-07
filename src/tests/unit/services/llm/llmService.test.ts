@@ -156,7 +156,6 @@ describe('LLM Service', () => {
 			input_price: 0.00001,
 			output_price: 0.00003,
 			context_window: 8192,
-			hub: 'openai',
 			handlesImages: false,
 			maxImages: 0,
 			generatesImages: false,
@@ -165,7 +164,8 @@ describe('LLM Service', () => {
 			extendedThinking: false,
 			max_input_per_request: 4096,
 			severity: 0,
-			reasons: true
+			reasons: true,
+			web_search: false
 		};
 
 		// Mock crypto.randomUUID
