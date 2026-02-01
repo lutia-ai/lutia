@@ -1,0 +1,35 @@
+# Copy this file to terraform.tfvars and fill in your actual values
+# NEVER commit terraform.tfvars to git!
+
+# Database Configuration
+database_url = "postgresql://username:password@34.78.244.9:5432/lutia-prod?schema=public"
+
+# AI API Keys
+openai_api_key        = "sk-proj-..."
+anthropic_api_key     = "sk-ant-..."
+google_gemini_api_key = "AIza..."
+llama_api_key         = "LA-..."
+xai_api_key           = "xai-..."
+deepseek_api_key      = "sk-..."
+
+# OAuth Configuration
+google_client_id     = "916876285526-...apps.googleusercontent.com"
+google_client_secret = "GOCSPX-..."
+
+# Authentication
+secret_auth = "your-secret-auth-string"
+
+# Payment Processing
+stripe_api_key    = "sk_live_..."
+stripe_public_key = "pk_live_..."
+
+# Email Service
+mailjet_api_key    = "..."
+mailjet_secret_key = "..."
+
+# Security
+recaptcha_key        = "..."
+recaptcha_public_key = "..."
+
+# Application Configuration
+base_url = "https://lutia.ai"

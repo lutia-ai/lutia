@@ -35,7 +35,7 @@ export async function handleImageGeneration(
 		throw new Error('No image data returned from OpenAI API');
 	}
 
-	const base64Data = response.data[0].b64_json;
+	const base64Data = response.data?.[0]?.b64_json;
 
 	if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
 		try {
