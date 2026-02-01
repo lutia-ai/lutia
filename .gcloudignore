@@ -1,0 +1,58 @@
+# This file specifies files that should be ignored when uploading to Google Cloud Build
+
+# Node modules (will be installed during build)
+node_modules/
+npm-debug.log
+
+# Build artifacts
+build/
+dist/
+.svelte-kit/
+coverage/
+
+# Test files
+src/tests/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+**/__tests__/
+
+# Development files
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+.github/
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Documentation
+README.md
+LICENSE
+COPYING
+docs/
+
+# CI/CD (not needed in build context)
+.dockerignore
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/

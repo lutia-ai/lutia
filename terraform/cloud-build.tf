@@ -1,0 +1,36 @@
+resource "google_cloudbuild_trigger" "main_branch" {
+    name        = "lutia-prod-main-deploy"
+    description = "Build and deploy to Cloud Run service lutia-prod on push to main"
+
+    github {
+        owner = var.github_owner
+        name  = var.github_repo
+
+        push {
+            branch = "^main$"
+        }
+    }
+
+    service_account = "projects/${var.project_id}/serviceAccounts/${local.compute_sa}"
+
+    filename = "cloudbuild.yaml"
+
+    include_build_logs = "INCLUDE_BUILD_LOGS_WITH_STATUS"
+
+    substitutions = {
+        _AR_HOSTNAME        = "${var.region}-docker.pkg.dev"
+        _AR_PROJECT_ID      = var.project_id
+        _AR_REPOSITORY      = "cloud-run-source-deploy"
+        _DEPLOY_REGION      = var.region
+        _PLATFORM           = "managed"
+        _SERVICE_NAME       = var.service_name
+        _CLOUD_SQL_INSTANCE = google_sql_database_instance.lutia.connection_name
+        _DATABASE_URL       = var.database_url
+    }
+
+    tags = [
+        "gcp-cloud-build-deploy-cloud-run",
+        "gcp-cloud-build-deploy-cloud-run-managed",
+        var.service_name
+    ]
+}
