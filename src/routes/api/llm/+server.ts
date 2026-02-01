@@ -5,6 +5,7 @@ import { retrieveUserByEmail } from '$lib/db/crud/user';
 import { validateApiRequest, type ApiRequestData } from '$lib/utils/apiRequestValidator';
 import { processLLMRequest } from '$lib/services/llm/llmService';
 import { handleImageGeneration } from '$lib/services/llm/imageGenerationService';
+import { handleGeminiImageGeneration } from '$lib/services/llm/geminiImageGenerationService';
 import type { RequestHandler } from './$types';
 
 /**
@@ -49,9 +50,16 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 			referencedMessageIds
 		} = validatedData;
 
-		// Special handling for image generation models (DALL-E)
+		// Special handling for image generation models
 		if (model.generatesImages) {
-			return handleImageGeneration(requestBody, user, model, requestId);
+			// Route to appropriate image generation service based on provider
+			if (provider === ApiProvider.google) {
+				return handleGeminiImageGeneration(requestBody, user, model, requestId);
+			} else if (provider === ApiProvider.openAI) {
+				return handleImageGeneration(requestBody, user, model, requestId);
+			} else {
+				throw error(400, `Image generation not supported for provider: ${provider}`);
+			}
 		}
 
 		// Process the LLM request with our unified service
