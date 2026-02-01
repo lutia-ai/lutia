@@ -31,7 +31,7 @@ export async function handleImageGeneration(
 		response_format: 'b64_json'
 	});
 
-	const base64Data = response.data[0].b64_json;
+	const base64Data = response.data?.[0]?.b64_json;
 
 	if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {
 		try {
