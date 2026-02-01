@@ -32,7 +32,7 @@ resource "google_cloudbuild_trigger" "migration_preview" {
 
 # Deploy trigger (runs on push to main)
 resource "google_cloudbuild_trigger" "main_branch" {
-    name        = "lutia-prod-main-deploy"
+    name        = "lutia-prod-main-deploy-v2"
     description = "Build and deploy to Cloud Run service lutia-prod on push to main"
 
     github {
