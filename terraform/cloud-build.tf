@@ -1,19 +1,16 @@
 # Migration Preview Trigger (runs on PRs)
 resource "google_cloudbuild_trigger" "migration_preview" {
-    name        = "migration-preview"
-    description = "Preview database migrations on pull requests"
+    name     = "migration-preview-v2"
+    location = "global"
 
     github {
         owner = var.github_owner
         name  = var.github_repo
 
         pull_request {
-            branch          = "^main$"
-            comment_control = "COMMENTS_ENABLED_FOR_EXTERNAL_CONTRIBUTORS_ONLY"
+            branch = "^main$"
         }
     }
-
-    service_account = "projects/${var.project_id}/serviceAccounts/${local.compute_sa}"
 
     filename = "cloudbuild-preview.yaml"
 
@@ -24,16 +21,19 @@ resource "google_cloudbuild_trigger" "migration_preview" {
         _DATABASE_URL       = var.database_url
     }
 
-    tags = [
-        "migration-preview",
-        "database-migrations"
-    ]
+    lifecycle {
+        ignore_changes = [
+            service_account,
+            github[0].pull_request[0].comment_control,
+            tags
+        ]
+    }
 }
 
 # Deploy trigger (runs on push to main)
 resource "google_cloudbuild_trigger" "main_branch" {
-    name        = "lutia-prod-main-deploy"
-    description = "Build and deploy to Cloud Run service lutia-prod on push to main"
+    name     = "lutia-prod-main-deploy-v2"
+    location = "global"
 
     github {
         owner = var.github_owner
@@ -43,8 +43,6 @@ resource "google_cloudbuild_trigger" "main_branch" {
             branch = "^main$"
         }
     }
-
-    service_account = "projects/${var.project_id}/serviceAccounts/${local.compute_sa}"
 
     filename = "cloudbuild-deploy.yaml"
 
@@ -61,9 +59,10 @@ resource "google_cloudbuild_trigger" "main_branch" {
         _DATABASE_URL       = var.database_url
     }
 
-    tags = [
-        "gcp-cloud-build-deploy-cloud-run",
-        "gcp-cloud-build-deploy-cloud-run-managed",
-        var.service_name
-    ]
+    lifecycle {
+        ignore_changes = [
+            service_account,
+            tags
+        ]
+    }
 }
