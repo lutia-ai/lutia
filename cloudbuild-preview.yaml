@@ -39,7 +39,7 @@ steps:
               DB_NAME=$$(echo "$${DATABASE_URL}" | sed -n 's/.*\/\([^?]*\).*/\1/p')
               DB_USER=$$(echo "$${DATABASE_URL}" | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
               DB_PASS=$$(echo "$${DATABASE_URL}" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p' | sed 's/%3E/>/g' | sed 's/%3F/?/g' | sed 's/%40/@/g' | sed 's/%7E/~/g')
-              
+
               # Use localhost since Cloud SQL Proxy is running
               LOCAL_DB_URL="postgresql://$${DB_USER}:$${DB_PASS}@localhost:5432/$${DB_NAME}?schema=public"
 
