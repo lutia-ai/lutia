@@ -13,7 +13,7 @@ resource "google_cloudbuild_trigger" "migration_preview" {
         }
     }
 
-    service_account = "projects/${var.project_id}/serviceAccounts/${local.cloudbuild_sa}"
+    service_account = "projects/${var.project_id}/serviceAccounts/${local.compute_sa}"
 
     filename = "cloudbuild-preview.yaml"
 
