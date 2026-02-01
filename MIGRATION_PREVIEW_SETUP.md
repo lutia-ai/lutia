@@ -32,7 +32,7 @@ This guide explains how to set up two-stage database migrations with preview in 
          │
          ▼
 ┌─────────────────────────────────┐
-│ Manual: Run "Deploy" trigger    │  ← Manual click
+│ Trigger: Deploy automatically   │  ← Automatic on merge
 │ Runs migrations + deploys app   │
 └─────────────────────────────────┘
 ```
@@ -73,9 +73,10 @@ This guide explains how to set up two-stage database migrations with preview in 
 1. Go to **Cloud Build > Triggers**
 2. Click on `lutia-prod-main-deploy`
 3. Click **"Edit"**
-4. Change **Event** from `Push to branch` to `Manual invocation`
-5. Update **Build configuration** location to: `cloudbuild-deploy.yaml`
-6. Click **"Save"**
+4. Ensure **Event** is set to: `Push to a branch`
+5. **Branch**: `^main$`
+6. Update **Build configuration** location to: `cloudbuild-deploy.yaml`
+7. Click **"Save"**
 
 ### 3. Workflow
 
@@ -94,9 +95,9 @@ This guide explains how to set up two-stage database migrations with preview in 
 #### After Merge:
 
 1. **PR is merged to main**
-2. **Go to Cloud Build > Triggers**
-3. **Click "RUN"** on `lutia-prod-main-deploy` trigger
-4. **Migrations run** → App deploys
+2. **Deploy trigger runs automatically**
+3. **Migrations run** → App deploys
+4. **Done!** No manual steps needed
 
 ## What You'll See in Cloud Build
 
@@ -197,16 +198,18 @@ resource "google_cloudbuild_trigger" "migration_preview" {
   }
 }
 
-# Deploy trigger (manual)
+# Deploy trigger (automatic on main)
 resource "google_cloudbuild_trigger" "deploy" {
   name        = "lutia-prod-deploy"
   description = "Deploy to production with migrations"
   
-  # Manual invocation only
-  source_to_build {
-    uri       = "https://github.com/lutia-ai/lutia"
-    ref       = "refs/heads/main"
-    repo_type = "GITHUB"
+  github {
+    owner = "lutia-ai"
+    name  = "lutia"
+    
+    push {
+      branch = "^main$"
+    }
   }
   
   filename = "cloudbuild-deploy.yaml"
