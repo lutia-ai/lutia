@@ -1,6 +1,6 @@
 # Migration Preview Trigger (runs on PRs)
 resource "google_cloudbuild_trigger" "migration_preview" {
-    name        = "migration-preview"
+    name        = "migration-preview-v2"
     description = "Preview database migrations on pull requests"
 
     github {
