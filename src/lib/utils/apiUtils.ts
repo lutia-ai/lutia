@@ -1,4 +1,5 @@
 import type { Model, Message } from '$lib/types/types';
+import { ApiProvider } from '@prisma/client';
 
 /**
  * UUID validation function
@@ -120,7 +121,7 @@ export class ApiRequestBuilder {
 	 * Set web search flag (only for supported providers)
 	 */
 	setWebSearch(provider: string, webSearch: boolean): this {
-		if (provider === 'anthropic') {
+		if (provider === ApiProvider.anthropic || provider === ApiProvider.openAI) {
 			this.requestBody.webSearchOn = webSearch;
 		}
 		return this;

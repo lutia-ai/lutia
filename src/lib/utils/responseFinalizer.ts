@@ -15,6 +15,7 @@ export interface FinalizationParams {
 	files: FileAttachment[];
 	chunks: string[];
 	thinkingChunks: string[];
+	webSearchResults: any[];
 	orderedContent?: OrderedContent;
 	finalUsage: GptTokenUsage;
 	wasAborted: boolean;
@@ -39,6 +40,7 @@ export async function finalizeResponse({
 	files,
 	chunks,
 	thinkingChunks,
+	webSearchResults,
 	orderedContent,
 	finalUsage,
 	wasAborted = false,
@@ -67,7 +69,12 @@ export async function finalizeResponse({
 		// Calculate costs with safe values
 		const inputCost = (safeInputTokens * model.input_price) / 1000000;
 		const outputCost = (safeOutputTokens * model.output_price) / 1000000;
-		const totalCost = inputCost + outputCost;
+
+		// Calculate web search cost separately
+		const webSearchCost =
+			webSearchResults.length > 0 && model.web_search_price ? model.web_search_price : 0;
+
+		const totalCost = inputCost + outputCost + webSearchCost;
 
 		// Ensure the cost is a valid number before updating balance
 		const safeTotalCost = isNaN(totalCost) ? 0 : totalCost;
@@ -101,6 +108,7 @@ export async function finalizeResponse({
 				inputCost: inputCost,
 				outputTokens: safeOutputTokens,
 				outputCost: outputCost,
+				webSearchCost: webSearchCost,
 				totalCost: safeTotalCost,
 				requestId: requestId,
 				status: status,
@@ -181,7 +189,12 @@ export async function updateExistingMessageAndRequest({
 		// Calculate costs with safe values
 		const inputCost = (safeInputTokens * model.input_price) / 1000000;
 		const outputCost = (safeOutputTokens * model.output_price) / 1000000;
-		const totalCost = inputCost + outputCost;
+
+		// Calculate web search cost separately
+		const webSearchCost =
+			webSearchResults.length > 0 && model.web_search_price ? model.web_search_price : 0;
+
+		const totalCost = inputCost + outputCost + webSearchCost;
 
 		// Ensure the cost is a valid number before updating balance
 		const safeTotalCost = isNaN(totalCost) ? 0 : totalCost;
@@ -244,6 +257,9 @@ export async function updateExistingMessageAndRequest({
 				},
 				output_cost: {
 					increment: outputCost
+				},
+				web_search_cost: {
+					increment: webSearchCost
 				},
 				total_cost: {
 					increment: safeTotalCost

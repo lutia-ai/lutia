@@ -112,6 +112,7 @@ export async function createMessageAndApiRequestEntry(
 				input_cost: apiRequestData.inputCost,
 				output_tokens: apiRequestData.outputTokens,
 				output_cost: apiRequestData.outputCost,
+				web_search_cost: apiRequestData.webSearchCost || 0,
 				total_cost: apiRequestData.totalCost,
 				request_id: apiRequestData.requestId,
 				status: apiRequestData.status,

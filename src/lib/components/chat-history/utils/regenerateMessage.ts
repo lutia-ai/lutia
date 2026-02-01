@@ -225,6 +225,7 @@ function updateChatHistoryForRegeneration(
 						: {}),
 					input_cost: result.inputPrice,
 					output_cost: result.outputPrice,
+					web_search_cost: result.webSearchPrice || 0,
 					toolInProgress: result.toolInProgress,
 					loading: isFinal ? false : result.toolInProgress // Only set loading to false on final update
 				};

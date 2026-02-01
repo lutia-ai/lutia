@@ -8,6 +8,7 @@ export interface UsageMetrics {
 	completion_tokens: number;
 	total_tokens: number;
 	thinking_tokens?: number;
+	web_search?: boolean;
 }
 
 /**
@@ -49,7 +50,7 @@ export interface LLMProvider {
 	handleStreamChunk(
 		chunk: any,
 		callbacks: {
-			onFirstChunk: (requestId: string, conversationId: string) => void;
+			onFirstChunk: (requestId: string) => void;
 			onUsage: (usage: UsageMetrics) => void;
 			onContent: (content: string) => void;
 			onReasoning?: (content: string) => void;
