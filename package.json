@@ -12,6 +12,7 @@
 		"format": "prettier --write .",
 		"migrate:ordered-content": "tsx scripts/migrate-to-ordered-content.ts",
 		"migrate:verify": "tsx scripts/migrate-to-ordered-content.ts verify",
+		"prisma:generate": "npx prisma generate",
 		"prisma:migrate": "npx prisma migrate dev --name",
 		"prisma:deploy": "npx prisma migrate deploy",
 		"test": "vitest run",
