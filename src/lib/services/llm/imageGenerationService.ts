@@ -31,6 +31,10 @@ export async function handleImageGeneration(
 		response_format: 'b64_json'
 	});
 
+	if (!response.data || response.data.length === 0 || !response.data[0].b64_json) {
+		throw new Error('No image data returned from OpenAI API');
+	}
+
 	const base64Data = response.data[0].b64_json;
 
 	if (user.payment_tier === PaymentTier.Premium && !messageConversationId) {

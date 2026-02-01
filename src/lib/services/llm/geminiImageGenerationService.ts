@@ -35,6 +35,15 @@ export async function handleGeminiImageGeneration(
 		});
 
 		// Extract base64 image data from response
+		if (
+			!response.candidates ||
+			response.candidates.length === 0 ||
+			!response.candidates[0].content ||
+			!response.candidates[0].content.parts
+		) {
+			throw new Error('No candidates returned from Gemini API');
+		}
+
 		let base64Data: string | undefined;
 		for (const part of response.candidates[0].content.parts) {
 			if (part.inlineData) {
