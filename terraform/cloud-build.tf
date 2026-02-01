@@ -1,18 +1,16 @@
 # Migration Preview Trigger (runs on PRs)
 resource "google_cloudbuild_trigger" "migration_preview" {
-    name        = "migration-preview-v2"
-    description = "Preview database migrations on pull requests"
-    location    = "global"
+    name     = "migration-preview-v2"
+    location = "global"
 
-    repository_event_config {
-        repository = "projects/lutia-430919/locations/global/connections/lutia-ai-lutia/repositories/lutia-ai-lutia"
-        
+    github {
+        owner = var.github_owner
+        name  = var.github_repo
+
         pull_request {
             branch = "^main$"
         }
     }
-
-    # No service_account specified - Cloud Build uses default service account
 
     filename = "cloudbuild-preview.yaml"
 
@@ -22,28 +20,21 @@ resource "google_cloudbuild_trigger" "migration_preview" {
         _CLOUD_SQL_INSTANCE = google_sql_database_instance.lutia.connection_name
         _DATABASE_URL       = var.database_url
     }
-
-    tags = [
-        "migration-preview",
-        "database-migrations"
-    ]
 }
 
 # Deploy trigger (runs on push to main)
 resource "google_cloudbuild_trigger" "main_branch" {
-    name        = "lutia-prod-main-deploy-v2"
-    description = "Build and deploy to Cloud Run service lutia-prod on push to main"
-    location    = "global"
+    name     = "lutia-prod-main-deploy-v2"
+    location = "global"
 
-    repository_event_config {
-        repository = "projects/lutia-430919/locations/global/connections/lutia-ai-lutia/repositories/lutia-ai-lutia"
-        
+    github {
+        owner = var.github_owner
+        name  = var.github_repo
+
         push {
             branch = "^main$"
         }
     }
-
-    # No service_account specified - Cloud Build uses default service account
 
     filename = "cloudbuild-deploy.yaml"
 
@@ -59,10 +50,4 @@ resource "google_cloudbuild_trigger" "main_branch" {
         _CLOUD_SQL_INSTANCE = google_sql_database_instance.lutia.connection_name
         _DATABASE_URL       = var.database_url
     }
-
-    tags = [
-        "gcp-cloud-build-deploy-cloud-run",
-        "gcp-cloud-build-deploy-cloud-run-managed",
-        var.service_name
-    ]
 }
