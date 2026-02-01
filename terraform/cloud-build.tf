@@ -13,7 +13,7 @@ resource "google_cloudbuild_trigger" "migration_preview" {
         }
     }
 
-    service_account = "projects/${var.project_id}/serviceAccounts/${local.compute_sa}"
+    # No service_account specified - Cloud Build uses default service account
 
     filename = "cloudbuild-preview.yaml"
 
@@ -44,7 +44,7 @@ resource "google_cloudbuild_trigger" "main_branch" {
         }
     }
 
-    service_account = "projects/${var.project_id}/serviceAccounts/${local.compute_sa}"
+    # No service_account specified - Cloud Build uses default service account
 
     filename = "cloudbuild-deploy.yaml"
 
