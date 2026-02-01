@@ -2,7 +2,7 @@ steps:
     # Step 1: Install dependencies
     - name: gcr.io/cloud-builders/npm
       id: install-dependencies
-      args: ['ci']
+      args: ['ci', '--silent']
 
     # Step 2: Generate Prisma Client
     - name: gcr.io/cloud-builders/npm
@@ -28,12 +28,20 @@ steps:
       args:
           - '-c'
           - |
-              # Start Cloud SQL Proxy in background
-              /workspace/cloud_sql_proxy -instances=${_CLOUD_SQL_INSTANCE}=tcp:5432 &
+              # Start Cloud SQL Proxy in background (suppress output)
+              /workspace/cloud_sql_proxy -instances=${_CLOUD_SQL_INSTANCE}=tcp:5432 > /dev/null 2>&1 &
               PROXY_PID=$$!
 
               # Wait for proxy to be ready
               sleep 5
+
+              # Extract connection details and build localhost URL
+              DB_NAME=$$(echo "$${DATABASE_URL}" | sed -n 's/.*\/\([^?]*\).*/\1/p')
+              DB_USER=$$(echo "$${DATABASE_URL}" | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
+              DB_PASS=$$(echo "$${DATABASE_URL}" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p' | sed 's/%3E/>/g' | sed 's/%3F/?/g' | sed 's/%40/@/g' | sed 's/%7E/~/g')
+              
+              # Use localhost since Cloud SQL Proxy is running
+              LOCAL_DB_URL="postgresql://$${DB_USER}:$${DB_PASS}@localhost:5432/$${DB_NAME}?schema=public"
 
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo "📋 DATABASE MIGRATION PREVIEW"
@@ -41,15 +49,15 @@ steps:
               echo ""
               echo "🔍 Current Migration Status:"
               echo "────────────────────────────────────────────────────────────"
-              npx prisma migrate status || true
+              DATABASE_URL="$$LOCAL_DB_URL" npx prisma migrate status || true
               echo ""
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo "📝 Proposed SQL Changes:"
               echo "────────────────────────────────────────────────────────────"
 
               # Show what would change
-              DIFF_OUTPUT=$$(npx prisma migrate diff \
-                --from-schema-datasource $${DATABASE_URL} \
+              DIFF_OUTPUT=$$(DATABASE_URL="$$LOCAL_DB_URL" npx prisma migrate diff \
+                --from-schema-datasource "$$LOCAL_DB_URL" \
                 --to-schema-datamodel prisma/schema.prisma \
                 --script 2>&1)
 
