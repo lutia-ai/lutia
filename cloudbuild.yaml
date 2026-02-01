@@ -7,7 +7,7 @@ steps:
     # Step 2: Generate Prisma Client (needed for migrations)
     - name: gcr.io/cloud-builders/npm
       id: generate-prisma-client
-      args: ['run', 'prisma', 'generate']
+      args: ['run', 'prisma:generate']
       waitFor: ['install-dependencies']
 
     # Step 3: Run database migrations
