@@ -46,13 +46,13 @@ steps:
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo "📝 Proposed SQL Changes:"
               echo "────────────────────────────────────────────────────────────"
-              
+
               # Show what would change
               DIFF_OUTPUT=$$(npx prisma migrate diff \
                 --from-schema-datasource $${DATABASE_URL} \
                 --to-schema-datamodel prisma/schema.prisma \
                 --script 2>&1)
-              
+
               if [ -z "$$DIFF_OUTPUT" ] || echo "$$DIFF_OUTPUT" | grep -q "No difference"; then
                 echo "✅ No database changes detected"
                 echo ""
@@ -67,7 +67,7 @@ steps:
                 echo "The SQL statements above will be executed when you run"
                 echo "the 'Apply Migrations' trigger after merging this PR."
               fi
-              
+
               echo ""
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo "✅ Preview completed successfully"
