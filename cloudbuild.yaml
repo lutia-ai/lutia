@@ -10,28 +10,41 @@ steps:
       args: ['run', 'prisma:generate']
       waitFor: ['install-dependencies']
 
-    # Step 3: Run database migrations
+    # Step 3: Download Cloud SQL Proxy
     - name: gcr.io/cloud-builders/gcloud
+      id: download-sql-proxy
+      entrypoint: bash
+      args:
+          - '-c'
+          - |
+              curl -o /workspace/cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
+              chmod +x /workspace/cloud_sql_proxy
+      waitFor: ['generate-prisma-client']
+
+    # Step 4: Run migrations with Cloud SQL Proxy
+    - name: gcr.io/cloud-builders/npm
       id: run-migrations
       entrypoint: bash
       args:
           - '-c'
           - |
-              # Download and start Cloud SQL Proxy in background
-              wget -q https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
-              chmod +x cloud_sql_proxy
-              ./cloud_sql_proxy -instances=${_CLOUD_SQL_INSTANCE}=tcp:5432 &
+              # Start Cloud SQL Proxy in background
+              /workspace/cloud_sql_proxy -instances=${_CLOUD_SQL_INSTANCE}=tcp:5432 &
+              PROXY_PID=$!
 
               # Wait for proxy to be ready
               sleep 5
 
               # Run Prisma migrations
               npm run prisma:deploy
+
+              # Kill proxy
+              kill $PROXY_PID || true
       env:
           - 'DATABASE_URL=${_DATABASE_URL}'
-      waitFor: ['generate-prisma-client']
+      waitFor: ['download-sql-proxy']
 
-    # Step 4: Build Docker image (existing step, now runs after migrations)
+    # Step 5: Build Docker image (existing step, now runs after migrations)
     - name: gcr.io/cloud-builders/docker
       id: Build
       args:
@@ -45,7 +58,7 @@ steps:
           - Dockerfile
       waitFor: ['run-migrations']
 
-    # Step 5: Push image to Artifact Registry (existing step)
+    # Step 6: Push image to Artifact Registry (existing step)
     - name: gcr.io/cloud-builders/docker
       id: Push
       args:
@@ -54,7 +67,7 @@ steps:
               $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
       waitFor: ['Build']
 
-    # Step 6: Deploy to Cloud Run (existing step)
+    # Step 7: Deploy to Cloud Run (existing step)
     - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
       id: Deploy
       entrypoint: gcloud
