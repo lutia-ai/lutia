@@ -78,7 +78,7 @@ describe('promptFunctions', () => {
 
 	describe('generateFullPrompt', () => {
 		// Use a real model from the dictionary
-		const mockModel: Model = modelDictionary.openAI.models.gpt4o;
+		const mockModel: Model = modelDictionary.openAI.models.gpt52;
 
 		// Mock chat history
 		const mockHistory: ChatComponent[] = [

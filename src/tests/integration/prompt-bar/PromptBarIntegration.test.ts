@@ -16,7 +16,7 @@ const chatHistory = writable<ChatComponent[]>([]);
 const numberPrevMessages = writable(0);
 const chosenCompany = writable('openAI');
 const isContextWindowAuto = writable(false);
-const chosenModel = writable(modelDictionary.openAI.models.gpt4o);
+const chosenModel = writable(modelDictionary.openAI.models.gpt52);
 const fullPrompt = writable('');
 const isDragging = writable(false);
 const isSidebarOpen = writable(false);
@@ -61,7 +61,7 @@ describe('PromptBar Integration - Token Calculation Bug Fix', () => {
 	let mockCompany: ApiProvider;
 
 	beforeEach(() => {
-		mockModel = modelDictionary.openAI.models.gpt4o;
+		mockModel = modelDictionary.openAI.models.gpt52;
 		mockCompany = 'openAI';
 	});
 
@@ -177,7 +177,7 @@ describe('PromptBar Component Integration Tests', () => {
 		numberPrevMessages.set(0);
 		chosenCompany.set('openAI');
 		isContextWindowAuto.set(false);
-		chosenModel.set(modelDictionary.openAI.models.gpt4o);
+		chosenModel.set(modelDictionary.openAI.models.gpt52);
 		fullPrompt.set('');
 		isDragging.set(false);
 		isSidebarOpen.set(false);

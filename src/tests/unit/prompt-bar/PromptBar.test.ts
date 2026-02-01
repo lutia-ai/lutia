@@ -30,7 +30,7 @@ describe('PromptBar Utility Function Tests', () => {
 	let mockCompany: ApiProvider;
 
 	beforeEach(() => {
-		mockModel = modelDictionary.openAI.models.gpt4o;
+		mockModel = modelDictionary.openAI.models.gpt52;
 		mockCompany = 'openAI';
 	});
 

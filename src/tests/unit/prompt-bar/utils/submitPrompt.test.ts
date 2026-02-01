@@ -132,7 +132,7 @@ describe('submitPrompt', () => {
 
 		// Setup default get mock implementation
 		mockGet.mockImplementation((store) => {
-			if (store === mockStores.chosenModel) return modelDictionary.openAI.models.gpt4o;
+			if (store === mockStores.chosenModel) return modelDictionary.openAI.models.gpt52;
 			if (store === mockStores.chosenCompany) return 'openAI' as ApiProvider;
 			if (store === mockStores.numberPrevMessages) return 4;
 			if (store === mockStores.conversationId) return '12345';
@@ -170,7 +170,7 @@ describe('submitPrompt', () => {
 		// Add messages directly to simulate what submitPrompt will do
 		mockChatHistoryArray.push(
 			{ by: 'user', text: plainText, attachments: [] },
-			{ by: modelDictionary.openAI.models.gpt4o.name, text: '', loading: true }
+			{ by: modelDictionary.openAI.models.gpt52.name, text: '', loading: true }
 		);
 
 		await submitPrompt(plainText, [], [], false, false, mockErrorPopup, mockNotification);
@@ -237,7 +237,7 @@ describe('submitPrompt', () => {
 		mockChatHistoryArray.push(
 			{ by: 'user', text: plainText, attachments: imageArray },
 			{
-				by: modelDictionary.openAI.models.gpt4o.name,
+				by: modelDictionary.openAI.models.gpt52.name,
 				text: '',
 				input_cost: 0,
 				output_cost: 0,
