@@ -62,7 +62,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 5,
 				reasons: true,
 				generatesImages: false,
-				description: 'OpenAI\'s most powerful reasoning model',
+				description: "OpenAI's most powerful reasoning model",
 				max_input_per_request: 3000,
 				web_search: true,
 				web_search_price: 0.035
@@ -100,59 +100,59 @@ export const modelDictionary: ModelDictionary = {
 	},
 	anthropic: {
 		models: {
-		claude45Opus: {
-			name: 'Claude_4_5_Opus',
-			param: 'claude-opus-4-5',
-			legacy: false,
-			input_price: 5 * 1.1,
-			output_price: 25 * 1.1,
-			context_window: 200000,
-			max_tokens: 8192,
-			handlesImages: true,
-			maxImages: 5,
-			generatesImages: false,
-			reasons: true,
-			extendedThinking: true,
-			description: 'Most intelligent Claude model for complex tasks',
-			max_input_per_request: 2500,
-			web_search: true,
-			web_search_price: 0.01
-		},
-		claude45Sonnet: {
-			name: 'Claude_4_5_Sonnet',
-			param: 'claude-sonnet-4-5',
-			legacy: false,
-			input_price: 3 * 1.1,
-			output_price: 15 * 1.1,
-			context_window: 200000,
-			max_tokens: 8192,
-			handlesImages: true,
-			maxImages: 5,
-			generatesImages: false,
-			reasons: true,
-			extendedThinking: true,
-			description: 'Balanced intelligence, cost, and speed',
-			max_input_per_request: 10000,
-			web_search: true,
-			web_search_price: 0.01
-		},
-		claude45Haiku: {
-			name: 'Claude_4_5_Haiku',
-			param: 'claude-haiku-4-5',
-			legacy: false,
-			input_price: 1 * 1.1,
-			output_price: 5 * 1.1,
-			context_window: 200000,
-			max_tokens: 8192,
-			handlesImages: true,
-			maxImages: 5,
-			generatesImages: false,
-			reasons: false,
-			description: 'Fast, cost-effective Claude model',
-			max_input_per_request: 15000,
-			web_search: true,
-			web_search_price: 0.01
-		}
+			claude45Opus: {
+				name: 'Claude_4_5_Opus',
+				param: 'claude-opus-4-5',
+				legacy: false,
+				input_price: 5 * 1.1,
+				output_price: 25 * 1.1,
+				context_window: 200000,
+				max_tokens: 8192,
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false,
+				reasons: true,
+				extendedThinking: true,
+				description: 'Most intelligent Claude model for complex tasks',
+				max_input_per_request: 2500,
+				web_search: true,
+				web_search_price: 0.01
+			},
+			claude45Sonnet: {
+				name: 'Claude_4_5_Sonnet',
+				param: 'claude-sonnet-4-5',
+				legacy: false,
+				input_price: 3 * 1.1,
+				output_price: 15 * 1.1,
+				context_window: 200000,
+				max_tokens: 8192,
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false,
+				reasons: true,
+				extendedThinking: true,
+				description: 'Balanced intelligence, cost, and speed',
+				max_input_per_request: 10000,
+				web_search: true,
+				web_search_price: 0.01
+			},
+			claude45Haiku: {
+				name: 'Claude_4_5_Haiku',
+				param: 'claude-haiku-4-5',
+				legacy: false,
+				input_price: 1 * 1.1,
+				output_price: 5 * 1.1,
+				context_window: 200000,
+				max_tokens: 8192,
+				handlesImages: true,
+				maxImages: 5,
+				generatesImages: false,
+				reasons: false,
+				description: 'Fast, cost-effective Claude model',
+				max_input_per_request: 15000,
+				web_search: true,
+				web_search_price: 0.01
+			}
 		}
 	},
 	google: {
@@ -189,20 +189,20 @@ export const modelDictionary: ModelDictionary = {
 				max_input_per_request: 20000,
 				web_search: false
 			},
-		gemini3ProImage: {
-			name: 'Gemini_3_Pro_Image',
-			param: 'gemini-3-pro-image-preview',
-			legacy: false,
-			input_price: 0,
-			output_price: 0.134,
-			context_window: 1000000,
-			handlesImages: true,
-			maxImages: 10,
-			generatesImages: true,
-			description: 'Professional image generation and understanding',
-			max_input_per_request: 15000,
-			web_search: false
-		}
+			gemini3ProImage: {
+				name: 'Gemini_3_Pro_Image',
+				param: 'gemini-3-pro-image-preview',
+				legacy: false,
+				input_price: 0,
+				output_price: 0.134,
+				context_window: 1000000,
+				handlesImages: true,
+				maxImages: 10,
+				generatesImages: true,
+				description: 'Professional image generation and understanding',
+				max_input_per_request: 15000,
+				web_search: false
+			}
 		}
 	},
 	xAI: {
@@ -251,7 +251,7 @@ export const modelDictionary: ModelDictionary = {
 				description: 'Specialized for agentic coding tasks',
 				max_input_per_request: 15000,
 				web_search: false
-			},
+			}
 		}
 	},
 	deepSeek: {
@@ -271,21 +271,21 @@ export const modelDictionary: ModelDictionary = {
 				max_input_per_request: 20000,
 				web_search: false
 			},
-		r1: {
-			name: 'R1',
-			param: 'deepseek-reasoner',
-			legacy: false,
-			input_price: 0.55 * 1.1,
-			output_price: 2.19 * 1.1,
-			context_window: 64000,
-			handlesImages: false,
-			maxImages: 0,
-			generatesImages: false,
-			reasons: true,
-			description: 'V3.2 with extended reasoning chains',
-			max_input_per_request: 15000,
-			web_search: false
-		}
+			r1: {
+				name: 'R1',
+				param: 'deepseek-reasoner',
+				legacy: false,
+				input_price: 0.55 * 1.1,
+				output_price: 2.19 * 1.1,
+				context_window: 64000,
+				handlesImages: false,
+				maxImages: 0,
+				generatesImages: false,
+				reasons: true,
+				description: 'V3.2 with extended reasoning chains',
+				max_input_per_request: 15000,
+				web_search: false
+			}
 		}
 	}
 };

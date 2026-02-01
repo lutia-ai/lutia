@@ -225,108 +225,106 @@
 								on:click|stopPropagation
 								on:keydown|stopPropagation
 							>
-							{#each $gptModelSelection as model}
-								<div
-									class="llm-options"
-									role="button"
-									tabindex="0"
-									on:click|stopPropagation={() => {
-										selectModel(model);
-										modelDropdownOpen = false;
-									}}
-									on:keydown|stopPropagation={(e) => {
-										if (e.key === 'Enter') selectModel(model);
-									}}
-								>
-									<div class="record">
-										{#if model.generatesImages}
-											<div class="icon">
-												<ImageIcon color="var(--text-color)" />
-											</div>
-										{:else if model.reasons}
-											<div class="icon">
-												<LightningReasoningIcon
-													color="var(--text-color)"
-												/>
-											</div>
-										{:else}
-											<div class="icon">
-												<LightningIcon color="var(--text-color)" />
-											</div>
-										{/if}
-										<div class="split">
-											<div class="main-content">
-												<p>
-													{formatModelEnumToReadable(model.name)}
-													{#if $showPricing}
-														<div class="pricing">
-															<span>
-																Input: ${Number(
-																	model.input_price.toFixed(
-																		3
-																	)
-																)}
-																{model.input_price > 0
-																	? '/ 1M'
-																	: ''}
-															</span>
-															<span>
-																Output: ${Number(
-																	model.output_price.toFixed(
-																		3
-																	)
-																)}
-																/ {model.generatesImages
-																	? 'Image'
-																	: '1M'}
-															</span>
-														</div>
+								{#each $gptModelSelection as model}
+									<div
+										class="llm-options"
+										role="button"
+										tabindex="0"
+										on:click|stopPropagation={() => {
+											selectModel(model);
+											modelDropdownOpen = false;
+										}}
+										on:keydown|stopPropagation={(e) => {
+											if (e.key === 'Enter') selectModel(model);
+										}}
+									>
+										<div class="record">
+											{#if model.generatesImages}
+												<div class="icon">
+													<ImageIcon color="var(--text-color)" />
+												</div>
+											{:else if model.reasons}
+												<div class="icon">
+													<LightningReasoningIcon
+														color="var(--text-color)"
+													/>
+												</div>
+											{:else}
+												<div class="icon">
+													<LightningIcon color="var(--text-color)" />
+												</div>
+											{/if}
+											<div class="split">
+												<div class="main-content">
+													<p>
+														{formatModelEnumToReadable(model.name)}
+														{#if $showPricing}
+															<div class="pricing">
+																<span>
+																	Input: ${Number(
+																		model.input_price.toFixed(3)
+																	)}
+																	{model.input_price > 0
+																		? '/ 1M'
+																		: ''}
+																</span>
+																<span>
+																	Output: ${Number(
+																		model.output_price.toFixed(
+																			3
+																		)
+																	)}
+																	/ {model.generatesImages
+																		? 'Image'
+																		: '1M'}
+																</span>
+															</div>
+														{/if}
+													</p>
+												</div>
+												<div class="description">
+													{#if model.description}
+														<span>{model.description}</span>
 													{/if}
-												</p>
+												</div>
 											</div>
-											<div class="description">
-												{#if model.description}
-													<span>{model.description}</span>
+											<div class="image">
+												{#if model.handlesImages}
+													<AttachmentIcon color="var(--text-color" />
+												{/if}
+											</div>
+											<div
+												class="selected-container"
+												style="margin-left: {model.handlesImages
+													? '0'
+													: 'auto'}"
+											>
+												{#if $chosenModel.name === model.name}
+													<div class="selected">
+														<TickIcon
+															color="var(--bg-color)"
+															strokeWidth={3}
+														/>
+													</div>
 												{/if}
 											</div>
 										</div>
-										<div class="image">
-											{#if model.handlesImages}
-												<AttachmentIcon color="var(--text-color" />
-											{/if}
-										</div>
-										<div
-											class="selected-container"
-											style="margin-left: {model.handlesImages
-												? '0'
-												: 'auto'}"
+									</div>
+								{/each}
+								<div class="toggles-container">
+									<div class="toggle">
+										<p
+											style="color: {!$showPricing
+												? 'var(--text-color-light)'
+												: ''}"
 										>
-											{#if $chosenModel.name === model.name}
-												<div class="selected">
-													<TickIcon
-														color="var(--bg-color)"
-														strokeWidth={3}
-													/>
-												</div>
-											{/if}
+											Pricing
+										</p>
+										<div class="switch">
+											<Switch bind:on={$showPricing} />
 										</div>
 									</div>
 								</div>
-							{/each}
-						<div class="toggles-container">
-							<div class="toggle">
-								<p
-									style="color: {!$showPricing
-										? 'var(--text-color-light)'
-										: ''}"
-								>
-									Pricing
-								</p>
-								<div class="switch">
-									<Switch bind:on={$showPricing} />
-								</div>
-							</div>
-						</div>
 							</div>
 						{/if}
 					</div>
@@ -539,78 +537,76 @@
 							on:click|stopPropagation
 							on:keydown|stopPropagation
 						>
-						{#each $gptModelSelection as model}
-							<div
-								class="llm-options"
-								role="button"
-								tabindex="0"
-								on:click|stopPropagation={() => {
-									selectModel(model);
-									modelDropdownOpen = false;
-								}}
-								on:keydown={(e) => {
-									if (e.key === 'Enter') selectModel(model);
-								}}
-							>
-								<div class="record">
-									{#if model.generatesImages}
-										<div class="icon">
-											<ImageIcon color="var(--text-color)" />
-										</div>
-									{:else if model.reasons}
-										<div class="icon">
-											<LightningReasoningIcon
-												color="var(--text-color)"
-											/>
-										</div>
-									{:else}
-										<div class="icon">
-											<LightningIcon color="var(--text-color)" />
-										</div>
-									{/if}
-									<p>
-										{formatModelEnumToReadable(model.name)}
-										{#if $showPricing}
-											<div class="pricing">
-												<span>
-													Input: ${Number(
-														model.input_price.toFixed(3)
-													)}
-													{model.input_price > 0 ? '/ 1M' : ''}
-												</span>
-												<span>
-													Output: ${Number(
-														model.output_price.toFixed(3)
-													)} / {model.generatesImages
-														? 'Image'
-														: '1M'}
-												</span>
+							{#each $gptModelSelection as model}
+								<div
+									class="llm-options"
+									role="button"
+									tabindex="0"
+									on:click|stopPropagation={() => {
+										selectModel(model);
+										modelDropdownOpen = false;
+									}}
+									on:keydown={(e) => {
+										if (e.key === 'Enter') selectModel(model);
+									}}
+								>
+									<div class="record">
+										{#if model.generatesImages}
+											<div class="icon">
+												<ImageIcon color="var(--text-color)" />
+											</div>
+										{:else if model.reasons}
+											<div class="icon">
+												<LightningReasoningIcon color="var(--text-color)" />
+											</div>
+										{:else}
+											<div class="icon">
+												<LightningIcon color="var(--text-color)" />
 											</div>
 										{/if}
-									</p>
-									{#if model.handlesImages}
-										<div class="image">
-											<AttachmentIcon color="var(--text-color" />
-										</div>
-									{/if}
-									<div
-										class="selected-container"
-										style="margin-left: {model.handlesImages
-											? '0'
-											: 'auto'}"
-									>
-										{#if $chosenModel.name === model.name}
-											<div class="selected">
-												<TickIcon
-													color="var(--bg-color)"
-													strokeWidth={3}
-												/>
+										<p>
+											{formatModelEnumToReadable(model.name)}
+											{#if $showPricing}
+												<div class="pricing">
+													<span>
+														Input: ${Number(
+															model.input_price.toFixed(3)
+														)}
+														{model.input_price > 0 ? '/ 1M' : ''}
+													</span>
+													<span>
+														Output: ${Number(
+															model.output_price.toFixed(3)
+														)} / {model.generatesImages
+															? 'Image'
+															: '1M'}
+													</span>
+												</div>
+											{/if}
+										</p>
+										{#if model.handlesImages}
+											<div class="image">
+												<AttachmentIcon color="var(--text-color" />
 											</div>
 										{/if}
+										<div
+											class="selected-container"
+											style="margin-left: {model.handlesImages
+												? '0'
+												: 'auto'}"
+										>
+											{#if $chosenModel.name === model.name}
+												<div class="selected">
+													<TickIcon
+														color="var(--bg-color)"
+														strokeWidth={3}
+													/>
+												</div>
+											{/if}
+										</div>
 									</div>
 								</div>
-							</div>
-						{/each}
+							{/each}
 							<div class="toggles-container">
 								<div class="toggle">
 									<p
@@ -884,10 +880,10 @@
 										font-size: 13px;
 										color: var(--text-color-light);
 									}
-						}
-					}
+								}
+							}
 
-					.image {
+							.image {
 								display: flex;
 								width: 20px;
 								height: 20px;
@@ -1153,10 +1149,10 @@
 						.icon {
 							margin-left: 5px;
 							width: 26px;
-					height: 26px;
-				}
+							height: 26px;
+						}
 
-				.image {
+						.image {
 							width: 20px;
 							height: 20px;
 						}
