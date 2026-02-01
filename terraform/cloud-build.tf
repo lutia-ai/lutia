@@ -8,8 +8,7 @@ resource "google_cloudbuild_trigger" "migration_preview" {
         name  = var.github_repo
 
         pull_request {
-            branch          = "^main$"
-            comment_control = "COMMENTS_ENABLED_FOR_EXTERNAL_CONTRIBUTORS_ONLY"
+            branch = "^main$"
         }
     }
 
