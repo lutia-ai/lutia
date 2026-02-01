@@ -64,6 +64,12 @@ vi.mock('openai', () => {
 						return Promise.resolve(createMockStream(hasReasoning));
 					})
 				}
+			},
+			responses: {
+				create: vi.fn().mockImplementation((params) => {
+					const hasReasoning = params.reasoning && params.reasoning.effort;
+					return Promise.resolve(createMockStream(hasReasoning));
+				})
 			}
 		}))
 	};
@@ -240,6 +246,9 @@ describe('OpenAIProvider', () => {
 				completions: {
 					create: mockCreate
 				}
+			},
+			responses: {
+				create: mockCreate
 			}
 		}));
 

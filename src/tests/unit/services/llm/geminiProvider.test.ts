@@ -142,10 +142,10 @@ describe('GeminiProvider', () => {
 
 	it('should create completion stream successfully', async () => {
 		const model = {
-			param: 'gemini-1.5-pro',
+			param: 'gemini-2.5-pro-preview-05-06',
 			input_price: 0.00000125,
 			output_price: 0.00000375,
-			name: 'Gemini_1_5_Pro',
+			name: 'Gemini_2_5_Pro',
 			legacy: false,
 			context_window: 1000000,
 			handlesImages: true,
@@ -228,10 +228,10 @@ describe('GeminiProvider', () => {
 
 	it('should handle a complete stream lifecycle', async () => {
 		const model = {
-			param: 'gemini-1.5-pro',
+			param: 'gemini-2.5-pro-preview-05-06',
 			input_price: 0.00000125,
 			output_price: 0.00000375,
-			name: 'Gemini_1_5_Pro',
+			name: 'Gemini_2_5_Pro',
 			legacy: false,
 			context_window: 1000000,
 			handlesImages: true,
@@ -289,19 +289,19 @@ describe('GeminiProvider', () => {
 			}
 		}));
 
-		const model = {
-			param: 'gemini-1.5-pro',
-			input_price: 0.00000125,
-			output_price: 0.00000375,
-			name: 'Gemini_1_5_Pro',
-			legacy: false,
-			context_window: 1000000,
-			handlesImages: true,
-			maxImages: 1,
-			generatesImages: false,
-			description: 'Google Gemini Pro model',
-			max_tokens: 4096,
-			reasons: false,
+	const model = {
+		param: 'gemini-2.5-pro-preview-05-06',
+		input_price: 0.00000125,
+		output_price: 0.00000375,
+		name: 'Gemini_2_5_Pro',
+		legacy: false,
+		context_window: 1000000,
+		handlesImages: true,
+		maxImages: 1,
+		generatesImages: false,
+		description: 'Google Gemini Pro model',
+		max_tokens: 4096,
+		reasons: false,
 			extendedThinking: false,
 			max_input_per_request: 1000000,
 			web_search: false

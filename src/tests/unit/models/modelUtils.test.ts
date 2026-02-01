@@ -82,15 +82,15 @@ describe('Model Utilities', () => {
 			expect(formatModelEnumToReadable('Claude_3_Opus')).toBe('Claude 3 Opus');
 		});
 
-		it('should add periods for version numbers', () => {
-			expect(formatModelEnumToReadable('GPT_3_5_Turbo')).toBe('GPT 3.5 Turbo');
-			expect(formatModelEnumToReadable('Claude_2_1')).toBe('Claude 2.1');
-		});
+	it('should add periods for version numbers', () => {
+		expect(formatModelEnumToReadable('GPT_5_2')).toBe('GPT 5.2');
+		expect(formatModelEnumToReadable('Claude_2_1')).toBe('Claude 2.1');
+	});
 
-		it('should handle complex model names', () => {
-			expect(formatModelEnumToReadable('GPT_4_Vision_Preview')).toBe('GPT 4 Vision Preview');
-			expect(formatModelEnumToReadable('Claude_3_5_Sonnet')).toBe('Claude 3.5 Sonnet');
-		});
+	it('should handle complex model names', () => {
+		expect(formatModelEnumToReadable('GPT_4_Vision_Preview')).toBe('GPT 4 Vision Preview');
+		expect(formatModelEnumToReadable('Claude_4_5_Sonnet')).toBe('Claude 4.5 Sonnet');
+	});
 
 		it('should handle empty strings', () => {
 			expect(formatModelEnumToReadable('')).toBe('');

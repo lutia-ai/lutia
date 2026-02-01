@@ -223,16 +223,16 @@ export async function validateApiRequest(
 			throw error(400, 'No user messages found. The first message must use the user role.');
 		}
 
-		// Special handling for GPT-o1 and GPT-o3 mini models
-		if (
-			apiProvider === ApiProvider.openAI &&
-			(model.name === ApiModel.GPT_o1 || model.name === ApiModel.GPT_o3_mini)
-		) {
-			messages.unshift({
-				role: 'developer',
-				content: 'Formatting re-enabled'
-			});
-		}
+	// Special handling for GPT-o1 and GPT-o3 reasoning models
+	if (
+		apiProvider === ApiProvider.openAI &&
+		(model.name === ApiModel.GPT_o1 || model.name === ApiModel.GPT_o3 || model.name === ApiModel.GPT_o1_pro)
+	) {
+		messages.unshift({
+			role: 'developer',
+			content: 'Formatting re-enabled'
+		});
+	}
 
 		// Prepare the usage object
 		const finalUsage: GptTokenUsage = {

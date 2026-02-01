@@ -12,7 +12,7 @@ vi.mock('$lib/models/modelUtils', () => ({
 		// Mock the function to return formatted names for testing
 		if (modelName === 'Gemini_2_5_Pro') return 'Gemini 2.5 Pro';
 		if (modelName === 'GPT_4o') return 'GPT 4o';
-		if (modelName === 'GPT_3_5_Turbo') return 'GPT 3.5 Turbo';
+		if (modelName === 'V3_2') return 'V3.2';
 		return modelName;
 	})
 }));
@@ -53,19 +53,19 @@ const mockOpenAIModel: Model = {
 };
 
 const mockTextOnlyModel: Model = {
-	name: ApiModel.GPT_3_5_Turbo,
-	param: 'gpt-3.5-turbo',
-	legacy: true,
-	input_price: 0.5,
-	output_price: 1.5,
-	context_window: 16385,
+	name: ApiModel.V3_2,
+	param: 'deepseek-chat',
+	legacy: false,
+	input_price: 0.28,
+	output_price: 0.42,
+	context_window: 128000,
 	handlesImages: false,
 	maxImages: 0, // No image support
 	generatesImages: false,
-	reasons: false,
+	reasons: true,
 	extendedThinking: false,
-	description: 'Fast and affordable small model',
-	max_input_per_request: 15000,
+	description: 'Latest DeepSeek with improved reasoning',
+	max_input_per_request: 20000,
 	web_search: false
 };
 
@@ -86,7 +86,7 @@ describe('validateImageUpload', () => {
 		const result = validateImageUpload([], 1, mockTextOnlyModel);
 
 		expect(result.isValid).toBe(false);
-		expect(result.errorMessage).toContain("GPT 3.5 Turbo doesn't support image uploads");
+		expect(result.errorMessage).toContain("V3.2 doesn't support image uploads");
 		expect(result.maxImages).toBe(0);
 	});
 
