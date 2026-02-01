@@ -2,11 +2,11 @@
 resource "google_cloudbuild_trigger" "migration_preview" {
     name        = "migration-preview-v2"
     description = "Preview database migrations on pull requests"
+    location    = "global"
 
-    github {
-        owner = var.github_owner
-        name  = var.github_repo
-
+    repository_event_config {
+        repository = "projects/lutia-430919/locations/global/connections/lutia-ai-lutia/repositories/lutia-ai-lutia"
+        
         pull_request {
             branch = "^main$"
         }
@@ -33,11 +33,11 @@ resource "google_cloudbuild_trigger" "migration_preview" {
 resource "google_cloudbuild_trigger" "main_branch" {
     name        = "lutia-prod-main-deploy-v2"
     description = "Build and deploy to Cloud Run service lutia-prod on push to main"
+    location    = "global"
 
-    github {
-        owner = var.github_owner
-        name  = var.github_repo
-
+    repository_event_config {
+        repository = "projects/lutia-430919/locations/global/connections/lutia-ai-lutia/repositories/lutia-ai-lutia"
+        
         push {
             branch = "^main$"
         }
