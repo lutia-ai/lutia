@@ -13,7 +13,7 @@ resource "google_cloudbuild_trigger" "migration_preview" {
         }
     }
 
-    service_account = "projects/${var.project_id}/serviceAccounts/${local.cloudbuild_sa}"
+    service_account = "projects/${var.project_id}/serviceAccounts/${local.compute_sa}"
 
     filename = "cloudbuild-preview.yaml"
 
@@ -30,7 +30,6 @@ resource "google_cloudbuild_trigger" "migration_preview" {
     ]
 }
 
-# Deploy Trigger (runs on push to main)
 # Deploy trigger (runs on push to main)
 resource "google_cloudbuild_trigger" "main_branch" {
     name        = "lutia-prod-main-deploy"
@@ -67,31 +66,4 @@ resource "google_cloudbuild_trigger" "main_branch" {
         "gcp-cloud-build-deploy-cloud-run-managed",
         var.service_name
     ]
-}
-
-# Migration preview trigger (runs on PRs)
-resource "google_cloudbuild_trigger" "migration_preview" {
-    name        = "migration-preview"
-    description = "Preview database migrations on pull requests"
-
-    github {
-        owner = var.github_owner
-        name  = var.github_repo
-
-        pull_request {
-            branch          = "^main$"
-            comment_control = "COMMENTS_ENABLED_FOR_EXTERNAL_CONTRIBUTORS_ONLY"
-        }
-    }
-
-    service_account = "projects/${var.project_id}/serviceAccounts/${local.compute_sa}"
-
-    filename = "cloudbuild-preview.yaml"
-
-    include_build_logs = "INCLUDE_BUILD_LOGS_WITH_STATUS"
-
-    substitutions = {
-        _CLOUD_SQL_INSTANCE = google_sql_database_instance.lutia.connection_name
-        _DATABASE_URL       = var.database_url
-    }
 }
