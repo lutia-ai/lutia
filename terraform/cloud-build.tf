@@ -20,6 +20,14 @@ resource "google_cloudbuild_trigger" "migration_preview" {
         _CLOUD_SQL_INSTANCE = google_sql_database_instance.lutia.connection_name
         _DATABASE_URL       = var.database_url
     }
+
+    lifecycle {
+        ignore_changes = [
+            service_account,
+            github[0].pull_request[0].comment_control,
+            tags
+        ]
+    }
 }
 
 # Deploy trigger (runs on push to main)
@@ -49,5 +57,12 @@ resource "google_cloudbuild_trigger" "main_branch" {
         _SERVICE_NAME       = var.service_name
         _CLOUD_SQL_INSTANCE = google_sql_database_instance.lutia.connection_name
         _DATABASE_URL       = var.database_url
+    }
+
+    lifecycle {
+        ignore_changes = [
+            service_account,
+            tags
+        ]
     }
 }
