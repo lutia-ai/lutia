@@ -36,7 +36,7 @@ steps:
               sleep 5
 
               # Replace the host:port with localhost:5432 (Cloud SQL Proxy endpoint)
-              LOCAL_DB_URL=$$(echo "$${DATABASE_URL}" | sed 's/@[^:]*:[0-9]*\//@localhost:5432\//')
+              LOCAL_DB_URL=$$(echo "$${DATABASE_URL}" | sed 's/@[^@]*:5432\//@localhost:5432\//')
 
               echo ""
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
