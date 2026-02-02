@@ -35,13 +35,13 @@ steps:
               # Wait for proxy to be ready
               sleep 5
 
-              # Extract connection details and build localhost URL
+              # Extract connection details (keep password URL-encoded)
               DB_NAME=$$(echo "$${DATABASE_URL}" | sed -n 's/.*\/\([^?]*\).*/\1/p')
               DB_USER=$$(echo "$${DATABASE_URL}" | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
-              DB_PASS=$$(echo "$${DATABASE_URL}" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p' | sed 's/%3E/>/g' | sed 's/%3F/?/g' | sed 's/%40/@/g' | sed 's/%7E/~/g')
+              DB_PASS_ENCODED=$$(echo "$${DATABASE_URL}" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
 
-              # Use localhost since Cloud SQL Proxy is running
-              LOCAL_DB_URL="postgresql://$${DB_USER}:$${DB_PASS}@localhost:5432/$${DB_NAME}?schema=public"
+              # Use localhost since Cloud SQL Proxy is running (keep password encoded)
+              LOCAL_DB_URL="postgresql://$${DB_USER}:$${DB_PASS_ENCODED}@localhost:5432/$${DB_NAME}?schema=public"
 
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo "📋 DATABASE MIGRATION PREVIEW"
