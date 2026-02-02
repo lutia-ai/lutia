@@ -3,6 +3,7 @@
 
 	export let inputCost: number;
 	export let outputCost: number;
+	export let webSearchCost: number = 0;
 </script>
 
 <div class="price-open-container">
@@ -14,9 +15,15 @@
 		<p>Output:</p>
 		<span>${roundToTwoSignificantDigits(outputCost)}</span>
 	</div>
+	{#if webSearchCost > 0}
+		<div class="price-record">
+			<p>Search:</p>
+			<span>${roundToTwoSignificantDigits(webSearchCost)}</span>
+		</div>
+	{/if}
 	<div class="price-record">
 		<p>Total:</p>
-		<span>${roundToTwoSignificantDigits(inputCost + outputCost)}</span>
+		<span>${roundToTwoSignificantDigits(inputCost + outputCost + webSearchCost)}</span>
 	</div>
 </div>
 

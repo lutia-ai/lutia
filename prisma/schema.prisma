@@ -69,6 +69,7 @@ model ApiRequest {
   input_cost         Decimal           @db.Decimal(15, 10)
   output_tokens      Int
   output_cost        Decimal           @db.Decimal(15, 10)
+  web_search_cost    Decimal?          @default(0) @db.Decimal(15, 10)
   total_cost         Decimal           @db.Decimal(15, 10)
   message_id         Int?              @unique
   conversation_id    String?
@@ -133,46 +134,71 @@ enum ApiProvider {
 }
 
 enum ApiModel {
-  GPT_4o
-  GPT_4o_mini
-  GPT_4_Turbo
-  GPT_4
-  GPT_3_5_Turbo
-  Claude_3_5_Sonnet
-  Claude_3_Opus
-  Claude_3_Sonnet
-  Claude_3_Haiku
-  Gemini_1_5_Pro
-  Gemini_1_5_Flash
-  Gemini_1_0_Pro
-  DALL_E
-  Llama_3_2_90b_Vision
-  Claude_3_5_Haiku
-  Grok_beta
-  GPT_o1_preview
-  GPT_o1_mini
-  Gemini_2_0_Flash
-  Gemini_2_0_Flash_Lite
-  Grok_2
-  Grok_2_vision
+  // OpenAI Models (Current)
+  GPT_5_2
+  GPT_5_2_Pro
   GPT_o1
-  GPT_o3_mini
-  Claude_3_7_Sonnet
+  GPT_o3
+  GPT_o1_pro
+  DALL_E
+  
+  // Anthropic Models (Current)
+  Claude_4_5_Opus
+  Claude_4_5_Sonnet
+  Claude_4_5_Haiku
+  
+  // Google Models (Current)
+  Gemini_3_Pro
+  Gemini_3_Flash
+  Gemini_3_Pro_Image
+  
+  // xAI Models (Current)
+  Grok_4
+  Grok_4_1_Fast
+  Grok_Code_Fast_1
+  
+  // DeepSeek Models (Current)
   R1
-  V3
-  GPT_4_5_preview
-  Gemini_2_5_Pro
+  V3_2
+  
+  // Legacy/Deprecated Models (kept for existing database records)
+  GPT_5
+  GPT_5_Mini
+  GPT_4o
   GPT_4_1
   GPT_4_1_mini
   GPT_4_1_nano
   GPT_o4_mini
-  GPT_o3
-  GPT_o1_pro
-  Grok_3_beta
-  Grok_3_mini_beta
+  GPT_3_5_Turbo
+  GPT_4
+  GPT_4_Turbo
+  GPT_4o_mini
+  GPT_o1_mini
+  GPT_o3_mini
+  GPT_4_5_preview
+  GPT_o1_preview
+  Claude_3_Haiku
+  Claude_3_Sonnet
+  Claude_3_Opus
+  Claude_3_5_Sonnet
+  Claude_3_5_Haiku
+  Claude_3_7_Sonnet
   Claude_4_Opus
   Claude_4_Sonnet
+  Gemini_1_5_Pro
+  Gemini_1_5_Flash
+  Gemini_1_0_Pro
+  Gemini_2_0_Flash
+  Gemini_2_5_Pro
   Gemini_2_5_Flash
+  Gemini_2_0_Flash_Lite
+  Grok_3_beta
+  Grok_3_mini_beta
+  Grok_2_vision
+  Grok_beta
+  Grok_2
+  V3
+  Llama_3_2_90b_Vision
 }
 
 enum PaymentTier {

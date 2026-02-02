@@ -3,211 +3,85 @@ import type { ModelDictionary } from '../types/types';
 export const modelDictionary: ModelDictionary = {
 	openAI: {
 		models: {
-			gpt41: {
-				name: 'GPT_4_1',
-				param: 'gpt-4.1',
+			gpt52: {
+				name: 'GPT_5_2',
+				param: 'gpt-5.2',
 				legacy: false,
-				input_price: 2 * 1.1,
-				output_price: 8 * 1.1,
-				context_window: 1047576,
+				input_price: 1.75 * 1.1,
+				output_price: 14 * 1.1,
+				context_window: 400000,
 				handlesImages: true,
-				maxImages: 5,
+				maxImages: 50,
 				reasons: false,
-				description: 'Flagship GPT model for complex tasks',
-				max_input_per_request: 10000, // How many tokens can be inputted per request when not custom context window
-				web_search: false
+				generatesImages: false,
+				description: 'Latest GPT-5.2 with enhanced reasoning',
+				max_input_per_request: 15000,
+				web_search: true,
+				web_search_price: 0.035
 			},
-			gpt41mini: {
-				name: 'GPT_4_1_mini',
-				param: 'gpt-4.1-mini',
+			gpt52Pro: {
+				name: 'GPT_5_2_Pro',
+				param: 'gpt-5.2-pro',
 				legacy: false,
-				input_price: 0.4 * 1.1,
-				output_price: 1.6 * 1.1,
-				context_window: 1047576,
+				input_price: 21 * 1.1,
+				output_price: 168 * 1.1,
+				context_window: 400000,
 				handlesImages: true,
-				maxImages: 5,
-				reasons: false,
-				description: 'Balanced for intelligence, speed, and cost',
-				max_input_per_request: 12000, // How many tokens can be inputted per request when not custom context window
-				web_search: false
-			},
-			gpt41nano: {
-				name: 'GPT_4_1_nano',
-				param: 'gpt-4.1-nano',
-				legacy: false,
-				input_price: 0.1 * 1.1,
-				output_price: 0.4 * 1.1,
-				context_window: 1047576,
-				handlesImages: true,
-				maxImages: 5,
-				reasons: false,
-				description: 'Fastest, most cost-effective GPT 4.1 model',
-				max_input_per_request: 15000, // How many tokens can be inputted per request when not custom context window
-				web_search: false
-			},
-			o4mini: {
-				name: 'GPT_o4_mini',
-				param: 'o4-mini',
-				legacy: false,
-				input_price: 1.1 * 1.1,
-				output_price: 4.4 * 1.1,
-				context_window: 200000,
-				handlesImages: true,
-				maxImages: 5,
+				maxImages: 50,
 				reasons: true,
-				description: 'Faster, more affordable reasoning model',
-				max_input_per_request: 10000,
-				web_search: false
+				generatesImages: false,
+				description: 'Most capable GPT-5.2 for complex tasks',
+				max_input_per_request: 5000,
+				web_search: true,
+				web_search_price: 0.035
 			},
-			// o3: {
-			// 	name: 'GPT_o3',
-			// 	param: 'o3',
-			// 	legacy: false,
-			// 	input_price: 10 * 1.1,
-			// 	output_price: 40 * 1.1,
-			// 	context_window: 200000,
-			// 	handlesImages: true,
-			// 	maxImages: 0,
-			// 	reasons: true,
-			// 	description: 'OpenAI\'s most powerful reasoning model',
-			// 	max_input_per_request: 3000
-			// },
-			o3mini: {
-				name: 'GPT_o3_mini',
-				param: 'o3-mini',
-				legacy: true,
-				input_price: 1.1 * 1.1,
-				output_price: 4.4 * 1.1,
-				context_window: 128000, // max input cost $0.1408
-				handlesImages: false,
-				maxImages: 5,
-				reasons: true,
-				description: 'Fast, flexible reasoning model',
-				max_input_per_request: 10000,
-				web_search: false
-			},
-			// o1pro: {
-			// 	name: 'GPT_o1_pro',
-			// 	param: 'o1-pro',
-			// 	legacy: false,
-			// 	input_price: 150 * 1.1,
-			// 	output_price: 600 * 1.1,
-			// 	context_window: 128000, // max input cost $1.92
-			// 	handlesImages: true,
-			// 	maxImages: 5,
-			// 	reasons: true,
-			// 	description: 'Version of o1 with more compute for better responses',
-			// 	max_input_per_request: 3000
-			// },
 			o1: {
 				name: 'GPT_o1',
 				param: 'o1',
 				legacy: false,
 				input_price: 15 * 1.1,
 				output_price: 60 * 1.1,
-				context_window: 128000, // max input cost $1.92
+				context_window: 128000,
 				handlesImages: true,
 				maxImages: 5,
 				reasons: true,
+				generatesImages: false,
 				description: 'High intelligence reasoning model',
 				max_input_per_request: 3000,
-				web_search: false
+				web_search: true,
+				web_search_price: 0.035
 			},
-			o1mini: {
-				name: 'GPT_o1_mini',
-				param: 'o1-mini',
-				legacy: true,
-				input_price: 1.1 * 1.1,
-				output_price: 4.4 * 1.1,
-				context_window: 128000, // max input cost $0.1408
-				handlesImages: false,
-				maxImages: 0,
-				reasons: true,
-				description: '',
-				max_input_per_request: 10000,
-				web_search: false
-			},
-			gpt45preview: {
-				name: 'GPT_4_5_preview',
-				param: 'gpt-4.5-preview',
-				legacy: true,
-				input_price: 75 * 1.1,
-				output_price: 150 * 1.1,
-				context_window: 128000, // max input cost $9.60
-				handlesImages: true,
-				maxImages: 5,
-				generatesImages: false,
-				description: 'Largest and most capable GPT model (preview)',
-				max_input_per_request: 1000,
-				web_search: false
-			},
-			gpt4o: {
-				name: 'GPT_4o',
-				param: 'gpt-4o',
-				legacy: true,
-				input_price: 2.5 * 1.1,
-				output_price: 10 * 1.1,
-				context_window: 128000, // max input cost $0.32
-				handlesImages: true,
-				maxImages: 5,
-				generatesImages: false,
-				description: 'Versatile, high-intelligence flagship model',
-				max_input_per_request: 10000,
-				web_search: false
-			},
-			gpt4mini: {
-				name: 'GPT_4o_mini',
-				param: 'gpt-4o-mini',
-				legacy: true,
-				input_price: 0.15 * 1.1,
-				output_price: 0.6 * 1.1,
-				context_window: 128000, // max input cost $0.0192
-				handlesImages: true,
-				maxImages: 5,
-				generatesImages: false,
-				description: 'Fast, affordable small model',
-				max_input_per_request: 15000,
-				web_search: false
-			},
-			gpt4turbo: {
-				name: 'GPT_4_Turbo',
-				param: 'gpt-4-turbo',
-				legacy: true,
+			o3: {
+				name: 'GPT_o3',
+				param: 'o3',
+				legacy: false,
 				input_price: 10 * 1.1,
-				output_price: 30 * 1.1,
-				context_window: 128000, // max input cost $1.28
+				output_price: 40 * 1.1,
+				context_window: 200000,
 				handlesImages: true,
 				maxImages: 5,
+				reasons: true,
 				generatesImages: false,
-				description: '',
+				description: "OpenAI's most powerful reasoning model",
 				max_input_per_request: 3000,
-				web_search: false
+				web_search: true,
+				web_search_price: 0.035
 			},
-			gpt4: {
-				name: 'GPT_4',
-				param: 'gpt-4',
-				legacy: true,
-				input_price: 30 * 1.1,
-				output_price: 60 * 1.1,
-				context_window: 8000, // max input cost $0.24
-				handlesImages: false,
+			o1pro: {
+				name: 'GPT_o1_pro',
+				param: 'o1-pro',
+				legacy: false,
+				input_price: 150 * 1.1,
+				output_price: 600 * 1.1,
+				context_window: 128000,
+				handlesImages: true,
+				maxImages: 5,
+				reasons: true,
 				generatesImages: false,
-				description: '',
-				max_input_per_request: 2000,
-				web_search: false
-			},
-			gpt35turbo: {
-				name: 'GPT_3_5_Turbo',
-				param: 'gpt-3.5-turbo-0125',
-				legacy: true,
-				input_price: 0.5 * 1.1,
-				output_price: 1.5 * 1.1,
-				context_window: 16385, // max input cost $0.0081925
-				handlesImages: false,
-				generatesImages: false,
-				description: '',
-				max_input_per_request: 15000,
-				web_search: false
+				description: 'Version of o1 with more compute for better responses',
+				max_input_per_request: 3000,
+				web_search: true,
+				web_search_price: 0.035
 			},
 			dalle3: {
 				name: 'DALL_E',
@@ -215,7 +89,7 @@ export const modelDictionary: ModelDictionary = {
 				legacy: false,
 				input_price: 0 * 1.1,
 				output_price: 0.04 * 1.1,
-				context_window: 4032, // max input cost $0
+				context_window: 4032,
 				handlesImages: false,
 				generatesImages: true,
 				description: 'Generate photo-realistic images',
@@ -226,61 +100,28 @@ export const modelDictionary: ModelDictionary = {
 	},
 	anthropic: {
 		models: {
-			claude4Opus: {
-				name: 'Claude_4_Opus',
-				param: 'claude-opus-4-20250514',
+			claude45Opus: {
+				name: 'Claude_4_5_Opus',
+				param: 'claude-opus-4-5',
 				legacy: false,
-				input_price: 15 * 1.1,
-				output_price: 75 * 1.1,
+				input_price: 5 * 1.1,
+				output_price: 25 * 1.1,
 				context_window: 200000,
-				max_tokens: 8192, // this refers to output tokens
+				max_tokens: 8192,
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
 				reasons: true,
 				extendedThinking: true,
-				description: 'Most intelligent model for complex tasks',
+				description: 'Most intelligent Claude model for complex tasks',
 				max_input_per_request: 2500,
-				web_search: true
+				web_search: true,
+				web_search_price: 0.01
 			},
-			claude4Sonnet: {
-				name: 'Claude_4_Sonnet',
-				param: 'claude-sonnet-4-20250514',
+			claude45Sonnet: {
+				name: 'Claude_4_5_Sonnet',
+				param: 'claude-sonnet-4-5',
 				legacy: false,
-				input_price: 3 * 1.1,
-				output_price: 15 * 1.1,
-				context_window: 200000,
-				max_tokens: 8192, // this refers to output tokens
-				handlesImages: true,
-				maxImages: 5,
-				generatesImages: false,
-				reasons: true,
-				extendedThinking: true,
-				description: 'Optimal balance of intelligence, cost, and speed',
-				max_input_per_request: 10000,
-				web_search: true
-			},
-			claude37Sonnet: {
-				name: 'Claude_3_7_Sonnet',
-				param: 'claude-3-7-sonnet-latest',
-				legacy: true,
-				input_price: 3 * 1.1,
-				output_price: 15 * 1.1,
-				context_window: 200000,
-				max_tokens: 8192, // this refers to output tokens
-				handlesImages: true,
-				maxImages: 5,
-				generatesImages: false,
-				reasons: true,
-				extendedThinking: true,
-				description: '',
-				max_input_per_request: 10000,
-				web_search: true
-			},
-			claude35Sonnet: {
-				name: 'Claude_3_5_Sonnet',
-				param: 'claude-3-5-sonnet-latest',
-				legacy: true,
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
 				context_window: 200000,
@@ -288,330 +129,163 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				generatesImages: false,
-				reasons: false,
-				description: 'Highest level of intelligence and capability',
-				max_input_per_request: 8000,
-				web_search: true
+				reasons: true,
+				extendedThinking: true,
+				description: 'Balanced intelligence, cost, and speed',
+				max_input_per_request: 10000,
+				web_search: true,
+				web_search_price: 0.01
 			},
-			claude35Haiku: {
-				name: 'Claude_3_5_Haiku',
-				param: 'claude-3-5-haiku-latest',
+			claude45Haiku: {
+				name: 'Claude_4_5_Haiku',
+				param: 'claude-haiku-4-5',
 				legacy: false,
 				input_price: 1 * 1.1,
 				output_price: 5 * 1.1,
-				context_window: 200000, // max input spend $0.2
+				context_window: 200000,
 				max_tokens: 8192,
-				handlesImages: false,
-				maxImages: 0,
+				handlesImages: true,
+				maxImages: 5,
 				generatesImages: false,
 				reasons: false,
-				description: 'Intelligence at blazing speeds',
+				description: 'Fast, cost-effective Claude model',
 				max_input_per_request: 15000,
-				web_search: true
-			},
-			claude3Opus: {
-				name: 'Claude_3_Opus',
-				param: 'claude-3-opus-20240229',
-				legacy: true,
-				input_price: 15 * 1.1,
-				output_price: 75 * 1.1,
-				context_window: 200000, // max input spend $3
-				max_tokens: 4096,
-				handlesImages: true,
-				maxImages: 5,
-				generatesImages: false,
-				reasons: false,
-				description: 'Top-level intelligence, fluency, and understanding',
-				max_input_per_request: 2000,
-				web_search: false
-			},
-			claude3Sonnet: {
-				name: 'Claude_3_Sonnet',
-				param: 'claude-3-sonnet-20240229',
-				legacy: true,
-				input_price: 3 * 1.1,
-				output_price: 15 * 1.1,
-				context_window: 200000, // max input spend $0.6
-				max_tokens: 4096,
-				handlesImages: true,
-				maxImages: 5,
-				generatesImages: false,
-				reasons: false,
-				description: '',
-				max_input_per_request: 5000,
-				web_search: false
-			},
-			claude3Haiku: {
-				name: 'Claude_3_Haiku',
-				param: 'claude-3-haiku-20240307',
-				legacy: true,
-				input_price: 0.25 * 1.1,
-				output_price: 1.25 * 1.1,
-				context_window: 200000, // max input spend $0.05
-				max_tokens: 4096,
-				handlesImages: true,
-				maxImages: 5,
-				generatesImages: false,
-				reasons: false,
-				description: 'Quick and accurate targeted performance',
-				max_input_per_request: 15000,
-				web_search: false
+				web_search: true,
+				web_search_price: 0.01
 			}
 		}
 	},
 	google: {
 		models: {
-			gemini25Pro: {
-				name: 'Gemini_2_5_Pro',
-				param: 'gemini-2.5-pro-preview-05-06',
+			gemini3Pro: {
+				name: 'Gemini_3_Pro',
+				param: 'gemini-3-pro-preview',
 				legacy: false,
-				input_price: 1.25 * 1.1,
-				output_price: 10 * 1.1,
-				input_price_large: 2.5 * 1.1, // Price increases for prompts 200k or longer
-				output_price_large: 15 * 1.1, // Price increases for prompts 200k or longer
-				context_window: 1048576, // max input cost $0.1048576
+				input_price: 2 * 1.1,
+				output_price: 12 * 1.1,
+				input_price_large: 4 * 1.1,
+				output_price_large: 18 * 1.1,
+				context_window: 1000000,
 				handlesImages: true,
-				maxImages: 1,
+				maxImages: 10,
 				reasons: true,
 				generatesImages: false,
-				description: 'State of the art reasoning model',
+				description: 'Most intelligent Gemini with multimodal understanding',
 				max_input_per_request: 15000,
 				web_search: false
 			},
-			gemini25Flash: {
-				name: 'Gemini_2_5_Flash',
-				param: 'gemini-2.5-flash-preview-05-20',
+			gemini3Flash: {
+				name: 'Gemini_3_Flash',
+				param: 'gemini-3-flash-preview',
 				legacy: false,
-				input_price: 0.15 * 1.1,
-				output_price: 0.6 * 1.1,
-				context_window: 1048576,
+				input_price: 0.5 * 1.1,
+				output_price: 3 * 1.1,
+				context_window: 1000000,
 				handlesImages: true,
-				maxImages: 1,
+				maxImages: 10,
 				reasons: true,
 				generatesImages: false,
-				description: 'Fast and versatile performance',
-				max_input_per_request: 15000,
-				web_search: false
-			},
-			gemini20Flash: {
-				name: 'Gemini_2_0_Flash',
-				param: 'gemini-2.0-flash',
-				legacy: true,
-				input_price: 0.1 * 1.1,
-				output_price: 0.4 * 1.1,
-				context_window: 1048576, // max input cost $0.1048576
-				handlesImages: true,
-				maxImages: 1,
-				reasons: false,
-				generatesImages: false,
-				description: '',
-				max_input_per_request: 15000,
-				web_search: false
-			},
-			gemini20FlashLite: {
-				name: 'Gemini_2_0_Flash_Lite',
-				param: 'gemini-2.0-flash-lite-preview-02-05',
-				legacy: false,
-				input_price: 0.075 * 1.1,
-				output_price: 0.3 * 1.1,
-				context_window: 1048576, // max input cost $0.0786432
-				handlesImages: true,
-				maxImages: 1,
-				generatesImages: false,
-				description: 'Cost efficient and low latency',
+				description: 'Balanced model built for speed and scale',
 				max_input_per_request: 20000,
 				web_search: false
 			},
-			gemini15Pro: {
-				name: 'Gemini_1_5_Pro',
-				param: 'gemini-1.5-pro',
-				legacy: true,
-				input_price: 3.5 * 1.1,
-				output_price: 10.5 * 1.1,
-				input_price_large: 7, // Price increases for prompts 128k or longer
-				output_price_large: 21, // Price increases for prompts 128k or longer
-				context_window: 2097152, // max input cost $7.340032 for <128k prompts, $14.680064 for >=128k prompts
+			gemini3ProImage: {
+				name: 'Gemini_3_Pro_Image',
+				param: 'gemini-3-pro-image-preview',
+				legacy: false,
+				input_price: 0,
+				output_price: 0.134,
+				context_window: 1000000,
 				handlesImages: true,
-				maxImages: 1,
-				generatesImages: false,
-				description: 'Complex reasoning tasks requiring more intelligence',
-				max_input_per_request: 3000,
-				web_search: false
-			},
-			gemini15Flash: {
-				name: 'Gemini_1_5_Flash',
-				param: 'gemini-1.5-flash',
-				legacy: true,
-				input_price: 0.35 * 1.1,
-				output_price: 1.05 * 1.1,
-				input_price_large: 0.7, // Price increases for prompts 128k or longer
-				output_price_large: 2.1, // Price increases for prompts 128k or longer
-				context_window: 1048576, // max input cost $0.3670016 for <128k prompts, $0.7340032 for >=128k prompts
-				handlesImages: true,
-				maxImages: 1,
-				generatesImages: false,
-				description: 'Fast and versatile performance across a diverse variety of tasks',
-				max_input_per_request: 10000,
+				maxImages: 10,
+				generatesImages: true,
+				description: 'Professional image generation and understanding',
+				max_input_per_request: 15000,
 				web_search: false
 			}
-			// gemini1Pro: {
-			// name: 'Gemini_1_0_Pro',
-			// param: 'gemini-1.0-pro',
-			// legacy: true,
-			// input_price: 0.5 * 1.1,
-			// output_price: 1.5 * 1.1,
-			// context_window: 1000000,
-			// handlesImages: false,
-			// maxImages: 1,
-			// generatesImages: false,
-			// description: ''
-			// }
 		}
 	},
 	xAI: {
 		models: {
-			grok3beta: {
-				name: 'Grok_3_beta',
-				param: 'grok-3-beta',
+			grok41Fast: {
+				name: 'Grok_4_1_Fast',
+				param: 'grok-4.1-fast',
+				legacy: false,
+				input_price: 0.2 * 1.1,
+				output_price: 0.5 * 1.1,
+				context_window: 2000000,
+				handlesImages: true,
+				maxImages: 5,
+				reasons: true,
+				generatesImages: false,
+				description: 'Ultra-fast with 2M token context window',
+				max_input_per_request: 20000,
+				web_search: false
+			},
+			grok4: {
+				name: 'Grok_4',
+				param: 'grok-4',
 				legacy: false,
 				input_price: 3 * 1.1,
 				output_price: 15 * 1.1,
-				context_window: 131072, // max input cost $0.262144
-				handlesImages: false,
-				maxImages: 0,
-				reasons: false,
+				context_window: 256000,
+				handlesImages: true,
+				maxImages: 5,
+				reasons: true,
 				generatesImages: false,
-				description: 'Flaghsip model that excels at complex tasks',
-				max_input_per_request: 5000,
+				description: 'Flagship Grok model with enhanced reasoning',
+				max_input_per_request: 10000,
 				web_search: false
 			},
-			grok3mini: {
-				name: 'Grok_3_mini_beta',
-				param: 'grok-3-mini-beta',
+			grokCodeFast1: {
+				name: 'Grok_Code_Fast_1',
+				param: 'grok-code-fast-1',
 				legacy: false,
-				input_price: 0.3 * 1.1,
+				input_price: 0.2 * 1.1,
 				output_price: 0.5 * 1.1,
-				context_window: 131072, // max input cost $0.262144
+				context_window: 256000,
 				handlesImages: false,
 				maxImages: 0,
 				reasons: true,
 				generatesImages: false,
-				description: 'A lightweight model that thinks before responding',
-				max_input_per_request: 10000,
-				web_search: false
-			},
-			grok2: {
-				name: 'Grok_2',
-				param: 'grok-2-1212',
-				legacy: true,
-				input_price: 2 * 1.1,
-				output_price: 10 * 1.1,
-				context_window: 131072, // max input cost $0.262144
-				handlesImages: false,
-				maxImages: 0,
-				reasons: false,
-				generatesImages: false,
-				description: 'Unfiltered intelligence, blazing speed',
-				max_input_per_request: 5000,
-				web_search: false
-			},
-			grok2Vision: {
-				name: 'Grok_2_vision',
-				param: 'grok-2-vision',
-				legacy: false,
-				input_price: 2 * 1.1,
-				output_price: 10 * 1.1,
-				context_window: 8192, // max input cost $0.065536
-				handlesImages: true,
-				maxImages: 5,
-				reasons: false,
-				generatesImages: false,
-				description: 'Unfiltered intelligence with image-understanding',
-				max_input_per_request: 5000,
-				web_search: false
-			},
-			grokBeta: {
-				name: 'Grok_beta',
-				param: 'grok-beta',
-				legacy: true,
-				input_price: 5 * 1.1,
-				output_price: 15 * 1.1,
-				context_window: 131072, // max input cost $0.65536
-				handlesImages: false,
-				maxImages: 0,
-				reasons: false,
-				generatesImages: false,
-				description: '',
-				max_input_per_request: 3000,
+				description: 'Specialized for agentic coding tasks',
+				max_input_per_request: 15000,
 				web_search: false
 			}
 		}
 	},
 	deepSeek: {
 		models: {
+			v32: {
+				name: 'V3_2',
+				param: 'deepseek-chat',
+				legacy: false,
+				input_price: 0.28 * 1.1,
+				output_price: 0.42 * 1.1,
+				context_window: 128000,
+				handlesImages: false,
+				maxImages: 0,
+				generatesImages: false,
+				reasons: true,
+				description: 'Latest DeepSeek with improved reasoning',
+				max_input_per_request: 20000,
+				web_search: false
+			},
 			r1: {
 				name: 'R1',
 				param: 'deepseek-reasoner',
 				legacy: false,
 				input_price: 0.55 * 1.1,
 				output_price: 2.19 * 1.1,
-				context_window: 64000, // max input cost $0.0352
+				context_window: 64000,
 				handlesImages: false,
 				maxImages: 0,
 				generatesImages: false,
 				reasons: true,
-				description: 'Cost effective intelligence and reasoning',
+				description: 'V3.2 with extended reasoning chains',
 				max_input_per_request: 15000,
-				web_search: false
-			},
-			v3: {
-				name: 'V3',
-				param: 'deepseek-chat',
-				legacy: false,
-				input_price: 0.27 * 1.1,
-				output_price: 1.1 * 1.1,
-				context_window: 64000, // max input cost $0.01728
-				handlesImages: false,
-				maxImages: 0,
-				generatesImages: false,
-				description: 'Fast, affordable intelligence',
-				max_input_per_request: 20000,
 				web_search: false
 			}
 		}
 	}
-	// meta: {
-	// models: {
-	// llama32: {
-	// name: "Llama_3_2_90b_Vision",
-	// param: "llama3.2-90b-vision",
-	// legacy: false,
-	// input_price: 2.8,
-	// output_price: 2.8,
-	// context_window: 128000,
-	// hub: "unsloth/Llama-3.2-1B",
-	// handlesImages: true,
-	// maxImages: 1,
-	// generatesImages: false
-	// },
-	// // llama31: {
-	// // name: "Llama_3_1",
-	// // param: "llama-3.1",
-	// // legacy: true,
-	// // input_price: 4,
-	// // output_price: 9,
-	// // context_window: 128000,
-	// // hub: "Xenova/Meta-Llama-3.1-Tokenizer",
-	// // },
-	// // llama2: {
-	// // name: "Llama_2",
-	// // param: "llama-2",
-	// // legacy: true,
-	// // input_price: 0.5,
-	// // output_price: 1.5,
-	// // context_window: 4096,
-	// // hub: "Xenova/llama2-tokenizer",
-	// // },
-	// }
-	// }
 };

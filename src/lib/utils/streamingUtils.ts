@@ -7,7 +7,7 @@ export interface StreamCallbacks {
 	onText?: (content: string) => void;
 	onReasoning?: (content: string) => void;
 	onToolUse?: (toolName: string, toolData?: any) => void;
-	onUsage?: (inputPrice: number, outputPrice: number) => void;
+	onUsage?: (inputPrice: number, outputPrice: number, webSearchPrice?: number) => void;
 	onError?: (message: string) => void;
 	onRequestInfo?: (conversationId: string, requestId?: string) => void;
 	onMessageId?: (messageId: number) => void;
@@ -23,6 +23,7 @@ export interface StreamingState {
 	responseText: string;
 	inputPrice: number;
 	outputPrice: number;
+	webSearchPrice: number;
 	messageId: number | undefined;
 	toolInProgress: boolean;
 }
@@ -229,7 +230,11 @@ async function processStreamChunk(
 				contentManager.addReasoning(data.content);
 				callbacks.onReasoning?.(data.content);
 			} else if (data.type === 'usage') {
-				callbacks.onUsage?.(data.usage.inputPrice, data.usage.outputPrice);
+				callbacks.onUsage?.(
+					data.usage.inputPrice,
+					data.usage.outputPrice,
+					data.usage.webSearchPrice
+				);
 			} else if (data.type === 'tool_use') {
 				contentManager.addToolUse(data.tool_name, data.tool_data);
 
@@ -272,6 +277,7 @@ export async function handleStreamingResponse(
 	let responseText = '';
 	let inputPrice = 0;
 	let outputPrice = 0;
+	let webSearchPrice = 0;
 	let messageId: number | undefined;
 
 	const createCurrentState = (): StreamingState => ({
@@ -280,6 +286,7 @@ export async function handleStreamingResponse(
 		responseText,
 		inputPrice,
 		outputPrice,
+		webSearchPrice,
 		messageId,
 		toolInProgress: contentManager.hasToolsInProgress()
 	});
@@ -290,10 +297,11 @@ export async function handleStreamingResponse(
 			responseText += content;
 			callbacks.onText?.(content);
 		},
-		onUsage: (input, output) => {
+		onUsage: (input, output, webSearch) => {
 			inputPrice = input;
 			outputPrice = output;
-			callbacks.onUsage?.(input, output);
+			webSearchPrice = webSearch || 0;
+			callbacks.onUsage?.(input, output, webSearch);
 		},
 		onMessageId: (id) => {
 			messageId = id;
@@ -362,13 +370,14 @@ export class ServerStreamEncoder {
 	/**
 	 * Encode and send usage information
 	 */
-	encodeUsage(inputPrice: number, outputPrice: number): Uint8Array {
+	encodeUsage(inputPrice: number, outputPrice: number, webSearch?: number): Uint8Array {
 		return this.textEncoder.encode(
 			JSON.stringify({
 				type: 'usage',
 				usage: {
 					inputPrice: inputPrice,
-					outputPrice: outputPrice
+					outputPrice: outputPrice,
+					webSearchPrice: webSearch
 				}
 			}) + '\n'
 		);

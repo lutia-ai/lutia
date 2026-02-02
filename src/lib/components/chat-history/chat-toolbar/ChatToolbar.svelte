@@ -56,7 +56,11 @@
 		<DollarIcon color="var(--text-color-light)" />
 		<HoverTag text={'View cost'} position="bottom" distance={12} />
 		{#if chat.price_open}
-			<PriceLabel inputCost={chat.input_cost} outputCost={chat.output_cost} />
+			<PriceLabel
+				inputCost={chat.input_cost}
+				outputCost={chat.output_cost}
+				webSearchCost={chat.web_search_cost || 0}
+			/>
 		{/if}
 	</div>
 	<div

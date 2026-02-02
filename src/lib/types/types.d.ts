@@ -54,13 +54,13 @@ export type LlmChat = {
 	text: string;
 	input_cost: number;
 	output_cost: number;
+	web_search_cost?: number;
 	price_open: boolean;
 	loading: boolean;
 	copied: boolean;
 	components: Component[];
 	orderedContent?: OrderedContent;
 	reasoning?: ReasoningComponent;
-	webSearchResults?: WebSearchData[];
 	toolInProgress?: boolean;
 };
 
@@ -89,6 +89,7 @@ export type Model = {
 	description: string; // A description of the model
 	max_input_per_request: number; // The maximum number of tokens that can be inputted in a single request
 	web_search: boolean; // Whether the model can use web search
+	web_search_price?: number; // The price per web search
 };
 
 export type ModelLogos = Record<string, { logo: any }>;
@@ -177,6 +178,7 @@ type SerializedApiRequest = {
 	inputCost: string;
 	outputTokens: number;
 	outputCost: string;
+	webSearchCost: string;
 	totalCost: string;
 	message: SerializedMessage | null;
 	conversationId: string | null;
@@ -295,6 +297,7 @@ export interface CreateApiRequestData {
 	inputCost: number;
 	outputTokens: number;
 	outputCost: number;
+	webSearchCost?: number;
 	totalCost: number;
 	requestId: string;
 	status: ApiRequestStatus;

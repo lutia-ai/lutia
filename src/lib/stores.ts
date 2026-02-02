@@ -64,7 +64,7 @@ export const gptModelSelection = createPersistentStore<Model[]>(
 // Persistent store for the chosenModel setting
 export const chosenModel = createPersistentStore<Model>(
 	'chosenModel',
-	modelDictionary.anthropic.models.claude37Sonnet
+	modelDictionary.anthropic.models.claude45Sonnet
 );
 
 // Persistent store for the conversationId setting
@@ -102,9 +102,6 @@ export const numberPrevMessages = createPersistentStore<number>('numberPrevMessa
 
 // Persistent store for showing the pricing in the LLM dropdown
 export const showPricing = createPersistentStore<boolean>('showPricing', false);
-
-// Persistent store for controlling the legacy models are shown in the LLM dropdown container
-export const showLegacyModels = createPersistentStore<boolean>('showLegacyModels', false);
 
 // Persistent store for controlling if the context window is set to automatic or manual
 export const isContextWindowAuto = createPersistentStore<boolean>('isContextWindowAuto', true);

@@ -65,6 +65,7 @@ export function serializeApiRequest(apiRequest: ApiRequestWithMessage): Serializ
 		inputCost: apiRequest.input_cost.toString(),
 		outputTokens: apiRequest.output_tokens,
 		outputCost: apiRequest.output_cost.toString(),
+		webSearchCost: apiRequest.web_search_cost?.toString() || '0',
 		totalCost: apiRequest.total_cost.toString(),
 		conversationId: apiRequest.conversation_id,
 		message: apiRequest.message ? serializeMessage(apiRequest.message) : null
@@ -153,6 +154,7 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 			text: responseText,
 			input_cost: parseFloat(apiRequest.inputCost),
 			output_cost: parseFloat(apiRequest.outputCost),
+			web_search_cost: parseFloat(apiRequest.webSearchCost || '0'),
 			price_open: false,
 			loading: false,
 			copied: false,
@@ -160,7 +162,6 @@ export function loadChatHistory(apiRequests: SerializedApiRequest[]) {
 				type: 'reasoning',
 				content: reasoningContent
 			},
-			webSearchResults: webSearchResults,
 			orderedContent: message.orderedContent,
 			components:
 				apiRequest.message?.pictures &&

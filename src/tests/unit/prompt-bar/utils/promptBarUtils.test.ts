@@ -63,10 +63,10 @@ describe('promptBarUtils', () => {
 
 	describe('filterModels', () => {
 		it('should filter models by name', () => {
-			const result = filterModels(modelDictionary, 'GPT_4');
+			const result = filterModels(modelDictionary, 'GPT_5');
 			expect(result.length).toBeGreaterThan(0);
-			// Check for any model with GPT_4 in its name
-			expect(result.some((item) => item.model.name.includes('GPT_4'))).toBe(true);
+			// Check for any model with GPT_5 in its name
+			expect(result.some((item) => item.model.name.includes('GPT_5'))).toBe(true);
 		});
 
 		it('should filter models by company', () => {
@@ -145,7 +145,7 @@ describe('promptBarUtils', () => {
 
 		beforeEach(() => {
 			// Use a real model from the dictionary
-			mockModel = modelDictionary.openAI.models.gpt4o;
+			mockModel = modelDictionary.openAI.models.gpt52;
 			mockCompany = 'openAI';
 			mockImages = [{ url: 'image1.jpg' }, { url: 'image2.jpg' }];
 

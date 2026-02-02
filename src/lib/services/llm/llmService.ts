@@ -37,6 +37,7 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 	// Get existing costs if regenerating
 	let existingInputCost = 0;
 	let existingOutputCost = 0;
+	let existingWebSearchCost = 0;
 
 	if (regenerateMessageId) {
 		try {
@@ -52,6 +53,9 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 				// existingApiRequest is the non-serialized version with Decimal fields
 				existingInputCost = parseFloat(existingApiRequest.input_cost.toString());
 				existingOutputCost = parseFloat(existingApiRequest.output_cost.toString());
+				existingWebSearchCost = parseFloat(
+					existingApiRequest.web_search_cost?.toString() || '0'
+				);
 			}
 		} catch (err) {
 			console.error('[LLM Service] Error fetching existing costs:', err);
@@ -79,6 +83,7 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 			total_tokens: 0
 		};
 		let errorMessage: any;
+		let webSearchWasUsed = false;
 
 		// Create the stream
 		let stream;
@@ -111,15 +116,66 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 				stream.controller.abort();
 			}
 		});
+		let count = 0;
 
 		// Create and return the readable stream
 		return new ReadableStream({
 			async start(controller) {
+				// Helper function to send usage updates with correct web search cost
+				const sendUsageUpdate = () => {
+					try {
+						// Calculate current generation costs using shared utility
+						const currentCosts = CostCalculator.calculateTotalCost(
+							finalUsage.prompt_tokens,
+							finalUsage.completion_tokens,
+							model
+						);
+
+						// Add web search cost if search was used and model supports it
+						let webSearchCost = 0;
+						if (
+							webSearchEnabled &&
+							model.web_search &&
+							model.web_search_price &&
+							webSearchWasUsed
+						) {
+							webSearchCost = model.web_search_price;
+						}
+
+						// For regeneration, send accumulated totals; for new messages, send current costs
+						const totalInputPrice = regenerateMessageId
+							? existingInputCost + currentCosts.inputCost
+							: currentCosts.inputCost;
+						const totalOutputPrice = regenerateMessageId
+							? existingOutputCost + currentCosts.outputCost
+							: currentCosts.outputCost;
+						const totalWebSearchPrice = regenerateMessageId
+							? existingWebSearchCost + webSearchCost
+							: webSearchCost;
+
+						controller.enqueue(
+							encoder.encodeUsage(
+								totalInputPrice,
+								totalOutputPrice,
+								totalWebSearchPrice
+							)
+						);
+					} catch (err) {
+						console.error('[LLM Service] Client already disconnected (usage)', err);
+						clientDisconnected = true;
+					}
+				};
+
 				try {
 					// Process each chunk from the provider's normalized stream
 					for await (const chunk of stream) {
 						if (clientDisconnected || abortSignal.aborted) {
 							break;
+						}
+
+						// console.log('chunk', chunk);
+						if (count < 10) {
+							count++;
 						}
 
 						// Process the chunk with the provider-specific handler
@@ -154,32 +210,8 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 								finalUsage.completion_tokens = usage.completion_tokens;
 								finalUsage.total_tokens = usage.total_tokens;
 
-								try {
-									// Calculate current generation costs using shared utility
-									const currentCosts = CostCalculator.calculateTotalCost(
-										finalUsage.prompt_tokens,
-										finalUsage.completion_tokens,
-										model
-									);
-
-									// For regeneration, send accumulated totals; for new messages, send current costs
-									const totalInputPrice = regenerateMessageId
-										? existingInputCost + currentCosts.inputCost
-										: currentCosts.inputCost;
-									const totalOutputPrice = regenerateMessageId
-										? existingOutputCost + currentCosts.outputCost
-										: currentCosts.outputCost;
-
-									controller.enqueue(
-										encoder.encodeUsage(totalInputPrice, totalOutputPrice)
-									);
-								} catch (err) {
-									console.error(
-										'[LLM Service] Client already disconnected (usage)',
-										err
-									);
-									clientDisconnected = true;
-								}
+								// Send usage update using helper function
+								sendUsageUpdate();
 							},
 							onContent: (content) => {
 								try {
@@ -206,8 +238,17 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 							onToolUse: (toolName, toolData) => {
 								try {
 									// Store web search results for saving to database
-									if (toolName === 'web_search' && toolData) {
-										searchManager.addWebSearchResults(toolData);
+									if (toolName === 'web_search') {
+										// Mark web search as used when tool is first called (even with undefined data)
+										if (!webSearchWasUsed) {
+											webSearchWasUsed = true;
+											// Send updated usage with web search cost
+											sendUsageUpdate();
+										}
+
+										if (toolData) {
+											searchManager.addWebSearchResults(toolData);
+										}
 									}
 
 									// Use shared content manager for tool tracking
@@ -247,6 +288,7 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 								files,
 								chunks,
 								thinkingChunks,
+								webSearchResults: searchManager.getWebSearchResults(),
 								orderedContent: contentManager.getOrderedContent(),
 								finalUsage,
 								wasAborted: clientDisconnected,

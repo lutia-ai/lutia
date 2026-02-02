@@ -23,7 +23,9 @@
 	let fileInput: HTMLInputElement;
 
 	// Reactive property to determine if multiple files are allowed
-	$: allowMultiple = $chosenModel.maxImages > 1 || !$chosenModel.handlesImages;
+	$: allowMultiple = $chosenModel
+		? $chosenModel.maxImages > 1 || !$chosenModel.handlesImages
+		: false;
 
 	/**
 	 * Reset the file input value - called from parent after submission
@@ -75,7 +77,7 @@
 			<HoverTag text="Add images, PDFs, or code files" position="top" />
 		</button>
 
-		{#if $chosenModel.reasons || $chosenModel.extendedThinking}
+		{#if $chosenModel && ($chosenModel.reasons || $chosenModel.extendedThinking)}
 			<button
 				class:selected={$reasoningOn ||
 					($chosenModel.reasons && !$chosenModel.extendedThinking)}
@@ -106,7 +108,7 @@
 			</button>
 		{/if}
 
-		{#if $chosenModel.web_search}
+		{#if $chosenModel && $chosenModel.web_search}
 			<button
 				class:selected={$webSearchOn}
 				class="reason-button"

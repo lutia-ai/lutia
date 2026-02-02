@@ -289,17 +289,10 @@ function updateChatHistory(
 						text: result.responseText,
 						components: orderedComponents,
 						orderedContent: result.orderedContent,
-						// Only include webSearchResults if they exist and have content
-						...(result.webSearchResults &&
-						result.webSearchResults.length > 0 &&
-						result.webSearchResults.some(
-							(result) => result.results && result.results.length > 0
-						)
-							? { webSearchResults: result.webSearchResults }
-							: {}),
 						message_id: result.messageId,
 						input_cost: result.inputPrice,
 						output_cost: result.outputPrice,
+						web_search_cost: result.webSearchPrice,
 						toolInProgress: result.toolInProgress,
 						loading: isLoading
 					}

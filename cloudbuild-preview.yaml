@@ -43,10 +43,10 @@ steps:
               echo "📋 DATABASE MIGRATION PREVIEW"
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo ""
-              
+
               # Get migration status (only show pending migrations)
               MIGRATE_STATUS=$$(DATABASE_URL="$$LOCAL_DB_URL" npx prisma migrate status 2>&1)
-              
+
               if echo "$$MIGRATE_STATUS" | grep -q "Following migrations have not yet been applied"; then
                 echo "⚠️  Pending Migrations:"
                 echo "────────────────────────────────────────────────────────────"
@@ -69,7 +69,7 @@ steps:
                 echo "$$DIFF_OUTPUT"
                 echo ""
               fi
-              
+
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
               # Kill proxy

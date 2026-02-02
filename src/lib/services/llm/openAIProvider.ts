@@ -1,13 +1,20 @@
 import OpenAI from 'openai';
 import { env } from '$env/dynamic/private';
 import type { LLMProvider, UsageMetrics } from './types';
-import type { Model, ToolUseCallback } from '$lib/types/types';
+import type { Model, ToolUseCallback, WebSearchData, WebSearchResult } from '$lib/types/types';
 import { addFilesToMessage } from '$lib/utils/fileHandling';
 
 /**
  * Implementation of LLMProvider for OpenAI
  */
 export class OpenAIProvider implements LLMProvider {
+	// Track collected annotations for web search results
+	private collectedAnnotations: any[] = [];
+	// Track if first chunk has been sent
+	private firstChunkSent: boolean = false;
+	// Track if web search is enabled for this request
+	private webSearchEnabled: boolean = false;
+
 	/**
 	 * Initialize the OpenAI client
 	 */
@@ -50,24 +57,48 @@ export class OpenAIProvider implements LLMProvider {
 	async createCompletionStream({
 		model,
 		messages,
-		reasoningEnabled
+		reasoningEnabled,
+		webSearchEnabled = false
 	}: {
 		model: Model;
 		messages: any;
 		reasoningEnabled?: boolean;
+		webSearchEnabled?: boolean;
 	}) {
 		const client = this.initializeClient();
 
+		// Reset collected annotations for this stream
+		this.collectedAnnotations = [];
+		this.firstChunkSent = false;
+
+		// Store web search enabled state for this request
+		this.webSearchEnabled = webSearchEnabled && model.web_search;
+
 		try {
-			return await client.chat.completions.create({
+			// Determine if we should use web search models
+			const useWebSearch = webSearchEnabled && model.web_search;
+
+			const requestConfig: any = {
 				model: model.param,
-				...(model.reasons && reasoningEnabled ? { reasoning: true } : {}),
-				messages,
-				stream: true,
-				stream_options: {
-					include_usage: true
-				}
-			});
+				input: messages,
+				stream: true
+			};
+
+			// Add reasoning if supported and enabled
+			if (model.reasons && reasoningEnabled) {
+				requestConfig.reasoning = { effort: 'medium' };
+			}
+
+			// Add web search tools if enabled and supported
+			if (useWebSearch) {
+				requestConfig.tools = [
+					{
+						type: 'web_search_preview'
+					}
+				];
+			}
+
+			return await client.responses.create(requestConfig);
 		} catch (err) {
 			console.error('[OpenAI Provider] Error creating stream:', err);
 			throw err;
@@ -87,7 +118,69 @@ export class OpenAIProvider implements LLMProvider {
 			onToolUse?: ToolUseCallback;
 		}
 	) {
-		// Track if this is the first content chunk
+		// Handle responses API streaming format
+		if (chunk.type === 'response.output_text.delta') {
+			// Call onFirstChunk for the first content delta
+			if (chunk.delta && !this.firstChunkSent) {
+				callbacks.onFirstChunk(crypto.randomUUID());
+				this.firstChunkSent = true;
+			}
+			const content = chunk.delta || '';
+			if (content) {
+				callbacks.onContent(content);
+			}
+			return;
+		}
+
+		if (chunk.type === 'response.reasoning.delta') {
+			const reasoningContent = chunk.delta || '';
+			if (reasoningContent && callbacks.onReasoning) {
+				callbacks.onReasoning(reasoningContent);
+			}
+			return;
+		}
+
+		if (chunk.type === 'response.web_search_call.in_progress') {
+			// Only process web search chunks if web search is enabled
+			if (this.webSearchEnabled && callbacks.onToolUse) {
+				callbacks.onToolUse('web_search', undefined);
+			}
+		}
+
+		if (chunk.type === 'response.content_part.done') {
+			if (chunk.part.type === 'output_text' && this.webSearchEnabled && callbacks.onToolUse) {
+				// Handle web search results - this will update the existing tool use entry
+				const searchResults = chunk.part.annotations;
+				if (searchResults && Array.isArray(searchResults)) {
+					const formattedResults = searchResults.map((result: any) => ({
+						type: result.type,
+						title: result.title,
+						url: result.url
+					}));
+
+					// Pass the results to update the existing tool use entry
+					callbacks.onToolUse('web_search', {
+						results: formattedResults,
+						totalResults: formattedResults.length
+					});
+				}
+			}
+		}
+
+		if (chunk.type === 'response.completed') {
+			// Handle completion
+			if (chunk.response?.usage) {
+				const usage: UsageMetrics = {
+					prompt_tokens: chunk.response.usage.input_tokens || 0,
+					completion_tokens: chunk.response.usage.output_tokens || 0,
+					total_tokens: chunk.response.usage.total_tokens || 0
+				};
+				callbacks.onUsage(usage);
+			}
+			return;
+		}
+
+		// Fallback for chat completions API format (if mixed usage)
 		const isFirstContentChunk = chunk.choices?.[0]?.index === 0;
 		const content = chunk.choices?.[0]?.delta?.content || '';
 		const reasoningContent = chunk.choices?.[0]?.delta?.reasoning_content || '';

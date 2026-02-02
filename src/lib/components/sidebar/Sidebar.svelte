@@ -5,7 +5,6 @@
 	import {
 		darkMode,
 		showPricing,
-		showLegacyModels,
 		chosenCompany,
 		chatHistory,
 		isContextWindowAuto,
@@ -67,6 +66,18 @@
 	// 			'attachments' in message && message.attachments && message.attachments.length > 0
 	// 	);
 	// }
+
+	// Validate and fix chosenModel if it references a deprecated/removed model
+	$: if ($chosenModel && !$chosenModel.name) {
+		// Model is invalid (likely removed from dictionary), reset to default
+		chosenModel.set(modelDictionary.anthropic.models.claude45Sonnet);
+	}
+
+	// Validate and fix gptModelSelection if it contains deprecated models
+	$: if ($gptModelSelection && $gptModelSelection.some((model) => !model || !model.name)) {
+		// Some models are invalid, refresh with current models from chosen company
+		gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
+	}
 
 	// handles if the company menu should be always open or open on hover
 	$: if (user.user_settings || !user.user_settings) {
@@ -215,113 +226,92 @@
 								on:keydown|stopPropagation
 							>
 								{#each $gptModelSelection as model}
-									{#if !model.legacy || $showLegacyModels}
-										<div
-											class="llm-options"
-											role="button"
-											tabindex="0"
-											on:click|stopPropagation={() => {
-												selectModel(model);
-												modelDropdownOpen = false;
-											}}
-											on:keydown|stopPropagation={(e) => {
-												if (e.key === 'Enter') selectModel(model);
-											}}
-										>
-											<div class="record">
-												{#if model.generatesImages}
-													<div class="icon">
-														<ImageIcon color="var(--text-color)" />
-													</div>
-												{:else if model.reasons}
-													<div class="icon">
-														<LightningReasoningIcon
-															color="var(--text-color)"
-														/>
-													</div>
-												{:else}
-													<div class="icon">
-														<LightningIcon color="var(--text-color)" />
-													</div>
-												{/if}
-												<div class="split">
-													<div class="main-content">
-														<p>
-															{formatModelEnumToReadable(model.name)}
-															{#if $showPricing}
-																<div class="pricing">
-																	<span>
-																		Input: ${Number(
-																			model.input_price.toFixed(
-																				3
-																			)
-																		)}
-																		{model.input_price > 0
-																			? '/ 1M'
-																			: ''}
-																	</span>
-																	<span>
-																		Output: ${Number(
-																			model.output_price.toFixed(
-																				3
-																			)
-																		)}
-																		/ {model.generatesImages
-																			? 'Image'
-																			: '1M'}
-																	</span>
-																</div>
-															{/if}
-														</p>
-													</div>
-													<div class="description">
-														{#if !model.legacy && model.description}
-															<span>{model.description}</span>
+									<div
+										class="llm-options"
+										role="button"
+										tabindex="0"
+										on:click|stopPropagation={() => {
+											selectModel(model);
+											modelDropdownOpen = false;
+										}}
+										on:keydown|stopPropagation={(e) => {
+											if (e.key === 'Enter') selectModel(model);
+										}}
+									>
+										<div class="record">
+											{#if model.generatesImages}
+												<div class="icon">
+													<ImageIcon color="var(--text-color)" />
+												</div>
+											{:else if model.reasons}
+												<div class="icon">
+													<LightningReasoningIcon
+														color="var(--text-color)"
+													/>
+												</div>
+											{:else}
+												<div class="icon">
+													<LightningIcon color="var(--text-color)" />
+												</div>
+											{/if}
+											<div class="split">
+												<div class="main-content">
+													<p>
+														{formatModelEnumToReadable(model.name)}
+														{#if $showPricing}
+															<div class="pricing">
+																<span>
+																	Input: ${Number(
+																		model.input_price.toFixed(3)
+																	)}
+																	{model.input_price > 0
+																		? '/ 1M'
+																		: ''}
+																</span>
+																<span>
+																	Output: ${Number(
+																		model.output_price.toFixed(
+																			3
+																		)
+																	)}
+																	/ {model.generatesImages
+																		? 'Image'
+																		: '1M'}
+																</span>
+															</div>
 														{/if}
-													</div>
+													</p>
 												</div>
-												<div class="image">
-													{#if model.handlesImages}
-														<AttachmentIcon color="var(--text-color" />
-													{/if}
-												</div>
-												{#if model.legacy}
-													<div class="legacy">
-														<p>Legacy</p>
-													</div>
-												{/if}
-												<div
-													class="selected-container"
-													style="margin-left: {model.handlesImages
-														? '0'
-														: 'auto'}"
-												>
-													{#if $chosenModel.name === model.name}
-														<div class="selected">
-															<TickIcon
-																color="var(--bg-color)"
-																strokeWidth={3}
-															/>
-														</div>
+												<div class="description">
+													{#if model.description}
+														<span>{model.description}</span>
 													{/if}
 												</div>
 											</div>
-										</div>
-									{/if}
-								{/each}
-								<div class="toggles-container">
-									<div class="toggle">
-										<p
-											style="color: {!$showLegacyModels
-												? 'var(--text-color-light)'
-												: ''}"
-										>
-											Legacy models
-										</p>
-										<div class="switch">
-											<Switch bind:on={$showLegacyModels} />
+											<div class="image">
+												{#if model.handlesImages}
+													<AttachmentIcon color="var(--text-color" />
+												{/if}
+											</div>
+											<div
+												class="selected-container"
+												style="margin-left: {model.handlesImages
+													? '0'
+													: 'auto'}"
+											>
+												{#if $chosenModel.name === model.name}
+													<div class="selected">
+														<TickIcon
+															color="var(--bg-color)"
+															strokeWidth={3}
+														/>
+													</div>
+												{/if}
+											</div>
 										</div>
 									</div>
+								{/each}
+								<div class="toggles-container">
 									<div class="toggle">
 										<p
 											style="color: {!$showPricing
@@ -548,97 +538,76 @@
 							on:keydown|stopPropagation
 						>
 							{#each $gptModelSelection as model}
-								{#if !model.legacy || $showLegacyModels}
-									<div
-										class="llm-options"
-										role="button"
-										tabindex="0"
-										on:click|stopPropagation={() => {
-											selectModel(model);
-											modelDropdownOpen = false;
-										}}
-										on:keydown={(e) => {
-											if (e.key === 'Enter') selectModel(model);
-										}}
-									>
-										<div class="record">
-											{#if model.generatesImages}
-												<div class="icon">
-													<ImageIcon color="var(--text-color)" />
+								<div
+									class="llm-options"
+									role="button"
+									tabindex="0"
+									on:click|stopPropagation={() => {
+										selectModel(model);
+										modelDropdownOpen = false;
+									}}
+									on:keydown={(e) => {
+										if (e.key === 'Enter') selectModel(model);
+									}}
+								>
+									<div class="record">
+										{#if model.generatesImages}
+											<div class="icon">
+												<ImageIcon color="var(--text-color)" />
+											</div>
+										{:else if model.reasons}
+											<div class="icon">
+												<LightningReasoningIcon color="var(--text-color)" />
+											</div>
+										{:else}
+											<div class="icon">
+												<LightningIcon color="var(--text-color)" />
+											</div>
+										{/if}
+										<p>
+											{formatModelEnumToReadable(model.name)}
+											{#if $showPricing}
+												<div class="pricing">
+													<span>
+														Input: ${Number(
+															model.input_price.toFixed(3)
+														)}
+														{model.input_price > 0 ? '/ 1M' : ''}
+													</span>
+													<span>
+														Output: ${Number(
+															model.output_price.toFixed(3)
+														)} / {model.generatesImages
+															? 'Image'
+															: '1M'}
+													</span>
 												</div>
-											{:else if model.reasons}
-												<div class="icon">
-													<LightningReasoningIcon
-														color="var(--text-color)"
+											{/if}
+										</p>
+										{#if model.handlesImages}
+											<div class="image">
+												<AttachmentIcon color="var(--text-color" />
+											</div>
+										{/if}
+										<div
+											class="selected-container"
+											style="margin-left: {model.handlesImages
+												? '0'
+												: 'auto'}"
+										>
+											{#if $chosenModel.name === model.name}
+												<div class="selected">
+													<TickIcon
+														color="var(--bg-color)"
+														strokeWidth={3}
 													/>
 												</div>
-											{:else}
-												<div class="icon">
-													<LightningIcon color="var(--text-color)" />
-												</div>
 											{/if}
-											<p>
-												{formatModelEnumToReadable(model.name)}
-												{#if $showPricing}
-													<div class="pricing">
-														<span>
-															Input: ${Number(
-																model.input_price.toFixed(3)
-															)}
-															{model.input_price > 0 ? '/ 1M' : ''}
-														</span>
-														<span>
-															Output: ${Number(
-																model.output_price.toFixed(3)
-															)} / {model.generatesImages
-																? 'Image'
-																: '1M'}
-														</span>
-													</div>
-												{/if}
-											</p>
-											{#if model.legacy}
-												<div class="legacy">
-													<p>Legacy</p>
-												</div>
-											{/if}
-											{#if model.handlesImages}
-												<div class="image">
-													<AttachmentIcon color="var(--text-color" />
-												</div>
-											{/if}
-											<div
-												class="selected-container"
-												style="margin-left: {model.handlesImages
-													? '0'
-													: 'auto'}"
-											>
-												{#if $chosenModel.name === model.name}
-													<div class="selected">
-														<TickIcon
-															color="var(--bg-color)"
-															strokeWidth={3}
-														/>
-													</div>
-												{/if}
-											</div>
 										</div>
 									</div>
-								{/if}
+								</div>
 							{/each}
 							<div class="toggles-container">
-								<div class="toggle">
-									<p
-										style="color: {!$showLegacyModels
-											? 'var(--text-color-light)'
-											: ''}"
-									>
-										Legacy models
-									</p>
-									<div class="switch">
-										<Switch bind:on={$showLegacyModels} />
-									</div>
-								</div>
 								<div class="toggle">
 									<p
 										style="color: {!$showPricing
@@ -914,22 +883,6 @@
 								}
 							}
 
-							.legacy {
-								display: flex;
-								border-radius: 20px;
-								border: 1px solid var(--text-color-light-opacity);
-								background: var(--bg-color-light);
-								padding: 5px 10px;
-								color: var(--text-color);
-
-								p {
-									width: max-content;
-									font-size: 12px;
-									color: var(--text-color-light);
-									margin: 0;
-								}
-							}
-
 							.image {
 								display: flex;
 								width: 20px;
@@ -1197,20 +1150,6 @@
 							margin-left: 5px;
 							width: 26px;
 							height: 26px;
-						}
-
-						.legacy {
-							border-radius: 20px;
-							border: 1px solid var(--text-color-light);
-							background: var(--bg-color-light);
-							padding: 4px 8px;
-							color: var(--text-color);
-
-							p {
-								width: max-content;
-								font-size: 10px;
-								color: var(--text-color-light);
-							}
 						}
 
 						.image {
