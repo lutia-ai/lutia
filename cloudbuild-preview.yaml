@@ -44,18 +44,21 @@ steps:
               LOCAL_DB_URL="postgresql://$${DB_USER}:$${DB_PASS_ENCODED}@localhost:5432/$${DB_NAME}?schema=public"
 
               echo ""
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo "📋 DATABASE MIGRATION PREVIEW"
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo ""
               
               # Get migration status (only show pending migrations)
               MIGRATE_STATUS=$$(DATABASE_URL="$$LOCAL_DB_URL" npx prisma migrate status 2>&1)
               
               if echo "$$MIGRATE_STATUS" | grep -q "Following migrations have not yet been applied"; then
-                echo "⚠️  Pending migrations:"
+                echo "⚠️  Pending Migrations:"
+                echo "────────────────────────────────────────────────────────────"
                 echo "$$MIGRATE_STATUS" | sed -n '/Following migrations have not yet been applied:/,/^$$/p' | grep "^[0-9]" || true
                 echo ""
               else
-                echo "✅ No pending migrations"
+                echo "✅ No Pending Migrations"
                 echo ""
               fi
 
@@ -66,10 +69,13 @@ steps:
                 --script 2>&1)
 
               if [ ! -z "$$DIFF_OUTPUT" ] && ! echo "$$DIFF_OUTPUT" | grep -q "No difference"; then
-                echo "📝 SQL changes that will be applied:"
+                echo "📝 SQL Changes:"
+                echo "────────────────────────────────────────────────────────────"
                 echo "$$DIFF_OUTPUT"
                 echo ""
               fi
+              
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
               # Kill proxy
               kill $$PROXY_PID || true
