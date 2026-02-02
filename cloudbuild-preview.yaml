@@ -43,43 +43,33 @@ steps:
               # Use localhost since Cloud SQL Proxy is running (keep password encoded)
               LOCAL_DB_URL="postgresql://$${DB_USER}:$${DB_PASS_ENCODED}@localhost:5432/$${DB_NAME}?schema=public"
 
-              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              echo ""
               echo "📋 DATABASE MIGRATION PREVIEW"
-              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo ""
-              echo "🔍 Current Migration Status:"
-              echo "────────────────────────────────────────────────────────────"
-              DATABASE_URL="$$LOCAL_DB_URL" npx prisma migrate status || true
-              echo ""
-              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-              echo "📝 Proposed SQL Changes:"
-              echo "────────────────────────────────────────────────────────────"
+              
+              # Get migration status (only show pending migrations)
+              MIGRATE_STATUS=$$(DATABASE_URL="$$LOCAL_DB_URL" npx prisma migrate status 2>&1)
+              
+              if echo "$$MIGRATE_STATUS" | grep -q "Following migrations have not yet been applied"; then
+                echo "⚠️  Pending migrations:"
+                echo "$$MIGRATE_STATUS" | sed -n '/Following migrations have not yet been applied:/,/^$$/p' | grep "^[0-9]" || true
+                echo ""
+              else
+                echo "✅ No pending migrations"
+                echo ""
+              fi
 
-              # Show what would change
+              # Show SQL diff (only if there are changes)
               DIFF_OUTPUT=$$(DATABASE_URL="$$LOCAL_DB_URL" npx prisma migrate diff \
                 --from-schema-datasource "$$LOCAL_DB_URL" \
                 --to-schema-datamodel prisma/schema.prisma \
                 --script 2>&1)
 
-              if [ -z "$$DIFF_OUTPUT" ] || echo "$$DIFF_OUTPUT" | grep -q "No difference"; then
-                echo "✅ No database changes detected"
-                echo ""
-                echo "The database schema matches your Prisma schema."
-              else
+              if [ ! -z "$$DIFF_OUTPUT" ] && ! echo "$$DIFF_OUTPUT" | grep -q "No difference"; then
+                echo "📝 SQL changes that will be applied:"
                 echo "$$DIFF_OUTPUT"
                 echo ""
-                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                echo "⚠️  CHANGES DETECTED"
-                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                echo ""
-                echo "The SQL statements above will be executed when you run"
-                echo "the 'Apply Migrations' trigger after merging this PR."
               fi
-
-              echo ""
-              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-              echo "✅ Preview completed successfully"
-              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
               # Kill proxy
               kill $$PROXY_PID || true
