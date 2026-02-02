@@ -58,8 +58,8 @@ steps:
               fi
 
               # Show SQL diff (only if there are changes)
-              DIFF_OUTPUT=$$(DATABASE_URL="$$LOCAL_DB_URL" npx prisma migrate diff \
-                --from-schema-datasource "$$LOCAL_DB_URL" \
+              DIFF_OUTPUT=$$(npx prisma migrate diff \
+                --from-url "$$LOCAL_DB_URL" \
                 --to-schema-datamodel prisma/schema.prisma \
                 --script 2>&1)
 
