@@ -17,7 +17,7 @@ steps:
       args:
           - '-c'
           - |
-              curl -o /workspace/cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
+              curl -s -o /workspace/cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
               chmod +x /workspace/cloud_sql_proxy
       waitFor: ['generate-prisma-client']
 
