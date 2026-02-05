@@ -16,7 +16,6 @@ import { type UserSettings } from '@prisma/client';
 import {
 	retrieveApiRequestsByConversationId,
 	retrieveConversationById,
-	verifyConversationOwnership,
 	updateConversation,
 	deleteConversation
 } from '$lib/db/crud/conversation';
@@ -49,16 +48,18 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 
 		// For both Premium and PayAsYouGo users, allow loading specific conversations
 		if (conversationId && conversationId !== 'new') {
-			// Try to load the specific conversation
-			const conversation = await retrieveConversationById(conversationId);
+			const userId = Number(session.user.id);
 
-			// Verify this conversation belongs to the current user
-			if (conversation && conversation.user_id === Number(session.user.id)) {
-				// Return conversation-specific API requests
+			// Try to load the specific conversation with ownership filter
+			const conversation = await retrieveConversationById(conversationId, userId);
+
+			// Conversation found and belongs to the current user
+			if (conversation) {
+				// Return conversation-specific API requests (also verified by userId)
 				return {
 					user,
 					userImage: session.user.image,
-					apiRequests: retrieveApiRequestsByConversationId(conversationId),
+					apiRequests: retrieveApiRequestsByConversationId(conversationId, userId),
 					conversation
 				};
 			}
@@ -278,7 +279,7 @@ export const actions = {
 			};
 		}
 	},
-	// New action for updating conversation title
+	// Action for updating conversation title (ownership verified in CRUD layer)
 	updateConversationTitle: async ({ request, locals }) => {
 		// Get the authenticated user
 		const session = await locals.auth();
@@ -301,24 +302,26 @@ export const actions = {
 		}
 
 		try {
-			// Verify that the conversation belongs to this user
-			const isOwner = await verifyConversationOwnership(conversationId, userId);
-			if (!isOwner) {
-				return fail(403, {
-					message: 'You do not have permission to update this conversation'
-				});
-			}
-
-			// Update the conversation
-			const updatedConversation = await updateConversation(conversationId, {
-				title: title.trim()
-			});
+			// Update the conversation (ownership verified inside updateConversation)
+			const updatedConversation = await updateConversation(
+				conversationId,
+				{ title: title.trim() },
+				userId
+			);
 
 			return {
 				type: 'success',
 				conversation: updatedConversation
 			};
-		} catch (error) {
+		} catch (error: any) {
+			if (error?.name === 'AuthorizationError') {
+				return fail(403, {
+					message: 'You do not have permission to update this conversation'
+				});
+			}
+			if (error?.name === 'ResourceNotFoundError') {
+				return fail(404, { message: 'Conversation not found' });
+			}
 			console.error('Error updating conversation title:', error);
 			return fail(500, { message: 'Failed to update conversation title' });
 		}
@@ -340,22 +343,22 @@ export const actions = {
 		}
 
 		try {
-			// Verify that the conversation belongs to this user
-			const isOwner = await verifyConversationOwnership(conversationId, userId);
-			if (!isOwner) {
-				return fail(403, {
-					message: 'You do not have permission to delete this conversation'
-				});
-			}
-
-			// Delete the conversation
-			await deleteConversation(conversationId);
+			// Delete the conversation (ownership verified inside deleteConversation)
+			await deleteConversation(conversationId, userId);
 
 			return {
 				type: 'success',
 				message: 'Conversation deleted successfully'
 			};
-		} catch (error) {
+		} catch (error: any) {
+			if (error?.name === 'AuthorizationError') {
+				return fail(403, {
+					message: 'You do not have permission to delete this conversation'
+				});
+			}
+			if (error?.name === 'ResourceNotFoundError') {
+				return fail(404, { message: 'Conversation not found' });
+			}
 			console.error('Error deleting conversation:', error);
 			return fail(500, { message: 'Failed to delete conversation' });
 		}

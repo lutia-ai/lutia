@@ -9,6 +9,7 @@ import {
 } from '$lib/utils/streamingUtils';
 import { CostCalculator } from '$lib/utils/apiUtils';
 import { retrieveApiRequestByMessageId } from '$lib/db/crud/apiRequest';
+import { requireMessageOwnership } from '$lib/utils/authorization';
 
 /**
  * Process an LLM request with streaming response
@@ -43,6 +44,10 @@ export async function processLLMRequest(config: LLMRequestConfig, requestSignal:
 		try {
 			// Parse the JSON string to get the actual messageId number
 			const messageIdNumber = JSON.parse(regenerateMessageId);
+
+			// Verify the user owns the message before allowing regeneration
+			await requireMessageOwnership(messageIdNumber, user.id);
+
 			const existingApiRequest = await retrieveApiRequestByMessageId(
 				messageIdNumber,
 				user.id,

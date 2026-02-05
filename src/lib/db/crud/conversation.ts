@@ -3,6 +3,7 @@ import { PaymentTier } from '@prisma/client';
 import type { ApiRequestWithMessage, SerializedApiRequest } from '$lib/db/types';
 import prisma from '$lib/db/prisma';
 import { serializeApiRequest } from '$lib/components/chat-history/utils/chatHistory';
+import { requireConversationOwnership } from '$lib/utils/authorization';
 
 /**
  * Create a new conversation for a user
@@ -131,15 +132,24 @@ export async function retrieveConversationsByFolderId(folderId: number): Promise
 
 /**
  * Retrieve a specific conversation by ID
+ * @param conversationId - The unique ID of the conversation
+ * @param userId - Optional user ID to filter by ownership (recommended for security)
+ * @returns The conversation if found (and owned by user if userId provided), or null
  */
 export async function retrieveConversationById(
-	conversationId: string
+	conversationId: string,
+	userId?: number
 ): Promise<Conversation | null> {
 	try {
-		const conversation = await prisma.conversation.findUnique({
-			where: {
-				id: conversationId
-			}
+		const whereCondition: any = { id: conversationId };
+
+		// If userId is provided, also filter by user_id for ownership verification
+		if (userId !== undefined) {
+			whereCondition.user_id = userId;
+		}
+
+		const conversation = await prisma.conversation.findFirst({
+			where: whereCondition
 		});
 
 		return conversation;
@@ -150,13 +160,25 @@ export async function retrieveConversationById(
 }
 
 /**
- * Update a conversation
+ * Update a conversation after verifying ownership
+ * @param conversationId - The unique ID of the conversation to update
+ * @param data - The data to update on the conversation
+ * @param userId - Optional user ID; if provided, ownership is verified before updating
+ * @returns The updated conversation
+ * @throws {AuthorizationError} If userId is provided and the user does not own the conversation
+ * @throws {ResourceNotFoundError} If the conversation does not exist
  */
 export async function updateConversation(
 	conversationId: string,
-	data: { title?: string; folderId?: number | null }
+	data: { title?: string; folderId?: number | null },
+	userId?: number
 ): Promise<Conversation> {
 	try {
+		// Verify ownership if userId is provided
+		if (userId !== undefined) {
+			await requireConversationOwnership(conversationId, userId);
+		}
+
 		const conversation = await prisma.conversation.update({
 			where: {
 				id: conversationId
@@ -175,10 +197,19 @@ export async function updateConversation(
 }
 
 /**
- * Delete a conversation and all associated messages
+ * Delete a conversation and all associated messages after verifying ownership
+ * @param conversationId - The unique ID of the conversation to delete
+ * @param userId - Optional user ID; if provided, ownership is verified before deleting
+ * @throws {AuthorizationError} If userId is provided and the user does not own the conversation
+ * @throws {ResourceNotFoundError} If the conversation does not exist
  */
-export async function deleteConversation(conversationId: string): Promise<void> {
+export async function deleteConversation(conversationId: string, userId?: number): Promise<void> {
 	try {
+		// Verify ownership if userId is provided
+		if (userId !== undefined) {
+			await requireConversationOwnership(conversationId, userId);
+		}
+
 		await prisma.$transaction(async (tx) => {
 			// Find all API requests for this conversation
 			const apiRequests = await tx.apiRequest.findMany({
@@ -252,12 +283,22 @@ export async function verifyConversationOwnership(
 }
 
 /**
- * Retrieve all API requests for a specific conversation, including messages
+ * Retrieve all API requests for a specific conversation, including messages.
+ * Verifies conversation ownership before returning data.
+ * @param conversationId - The unique ID of the conversation
+ * @param userId - The user ID to verify conversation ownership
+ * @returns Array of serialized API requests with their messages
+ * @throws {AuthorizationError} If the user does not own the conversation
+ * @throws {ResourceNotFoundError} If the conversation does not exist
  */
 export async function retrieveApiRequestsByConversationId(
-	conversationId: string
+	conversationId: string,
+	userId: number
 ): Promise<SerializedApiRequest[]> {
 	try {
+		// Verify the user owns this conversation before retrieving its data
+		await requireConversationOwnership(conversationId, userId);
+
 		const apiRequests = await prisma.apiRequest.findMany({
 			where: {
 				conversation_id: conversationId,

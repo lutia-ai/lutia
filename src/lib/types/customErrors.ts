@@ -29,3 +29,23 @@ export class InsufficientBalanceError extends Error {
 		this.name = 'InsufficientBalanceError';
 	}
 }
+
+export class AuthorizationError extends Error {
+	public statusCode: number;
+
+	constructor(message: string, statusCode: number = 403) {
+		super(message);
+		this.name = 'AuthorizationError';
+		this.statusCode = statusCode;
+	}
+}
+
+export class ResourceNotFoundError extends Error {
+	public statusCode: number;
+
+	constructor(resource: string) {
+		super(`${resource} not found`);
+		this.name = 'ResourceNotFoundError';
+		this.statusCode = 404;
+	}
+}
