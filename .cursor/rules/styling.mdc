@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+---
+# Styling with SCSS
+
+## Core Principles
+
+**SCSS nesting must mirror HTML structure exactly**
+
+Example:
+```svelte
+<div class="chat-container">
+    <div class="message">
+        <span class="author">User</span>
+        <p class="content">Hello</p>
+    </div>
+</div>
+
+<style lang="scss">
+.chat-container {
+    // Container styles
+    
+    .message {
+        // Message styles
+        
+        .author {
+            // Author styles
+        }
+        
+        .content {
+            // Content styles
+        }
+    }
+}
+</style>
+```
+
+## SCSS Best Practices
+
+- **Use SCSS `lang="scss"`** in all Svelte component `<style>` blocks
+- **Match HTML hierarchy** - nested selectors should reflect DOM structure
+- **4-space indentation** for consistency with code formatting
+- **Avoid deep nesting** - max 3-4 levels to maintain readability
+- **Use BEM-like naming** for clarity (e.g., `chat-container`, `message-author`)
+- **Leverage SCSS features**: variables, mixins, functions when needed
+- **Scope styles** - Svelte automatically scopes component styles
+
+
+## Global Styles
+
+- Minimal global styles in `/src/routes/+layout.svelte`
+- Component-specific styles stay in component `<style>` blocks
+- Use CSS custom properties (variables) for theming

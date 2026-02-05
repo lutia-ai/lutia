@@ -1,0 +1,88 @@
+---
+alwaysApply: true
+---
+# Deployment Pipeline and Infrastructure
+
+This project uses Google Cloud Platform (GCP) with Terraform for infrastructure management and Cloud Build for CI/CD.
+
+## Infrastructure Overview
+
+### Core Components
+- **Cloud Run**: Serverless container hosting for the application (service: `lutia-prod`)
+- **Cloud SQL**: PostgreSQL 16 database (instances: `lutia`, `lutia-backup`)
+- **Artifact Registry**: Docker image storage (`europe-west1-docker.pkg.dev`)
+- **Cloud Build**: CI/CD pipeline with automated triggers
+- **Terraform**: Infrastructure as Code (all configs in `/terraform` folder)
+
+## Deployment Pipeline
+
+### Two-Stage Pipeline
+
+#### 1. Pull Request Preview (`cloudbuild-preview.yaml`)
+Triggered automatically on PRs to `main` branch:
+- **Purpose**: Preview database migrations before they're applied
+- **No Changes Applied**: Only previews migrations, doesn't modify database
+- **Timeout**: 600s (10 minutes)
+
+#### 2. Production Deploy (`cloudbuild-deploy.yaml`)
+Triggered automatically on push to `main` branch:
+- **Purpose**: Deploy application and apply database migrations
+- **Database First**: Migrations run BEFORE building/deploying the app
+- **Timeout**: 1800s (30 minutes)
+- **Machine Type**: E2_HIGHCPU_8 for faster builds
+
+
+## Terraform Infrastructure Management
+### Directory Structure (`/terraform`)
+- `cloud-build.tf` - Cloud Build triggers (preview and deploy)
+- `cloud-run.tf` - Cloud Run service configuration
+- `cloud-sql.tf` - PostgreSQL database instances
+- `artifact-registry.tf` - Docker image registry
+- `iam.tf` - IAM roles and permissions
+- `secret-manager.tf` - Secret Manager configuration (optional)
+- `variables.tf` - Variable definitions
+- `terraform.tfvars` - Actual values (NEVER commit to git!)
+
+### Terraform Workflow
+1. **Initialize**: `terraform init` (only once or when adding providers)
+2. **Plan**: `terraform plan` (always review before applying)
+3. **Apply**: `terraform apply` (apply infrastructure changes)
+4. **Import**: Use `terraform import` for existing resources
+
+### Important Terraform Practices
+- Always run `terraform plan` before `terraform apply`
+- Review changes carefully before applying
+- Use `terraform.tfvars` for sensitive values (git-ignored)
+- Deletion protection enabled on Cloud SQL instances
+- Cloud Run image managed by Cloud Build (ignored in lifecycle)
+
+## Environment Variables
+
+All environment variables are configured in Terraform (`cloud-run.tf`) and include:
+- Database credentials (`DATABASE_URL`)
+- API keys for LLM providers (OpenAI, Anthropic, Gemini, etc.)
+- Stripe payment keys
+- Google OAuth credentials
+- Email service credentials (Mailjet)
+- reCAPTCHA keys
+- Auth secrets
+
+## Database Migration Workflow
+### Development
+1. Make schema changes in `prisma/schema.prisma`
+2. Create migration: `npm run prisma:migrate` (prompts for name)
+3. Commit migration files in `prisma/migrations/`
+
+### CI/CD Process
+1. **PR Created**: Cloud Build preview trigger shows migration preview
+2. **Review**: Check migration SQL in Cloud Build logs
+3. **Merge to Main**: Deploy trigger automatically:
+    - Runs migrations on production database
+    - Builds new Docker image with updated Prisma Client
+    - Deploys to Cloud Run
+
+### Migration Best Practices
+- ALWAYS review migration SQL in preview before merging
+- Test migrations in development first
+- Migrations are sequential and irreversible
+- Database operations happen BEFORE deployment

@@ -1,0 +1,68 @@
+---
+alwaysApply: true
+---
+# Documentation
+
+## JSDoc Requirements
+
+**Add JSDoc to every function** with:
+- Description of what the function does
+- `@param` tags for all parameters with types and descriptions
+- `@returns` tag describing return value
+- `@throws` tag if function can throw errors
+
+Example:
+```typescript
+/**
+ * Fetches conversation history for a user
+ * @param {string} userId - The user's unique identifier
+ * @param {number} limit - Maximum number of conversations to return
+ * @returns {Promise<Conversation[]>} Array of conversation objects
+ * @throws {DatabaseError} If database query fails
+ */
+async function getConversations(userId: string, limit: number): Promise<Conversation[]> {
+    // implementation
+}
+```
+
+## Comments
+
+- Add inline comments for complex logic, algorithms, or non-obvious code
+- Explain **why**, not what (code shows what, comments explain reasoning)
+- Use `//` for single-line, `/* */` for multi-line
+- Comment workarounds, TODOs, and performance-critical sections
+- Keep comments up-to-date when code changes
+
+## When to Comment
+
+**Do comment:**
+- Complex business logic or calculations
+- Workarounds for bugs or limitations
+- Performance optimizations
+- Non-obvious error handling
+- Important assumptions or constraints
+
+**Don't comment:**
+- Self-explanatory code
+- Variable/function names (use descriptive names instead)
+- What the code does line-by-line
+
+## Svelte Component Documentation
+
+For Svelte components, document:
+- Component purpose and usage
+- Props with types and descriptions
+- Emitted events
+- Slots if applicable
+
+Example:
+```svelte
+<!--
+    ChatToolbar Component
+    Displays message controls (regenerate, copy, etc.)
+    
+    Props:
+    - message: Message - The message object to display toolbar for
+    - onRegenerate: () => void - Callback when regenerate clicked
+-->
+```

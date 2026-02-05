@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+---
+# Database
+
+This project uses **Prisma ORM** with PostgreSQL 16 on Google Cloud SQL.
+
+## Schema and Client
+
+- **Schema**: `prisma/schema.prisma` (single source of truth)
+- **Prisma Client**: Auto-generated, import from `$lib/db/prisma.ts`
+- **Migrations**: Stored in `prisma/migrations/` (sequential, never edit applied migrations)
+
+## CRUD Operations Pattern
+
+- **Always check existing CRUD functions** in `/src/lib/db/crud/` before writing database queries
+- **All database operations must have their own function** in the appropriate CRUD file:
+    - `apiRequest.ts` - API requests and responses
+    - `balance.ts` - User balance operations
+    - `conversation.ts` - Conversation management
+    - `folder.ts` - Folder operations
+    - `message.ts` - Message CRUD
+    - `user.ts` - User operations
+    - `userSettings.ts` - User settings
+- **Create new CRUD files** for new models following the same pattern
+- **Import Prisma client**: `import { prisma } from '$lib/db/prisma'`
+
+## Key Commands
+
+```bash
+# Create migration (development)
+npm run prisma:migrate <name>
+
+# Apply migrations (production, CI/CD)
+npm run prisma:deploy
+
+# Regenerate Prisma Client (after schema changes)
+npm run prisma:generate
+```
+
+## Schema Change Workflow
+
+1. Edit `prisma/schema.prisma`
+2. Run `npm run prisma:migrate <descriptive-name>`
+3. Review generated SQL in `prisma/migrations/`
+4. Commit both schema and migration files
+5. PR preview shows migration before applying to production
+
+## Best Practices
+
+- Use Prisma's type-safe queries (avoid raw SQL unless necessary)
+- Wrap complex operations in transactions
+- Always handle errors in CRUD functions
+- Use select/include to fetch only needed fields
+- Create indexes for frequently queried fields
+- Test migrations locally before committing

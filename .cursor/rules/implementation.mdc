@@ -1,0 +1,54 @@
+---
+alwaysApply: true
+---
+# Implementation Guidelines
+
+## Component Reusability
+
+**Always check `/src/lib/components/` before creating new components:**
+- `chat-history/` - Chat display components (LLM responses, user messages, code blocks)
+- `prompt-bar/` - User input, model selection, attachments
+- `sidebar/` - Navigation, conversations, context window
+- `settings/` - Settings pages (billing, usage, general)
+- `icons/` - All SVG icon components
+- `notifications/` - Error popups, notifications
+- `barchart/` - Analytics and charts
+
+**Prefer composition over duplication** - break down large components into smaller, reusable ones
+
+## Code Organization
+
+### SvelteKit Structure
+- **Routes**: `/src/routes/` - file-based routing
+- **Components**: `/src/lib/components/` - reusable UI components
+- **Utilities**: `/src/lib/utils/` - pure functions, helpers
+- **Services**: `/src/lib/services/` - LLM providers, Stripe, email
+- **Database**: `/src/lib/db/crud/` - Prisma database operations
+- **Types**: `/src/lib/types/types.d.ts` - TypeScript definitions
+
+### Component Utils Pattern
+Group related utilities in component-specific `utils/` folders:
+- `chat-history/utils/` - Chat-specific functions
+- `prompt-bar/utils/` - Prompt handling logic
+- `settings/utils/` - Settings helpers
+
+## Formatting Standards
+
+**CRITICAL: Always use 4-space tabs (configured in `.prettierrc`)**
+- Tab width: 4 spaces
+- Use tabs, not spaces
+- Print width: 100 characters
+- Single quotes for strings
+- No trailing commas
+
+Run `npm run format` before committing to ensure consistency.
+
+## Best Practices
+
+- Keep page components (`+page.svelte`) lean by extracting logic into components
+- Use Svelte stores (`$lib/stores.ts`) for shared state
+- Follow SvelteKit conventions for server/client code separation
+- Use `+page.server.ts` for server-side data loading and actions
+- Use `+layout.svelte` for shared layouts
+- Handle errors with `+error.svelte` pages
+- Implement proper loading states with `+page.ts` load functions
