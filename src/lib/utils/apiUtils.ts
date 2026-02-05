@@ -1,4 +1,5 @@
-import type { Model, Message } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
+import type { Message } from '$lib/components/chat-history/types';
 import { ApiProvider } from '@prisma/client';
 
 /**

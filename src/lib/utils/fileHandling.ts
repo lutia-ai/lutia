@@ -1,7 +1,7 @@
-import type { FileAttachment, Image } from '../types/types';
+import type { FileAttachment, Image } from '$lib/types/attachment';
 import type { ActionResult } from '@sveltejs/kit';
 import { deserialize } from '$app/forms';
-import type { Model } from '../types/types';
+import type { Model } from '$lib/models/types';
 import { validateImageUpload } from './imageValidation';
 
 // Function to extract text content from file

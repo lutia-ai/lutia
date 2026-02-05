@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleImageGeneration } from '$lib/services/llm/imageGenerationService';
 import { PaymentTier, ApiProvider, ApiRequestStatus } from '@prisma/client';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 import type { User } from '@prisma/client';
 
 // Mock OpenAI

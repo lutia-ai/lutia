@@ -2,7 +2,11 @@
  * Utility functions for the PromptBar component
  */
 
-import type { FileAttachment, Message, Model, ModelDictionary } from '$lib/types/types';
+import type { FileAttachment } from '$lib/types/attachment';
+
+import type { Message } from '$lib/components/chat-history/types';
+
+import type { Model, ModelDictionary } from '$lib/models/types';
 import type { ApiProvider } from '@prisma/client';
 import { calculateImageCostByProvider } from '$lib/models/cost-calculators/imageCalculator';
 import { formatModelEnumToReadable } from '$lib/models/modelUtils';

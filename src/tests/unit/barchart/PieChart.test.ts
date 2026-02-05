@@ -4,7 +4,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/svelte';
 import PieChart from '$lib/components/barchart/PieChart.svelte';
-import type { Company, UsageObject } from '$lib/types/types';
+import type { Company } from '$lib/components/barchart/utils';
+import type { UsageObject } from '$lib/db/types';
 
 // Mock Chart.js
 vi.mock('chart.js/auto', () => {

@@ -6,7 +6,7 @@ import { render, fireEvent } from '@testing-library/svelte';
 import PromptControls from '$lib/components/prompt-bar/PromptControls.svelte';
 import { chosenModel, isContextWindowAuto, reasoningOn, webSearchOn } from '$lib/stores';
 import { ApiModel } from '@prisma/client';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 
 // Mock the stores
 vi.mock('$lib/stores', () => ({

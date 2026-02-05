@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { ApiProvider } from '@prisma/client';
-	import type { Model } from '$lib/types/types';
+	import type { Model } from '$lib/models/types';
 	import {
 		isModelAnthropic,
 		isModelDeepSeek,
 		isModelGoogle,
 		isModelOpenAI,
 		isModelXAI
-	} from '$lib/types/typeGuards';
+	} from '$lib/models/typeGuards';
 
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';

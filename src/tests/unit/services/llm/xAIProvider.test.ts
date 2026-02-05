@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { XAIProvider } from '$lib/services/llm/xAIProvider';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 import type { UsageMetrics } from '$lib/services/llm/types';
 
 // Mock OpenAI (xAI uses OpenAI SDK)

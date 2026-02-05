@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { submitPrompt } from '$lib/components/prompt-bar/utils/submitPrompt';
-import type { LlmChat, UserChat } from '$lib/types/types';
+import type { LlmChat, UserChat } from '$lib/components/chat-history/types';
 import type { ApiProvider } from '@prisma/client';
 import { modelDictionary } from '$lib/models/modelDictionary';
 

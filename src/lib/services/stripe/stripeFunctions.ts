@@ -1,4 +1,4 @@
-import type { CardDetails, ChargeResult, TransactionRecord } from '$lib/types/types';
+import type { CardDetails, ChargeResult, TransactionRecord } from '$lib/services/stripe/types';
 import stripe from '$lib/services/stripe/stripe.config';
 import type Stripe from 'stripe';
 

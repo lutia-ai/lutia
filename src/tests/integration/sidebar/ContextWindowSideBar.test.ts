@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
-import type { ChatComponent } from '$lib/types/types';
+import type { ChatComponent } from '$lib/components/chat-history/types';
 
 // Define mocks with hoisted to make them available before module imports
 const mocks = vi.hoisted(() => {

@@ -7,7 +7,8 @@ import { tick } from 'svelte';
 import AttachmentPreview from '$lib/components/prompt-bar/AttachmentPreview.svelte';
 import { get } from 'svelte/store';
 import { isDragging } from '$lib/stores';
-import type { FileAttachment, Image, Model } from '$lib/types/types';
+import type { FileAttachment, Image } from '$lib/types/attachment';
+import type { Model } from '$lib/models/types';
 import { ApiModel } from '@prisma/client';
 
 // Mock the store

@@ -3,7 +3,8 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { validateImageUpload } from '$lib/utils/imageValidation';
-import type { Model, Image } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
+import type { Image } from '$lib/types/attachment';
 import { ApiModel } from '@prisma/client';
 
 // Mock the formatModelEnumToReadable function

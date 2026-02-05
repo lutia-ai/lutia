@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
-import type { UserWithSettings } from '$lib/types/types';
+import type { UserWithSettings } from '$lib/db/types';
 import { PaymentTier } from '@prisma/client';
 
 // Define mocks with hoisted to make them available before module imports

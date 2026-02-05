@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DeepSeekProvider } from '$lib/services/llm/deepSeekProvider';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 import type { UsageMetrics } from '$lib/services/llm/types';
 
 // Mock OpenAI (DeepSeek uses OpenAI SDK)

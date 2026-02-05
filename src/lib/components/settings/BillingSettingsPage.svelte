@@ -8,7 +8,8 @@
 		type StripeElements,
 		type StripeCardElement
 	} from '@stripe/stripe-js';
-	import type { CardDetails, UserWithSettings, TransactionRecord } from '$lib/types/types';
+	import type { CardDetails, TransactionRecord } from '$lib/services/stripe/types';
+	import type { UserWithSettings } from '$lib/db/types';
 	import { env } from '$env/dynamic/public';
 	import Topup from '$lib/components/icons/Topup.svelte';
 	import CrossIcon from '$lib/components/icons/CrossIcon.svelte';

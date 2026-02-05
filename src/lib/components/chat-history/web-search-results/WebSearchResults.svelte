@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { WebSearchData } from '$lib/types/types';
+	import type { WebSearchData } from '$lib/services/llm/tool-types';
 	import { slide } from 'svelte/transition';
 
 	export let searchResults: WebSearchData[] = [];

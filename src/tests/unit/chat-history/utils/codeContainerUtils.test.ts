@@ -8,8 +8,8 @@ import {
 	closeAllTabWidths
 } from '$lib/components/chat-history/utils/codeContainerUtils';
 import { chatHistory } from '$lib/stores';
-import { isLlmChatComponent, isCodeComponent } from '$lib/types/typeGuards';
-import type { ChatComponent } from '$lib/types/types';
+import { isLlmChatComponent, isCodeComponent } from '$lib/components/chat-history/typeGuards';
+import type { ChatComponent } from '$lib/components/chat-history/types';
 import type { Updater } from 'svelte/store';
 
 // Mock the stores

@@ -6,7 +6,7 @@ import { render, fireEvent, screen } from '@testing-library/svelte';
 import Settings from '$lib/components/settings/Settings.svelte';
 import { isSettingsOpen, bodyScrollLocked, darkMode } from '$lib/stores';
 import { PaymentTier } from '@prisma/client';
-import type { UserWithSettings } from '$lib/types/types';
+import type { UserWithSettings } from '$lib/db/types';
 
 // Mock the stores
 vi.mock('$lib/stores', () => {

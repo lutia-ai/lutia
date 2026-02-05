@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { formatModelEnumToReadable, getModelFromName } from '$lib/models/modelUtils';
 import { ApiModel } from '@prisma/client';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 
 // Define mocks with hoisted to make them available before imports
 const mocks = vi.hoisted(() => {

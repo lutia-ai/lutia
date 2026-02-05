@@ -6,7 +6,7 @@ import { render, fireEvent } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import ChatToolbar from '$lib/components/chat-history/chat-toolbar/ChatToolbar.svelte';
 import { chatHistory } from '$lib/stores';
-import type { LlmChat } from '$lib/types/types';
+import type { LlmChat } from '$lib/components/chat-history/types';
 
 // Mock the needed dependencies
 vi.mock('$lib/models/modelUtils', () => ({

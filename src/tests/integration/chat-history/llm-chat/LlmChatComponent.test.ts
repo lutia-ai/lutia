@@ -75,7 +75,7 @@ vi.mock('$lib/types/typeGuards', () => ({
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import LlmChatComponent from '$lib/components/chat-history/llm-chat/LlmChatComponent.svelte';
-import type { LlmChat, Component } from '$lib/types/types';
+import type { LlmChat, Component } from '$lib/components/chat-history/types';
 
 describe('LlmChatComponent Integration Tests', () => {
 	let mockOpenImageViewer: (image: string, alt: string) => void;

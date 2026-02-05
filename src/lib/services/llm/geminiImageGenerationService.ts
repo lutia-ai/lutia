@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { env } from '$env/dynamic/private';
 import { ApiProvider, ApiRequestStatus, PaymentTier, type User } from '@prisma/client';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 import { createMessageAndApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { createConversation, updateConversationLastMessage } from '$lib/db/crud/conversation';

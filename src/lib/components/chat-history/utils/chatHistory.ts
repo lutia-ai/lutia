@@ -2,16 +2,13 @@ import type {
 	ChatComponent,
 	Component,
 	LlmChat,
-	SerializedApiRequest,
 	UserChat,
-	Image,
-	ApiRequestWithMessage,
 	SerializedMessage,
-	FileAttachment,
-	Attachment,
 	OrderedContent,
 	ToolUseComponent
-} from '$lib/types/types';
+} from '$lib/components/chat-history/types';
+import type { SerializedApiRequest, ApiRequestWithMessage } from '$lib/db/types';
+import type { Image, FileAttachment, Attachment } from '$lib/types/attachment';
 import { deserialize } from '$app/forms';
 import { chatHistory, numberPrevMessages } from '$lib/stores';
 import type { ActionResult } from '@sveltejs/kit';

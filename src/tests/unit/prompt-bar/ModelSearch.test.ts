@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import ModelSearch from '$lib/components/prompt-bar/ModelSearch.svelte';
 import { ApiProvider, ApiModel } from '@prisma/client';
-import * as typeGuards from '$lib/types/typeGuards';
+import * as typeGuards from '$lib/models/typeGuards';
 
 // Mock scrollIntoView function which doesn't exist in JSDOM
 HTMLElement.prototype.scrollIntoView = vi.fn();

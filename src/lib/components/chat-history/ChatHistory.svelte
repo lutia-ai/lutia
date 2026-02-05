@@ -2,7 +2,7 @@
 	import { chatHistory } from '$lib/stores';
 	import { fade } from 'svelte/transition';
 	import UserChatComponent from './user-chat/UserChatComponent.svelte';
-	import { isLlmChatComponent, isUserChatComponent } from '$lib/types/typeGuards';
+	import { isLlmChatComponent, isUserChatComponent } from '$lib/components/chat-history/typeGuards';
 	import LlmChatComponent from './llm-chat/LlmChatComponent.svelte';
 
 	export let openImageViewer: (src: string, alt: string) => void;

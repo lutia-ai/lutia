@@ -19,7 +19,8 @@
 		filesSidebarOpen
 	} from '$lib/stores.ts';
 	import { PaymentTier, type ApiProvider } from '@prisma/client';
-	import type { Model, UserWithSettings } from '$lib/types/types';
+	import type { Model } from '$lib/models/types';
+	import type { UserWithSettings } from '$lib/db/types';
 	import { modelDictionary } from '$lib/models/modelDictionary';
 
 	import Switch from '$lib/components/Switch.svelte';

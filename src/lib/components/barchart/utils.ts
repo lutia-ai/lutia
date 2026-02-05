@@ -1,5 +1,7 @@
 import { group } from 'd3-array';
 
+export type Company = 'openAI' | 'anthropic' | 'google' | 'xAI' | 'deepSeek';
+
 // Returns an array of m psuedorandom, smoothly-varying non-negative numbers.
 // Inspired by Lee Byron’s test data generator.
 // http://leebyron.com/streamgraph/

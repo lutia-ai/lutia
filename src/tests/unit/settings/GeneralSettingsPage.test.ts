@@ -7,7 +7,7 @@ import GeneralSettingsPage from '$lib/components/settings/GeneralSettingsPage.sv
 import { darkMode, isSettingsOpen } from '$lib/stores';
 import { PaymentTier } from '@prisma/client';
 import { get } from 'svelte/store';
-import type { UserWithSettings } from '$lib/types/types';
+import type { UserWithSettings } from '$lib/db/types';
 
 // Mock the stores
 vi.mock('$lib/stores', () => {

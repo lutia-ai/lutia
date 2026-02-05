@@ -1,6 +1,9 @@
 import { error } from '@sveltejs/kit';
-import type { Message, Model, Image, FileAttachment, GptTokenUsage } from '$lib/types/types';
-import { isValidMessageArray } from '../types/typeGuards';
+import type { Message } from '$lib/components/chat-history/types';
+import type { Model } from '$lib/models/types';
+import type { Image, FileAttachment } from '$lib/types/attachment';
+import type { GptTokenUsage } from '$lib/db/types';
+import { isValidMessageArray } from '$lib/components/chat-history/typeGuards';
 import { getModelFromName } from '$lib/models/modelUtils';
 import { ApiModel, ApiProvider, PaymentTier, type User } from '@prisma/client';
 import { retrieveUsersBalance } from '$lib/db/crud/balance';

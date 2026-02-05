@@ -7,8 +7,8 @@ import {
 	updateChatHistoryToCopiedState
 } from '$lib/components/chat-history/utils/copying';
 import { chatHistory } from '$lib/stores';
-import type { ChatComponent, LlmChat } from '$lib/types/types';
-import { isLlmChatComponent, isCodeComponent } from '$lib/types/typeGuards';
+import type { ChatComponent, LlmChat } from '$lib/components/chat-history/types';
+import { isLlmChatComponent, isCodeComponent } from '$lib/components/chat-history/typeGuards';
 import type { Updater } from 'svelte/store';
 
 // Mock the stores

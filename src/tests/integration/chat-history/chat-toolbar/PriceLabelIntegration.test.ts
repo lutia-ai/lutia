@@ -6,7 +6,7 @@ import { render, fireEvent } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import ChatToolbar from '$lib/components/chat-history/chat-toolbar/ChatToolbar.svelte';
 import PriceLabel from '$lib/components/chat-history/chat-toolbar/PriceLabel.svelte';
-import type { LlmChat, TextComponent, Component } from '$lib/types/types';
+import type { LlmChat, TextComponent, Component } from '$lib/components/chat-history/types';
 
 // Mock dependencies
 vi.mock('$lib/models/cost-calculators/tokenCounter', () => ({

@@ -12,7 +12,7 @@
 		darkMode,
 		isDragging
 	} from '$lib/stores.ts';
-	import type { SerializedApiRequest } from '$lib/types/types.js';
+	import type { SerializedApiRequest } from '$lib/db/types';
 	import { modelDictionary } from '$lib/models/modelDictionary';
 	import ErrorPopup from '$lib/components/notifications/ErrorPopup.svelte';
 	import NotificationPopup from '$lib/components/notifications/NotificationPopup.svelte';

@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 import type { ApiProvider } from '@prisma/client';
 import { chosenCompany, companySelection, gptModelSelection, chosenModel } from '$lib/stores';
 import { modelDictionary } from '$lib/models/modelDictionary';

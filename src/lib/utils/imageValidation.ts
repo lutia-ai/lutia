@@ -1,4 +1,5 @@
-import type { Model, Image } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
+import type { Image } from '$lib/types/attachment';
 import { formatModelEnumToReadable } from '$lib/models/modelUtils';
 
 /**

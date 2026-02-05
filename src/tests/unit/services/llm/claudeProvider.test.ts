@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ClaudeProvider } from '$lib/services/llm/claudeProvider';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 import type { UsageMetrics } from '$lib/services/llm/types';
 
 // Mock Anthropic

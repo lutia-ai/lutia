@@ -1,4 +1,4 @@
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 import type { ApiModel } from '@prisma/client';
 import { modelDictionary } from '$lib/models/modelDictionary';
 

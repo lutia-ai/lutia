@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { FileAttachment, Image, Model } from '$lib/types/types';
+	import type { FileAttachment, Image } from '$lib/types/attachment';
+	import type { Model } from '$lib/models/types';
 	import ImageThumbnail from '$lib/components/prompt-bar/ImageThumbnail.svelte';
 	import FilePreview from '$lib/components/prompt-bar/FilePreview.svelte';
 	import { isDragging } from '$lib/stores';

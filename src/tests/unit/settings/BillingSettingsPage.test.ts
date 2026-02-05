@@ -5,7 +5,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, screen } from '@testing-library/svelte';
 import BillingSettingsPage from '$lib/components/settings/BillingSettingsPage.svelte';
 import { PaymentTier } from '@prisma/client';
-import type { UserWithSettings, CardDetails, TransactionRecord } from '$lib/types/types';
+import type { UserWithSettings } from '$lib/db/types';
+import type { CardDetails, TransactionRecord } from '$lib/services/stripe/types';
 import { deserialize } from '$app/forms';
 
 // Mock necessary modules

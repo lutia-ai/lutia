@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { ApiProvider, ApiModel } from '@prisma/client';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 
 describe('modelSelectionUtils', () => {
 	// Create test data

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { OpenAIProvider } from '$lib/services/llm/openAIProvider';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 import type { UsageMetrics } from '$lib/services/llm/types';
 
 // Mock OpenAI

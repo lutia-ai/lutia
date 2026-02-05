@@ -10,7 +10,8 @@ import {
 	calculateTokensAndPrice,
 	preparePromptWithAttachments
 } from '$lib/components/prompt-bar/utils/promptBarUtils';
-import type { Model, ModelDictionary, Message } from '$lib/types/types';
+import type { Model, ModelDictionary } from '$lib/models/types';
+import type { Message } from '$lib/components/chat-history/types';
 import type { ApiModel, ApiProvider } from '@prisma/client';
 import * as tokenCounter from '$lib/models/cost-calculators/tokenCounter';
 import * as imageCalculator from '$lib/models/cost-calculators/imageCalculator';

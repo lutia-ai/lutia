@@ -1,7 +1,12 @@
 import { get } from 'svelte/store';
 import { page } from '$app/stores';
 import { pushState } from '$app/navigation';
-import type { UserChat, Component, ReasoningComponent, LlmChat } from '$lib/types/types';
+import type {
+	UserChat,
+	Component,
+	ReasoningComponent,
+	LlmChat
+} from '$lib/components/chat-history/types';
 import {
 	chatHistory,
 	chosenModel,
@@ -12,7 +17,7 @@ import {
 } from '$lib/stores';
 import { generateFullPrompt } from '$lib/components/prompt-bar/utils/promptFunctions';
 import { parseOrderedContent } from '$lib/components/chat-history/utils/chatHistory';
-import { isLlmChatComponent } from '$lib/types/typeGuards';
+import { isLlmChatComponent } from '$lib/components/chat-history/typeGuards';
 import { calculateImageCostByProvider } from '$lib/models/cost-calculators/imageCalculator';
 import {
 	handleStreamingResponse,
