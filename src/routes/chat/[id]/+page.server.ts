@@ -20,7 +20,7 @@ import {
 	updateConversation,
 	deleteConversation
 } from '$lib/db/crud/conversation';
-import type { UserWithSettings } from '$lib/types/types';
+import type { UserWithSettings } from '$lib/db/types';
 import { retrieveConversationsByUserIdPaginated } from '$lib/db/crud/conversation';
 
 interface ChatParams {

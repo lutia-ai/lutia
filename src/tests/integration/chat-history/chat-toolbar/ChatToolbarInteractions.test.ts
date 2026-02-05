@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import ChatToolbar from '$lib/components/chat-history/chat-toolbar/ChatToolbar.svelte';
-import type { LlmChat } from '$lib/types/types';
+import type { LlmChat } from '$lib/components/chat-history/types';
 
 // Mock dependencies
 vi.mock('$lib/components/chat-history/utils/regenerateMessage', () => ({

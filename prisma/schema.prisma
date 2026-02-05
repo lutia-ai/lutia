@@ -141,26 +141,26 @@ enum ApiModel {
   GPT_o3
   GPT_o1_pro
   DALL_E
-  
+
   // Anthropic Models (Current)
   Claude_4_5_Opus
   Claude_4_5_Sonnet
   Claude_4_5_Haiku
-  
+
   // Google Models (Current)
   Gemini_3_Pro
   Gemini_3_Flash
   Gemini_3_Pro_Image
-  
+
   // xAI Models (Current)
   Grok_4
   Grok_4_1_Fast
   Grok_Code_Fast_1
-  
+
   // DeepSeek Models (Current)
   R1
   V3_2
-  
+
   // Legacy/Deprecated Models (kept for existing database records)
   GPT_5
   GPT_5_Mini

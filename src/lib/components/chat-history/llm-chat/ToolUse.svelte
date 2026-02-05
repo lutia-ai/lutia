@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade, slide } from 'svelte/transition';
-	import type { WebSearchData } from '$lib/types/types';
+	import type { WebSearchData } from '$lib/services/llm/tool-types';
 	import WebSearchResults from '../web-search-results/WebSearchResults.svelte';
 	import SpinningGlobeIcon from '$lib/components/icons/SpinningGlobeIcon.svelte';
 

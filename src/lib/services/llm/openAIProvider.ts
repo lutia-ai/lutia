@@ -1,7 +1,8 @@
 import OpenAI from 'openai';
 import { env } from '$env/dynamic/private';
 import type { LLMProvider, UsageMetrics } from './types';
-import type { Model, ToolUseCallback, WebSearchData, WebSearchResult } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
+import type { ToolUseCallback, WebSearchData, WebSearchResult } from '$lib/services/llm/tool-types';
 import { addFilesToMessage } from '$lib/utils/fileHandling';
 
 /**

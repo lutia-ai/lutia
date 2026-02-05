@@ -59,7 +59,7 @@ import ChatHistory from '$lib/components/chat-history/ChatHistory.svelte';
 import UserChatComponent from '$lib/components/chat-history/user-chat/UserChatComponent.svelte';
 import LlmChatComponent from '$lib/components/chat-history/llm-chat/LlmChatComponent.svelte';
 import { chatHistory } from '$lib/stores';
-import type { UserChat, LlmChat } from '$lib/types/types';
+import type { UserChat, LlmChat } from '$lib/components/chat-history/types';
 
 describe('ChatHistory Component', () => {
 	// Setup callbacks for the component

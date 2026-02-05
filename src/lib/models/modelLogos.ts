@@ -1,4 +1,4 @@
-import type { ModelLogos } from '$lib/types/types';
+import type { ModelLogos } from '$lib/models/types';
 import AnthropicIcon from '$lib/components/icons/Anthropic.svelte';
 import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
 import OpenAiIcon from '$lib/components/icons/OpenAiIcon.svelte';

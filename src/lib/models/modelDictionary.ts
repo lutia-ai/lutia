@@ -1,4 +1,4 @@
-import type { ModelDictionary } from '../types/types';
+import type { ModelDictionary } from '$lib/models/types';
 
 export const modelDictionary: ModelDictionary = {
 	openAI: {
@@ -13,6 +13,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 50,
 				reasons: false,
+				extendedThinking: false,
 				generatesImages: false,
 				description: 'Latest GPT-5.2 with enhanced reasoning',
 				max_input_per_request: 15000,
@@ -29,6 +30,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 50,
 				reasons: true,
+				extendedThinking: false,
 				generatesImages: false,
 				description: 'Most capable GPT-5.2 for complex tasks',
 				max_input_per_request: 5000,
@@ -45,6 +47,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				reasons: true,
+				extendedThinking: false,
 				generatesImages: false,
 				description: 'High intelligence reasoning model',
 				max_input_per_request: 3000,
@@ -61,6 +64,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				reasons: true,
+				extendedThinking: false,
 				generatesImages: false,
 				description: "OpenAI's most powerful reasoning model",
 				max_input_per_request: 3000,
@@ -77,6 +81,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				reasons: true,
+				extendedThinking: false,
 				generatesImages: false,
 				description: 'Version of o1 with more compute for better responses',
 				max_input_per_request: 3000,
@@ -91,6 +96,9 @@ export const modelDictionary: ModelDictionary = {
 				output_price: 0.04 * 1.1,
 				context_window: 4032,
 				handlesImages: false,
+				maxImages: 0,
+				reasons: false,
+				extendedThinking: false,
 				generatesImages: true,
 				description: 'Generate photo-realistic images',
 				max_input_per_request: 4000,
@@ -148,6 +156,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 5,
 				generatesImages: false,
 				reasons: false,
+				extendedThinking: false,
 				description: 'Fast, cost-effective Claude model',
 				max_input_per_request: 15000,
 				web_search: true,
@@ -163,12 +172,11 @@ export const modelDictionary: ModelDictionary = {
 				legacy: false,
 				input_price: 2 * 1.1,
 				output_price: 12 * 1.1,
-				input_price_large: 4 * 1.1,
-				output_price_large: 18 * 1.1,
 				context_window: 1000000,
 				handlesImages: true,
 				maxImages: 10,
 				reasons: true,
+				extendedThinking: false,
 				generatesImages: false,
 				description: 'Most intelligent Gemini with multimodal understanding',
 				max_input_per_request: 15000,
@@ -184,6 +192,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 10,
 				reasons: true,
+				extendedThinking: false,
 				generatesImages: false,
 				description: 'Balanced model built for speed and scale',
 				max_input_per_request: 20000,
@@ -198,6 +207,8 @@ export const modelDictionary: ModelDictionary = {
 				context_window: 1000000,
 				handlesImages: true,
 				maxImages: 10,
+				reasons: false,
+				extendedThinking: false,
 				generatesImages: true,
 				description: 'Professional image generation and understanding',
 				max_input_per_request: 15000,
@@ -217,6 +228,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				reasons: true,
+				extendedThinking: false,
 				generatesImages: false,
 				description: 'Ultra-fast with 2M token context window',
 				max_input_per_request: 20000,
@@ -232,6 +244,7 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: true,
 				maxImages: 5,
 				reasons: true,
+				extendedThinking: false,
 				generatesImages: false,
 				description: 'Flagship Grok model with enhanced reasoning',
 				max_input_per_request: 10000,
@@ -247,12 +260,16 @@ export const modelDictionary: ModelDictionary = {
 				handlesImages: false,
 				maxImages: 0,
 				reasons: true,
+				extendedThinking: false,
 				generatesImages: false,
 				description: 'Specialized for agentic coding tasks',
 				max_input_per_request: 15000,
 				web_search: false
 			}
 		}
+	},
+	meta: {
+		models: {}
 	},
 	deepSeek: {
 		models: {
@@ -267,6 +284,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 0,
 				generatesImages: false,
 				reasons: true,
+				extendedThinking: false,
 				description: 'Latest DeepSeek with improved reasoning',
 				max_input_per_request: 20000,
 				web_search: false
@@ -282,6 +300,7 @@ export const modelDictionary: ModelDictionary = {
 				maxImages: 0,
 				generatesImages: false,
 				reasons: true,
+				extendedThinking: false,
 				description: 'V3.2 with extended reasoning chains',
 				max_input_per_request: 15000,
 				web_search: false

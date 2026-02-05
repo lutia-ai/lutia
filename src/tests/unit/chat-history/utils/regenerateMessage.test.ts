@@ -4,8 +4,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { regenerateMessage } from '$lib/components/chat-history/utils/regenerateMessage';
 import { chatHistory } from '$lib/stores';
-import type { Component, ReasoningComponent, ChatComponent } from '$lib/types/types';
-import { isLlmChatComponent } from '$lib/types/typeGuards';
+import type {
+	Component,
+	ReasoningComponent,
+	ChatComponent
+} from '$lib/components/chat-history/types';
+import { isLlmChatComponent } from '$lib/components/chat-history/typeGuards';
 import { ApiProvider } from '@prisma/client';
 import { deserialize } from '$app/forms';
 import type { Updater } from 'svelte/store';
@@ -27,7 +31,7 @@ vi.mock('$lib/components/chat-history/utils/chatHistory', () => ({
 	extractWebSearchResults: vi.fn((content) => [])
 }));
 
-vi.mock('$lib/types/typeGuards', () => ({
+vi.mock('$lib/components/chat-history/typeGuards', () => ({
 	isLlmChatComponent: vi.fn((chat) => chat.by !== 'user')
 }));
 

@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { calculateTokensAndPrice } from '$lib/components/prompt-bar/utils/promptBarUtils';
 import { modelDictionary } from '$lib/models/modelDictionary';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 import type { ApiProvider } from '@prisma/client';
 
 // Mock the token counter

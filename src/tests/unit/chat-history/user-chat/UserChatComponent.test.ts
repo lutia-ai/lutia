@@ -11,7 +11,8 @@ vi.mock('$lib/utils/fileHandling', () => ({
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import UserChatComponent from '$lib/components/chat-history/user-chat/UserChatComponent.svelte';
-import type { UserChat, FileAttachment } from '$lib/types/types';
+import type { UserChat } from '$lib/components/chat-history/types';
+import type { FileAttachment } from '$lib/types/attachment';
 
 describe('UserChatComponent', () => {
 	// Common props

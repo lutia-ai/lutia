@@ -9,12 +9,12 @@ import { chatHistory } from '$lib/stores';
 import type {
 	Component,
 	ReasoningComponent,
-	SerializedApiRequest,
 	Message as ChatMessage,
 	OrderedContent,
 	ContentItem
-} from '$lib/types/types';
-import { isLlmChatComponent } from '$lib/types/typeGuards';
+} from '$lib/components/chat-history/types';
+import type { SerializedApiRequest } from '$lib/db/types';
+import { isLlmChatComponent } from '$lib/components/chat-history/typeGuards';
 import type { ActionResult } from '@sveltejs/kit';
 import {
 	handleStreamingResponse,

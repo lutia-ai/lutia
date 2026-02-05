@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/svelte';
 import Settings from '$lib/components/settings/Settings.svelte';
 import { isSettingsOpen, bodyScrollLocked } from '$lib/stores';
-import type { UserWithSettings } from '$lib/types/types';
+import type { UserWithSettings } from '$lib/db/types';
 
 // Mock the store values
 vi.mock('$lib/stores', () => {

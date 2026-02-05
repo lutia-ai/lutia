@@ -1,6 +1,6 @@
 import { chatHistory } from '$lib/stores';
-import type { ChatComponent } from '$lib/types/types';
-import { isCodeComponent, isLlmChatComponent } from '$lib/types/typeGuards';
+import type { ChatComponent } from '$lib/components/chat-history/types';
+import { isCodeComponent, isLlmChatComponent } from '$lib/components/chat-history/typeGuards';
 
 export function copyToClipboard(text: string): Promise<void> {
 	return new Promise((resolve, reject) => {

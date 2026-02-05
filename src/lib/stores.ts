@@ -1,6 +1,7 @@
 import { writable, type Writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
-import type { ChatComponent, Message, Model } from '$lib/types/types';
+import type { ChatComponent, Message } from '$lib/components/chat-history/types';
+import type { Model } from '$lib/models/types';
 import type { ApiProvider } from '@prisma/client';
 import { modelDictionary } from './models/modelDictionary';
 

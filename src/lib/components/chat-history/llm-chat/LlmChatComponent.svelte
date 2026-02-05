@@ -2,14 +2,16 @@
 	import { chatHistory, chosenModel } from '$lib/stores';
 	import {
 		isLlmChatComponent,
+		isToolUseComponent
+	} from '$lib/components/chat-history/typeGuards';
+	import {
 		isModelAnthropic,
 		isModelDeepSeek,
 		isModelGoogle,
 		isModelOpenAI,
-		isModelXAI,
-		isToolUseComponent
-	} from '$lib/types/typeGuards';
-	import type { LlmChat } from '$lib/types/types';
+		isModelXAI
+	} from '$lib/models/typeGuards';
+	import type { LlmChat } from '$lib/components/chat-history/types';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';
 	import GrokIcon from '$lib/components/icons/GrokIcon.svelte';
 	import DeepSeekIcon from '$lib/components/icons/DeepSeekIcon.svelte';
@@ -23,8 +25,6 @@
 	import ChatToolbar from '../chat-toolbar/ChatToolbar.svelte';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
-	import WebSearchResults from '../web-search-results/WebSearchResults.svelte';
-	import { fade } from 'svelte/transition';
 	import ToolUse from './ToolUse.svelte';
 
 	export let chatIndex: number;

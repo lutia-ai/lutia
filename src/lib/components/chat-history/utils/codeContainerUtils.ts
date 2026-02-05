@@ -1,6 +1,6 @@
 import { chatHistory } from '$lib/stores';
-import type { Component } from '$lib/types/types';
-import { isCodeComponent, isLlmChatComponent } from '$lib/types/typeGuards';
+import type { Component } from '$lib/components/chat-history/types';
+import { isCodeComponent, isLlmChatComponent } from '$lib/components/chat-history/typeGuards';
 
 export function calculateTabWidth(code: string): number {
 	const lines = code.split('\n');

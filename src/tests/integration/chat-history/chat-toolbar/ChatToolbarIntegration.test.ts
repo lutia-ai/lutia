@@ -6,7 +6,7 @@ import { render, fireEvent } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import ChatToolbar from '$lib/components/chat-history/chat-toolbar/ChatToolbar.svelte';
 import PriceLabel from '$lib/components/chat-history/chat-toolbar/PriceLabel.svelte';
-import type { LlmChat } from '$lib/types/types';
+import type { LlmChat } from '$lib/components/chat-history/types';
 
 // Mock dependencies that make API calls or interact with global state
 vi.mock('$lib/components/chat-history/utils/regenerateMessage', () => ({

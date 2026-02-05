@@ -6,7 +6,7 @@ import type {
 	CreateApiRequestData,
 	CreateMessageData,
 	SerializedApiRequest
-} from '$lib/types/types';
+} from '$lib/db/types';
 import prisma from '$lib/db/prisma';
 import { serializeApiRequest } from '$lib/components/chat-history/utils/chatHistory';
 

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import StackedBarChart from '$lib/components/barchart/StackedBarChart.svelte';
-	import type { UsageObject, Company, UserWithSettings } from '$lib/types/types';
+	import type { UsageObject, UserWithSettings } from '$lib/db/types';
+	import type { Company } from '$lib/components/barchart/utils';
 	import { modelLogos } from '$lib/models/modelLogos';
 	import PieChart from '$lib/components/barchart/PieChart.svelte';
 	import { capitalizeFirstLetter } from '$lib/components/barchart/utils';

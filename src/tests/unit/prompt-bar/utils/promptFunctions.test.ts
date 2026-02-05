@@ -3,9 +3,11 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { sanitizeHtml, generateFullPrompt } from '$lib/components/prompt-bar/utils/promptFunctions';
-import type { ChatComponent, Message, Model, FileAttachment, UserChat } from '$lib/types/types';
+import type { ChatComponent, Message, UserChat } from '$lib/components/chat-history/types';
+import type { Model } from '$lib/models/types';
+import type { FileAttachment } from '$lib/types/attachment';
 import type { ApiModel } from '@prisma/client';
-import * as typeGuards from '$lib/types/typeGuards';
+import * as typeGuards from '$lib/components/chat-history/typeGuards';
 import * as fileHandling from '$lib/utils/fileHandling';
 import DOMPurify from 'dompurify';
 import { modelDictionary } from '$lib/models/modelDictionary';

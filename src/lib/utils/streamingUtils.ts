@@ -1,4 +1,5 @@
-import type { OrderedContent, WebSearchData } from '$lib/types/types';
+import type { OrderedContent } from '$lib/components/chat-history/types';
+import type { WebSearchData } from '$lib/services/llm/tool-types';
 
 /**
  * Stream processing callbacks interface

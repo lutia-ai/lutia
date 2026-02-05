@@ -8,16 +8,18 @@
 		processLinks
 	} from '$lib/components/chat-history/utils/chatHistory';
 	import { formatModelEnumToReadable } from '$lib/models/modelUtils';
-	import type { ChatComponent } from '$lib/types/types';
+	import type { ChatComponent } from '$lib/components/chat-history/types';
 	import {
 		isModelAnthropic,
 		isModelOpenAI,
 		isModelGoogle,
 		isModelXAI,
-		isModelDeepSeek,
+		isModelDeepSeek
+	} from '$lib/models/typeGuards';
+	import {
 		isLlmChatComponent,
 		isUserChatComponent
-	} from '$lib/types/typeGuards';
+	} from '$lib/components/chat-history/typeGuards';
 	import ClaudeIcon from '$lib/images/claude.png';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 	import GeminiIcon from '$lib/components/icons/GeminiIcon.svelte';

@@ -10,11 +10,12 @@ import {
 	loadChatHistory,
 	handleKeyboardShortcut
 } from '$lib/components/chat-history/utils/chatHistory';
-import type { TextComponent, CodeComponent, SerializedApiRequest } from '$lib/types/types';
+import type { TextComponent, CodeComponent } from '$lib/components/chat-history/types';
+import type { SerializedApiRequest } from '$lib/db/types';
 import { numberPrevMessages } from '$lib/stores';
 import { Decimal } from '@prisma/client/runtime/library';
 import type { ApiModel, ApiProvider } from '@prisma/client';
-import { isLlmChatComponent } from '$lib/types/typeGuards';
+import { isLlmChatComponent } from '$lib/components/chat-history/typeGuards';
 import { get } from 'svelte/store';
 
 // Mock the get function from svelte/store

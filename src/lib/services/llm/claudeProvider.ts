@@ -1,8 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { env } from '$env/dynamic/private';
 import type { LLMProvider, UsageMetrics } from './types';
-import type { Model, ToolData, ToolUseCallback } from '$lib/types/types';
-import type { ClaudeImage } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
+import type { ToolData, ToolUseCallback } from '$lib/services/llm/tool-types';
+import type { ClaudeImage } from '$lib/services/llm/types';
 import { addFilesToMessage } from '$lib/utils/fileHandling';
 
 /**

@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Mock } from 'vitest';
 import { ApiProvider, PaymentTier } from '@prisma/client';
 import { ReadableStream } from 'stream/web';
-import type { Model } from '$lib/types/types';
+import type { Model } from '$lib/models/types';
 
 // Mock node-mailjet to prevent ReferenceError: define is not defined
 vi.mock('node-mailjet', () => ({

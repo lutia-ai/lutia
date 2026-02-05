@@ -1,4 +1,7 @@
-import type { GptTokenUsage, Image, Model, FileAttachment, OrderedContent } from '$lib/types/types';
+import type { GptTokenUsage } from '$lib/db/types';
+import type { Image, FileAttachment } from '$lib/types/attachment';
+import type { Model } from '$lib/models/types';
+import type { OrderedContent } from '$lib/components/chat-history/types';
 import { createMessageAndApiRequestEntry } from '$lib/db/crud/apiRequest';
 import { updateUserBalanceWithDeduction } from '$lib/db/crud/balance';
 import { ApiProvider, ApiRequestStatus, PaymentTier, type User } from '@prisma/client';

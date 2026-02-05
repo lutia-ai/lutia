@@ -1,4 +1,4 @@
-import type { Image } from '$lib/types/types';
+import type { Image } from '$lib/types/attachment';
 import type { Message } from '@prisma/client';
 import prisma from '$lib/db/prisma';
 

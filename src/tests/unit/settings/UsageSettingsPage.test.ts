@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, screen } from '@testing-library/svelte';
 import UsageSettingsPage from '$lib/components/settings/UsageSettingsPage.svelte';
 import { PaymentTier } from '@prisma/client';
-import type { UserWithSettings, UsageObject } from '$lib/types/types';
+import type { UserWithSettings, UsageObject } from '$lib/db/types';
 
 // Mock the components used by UsageSettingsPage
 vi.mock('$lib/components/barchart/StackedBarChart.svelte', () => ({

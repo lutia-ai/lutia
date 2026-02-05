@@ -3,7 +3,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as imageCalculator from '$lib/models/cost-calculators/imageCalculator';
-import type { Image, Model } from '$lib/types/types';
+import type { Image } from '$lib/types/attachment';
+import type { Model } from '$lib/models/types';
 import { ApiProvider, ApiModel } from '@prisma/client';
 
 describe('Image Cost Calculator', () => {

@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Chart } from 'chart.js/auto';
-	import type { UsageObject, Company } from '$lib/types/types';
+	import type { UsageObject } from '$lib/db/types';
 	import { capitalizeFirstLetter } from './utils';
+	import type { Company } from './utils';
 
 	type PieData = {
 		company: string;

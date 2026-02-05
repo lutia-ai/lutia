@@ -19,7 +19,7 @@
 	import ConversationsSideBar from '$lib/components/sidebar/ConversationsSideBar.svelte';
 	import ContextWindowSideBar from '$lib/components/sidebar/ContextWindowSideBar.svelte';
 	// import FilesSideBar from '$lib/components/sidebar/FilesSideBar.svelte';
-	import type { UserWithSettings } from '$lib/types/types.js';
+	import type { UserWithSettings } from '$lib/db/types';
 
 	export let data;
 

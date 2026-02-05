@@ -5,7 +5,7 @@
 	import DollarIcon from '$lib/components/icons/DollarIcon.svelte';
 	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
 	import TickIcon from '$lib/components/icons/TickIcon.svelte';
-	import type { LlmChat } from '$lib/types/types';
+	import type { LlmChat } from '$lib/components/chat-history/types';
 	import {
 		copyToClipboard,
 		updateChatHistoryToCopiedState

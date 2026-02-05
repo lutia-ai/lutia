@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { UserChat } from '$lib/types/types';
+	import type { UserChat } from '$lib/components/chat-history/types';
 	import { getFileIcon, getFileIconColor } from '$lib/utils/fileHandling';
 
 	export let chat: UserChat;

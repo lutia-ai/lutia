@@ -1,7 +1,9 @@
 import DOMPurify from 'dompurify';
-import type { Message, Image, Model, ChatComponent, FileAttachment } from '$lib/types/types';
+import type { Message, ChatComponent } from '$lib/components/chat-history/types';
+import type { Image, FileAttachment } from '$lib/types/attachment';
+import type { Model } from '$lib/models/types';
 import { addFilesToMessage } from '$lib/utils/fileHandling';
-import { isUserChatComponent } from '$lib/types/typeGuards';
+import { isUserChatComponent } from '$lib/components/chat-history/typeGuards';
 
 export function sanitizeHtml(html: string): string {
 	let sanitizedHtml = DOMPurify.sanitize(html, {

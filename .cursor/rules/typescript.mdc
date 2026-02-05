@@ -1,0 +1,33 @@
+---
+alwaysApply: true
+---
+# TypeScript
+
+## Type System - Co-located Types
+
+Types live next to the code that uses them. Only truly shared types remain in `/src/lib/types/`.
+
+### Type Locations
+- `$lib/models/types.ts` / `typeGuards.ts` - Model types and guards
+- `$lib/components/chat-history/types.ts` / `typeGuards.ts` - Chat/message types and guards
+- `$lib/db/types.ts` - Database and user types
+- `$lib/services/llm/types.ts` - LLM provider types (incl. provider image formats)
+- `$lib/services/llm/tool-types.ts` - LLM tool types
+- `$lib/services/stripe/types.ts` - Stripe payment types
+- `$lib/types/attachment.ts` - Shared attachment types (`Image`, `FileAttachment`)
+- `$lib/types/customErrors.ts` - Custom error classes
+
+### Rules
+1. Co-locate types with usage — don't add to `/src/lib/types/` unless used across 3+ domains
+2. Check existing co-located files before creating new types
+3. Always use explicit type annotations (variables, params, return types)
+4. Use `unknown` over `any`, then narrow with type guards
+5. Import Prisma enums/types directly from `@prisma/client`
+6. Use SvelteKit's `$types` for page/layout types
+
+
+## Type Safety
+
+- Strict mode enabled in `tsconfig.json`
+- Run `npm run check` to validate
+- CI/CD fails on type errors

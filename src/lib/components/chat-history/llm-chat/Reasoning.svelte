@@ -8,7 +8,7 @@
 
 	export let reasoning: string;
 	export let isLoading: boolean = false;
-	export let onAutoCollapse: ((isManualToggle?: boolean) => void) | undefined = undefined;
+	export let onAutoCollapse: ((_isManualToggle?: boolean) => void) | undefined = undefined;
 	export let animationMode: 'character' | 'word' | 'none' = 'character'; // Animation mode option
 
 	let isExpanded: boolean = false;

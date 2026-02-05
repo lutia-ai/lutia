@@ -1,4 +1,28 @@
-import type { ToolUseCallback } from '$lib/types/types';
+import type { ToolUseCallback } from '$lib/services/llm/tool-types';
+
+// Provider-specific image formats
+export type ChatGPTImage = {
+	type: 'image_url';
+	image_url: {
+		url: string;
+	};
+};
+
+export type ClaudeImage = {
+	type: 'image';
+	source: {
+		type: 'base64';
+		media_type: string;
+		data: string;
+	};
+};
+
+export type GeminiImage = {
+	inlineData: {
+		data: string;
+		mimeType: string;
+	};
+};
 
 /**
  * Represents the usage metrics for a LLM request

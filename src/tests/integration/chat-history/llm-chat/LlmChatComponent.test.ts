@@ -58,14 +58,18 @@ vi.mock('$lib/components/chat-history/utils/codeContainerUtils', () => ({
 	changeTabWidth: vi.fn((code) => code)
 }));
 
-// Mock the type guards
-vi.mock('$lib/types/typeGuards', () => ({
-	isLlmChatComponent: vi.fn().mockReturnValue(true),
+// Mock model type guards
+vi.mock('$lib/models/typeGuards', () => ({
 	isModelAnthropic: vi.fn().mockImplementation((model: string) => model.includes('Claude')),
 	isModelOpenAI: vi.fn().mockImplementation((model: string) => model.includes('gpt')),
 	isModelGoogle: vi.fn().mockImplementation((model: string) => model.includes('Gemini')),
 	isModelXAI: vi.fn().mockImplementation((model: string) => model.includes('Grok')),
-	isModelDeepSeek: vi.fn().mockImplementation((model: string) => model.includes('DeepSeek')),
+	isModelDeepSeek: vi.fn().mockImplementation((model: string) => model.includes('DeepSeek'))
+}));
+
+// Mock chat component type guards
+vi.mock('$lib/components/chat-history/typeGuards', () => ({
+	isLlmChatComponent: vi.fn().mockReturnValue(true),
 	isToolUseComponent: vi
 		.fn()
 		.mockImplementation((component: any) => component.type === 'tool_use')
@@ -75,7 +79,7 @@ vi.mock('$lib/types/typeGuards', () => ({
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import LlmChatComponent from '$lib/components/chat-history/llm-chat/LlmChatComponent.svelte';
-import type { LlmChat, Component } from '$lib/types/types';
+import type { LlmChat, Component } from '$lib/components/chat-history/types';
 
 describe('LlmChatComponent Integration Tests', () => {
 	let mockOpenImageViewer: (image: string, alt: string) => void;
