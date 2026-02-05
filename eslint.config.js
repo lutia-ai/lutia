@@ -52,6 +52,6 @@ export default [
 	},
 	{
 		// Ignore third-party code and build outputs
-		ignores: ['build/**', '.svelte-kit/**', 'dist/**', 'node_modules/**']
+		ignores: ['build/**', '.svelte-kit/**', 'dist/**', 'node_modules/**', '.cursor/**']
 	}
 ];
