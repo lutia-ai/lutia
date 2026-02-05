@@ -31,7 +31,7 @@ vi.mock('$lib/components/chat-history/utils/chatHistory', () => ({
 	extractWebSearchResults: vi.fn((content) => [])
 }));
 
-vi.mock('$lib/types/typeGuards', () => ({
+vi.mock('$lib/components/chat-history/typeGuards', () => ({
 	isLlmChatComponent: vi.fn((chat) => chat.by !== 'user')
 }));
 

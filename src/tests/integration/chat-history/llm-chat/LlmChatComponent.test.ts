@@ -58,14 +58,18 @@ vi.mock('$lib/components/chat-history/utils/codeContainerUtils', () => ({
 	changeTabWidth: vi.fn((code) => code)
 }));
 
-// Mock the type guards
-vi.mock('$lib/types/typeGuards', () => ({
-	isLlmChatComponent: vi.fn().mockReturnValue(true),
+// Mock model type guards
+vi.mock('$lib/models/typeGuards', () => ({
 	isModelAnthropic: vi.fn().mockImplementation((model: string) => model.includes('Claude')),
 	isModelOpenAI: vi.fn().mockImplementation((model: string) => model.includes('gpt')),
 	isModelGoogle: vi.fn().mockImplementation((model: string) => model.includes('Gemini')),
 	isModelXAI: vi.fn().mockImplementation((model: string) => model.includes('Grok')),
-	isModelDeepSeek: vi.fn().mockImplementation((model: string) => model.includes('DeepSeek')),
+	isModelDeepSeek: vi.fn().mockImplementation((model: string) => model.includes('DeepSeek'))
+}));
+
+// Mock chat component type guards
+vi.mock('$lib/components/chat-history/typeGuards', () => ({
+	isLlmChatComponent: vi.fn().mockReturnValue(true),
 	isToolUseComponent: vi
 		.fn()
 		.mockImplementation((component: any) => component.type === 'tool_use')

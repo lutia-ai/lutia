@@ -115,15 +115,19 @@ vi.mock('$lib/models/modelUtils', () => ({
 	formatModelEnumToReadable: mocks.modelMocks.formatModelEnumToReadable
 }));
 
-// Mock type guards
-vi.mock('$lib/types/typeGuards', () => ({
-	isUserChatComponent: mocks.typeGuardMocks.isUserChatComponent,
-	isLlmChatComponent: mocks.typeGuardMocks.isLlmChatComponent,
+// Mock model type guards
+vi.mock('$lib/models/typeGuards', () => ({
 	isModelAnthropic: mocks.typeGuardMocks.isModelAnthropic,
 	isModelOpenAI: mocks.typeGuardMocks.isModelOpenAI,
 	isModelGoogle: mocks.typeGuardMocks.isModelGoogle,
 	isModelXAI: mocks.typeGuardMocks.isModelXAI,
 	isModelDeepSeek: mocks.typeGuardMocks.isModelDeepSeek
+}));
+
+// Mock chat component type guards
+vi.mock('$lib/components/chat-history/typeGuards', () => ({
+	isUserChatComponent: mocks.typeGuardMocks.isUserChatComponent,
+	isLlmChatComponent: mocks.typeGuardMocks.isLlmChatComponent
 }));
 
 // Import component after all mocks are set up

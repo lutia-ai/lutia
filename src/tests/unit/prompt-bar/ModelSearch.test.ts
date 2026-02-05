@@ -11,7 +11,7 @@ import * as typeGuards from '$lib/models/typeGuards';
 HTMLElement.prototype.scrollIntoView = vi.fn();
 
 // Mock the type guards
-vi.mock('$lib/types/typeGuards', () => ({
+vi.mock('$lib/models/typeGuards', () => ({
 	isModelAnthropic: vi.fn(),
 	isModelOpenAI: vi.fn(),
 	isModelGoogle: vi.fn(),
