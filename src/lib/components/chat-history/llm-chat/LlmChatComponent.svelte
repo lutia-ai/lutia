@@ -25,8 +25,6 @@
 	import ChatToolbar from '../chat-toolbar/ChatToolbar.svelte';
 	import ChatGPTIcon from '$lib/components/icons/chatGPT.svelte';
 	import ClaudeIcon from '$lib/images/claude.png';
-	import WebSearchResults from '../web-search-results/WebSearchResults.svelte';
-	import { fade } from 'svelte/transition';
 	import ToolUse from './ToolUse.svelte';
 
 	export let chatIndex: number;

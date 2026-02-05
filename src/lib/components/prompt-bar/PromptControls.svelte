@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { Model } from '$lib/models/types';
 	import BrainIcon from '../icons/BrainIcon.svelte';
 	import HoverTag from '../HoverTag.svelte';
 	import { chosenModel, isContextWindowAuto, reasoningOn, webSearchOn } from '$lib/stores';

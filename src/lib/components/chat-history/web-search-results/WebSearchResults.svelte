@@ -1,28 +1,13 @@
 <script lang="ts">
 	import type { WebSearchData } from '$lib/services/llm/tool-types';
-	import { slide } from 'svelte/transition';
 
 	export let searchResults: WebSearchData[] = [];
-
-	// State for expand/collapse functionality
-	let isExpanded = false;
-	const initialDisplayCount = 4;
 
 	// Flatten all results from all search data - with defensive checking
 	$: allResults =
 		searchResults && Array.isArray(searchResults)
 			? searchResults.flatMap((searchData) => searchData?.results || [])
 			: [];
-	$: initialResults = allResults.slice(0, initialDisplayCount);
-	$: additionalResults = allResults.slice(initialDisplayCount);
-	$: hasMoreResults = allResults.length > initialDisplayCount;
-
-	/**
-	 * Toggle expanded state
-	 */
-	function toggleExpanded(): void {
-		isExpanded = !isExpanded;
-	}
 
 	/**
 	 * Get favicon URL for a domain
