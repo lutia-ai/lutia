@@ -9,6 +9,7 @@ import { updateConversation, updateConversationLastMessage } from '$lib/db/crud/
 import { generateConversationTitle } from '$lib/utils/titleGenerator';
 import { estimateTokenCount } from '../models/cost-calculators/tokenCounter';
 import prisma from '$lib/db/prisma';
+import { requireMessageOwnership } from '$lib/utils/authorization';
 
 export interface FinalizationParams {
 	user: User;
@@ -124,11 +125,11 @@ export async function finalizeResponse({
 		if (responseText.length > 0 && messageConversationId) {
 			await updateConversationLastMessage(messageConversationId);
 
-			// Generate title for new conversations
+			// Generate title for new conversations (pass userId for ownership verification)
 			if (!originalConversationId) {
 				try {
 					const title = await generateConversationTitle(plainText);
-					await updateConversation(messageConversationId, { title });
+					await updateConversation(messageConversationId, { title }, user.id);
 				} catch (titleError) {
 					console.error('Error generating conversation title:', titleError);
 				}
@@ -213,6 +214,9 @@ export async function updateExistingMessageAndRequest({
 			: error
 				? ApiRequestStatus.FAILED
 				: ApiRequestStatus.COMPLETED;
+
+		// Verify the user owns this message before updating
+		await requireMessageOwnership(Number(messageId), user.id);
 
 		// Retrieve the existing message
 		const message = await prisma.message.findUnique({

@@ -9,6 +9,7 @@ import type {
 } from '$lib/db/types';
 import prisma from '$lib/db/prisma';
 import { serializeApiRequest } from '$lib/components/chat-history/utils/chatHistory';
+import { requireApiRequestOwnership } from '$lib/utils/authorization';
 
 export async function createApiRequestEntry(
 	userId: number,
@@ -285,11 +286,26 @@ export async function updateApiRequestStatus(
 	}
 }
 
+/**
+ * Updates an API request after optionally verifying ownership
+ * @param id - The ID of the API request to update
+ * @param updatedData - Partial data to update the API request with
+ * @param userId - Optional user ID; if provided, ownership is verified before updating
+ * @returns The updated API request
+ * @throws {AuthorizationError} If userId is provided and the user does not own the API request
+ * @throws {ResourceNotFoundError} If the API request does not exist
+ */
 export async function updateApiRequest(
 	id: number,
-	updatedData: Partial<Omit<ApiRequest, 'id'>>
+	updatedData: Partial<Omit<ApiRequest, 'id'>>,
+	userId?: number
 ): Promise<ApiRequest> {
 	try {
+		// Verify ownership if userId is provided
+		if (userId !== undefined) {
+			await requireApiRequestOwnership(id, userId);
+		}
+
 		const updatedApiRequest = await prisma.apiRequest.update({
 			where: { id },
 			data: updatedData

@@ -7,12 +7,17 @@ import { isValidMessageArray } from '$lib/components/chat-history/typeGuards';
 import { getModelFromName } from '$lib/models/modelUtils';
 import { ApiModel, ApiProvider, PaymentTier, type User } from '@prisma/client';
 import { retrieveUsersBalance } from '$lib/db/crud/balance';
-import { InsufficientBalanceError } from '$lib/types/customErrors';
+import {
+	InsufficientBalanceError,
+	AuthorizationError,
+	ResourceNotFoundError
+} from '$lib/types/customErrors';
 import {
 	createConversation,
 	deleteOldestConversation,
 	countUserConversations
 } from '$lib/db/crud/conversation';
+import { requireConversationOwnership, requireMessagesOwnership } from '$lib/utils/authorization';
 import { estimateTokenCount } from '../models/cost-calculators/tokenCounter';
 import { calculateImageCostByProvider } from '../models/cost-calculators/imageCalculator';
 
@@ -133,6 +138,11 @@ export async function validateApiRequest(
 			throw error(400, 'Email not verified');
 		}
 
+		// Verify conversation ownership if an existing conversation ID was provided
+		if (messageConversationId) {
+			await requireConversationOwnership(messageConversationId, user.id);
+		}
+
 		// Extract unique message IDs from your messages array
 		const referencedMessageIds: number[] = [
 			...new Set(
@@ -142,6 +152,11 @@ export async function validateApiRequest(
 					.filter((id): id is number => id !== undefined)
 			)
 		];
+
+		// Verify ownership of all referenced messages
+		if (referencedMessageIds.length > 0) {
+			await requireMessagesOwnership(referencedMessageIds, user.id);
+		}
 
 		// Process messages differently based on provider
 		if (apiProvider === ApiProvider.anthropic) {
@@ -266,6 +281,12 @@ export async function validateApiRequest(
 	} catch (err: any) {
 		if (err instanceof InsufficientBalanceError) {
 			throw error(500, err.message);
+		}
+		if (err instanceof AuthorizationError) {
+			throw error(err.statusCode, err.message);
+		}
+		if (err instanceof ResourceNotFoundError) {
+			throw error(err.statusCode, err.message);
 		}
 		if (err.status && err.body) {
 			throw err; // Pass through HTTP errors

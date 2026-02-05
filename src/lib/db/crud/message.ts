@@ -1,6 +1,7 @@
 import type { Image } from '$lib/types/attachment';
 import type { Message } from '@prisma/client';
 import prisma from '$lib/db/prisma';
+import { requireMessageOwnership } from '$lib/utils/authorization';
 
 /**
  * Creates a new message with ordered content
@@ -101,10 +102,13 @@ export async function deleteAllUserMessagesWithoutAConversation(userId: number):
 }
 
 /**
- * Updates a message with the given ID
+ * Updates a message with the given ID after verifying ownership
  * @param id - The ID of the message to update
  * @param updatedData - Partial data to update the message with
+ * @param userId - Optional user ID; if provided, ownership is verified before updating
  * @returns The updated message
+ * @throws {AuthorizationError} If userId is provided and the user does not own the message
+ * @throws {ResourceNotFoundError} If the message does not exist
  */
 export async function updateMessage(
 	id: number,
@@ -112,9 +116,15 @@ export async function updateMessage(
 		pictures?: Image[];
 		files?: any;
 		ordered_content?: any;
-	}
+	},
+	userId?: number
 ): Promise<Message> {
 	try {
+		// Verify ownership if userId is provided
+		if (userId !== undefined) {
+			await requireMessageOwnership(id, userId);
+		}
+
 		// Create a new object with processed data for Prisma
 		const processedData: any = { ...updatedData };
 

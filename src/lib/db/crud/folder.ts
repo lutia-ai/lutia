@@ -1,5 +1,6 @@
 import type { Folder } from '@prisma/client';
 import prisma from '$lib/db/prisma';
+import { requireFolderOwnership } from '$lib/utils/authorization';
 
 /**
  * Create a new folder for a user
@@ -48,13 +49,24 @@ export async function retrieveFoldersByUserId(userId: number): Promise<Folder[]>
 
 /**
  * Retrieve a specific folder by ID
+ * @param folderId - The ID of the folder to retrieve
+ * @param userId - Optional user ID to filter by ownership (recommended for security)
+ * @returns The folder if found (and owned by user if userId provided), or null
  */
-export async function retrieveFolderById(folderId: number): Promise<Folder | null> {
+export async function retrieveFolderById(
+	folderId: number,
+	userId?: number
+): Promise<Folder | null> {
 	try {
-		const folder = await prisma.folder.findUnique({
-			where: {
-				id: folderId
-			},
+		const whereCondition: any = { id: folderId };
+
+		// If userId is provided, also filter by user_id for ownership verification
+		if (userId !== undefined) {
+			whereCondition.user_id = userId;
+		}
+
+		const folder = await prisma.folder.findFirst({
+			where: whereCondition,
 			include: {
 				subfolders: true,
 				conversations: true
@@ -69,13 +81,25 @@ export async function retrieveFolderById(folderId: number): Promise<Folder | nul
 }
 
 /**
- * Update a folder
+ * Update a folder after verifying ownership
+ * @param folderId - The ID of the folder to update
+ * @param data - The data to update on the folder
+ * @param userId - Optional user ID; if provided, ownership is verified before updating
+ * @returns The updated folder
+ * @throws {AuthorizationError} If userId is provided and the user does not own the folder
+ * @throws {ResourceNotFoundError} If the folder does not exist
  */
 export async function updateFolder(
 	folderId: number,
-	data: { name?: string; parentId?: number | null }
+	data: { name?: string; parentId?: number | null },
+	userId?: number
 ): Promise<Folder> {
 	try {
+		// Verify ownership if userId is provided
+		if (userId !== undefined) {
+			await requireFolderOwnership(folderId, userId);
+		}
+
 		const folder = await prisma.folder.update({
 			where: {
 				id: folderId
@@ -94,10 +118,19 @@ export async function updateFolder(
 }
 
 /**
- * Delete a folder
+ * Delete a folder after verifying ownership
+ * @param folderId - The ID of the folder to delete
+ * @param userId - Optional user ID; if provided, ownership is verified before deleting
+ * @throws {AuthorizationError} If userId is provided and the user does not own the folder
+ * @throws {ResourceNotFoundError} If the folder does not exist
  */
-export async function deleteFolder(folderId: number): Promise<void> {
+export async function deleteFolder(folderId: number, userId?: number): Promise<void> {
 	try {
+		// Verify ownership if userId is provided
+		if (userId !== undefined) {
+			await requireFolderOwnership(folderId, userId);
+		}
+
 		await prisma.folder.delete({
 			where: {
 				id: folderId
