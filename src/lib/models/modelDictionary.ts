@@ -270,6 +270,8 @@ export const modelDictionary: ModelDictionary = {
 	},
 	meta: {
 		models: {}
+		// TODO: Llama provider exists but no models are configured yet
+		// Add models here when Llama is ready to be enabled
 	},
 	deepSeek: {
 		models: {

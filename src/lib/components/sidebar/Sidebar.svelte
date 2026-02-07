@@ -89,7 +89,11 @@
 	// Updates the chosen company and resets the model selection based on the new company.
 	function selectCompany(company: ApiProvider) {
 		chosenCompany.set(company);
-		companySelection.set(Object.keys(modelDictionary) as ApiProvider[]);
+		// Filter out providers that have no models (e.g., meta/Llama which isn't implemented yet)
+		const availableProviders = (Object.keys(modelDictionary) as ApiProvider[]).filter(
+			(provider) => Object.keys(modelDictionary[provider].models).length > 0
+		);
+		companySelection.set(availableProviders);
 		companySelection.set($companySelection.filter((c) => c !== company));
 		gptModelSelection.set(Object.values(modelDictionary[$chosenCompany].models));
 		chosenModel.set($gptModelSelection[0]);

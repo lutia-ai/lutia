@@ -51,9 +51,12 @@ function createPersistentStore<T>(key: string, startValue: T): Writable<T> {
 export const chosenCompany = createPersistentStore<ApiProvider>('chosenCompany', 'anthropic');
 
 // Persistent store for the companySelection setting
+// Filter out providers that have no models (e.g., meta/Llama which isn't implemented yet)
 export const companySelection = createPersistentStore<ApiProvider[]>(
 	'companySelection',
-	Object.keys(modelDictionary) as ApiProvider[]
+	(Object.keys(modelDictionary) as ApiProvider[]).filter(
+		(provider) => Object.keys(modelDictionary[provider].models).length > 0
+	)
 );
 
 // Persistent store for the gptModelSelection setting
